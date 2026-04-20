@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.59",
+    version: "1.6.60",
     date: "2026-04-20",
     title: "Updates & Fixes",
     changes: [
-      "Fix extended nutrition (sugar/fibre/salt) fetch from FatSecret food.get",
+      "Add clickable nutrition summary panel with full daily breakdown sheet",
     ],
   },
   {
