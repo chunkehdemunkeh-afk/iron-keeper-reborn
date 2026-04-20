@@ -30,23 +30,11 @@ self.addEventListener("activate", (event) => {
       await Promise.all(
         names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))
       );
-      // Wipe any HTML responses cached by the previous SW version
-      try {
-        const cache = await caches.open(CACHE_NAME);
-        const keys = await cache.keys();
-        await Promise.all(
-          keys
-            .filter((req) => {
-              const u = new URL(req.url);
-              return (
-                req.mode === "navigate" ||
-                u.pathname === "/" ||
-                u.pathname.endsWith(".html")
-              );
-            })
-            .map((req) => cache.delete(req))
-        );
-      } catch {}
+      // NOTE: We intentionally do NOT wipe cached HTML here. The fetch handler
+      // does change-detection and replaces stale HTML on the very next
+      // navigation, so the cached copy stays available as an offline fallback
+      // in the meantime. Wiping it here used to cause an "Offline" flash for
+      // returning users immediately after a deploy.
       await self.clients.claim();
     })()
   );
