@@ -30,23 +30,11 @@ self.addEventListener("activate", (event) => {
       await Promise.all(
         names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))
       );
-      // Wipe any HTML responses cached by the previous SW version
-      try {
-        const cache = await caches.open(CACHE_NAME);
-        const keys = await cache.keys();
-        await Promise.all(
-          keys
-            .filter((req) => {
-              const u = new URL(req.url);
-              return (
-                req.mode === "navigate" ||
-                u.pathname === "/" ||
-                u.pathname.endsWith(".html")
-              );
-            })
-            .map((req) => cache.delete(req))
-        );
-      } catch {}
+      // NOTE: We intentionally do NOT wipe cached HTML here. The fetch handler
+      // does change-detection and replaces stale HTML on the very next
+      // navigation, so the cached copy stays available as an offline fallback
+      // in the meantime. Wiping it here used to cause an "Offline" flash for
+      // returning users immediately after a deploy.
       await self.clients.claim();
     })()
   );
@@ -118,9 +106,28 @@ self.addEventListener("fetch", (event) => {
             headers: networkRes.headers,
           });
         } catch {
-          // Offline fallback
+          // Offline fallback — try cached HTML for this request, then ANY cached
+          // HTML (covers the case where the URL changed between deploys), and
+          // only as a last resort show the offline message. This prevents the
+          // "Offline" screen from flashing during update reloads or transient
+          // network blips when we actually have a usable cached shell.
           const cached = await caches.match(req);
-          return cached ?? new Response("Offline — please reconnect.", { status: 503 });
+          if (cached) return cached;
+          try {
+            const cache = await caches.open(CACHE_NAME);
+            const keys = await cache.keys();
+            for (const k of keys) {
+              const u = new URL(k.url);
+              if (u.pathname === "/" || u.pathname.endsWith(".html")) {
+                const fallback = await cache.match(k);
+                if (fallback) return fallback;
+              }
+            }
+          } catch {}
+          return new Response(
+            "<!doctype html><meta charset=utf-8><title>Reconnecting…</title><body style='font-family:system-ui;display:grid;place-items:center;height:100vh;margin:0;background:#0b0b0c;color:#fafafa'><div style='text-align:center'><p style='opacity:.7'>Reconnecting…</p><script>setTimeout(()=>location.reload(),1500)</script></div></body>",
+            { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } }
+          );
         }
       })()
     );
