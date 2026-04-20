@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.60",
+    version: "1.6.61",
     date: "2026-04-20",
     title: "Updates & Fixes",
     changes: [
-      "Add clickable nutrition summary panel with full daily breakdown sheet",
+      "Make split rotation pills tappable to swap next session",
     ],
   },
   {
