@@ -1,10 +1,15 @@
-import { lovable } from "@/integrations/lovable";
+import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Zap, BarChart3, Shield, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Login() {
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
-    await lovable.auth.signInWithOAuth(provider);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) toast.error("Sign in failed. Please try again.");
   };
 
   const features = [
