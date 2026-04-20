@@ -5,6 +5,7 @@ import { format, addDays, subDays } from "date-fns";
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Plus, Settings, Trash2, CheckCircle2, Copy, Sunrise, Sun, Moon, Apple, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import FoodSearch from "@/components/food/FoodSearch";
@@ -97,6 +98,7 @@ export default function FoodTracker() {
   const [searchMeal, setSearchMeal] = useState<MealType | null>(null);
   const [editingLog, setEditingLog] = useState<EditingLog | null>(null);
   const [showComplete, setShowComplete] = useState(false);
+  const [showNutritionSheet, setShowNutritionSheet] = useState(false);
   const [copyMeal, setCopyMeal] = useState<MealType | null>(null);
   const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set());
   const [waterMl, setWaterMl] = useState(0);
@@ -158,9 +160,14 @@ export default function FoodTracker() {
       protein: acc.protein + l.protein_g,
       carbs: acc.carbs + l.carbs_g,
       fat: acc.fat + l.fat_g,
+      sugar: acc.sugar + (l.sugar_g ?? 0),
+      fibre: acc.fibre + (l.fibre_g ?? 0),
+      saturatedFat: acc.saturatedFat + (l.saturated_fat_g ?? 0),
+      salt: acc.salt + (l.salt_g ?? 0),
     }),
-    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    { calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, fibre: 0, saturatedFat: 0, salt: 0 }
   );
+  const hasExtendedTotals = logs.some(l => l.sugar_g != null || l.fibre_g != null || l.saturated_fat_g != null || l.salt_g != null);
 
   if (showSetup) {
     return (
@@ -224,7 +231,8 @@ export default function FoodTracker() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mx-4 p-4 rounded-2xl bg-card border border-border mb-4"
+          className="mx-4 p-4 rounded-2xl bg-card border border-border mb-4 cursor-pointer active:opacity-80 transition-opacity"
+          onClick={() => setShowNutritionSheet(true)}
         >
           {/* Calorie ring — centred with flanking stats */}
           <div className="flex items-center justify-between mb-4">
@@ -285,6 +293,10 @@ export default function FoodTracker() {
                 </div>
               </div>
             ))}
+          </div>
+          <div className="flex items-center justify-center gap-1 mt-3 pt-2 border-t border-border/50">
+            <span className="text-[10px] text-muted-foreground">Full breakdown</span>
+            <ChevronRight className="h-3 w-3 text-muted-foreground" />
           </div>
         </motion.div>
       )}
@@ -559,6 +571,95 @@ export default function FoodTracker() {
           targetMeal={copyMeal}
           onCopied={fetchData}
         />
+      )}
+
+      {/* Full nutrition breakdown sheet */}
+      {goals && (
+        <Sheet open={showNutritionSheet} onOpenChange={setShowNutritionSheet}>
+          <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh] overflow-y-auto">
+            <SheetHeader className="mb-6">
+              <SheetTitle className="font-display text-lg">
+                {format(new Date(date + "T12:00:00"), "EEE, MMM d")} — Nutrition
+              </SheetTitle>
+            </SheetHeader>
+
+            {/* Calorie overview */}
+            <div className="flex items-center justify-between px-1 mb-6">
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-2xl font-display font-bold">{Math.round(totals.calories)}</span>
+                <span className="text-[11px] text-muted-foreground">Eaten</span>
+              </div>
+              <div className="flex-1 mx-4 h-px bg-border" />
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-2xl font-display font-bold text-primary">{Math.max(0, goals.calories - Math.round(totals.calories))}</span>
+                <span className="text-[11px] text-muted-foreground">Remaining</span>
+              </div>
+              <div className="flex-1 mx-4 h-px bg-border" />
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-2xl font-display font-bold">{goals.calories}</span>
+                <span className="text-[11px] text-muted-foreground">Goal</span>
+              </div>
+            </div>
+
+            {/* Macros */}
+            <div className="mb-6">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Macronutrients</p>
+              <div className="space-y-4">
+                {[
+                  { label: "Carbohydrates", value: totals.carbs,   target: goals.carbs_g,   color: "bg-amber-400",  unit: "g" },
+                  { label: "Protein",       value: totals.protein, target: goals.protein_g, color: "bg-primary",    unit: "g" },
+                  { label: "Fat",           value: totals.fat,     target: goals.fat_g,     color: "bg-rose-400",   unit: "g" },
+                ].map((m) => (
+                  <div key={m.label}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-medium">{m.label}</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-sm font-display font-bold">{Math.round(m.value)}</span>
+                        <span className="text-[11px] text-muted-foreground">/ {m.target}{m.unit}</span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${m.color} transition-all duration-500`}
+                        style={{ width: `${Math.min(100, pct(m.value, m.target))}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Extended nutrition */}
+            {hasExtendedTotals && (
+              <div>
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Extended</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: "Sugar",         value: totals.sugar,        unit: "g", color: "bg-pink-400" },
+                    { label: "Fibre",         value: totals.fibre,        unit: "g", color: "bg-emerald-400" },
+                    { label: "Saturated Fat", value: totals.saturatedFat, unit: "g", color: "bg-orange-400" },
+                    { label: "Salt",          value: totals.salt,         unit: "g", color: "bg-sky-400" },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-xl bg-secondary/50 p-3">
+                      <div className={`w-2 h-2 rounded-full ${item.color} mb-2`} />
+                      <p className="text-[11px] text-muted-foreground mb-0.5">{item.label}</p>
+                      <p className="text-lg font-display font-bold leading-none">
+                        {item.value < 0.1 && item.value > 0 ? "<0.1" : Math.round(item.value * 10) / 10}
+                        <span className="text-xs font-normal text-muted-foreground ml-0.5">{item.unit}</span>
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!hasExtendedTotals && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Log foods with extended data to see sugar, fibre, salt, and more.
+              </p>
+            )}
+          </SheetContent>
+        </Sheet>
       )}
     </div>
   );
