@@ -191,12 +191,18 @@ export async function fetchExtendedNutrition(foodId: string): Promise<Pick<FoodI
     if (!res.ok) return null;
     const data = await res.json();
     const food = data?.food;
-    if (!food) { console.warn("[ExtNutrition] food.get returned no food object", data); return null; }
+    if (!food) return null;
     const servings = food.servings?.serving;
-    const s = Array.isArray(servings) ? servings[0] : servings;
-    if (!s) { console.warn("[ExtNutrition] no serving found in food.get response", food); return null; }
+    const servingList: Record<string, string>[] = Array.isArray(servings) ? servings : servings ? [servings] : [];
+    if (servingList.length === 0) return null;
 
-    console.log("[ExtNutrition] serving fields:", { sugar: s.sugar, fiber: s.fiber, saturated_fat: s.saturated_fat, sodium: s.sodium, serving_description: s.serving_description });
+    // Prefer the 100g reference serving — most complete and avoids factor math errors.
+    // Fall back to the first serving that has at least sugar or fiber data.
+    const pick100g = servingList.find(
+      (sv) => sv.metric_serving_unit === "g" && parseFloat(sv.metric_serving_amount || "0") === 100
+    );
+    const pickWithData = servingList.find((sv) => sv.sugar || sv.fiber || sv.saturated_fat || sv.sodium);
+    const s = pick100g ?? pickWithData ?? servingList[0];
 
     const servingWeightG =
       s.metric_serving_unit === "g"
