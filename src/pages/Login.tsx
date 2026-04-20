@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Zap, BarChart3, Shield, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import EmailAuthForm from "@/components/auth/EmailAuthForm";
 
 export default function Login() {
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
@@ -93,10 +94,32 @@ export default function Login() {
             <ChevronRight className="h-4 w-4 opacity-60" />
           </motion.button>
 
-<motion.p
+          {/* Divider */}
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.85 }}
+            transition={{ delay: 0.8, duration: 0.4 }}
+            className="flex items-center gap-3"
+          >
+            <div className="flex-1 h-px bg-border/40" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="flex-1 h-px bg-border/40" />
+          </motion.div>
+
+          {/* Email auth */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.85, duration: 0.4 }}
+            className="w-full"
+          >
+            <EmailAuthForm />
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.95 }}
             className="text-[11px] text-muted-foreground"
           >
             Your data syncs securely across all devices
