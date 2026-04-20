@@ -398,7 +398,26 @@ export default function WorkoutSession() {
   // Load last session data, notes, and weight-up suggestions
   useEffect(() => {
     if (!workout) return;
-    fetchLastSessionData(workout.id).then(setLastSessionData);
+    fetchLastSessionData(workout.id).then(data => {
+      setLastSessionData(data);
+      // Pre-select attachment used last session for each cable exercise
+      const preSelected: Record<string, string> = {};
+      (workout.exercises || []).forEach(ex => {
+        if (!isCableAttachmentExercise(ex.name)) return;
+        const base = ex.id;
+        for (const att of CABLE_ATTACHMENTS) {
+          const suffix = `-${attachmentKey(att)}`;
+          if (Object.keys(data).some(key => key.startsWith(base) && key.endsWith(suffix))) {
+            preSelected[ex.id] = att;
+            break;
+          }
+        }
+      });
+      if (Object.keys(preSelected).length > 0) {
+        // Spread order: preSelected first so existing (resumed) values win
+        setCableAttachments(prev => ({ ...preSelected, ...prev }));
+      }
+    });
     try {
       const saved = localStorage.getItem(`exercise-notes-${workout.id}`);
       if (saved) setLastExerciseNotes(JSON.parse(saved));
@@ -550,6 +569,16 @@ export default function WorkoutSession() {
     if (!currentSets[setIdx]) return;
 
     const wasCompleted = currentSets[setIdx].completed;
+
+    // Block completing a cable attachment exercise without an attachment selected
+    if (!wasCompleted) {
+      const ex = allExercises.find(e => e.id === exerciseId);
+      const exName = exerciseOverrides[exerciseId]?.name || ex?.name || "";
+      if (isCableAttachmentExercise(exName) && !cableAttachments[exerciseId]) {
+        toast.error("Select an attachment first");
+        return;
+      }
+    }
     const newSets = currentSets.map((s, i) =>
       i === setIdx ? { ...s, completed: !wasCompleted } : s
     );
