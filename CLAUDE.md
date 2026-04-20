@@ -34,23 +34,20 @@ npx supabase functions deploy <name>   # Deploy a single edge function (fatsecre
 - `src/lib/workout-data.ts` — Static workout definitions + localStorage for in-progress sessions
 - `src/lib/user-preferences.ts` — User split/schedule/onboarding stored in **localStorage** under `ik-prefs-{userId}` (not Supabase)
 - `src/integrations/supabase/client.ts` — Supabase JS client singleton
+- `src/components/NextSessionCard.tsx` — derives next workout from split + history via `getNextSplitDay`. Rotation pills are tappable to locally override via `overrideWorkoutId` state. The dropdown only shows workouts outside the split.
 
 **Routing** is in `src/App.tsx`. All routes are protected by auth guards. `Index.tsx` does role-based redirect.
 
 **Pages:**
 - `Sessions` — browse and start workout sessions
-- `Progress` — **Stats** (frequency/volume charts) + **PRs** (personal records with swipe-to-delete). **Body tab planned but not yet built** — see PLAN.md.
+- `Progress` — **Stats** tab (frequency/volume charts, DailyReviewChart) + **PRs** tab (personal records with swipe-to-delete). **Body tab planned but not yet built** — see PLAN.md.
 - `WorkoutSession` — active workout tracker (sets, reps, rest timer, exercise swap)
 - `WorkoutBuilder` — create custom workouts; stored in **localStorage** under `ironkeeper_custom_workouts`
 - `ExerciseLibrary` — browsable exercise index; data is static in `src/lib/exercise-library.ts`
 - `FoodTracker` — nutrition logging with barcode scan, meal groups, weekly chart
 - `History` — past workout log
-- `Progress` — charts and streaks
-- `BodyMeasurements` — weight + body fat log with trend chart
+- `BodyMeasurements` — weight + body fat log with trend chart; also accessible via Profile
 - `Profile` — settings, preferences, onboarding re-entry
-
-**Key components:**
-- `src/components/NextSessionCard.tsx` — derives next workout from split + history via `getNextSplitDay`. Rotation pills are tappable to locally override the displayed "next up" workout (`overrideWorkoutId` state). The "something different" dropdown only shows workouts outside the split.
 
 **Database tables** (all with RLS, scoped per user):
 - `profiles` — display name and user info
