@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.53",
+    version: "1.6.54",
     date: "2026-04-20",
     title: "Updates & Fixes",
     changes: [
-      "Update site info for publish",
+      "Remove Apple sign in button",
     ],
   },
   {
