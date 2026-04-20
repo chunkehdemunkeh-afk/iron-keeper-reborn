@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.62",
+    version: "1.6.63",
     date: "2026-04-20",
     title: "Updates & Fixes",
     changes: [
-      "Document NextSessionCard override state in CLAUDE.md",
+      "Fix duplicate Progress entry and tidy Key data flow in CLAUDE.md",
     ],
   },
   {
