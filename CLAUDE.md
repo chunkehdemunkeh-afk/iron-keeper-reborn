@@ -38,6 +38,7 @@ npx supabase db push # Apply DB migrations to Supabase
 
 **Pages:**
 - `Sessions` — browse and start workout sessions
+- `Progress` — 3-tab strip: **Stats** (frequency/volume charts), **Body** (weight trend + progress photos), **PRs** (personal records with swipe-to-delete)
 - `WorkoutSession` — active workout tracker (sets, reps, rest timer, exercise swap)
 - `WorkoutBuilder` — create custom workouts; stored in **localStorage** under `ironkeeper_custom_workouts`
 - `ExerciseLibrary` — browsable exercise index; data is static in `src/lib/exercise-library.ts`
@@ -57,6 +58,7 @@ npx supabase db push # Apply DB migrations to Supabase
 - `body_measurements` — weight and body fat readings
 - `daily_logs` — daily completion/notes log
 - `user_roles` — coach vs. member role (`role` column, checked by `useUserRole`)
+- `progress_photos` — progress photo metadata: `user_id`, `date`, `storage_path`, `notes`. Actual images in Supabase Storage bucket `progress-photos` (private). Files stored at `{user_id}/{date}-{timestamp}.jpg`. Display via signed URLs generated at fetch time.
 
 Migrations live in `supabase/migrations/` and must be pushed with `npx supabase db push`.
 
@@ -76,9 +78,20 @@ Migrations live in `supabase/migrations/` and must be pushed with `npx supabase 
 - **Swipe-to-delete pattern:** Red destructive background must use `useTransform(x, [-100, -30], [1, 0])` for opacity — **do not** use a fully-opaque absolute div behind a transparent sliding div; it bleeds through. The sliding div must use `bg-card` or equivalent opaque background.
 - **Animations:** Framer Motion throughout — page transitions, list reordering (`Reorder`), collapse/expand. Keep motion consistent with existing patterns.
 
+## Supabase Ownership
+
+**Migration complete.** The app now uses a user-owned Supabase project.
+- Project ref: `kzwkdhwselqchhcqkyzs` (Iron Keeper V2)
+- `npx supabase link --project-ref kzwkdhwselqchhcqkyzs` + `npx supabase db push` works normally
+- Supabase CLI requires `SUPABASE_ACCESS_TOKEN` env var — interactive login won't work in non-TTY environments
+- Auth uses standard Supabase OAuth (`supabase.auth.signInWithOAuth`) — **not** `@lovable.dev/cloud-auth-js`
+- Google OAuth is configured; Apple sign-in removed (no Apple Developer account)
+- **The Supabase client** reads credentials from env vars only — `src/integrations/supabase/client.ts` has no hardcoded URLs
+- User data import script: `data-export/generate_import.py` — provide old UID + new UID to generate `import.sql` for any user migrating from the old project
+
 ## Git Workflow
 
-Lovable and the auto-changelog GitHub Action push to `main` frequently. **Always pull before editing files** and before pushing:
+Lovable and the auto-changelog GitHub Action push to `main` frequently. **Active repo: `iron-keeper-reborn`** — `origin` points there. The old `ironkeeper-cf7d5021` repo is the `reborn` remote (legacy, do not push to it). **Always pull before editing files** and before pushing:
 
 ```bash
 # Before starting any edits:
