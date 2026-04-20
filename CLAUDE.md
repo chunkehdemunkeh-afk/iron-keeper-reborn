@@ -49,6 +49,9 @@ npx supabase functions deploy <name>   # Deploy a single edge function (fatsecre
 - `BodyMeasurements` — weight + body fat log with trend chart
 - `Profile` — settings, preferences, onboarding re-entry
 
+**Key components:**
+- `src/components/NextSessionCard.tsx` — derives next workout from split + history via `getNextSplitDay`. Rotation pills are tappable to locally override the displayed "next up" workout (`overrideWorkoutId` state). The "something different" dropdown only shows workouts outside the split.
+
 **Database tables** (all with RLS, scoped per user):
 - `profiles` — display name and user info
 - `workout_history` — completed workout sessions
