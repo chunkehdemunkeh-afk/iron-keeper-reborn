@@ -118,9 +118,28 @@ self.addEventListener("fetch", (event) => {
             headers: networkRes.headers,
           });
         } catch {
-          // Offline fallback
+          // Offline fallback — try cached HTML for this request, then ANY cached
+          // HTML (covers the case where the URL changed between deploys), and
+          // only as a last resort show the offline message. This prevents the
+          // "Offline" screen from flashing during update reloads or transient
+          // network blips when we actually have a usable cached shell.
           const cached = await caches.match(req);
-          return cached ?? new Response("Offline — please reconnect.", { status: 503 });
+          if (cached) return cached;
+          try {
+            const cache = await caches.open(CACHE_NAME);
+            const keys = await cache.keys();
+            for (const k of keys) {
+              const u = new URL(k.url);
+              if (u.pathname === "/" || u.pathname.endsWith(".html")) {
+                const fallback = await cache.match(k);
+                if (fallback) return fallback;
+              }
+            }
+          } catch {}
+          return new Response(
+            "<!doctype html><meta charset=utf-8><title>Reconnecting…</title><body style='font-family:system-ui;display:grid;place-items:center;height:100vh;margin:0;background:#0b0b0c;color:#fafafa'><div style='text-align:center'><p style='opacity:.7'>Reconnecting…</p><script>setTimeout(()=>location.reload(),1500)</script></div></body>",
+            { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } }
+          );
         }
       })()
     );
