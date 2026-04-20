@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.56",
+    version: "1.6.57",
     date: "2026-04-20",
     title: "Updates & Fixes",
     changes: [
-      "Block set completion without attachment; pre-select last session's attachment on start",
+      "Add reset-password page and route; update CLAUDE.md",
     ],
   },
   {
