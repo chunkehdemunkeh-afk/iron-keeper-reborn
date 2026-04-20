@@ -26,6 +26,12 @@ export class ServiceUnavailableError extends Error {
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+const edgeFunctionHeaders = {
+  apikey: SUPABASE_ANON_KEY,
+  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+};
 
 // ---------- FatSecret helpers ----------
 
@@ -142,7 +148,8 @@ export async function searchFoods(query: string, page = 1): Promise<FoodItem[]> 
   // Try FatSecret first
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/fatsecret-search?q=${encodeURIComponent(query)}&page=${Math.max(0, page - 1)}&region=GB&language=en`
+      `${SUPABASE_URL}/functions/v1/fatsecret-search?q=${encodeURIComponent(query)}&page=${Math.max(0, page - 1)}&region=GB&language=en`,
+      { headers: edgeFunctionHeaders }
     );
     if (res.ok) {
       const data = await res.json();
@@ -158,7 +165,8 @@ export async function searchFoods(query: string, page = 1): Promise<FoodItem[]> 
   // Fallback to Open Food Facts
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/food-search?q=${encodeURIComponent(query)}&page=${page}`
+      `${SUPABASE_URL}/functions/v1/food-search?q=${encodeURIComponent(query)}&page=${page}`,
+      { headers: edgeFunctionHeaders }
     );
     if (!res.ok) return [];
     const data = await res.json();
@@ -177,7 +185,8 @@ export async function searchFoods(query: string, page = 1): Promise<FoodItem[]> 
 export async function fetchExtendedNutrition(foodId: string): Promise<Pick<FoodItem, "sugar" | "fibre" | "saturatedFat" | "salt"> | null> {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/fatsecret-search?food_id=${encodeURIComponent(foodId)}&region=GB&language=en`
+      `${SUPABASE_URL}/functions/v1/fatsecret-search?food_id=${encodeURIComponent(foodId)}&region=GB&language=en`,
+      { headers: edgeFunctionHeaders }
     );
     if (!res.ok) return null;
     const data = await res.json();
@@ -213,7 +222,8 @@ export async function lookupBarcode(barcode: string): Promise<FoodItem | null> {
   // Try FatSecret barcode lookup first
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/fatsecret-search?barcode=${encodeURIComponent(barcode)}&region=GB&language=en`
+      `${SUPABASE_URL}/functions/v1/fatsecret-search?barcode=${encodeURIComponent(barcode)}&region=GB&language=en`,
+      { headers: edgeFunctionHeaders }
     );
     if (res.ok) {
       const data = await res.json();
@@ -259,7 +269,8 @@ export async function lookupBarcode(barcode: string): Promise<FoodItem | null> {
   // Fallback to Open Food Facts
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/food-search?barcode=${encodeURIComponent(barcode)}`
+      `${SUPABASE_URL}/functions/v1/food-search?barcode=${encodeURIComponent(barcode)}`,
+      { headers: edgeFunctionHeaders }
     );
     if (!res.ok) return null;
     const data = await res.json();
