@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.58",
+    version: "1.6.59",
     date: "2026-04-20",
     title: "Updates & Fixes",
     changes: [
-      "Fix food search: add apikey/Authorization headers to edge function calls",
+      "Fix extended nutrition (sugar/fibre/salt) fetch from FatSecret food.get",
     ],
   },
   {
