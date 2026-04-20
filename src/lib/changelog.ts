@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.57",
+    version: "1.6.58",
     date: "2026-04-20",
     title: "Updates & Fixes",
     changes: [
-      "Add reset-password page and route; update CLAUDE.md",
+      "Fix food search: add apikey/Authorization headers to edge function calls",
     ],
   },
   {
