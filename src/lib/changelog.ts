@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.55",
+    version: "1.6.56",
     date: "2026-04-20",
     title: "Updates & Fixes",
     changes: [
-      "Add email/password auth as alternative to Google sign in",
+      "Block set completion without attachment; pre-select last session's attachment on start",
     ],
   },
   {
