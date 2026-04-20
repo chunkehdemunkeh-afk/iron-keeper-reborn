@@ -13,6 +13,7 @@ export default function NextSessionCard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [showAll, setShowAll] = useState(false);
+  const [overrideWorkoutId, setOverrideWorkoutId] = useState<string | null>(null);
 
   const prefs = user ? getUserPreferences(user.id) : null;
 
@@ -31,12 +32,17 @@ export default function NextSessionCard() {
     return getNextSplitDay(prefs.schedule, recent);
   }, [prefs, history]);
 
-  const nextWorkout = nextSplitDay
+  const splitNextWorkout = nextSplitDay
     ? allWorkouts.find((w) => w.id === nextSplitDay.next.workoutId)
     : null;
 
-  // All other workouts (for the "switch it" list)
-  const otherWorkouts = allWorkouts.filter((w) => w.id !== nextWorkout?.id);
+  const nextWorkout = overrideWorkoutId
+    ? allWorkouts.find((w) => w.id === overrideWorkoutId) ?? splitNextWorkout
+    : splitNextWorkout;
+
+  // Workouts not in the split (for the "something different" dropdown)
+  const splitWorkoutIds = new Set(prefs?.schedule?.map((d) => d.workoutId) ?? []);
+  const otherWorkouts = allWorkouts.filter((w) => !splitWorkoutIds.has(w.id));
 
   // ── No preferences set: show all workouts (pre-onboarding or skipped) ──
   if (!prefs || !prefs.schedule?.length) {
@@ -112,53 +118,64 @@ export default function NextSessionCard() {
         </motion.button>
       )}
 
-      {/* Rotation pills */}
+      {/* Rotation pills — tap to swap next up */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide mb-3">
         {prefs.schedule.map((day, i) => {
           const dayWorkout = allWorkouts.find((w) => w.id === day.workoutId);
           const DayIcon = dayWorkout?.icon;
-          const isCurrent = day.workoutId === nextWorkout?.id;
+          const isSelected = day.workoutId === nextWorkout?.id;
           return (
-            <div
+            <button
               key={i}
-              className={`flex-shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
-                isCurrent
+              onClick={() => {
+                if (isSelected) {
+                  setOverrideWorkoutId(null);
+                } else {
+                  setOverrideWorkoutId(day.workoutId);
+                }
+              }}
+              className={`flex-shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all active:scale-95 ${
+                isSelected
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted/50 text-muted-foreground"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
               {DayIcon && <DayIcon className="h-2.5 w-2.5" />}
               {day.label}
-            </div>
+            </button>
           );
         })}
       </div>
 
-      {/* Switch it out */}
-      <button
-        onClick={() => setShowAll((v) => !v)}
-        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
-      >
-        <Repeat2 className="h-3.5 w-3.5" />
-        Want to do something different?
-        {showAll ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-      </button>
-
-      <AnimatePresence>
-        {showAll && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden space-y-2"
+      {/* Switch it out — workouts not in the split */}
+      {otherWorkouts.length > 0 && (
+        <>
+          <button
+            onClick={() => setShowAll((v) => !v)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
           >
-            {otherWorkouts.map((workout, i) => (
-              <WorkoutButton key={workout.id} workout={workout} index={i} compact />
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <Repeat2 className="h-3.5 w-3.5" />
+            Something outside your split?
+            {showAll ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+
+          <AnimatePresence>
+            {showAll && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden space-y-2"
+              >
+                {otherWorkouts.map((workout, i) => (
+                  <WorkoutButton key={workout.id} workout={workout} index={i} compact />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
     </motion.div>
   );
 }
