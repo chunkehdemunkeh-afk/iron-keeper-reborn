@@ -12,7 +12,8 @@ npm run build        # Production build
 npm run lint         # ESLint
 npm run test         # Run Vitest (single run)
 npm run test:watch   # Vitest in watch mode
-npx supabase db push # Apply DB migrations to Supabase
+npx supabase db push                    # Apply DB migrations to Supabase
+npx supabase functions deploy <name>   # Deploy a single edge function (fatsecret-search, food-search)
 ```
 
 ## Architecture
@@ -38,7 +39,7 @@ npx supabase db push # Apply DB migrations to Supabase
 
 **Pages:**
 - `Sessions` — browse and start workout sessions
-- `Progress` — 3-tab strip: **Stats** (frequency/volume charts), **Body** (weight trend + progress photos), **PRs** (personal records with swipe-to-delete)
+- `Progress` — **Stats** (frequency/volume charts) + **PRs** (personal records with swipe-to-delete). **Body tab planned but not yet built** — see PLAN.md.
 - `WorkoutSession` — active workout tracker (sets, reps, rest timer, exercise swap)
 - `WorkoutBuilder` — create custom workouts; stored in **localStorage** under `ironkeeper_custom_workouts`
 - `ExerciseLibrary` — browsable exercise index; data is static in `src/lib/exercise-library.ts`
@@ -107,7 +108,7 @@ git stash && git pull --rebase origin main && git stash pop && git push origin m
 
 **PWA updates:** `main.tsx` polls `index.html` every 60s and triggers a reload when the hash changes. The service worker at `public/sw.js` also polls for updates. The auto-changelog workflow (`.github/workflows/auto-changelog.yml`) updates `src/lib/changelog.ts` on every push to `main`.
 
-**Food data** comes from the Open Food Facts API (`src/lib/open-food-facts.ts`) including barcode lookup. Extended nutrition fields are fetched synchronously at log time to guarantee they're saved.
+**Food data:** Text search goes through the `fatsecret-search` Supabase edge function (FatSecret OAuth 1.0, credentials stored as Supabase secrets). Barcode lookup uses the Open Food Facts API directly (`src/lib/open-food-facts.ts`). Extended nutrition fields are fetched synchronously at log time to guarantee they're saved.
 
 ## Gotchas
 
@@ -118,3 +119,5 @@ git stash && git pull --rebase origin main && git stash pop && git push origin m
 - **WeekStrip deletes:** Workout sessions deleted from WeekStrip use `deleteWorkoutFromCloud` (same function as History page). Activity logs use `deleteActivityLog`. Both trigger a `setRefreshKey` increment to re-fetch.
 - **Add Exercise to session:** `WorkoutSession` supports adding any exercise mid-session via a search Sheet with muscle group pill filters. Added exercises are stored in `addedExercises: Exercise[]` state and persisted in the auto-save localStorage key alongside `addedAccessories`. Swipe-to-delete removes from `addedExercises` + `exerciseOrder` + `setLogs`.
 - **Accessory routines:** Icon for each routine is derived via `accessoryIcon(routine.id)` in `WorkoutSession` — maps `acc-abs`→Flame, `acc-grip`→Hand, others→Zap. The `emoji` field on `AccessoryRoutine` is no longer rendered in the session UI.
+- **Cable attachment exercises:** `WorkoutSession` has `CABLE_ATTACHMENTS` (Handles, V-Bar, MAG Grip, Straight Bar, Rope, Cuff & Lat Bar) and `isCableAttachmentExercise(name)`. A set cannot be completed without selecting an attachment first. `getEffectiveExId()` appends `-{attachmentKey}` to the exercise ID so each attachment tracks its own PR history independently. Last session's attachment is pre-selected on load.
+- **Password reset flow:** `EmailAuthForm` sends reset emails redirecting to `/reset-password`. The `ResetPassword.tsx` page handles the Supabase `PASSWORD_RECOVERY` auth event and calls `supabase.auth.updateUser({ password })` to complete the flow.

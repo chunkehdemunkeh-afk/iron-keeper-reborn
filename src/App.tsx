@@ -25,6 +25,7 @@ import CoachDashboard from "./pages/CoachDashboard";
 import FoodTracker from "./pages/FoodTracker";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
+import ResetPassword from "./pages/ResetPassword";
 import { isOnboardingComplete } from "@/lib/user-preferences";
 
 const queryClient = new QueryClient();
@@ -86,6 +87,7 @@ const AnimatedRoutes = () => {
         <Route path="/profile" element={<PageWrapper><ProtectedRoute><Profile /></ProtectedRoute></PageWrapper>} />
         <Route path="/exercises" element={<PageWrapper><ProtectedRoute><ExerciseLibrary /></ProtectedRoute></PageWrapper>} />
         <Route path="/body" element={<PageWrapper><ProtectedRoute><BodyMeasurements /></ProtectedRoute></PageWrapper>} />
+        <Route path="/reset-password" element={<PageWrapper><ResetPassword /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>
     </AnimatePresence>
