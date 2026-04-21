@@ -122,6 +122,14 @@ export default function WeekStrip() {
     return `${s.reps} ${(ex?.repLabel || "reps").toLowerCase()}`;
   };
 
+  const handlePresetClick = (activityType: string, label: string) => {
+    if (activityType === "other") {
+      setShowOtherInput(true);
+      return;
+    }
+    handleLogActivity(activityType, label);
+  };
+
   const handleLogActivity = async (activityType: string, label: string) => {
     if (logSheetDay === null) return;
     const dateStr = getDateForDayIndex(logSheetDay);
@@ -138,6 +146,8 @@ export default function WeekStrip() {
       setLogSheetDay(null);
       setLogDuration("");
       setLogNotes("");
+      setOtherLabel("");
+      setShowOtherInput(false);
       setRefreshKey((k) => k + 1);
     } else {
       toast.error("Failed to log activity");
