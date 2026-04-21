@@ -59,6 +59,8 @@ export default function WeekStrip() {
   const [logSheetDay, setLogSheetDay] = useState<number | null>(null);
   const [logDuration, setLogDuration] = useState("");
   const [logNotes, setLogNotes] = useState("");
+  const [otherLabel, setOtherLabel] = useState("");
+  const [showOtherInput, setShowOtherInput] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const getDateForDayIndex = useCallback((dayIdx: number) => {
