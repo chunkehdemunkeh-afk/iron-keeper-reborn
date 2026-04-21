@@ -131,6 +131,9 @@ export default function BodyDiagram({
   const dim = size === "lg" ? "w-full max-w-[280px]" : "w-full max-w-[120px]";
   const hasHighlight = !!highlighted && !!highlightData;
 
+  // Glow scales with diagram size so the small RecoveryCard preview doesn't get blown out.
+  const glowBlur = size === "lg" ? { inner: 6, outer: 14 } : { inner: 3, outer: 7 };
+
   const handleClick = (stats: IMuscleStats) => {
     if (!interactive) return;
     const region = LIB_TO_REGION[stats.muscle];
@@ -143,29 +146,34 @@ export default function BodyDiagram({
         className={`mx-auto ${dim} relative`}
         style={{ filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.35))" }}
       >
-        <div
-          style={{
-            opacity: hasHighlight ? 0.25 : 1,
-            transition: "opacity 0.3s ease",
-          }}
-        >
-          <Model
-            data={data}
-            type={view === "front" ? "anterior" : "posterior"}
-            bodyColor={BODY_COLOR}
-            highlightedColors={HIGHLIGHTED_COLORS}
-            onClick={handleClick}
-            style={{ width: "100%", height: "auto", padding: 0 }}
-            svgStyle={{ width: "100%", height: "auto", cursor: interactive ? "pointer" : "default" }}
-          />
-        </div>
+        {/* Base diagram — stays fully opaque; the highlight layer adds emphasis on top
+            so non-highlighted muscles keep their true status colors. */}
+        <Model
+          data={data}
+          type={view === "front" ? "anterior" : "posterior"}
+          bodyColor={BODY_COLOR}
+          highlightedColors={HIGHLIGHTED_COLORS}
+          onClick={handleClick}
+          style={{ width: "100%", height: "auto", padding: 0 }}
+          svgStyle={{ width: "100%", height: "auto", cursor: interactive ? "pointer" : "default" }}
+        />
         {hasHighlight && highlightData && highlightColor && (
           <div
-            className="absolute inset-0 pointer-events-none"
+            className="absolute inset-0 pointer-events-none body-diagram-highlight"
             style={{
-              filter: `drop-shadow(0 0 8px ${highlightColor}) drop-shadow(0 0 16px ${highlightColor})`,
+              filter: `drop-shadow(0 0 ${glowBlur.inner}px ${highlightColor}) drop-shadow(0 0 ${glowBlur.outer}px ${highlightColor})`,
             }}
           >
+            {/* Transparent body so only the highlighted muscle paints; an inline
+                style targets just the visible polygons to add a white outline. */}
+            <style>{`
+              .body-diagram-highlight svg polygon[style*="fill: ${highlightColor}"],
+              .body-diagram-highlight svg polygon[style*="fill:${highlightColor}"] {
+                stroke: rgba(255,255,255,0.95);
+                stroke-width: 0.5;
+                stroke-linejoin: round;
+              }
+            `}</style>
             <Model
               data={highlightData}
               type={view === "front" ? "anterior" : "posterior"}
