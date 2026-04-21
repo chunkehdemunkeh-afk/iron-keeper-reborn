@@ -19,7 +19,7 @@ import RecoverySettings from "@/components/recovery/RecoverySettings";
 import { computeMuscleRecovery, statusColor, statusLabel } from "@/lib/recovery";
 import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
 import { getUserPreferences } from "@/lib/user-preferences";
-import { getRecoverySettings } from "@/lib/recovery-settings";
+import { useRecoverySettings } from "@/hooks/useRecoverySettings";
 import { useState } from "react";
 
 function PRSwipeRow({ exId, pr, onDelete }: { exId: string; pr: any; onDelete: () => void }) {
