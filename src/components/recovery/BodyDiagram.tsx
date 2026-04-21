@@ -11,6 +11,8 @@ interface Props {
   view?: "front" | "back";
   interactive?: boolean;
   size?: "sm" | "lg";
+  /** Externally-controlled muscle highlight (e.g. clicked from a list). */
+  highlighted?: MuscleRegion | null;
 }
 
 /**
