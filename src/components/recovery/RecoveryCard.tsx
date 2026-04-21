@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Activity, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
 import { getUserPreferences } from "@/lib/user-preferences";
 import { useRecoverySettings } from "@/hooks/useRecoverySettings";
 import BodyDiagram from "./BodyDiagram";
+import AnimatedNumber from "@/components/AnimatedNumber";
 
 export default function RecoveryCard() {
   const navigate = useNavigate();
