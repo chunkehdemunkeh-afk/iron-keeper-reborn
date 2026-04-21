@@ -31,8 +31,30 @@ import { changelog } from "@/lib/changelog";
 const APP_VERSION = changelog[0]?.version || "1.0.0";
 
 export default function Profile() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, updateDisplayName } = useAuth();
   const navigate = useNavigate();
+
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  const startEditName = () => {
+    setNameInput(profile?.display_name || "");
+    setEditingName(true);
+  };
+
+  const saveName = async () => {
+    setSavingName(true);
+    const { error } = await updateDisplayName(nameInput);
+    setSavingName(false);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    hapticSuccess();
+    toast.success("Name updated");
+    setEditingName(false);
+  };
 
   const { data: history = [] } = useQuery({
     queryKey: ["workout-history", user?.id],
