@@ -526,3 +526,139 @@ export async function fetchDailyLogs(): Promise<DailyLog[]> {
     created_at: r.created_at,
   }));
 }
+
+// ── Sleep logs ────────────────────────────────────────────────────────────────
+
+export interface SleepLogRecord {
+  id: string;
+  date: string;     // YYYY-MM-DD
+  hours: number;
+  quality: number;  // 1..5
+  notes: string | null;
+  source: string;
+}
+
+export async function fetchSleepLogs(daysBack: number = 14): Promise<SleepLogRecord[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - daysBack);
+  const cutoffStr = cutoff.toISOString().split("T")[0];
+
+  const { data, error } = await supabase
+    .from("sleep_logs")
+    .select("*")
+    .eq("user_id", user.id)
+    .gte("date", cutoffStr)
+    .order("date", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map((r: any) => ({
+    id: r.id,
+    date: r.date,
+    hours: Number(r.hours),
+    quality: r.quality,
+    notes: r.notes,
+    source: r.source,
+  }));
+}
+
+export async function upsertSleepLog(data: {
+  date: string;
+  hours: number;
+  quality: number;
+  notes?: string;
+}): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from("sleep_logs")
+    .upsert(
+      {
+        user_id: user.id,
+        date: data.date,
+        hours: data.hours,
+        quality: data.quality,
+        notes: data.notes ?? null,
+        source: "manual",
+      },
+      { onConflict: "user_id,date" },
+    );
+
+  if (error) console.error("Failed to save sleep log:", error);
+  return !error;
+}
+
+export async function deleteSleepLog(date: string): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from("sleep_logs")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("date", date);
+
+  return !error;
+}
+
+// ── Recent sets (joined with workout_history.date) ────────────────────────────
+
+export interface RecentSetRecord {
+  exerciseId: string;
+  exerciseName: string;
+  targetMuscle?: string;
+  muscleGroup?: string;
+  weight: number;
+  reps: number;
+  workoutDate: string; // ISO
+}
+
+export async function fetchRecentSets(daysBack: number = 7): Promise<RecentSetRecord[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - daysBack);
+  const cutoffIso = cutoff.toISOString();
+
+  // Get recent workout_history rows
+  const { data: history } = await supabase
+    .from("workout_history")
+    .select("id, date")
+    .eq("user_id", user.id)
+    .gte("date", cutoffIso);
+
+  if (!history || history.length === 0) return [];
+
+  const dateMap: Record<string, string> = {};
+  history.forEach((h: any) => { dateMap[h.id] = h.date; });
+
+  const { data: sets } = await supabase
+    .from("workout_sets")
+    .select("exercise_id, exercise_name, weight, reps, workout_history_id")
+    .in("workout_history_id", history.map((h: any) => h.id));
+
+  if (!sets) return [];
+
+  // Build a quick targetMuscle lookup from WORKOUTS + ACCESSORY_ROUTINES
+  const targetMap: Record<string, string> = {};
+  WORKOUTS.forEach((w) => w.exercises.forEach((ex: any) => {
+    if (ex.targetMuscle) targetMap[ex.id] = ex.targetMuscle;
+  }));
+  ACCESSORY_ROUTINES.forEach((r) => r.exercises.forEach((ex: any) => {
+    if (ex.targetMuscle) targetMap[ex.id] = ex.targetMuscle;
+  }));
+
+  return sets.map((s: any) => ({
+    exerciseId: s.exercise_id,
+    exerciseName: s.exercise_name,
+    targetMuscle: targetMap[s.exercise_id],
+    weight: Number(s.weight),
+    reps: s.reps,
+    workoutDate: dateMap[s.workout_history_id],
+  }));
+}
