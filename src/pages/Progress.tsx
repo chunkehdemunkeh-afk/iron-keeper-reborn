@@ -14,7 +14,7 @@ import {
   BarChart, Bar, CartesianGrid,
 } from "recharts";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import BodyDiagram from "@/components/recovery/BodyDiagram";
+import BodyDiagram, { viewForMuscle } from "@/components/recovery/BodyDiagram";
 import RecoverySettings from "@/components/recovery/RecoverySettings";
 import { computeMuscleRecovery, statusColor, statusLabel } from "@/lib/recovery";
 import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
@@ -72,6 +72,7 @@ function PRSwipeRow({ exId, pr, onDelete }: { exId: string; pr: any; onDelete: (
 function RecoveryTabContent() {
   const { user } = useAuth();
   const [view, setView] = useState<"front" | "back">("front");
+  const [highlighted, setHighlighted] = useState<typeof MUSCLE_REGIONS[number] | null>(null);
 
   const { data: sets = [] } = useQuery({
     queryKey: ["recent-sets", user?.id],
@@ -160,9 +161,9 @@ function RecoveryTabContent() {
             </button>
           </div>
         </div>
-        <BodyDiagram states={states} view={view} interactive size="lg" />
+        <BodyDiagram states={states} view={view} interactive size="lg" highlighted={highlighted} />
         <p className="text-[10px] text-muted-foreground text-center mt-2">
-          Tap a muscle for details
+          {highlighted ? `Highlighting ${MUSCLE_LABELS[highlighted]} — tap again to clear` : "Tap a muscle for details"}
         </p>
 
         {/* Legend */}
@@ -188,12 +189,24 @@ function RecoveryTabContent() {
           {sortedRegions.map((region) => {
             const s = states[region];
             const color = statusColor(s.status);
+            const isActive = highlighted === region;
             return (
-              <motion.div
+              <motion.button
                 key={region}
                 layout
+                type="button"
+                onClick={() => {
+                  if (isActive) {
+                    setHighlighted(null);
+                  } else {
+                    setHighlighted(region);
+                    setView(viewForMuscle(region));
+                  }
+                }}
                 transition={{ layout: { duration: 0.45, ease: [0.32, 0.72, 0, 1] } }}
-                className="flex items-center justify-between py-2 border-b border-border/30 last:border-0"
+                className={`w-full flex items-center justify-between py-2 border-b border-border/30 last:border-0 text-left transition-colors rounded-md px-2 -mx-2 ${
+                  isActive ? "bg-primary/10" : "hover:bg-muted/40 active:bg-muted/60"
+                }`}
               >
                 <div className="flex items-center gap-2.5">
                   <span
@@ -201,7 +214,9 @@ function RecoveryTabContent() {
                     style={{ background: color }}
                   />
                   <div>
-                    <p className="text-sm font-medium text-foreground">{MUSCLE_LABELS[region]}</p>
+                    <p className={`text-sm font-medium ${isActive ? "text-primary" : "text-foreground"}`}>
+                      {MUSCLE_LABELS[region]}
+                    </p>
                     {s.lastWorkedAt ? (
                       <p className="text-[10px] text-muted-foreground">
                         Last: {new Date(s.lastWorkedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
@@ -224,7 +239,7 @@ function RecoveryTabContent() {
                     </p>
                   )}
                 </div>
-              </motion.div>
+              </motion.button>
             );
           })}
         </motion.div>
