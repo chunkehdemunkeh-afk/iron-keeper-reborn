@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Activity, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
 import { getUserPreferences } from "@/lib/user-preferences";
 import { useRecoverySettings } from "@/hooks/useRecoverySettings";
 import BodyDiagram from "./BodyDiagram";
+import AnimatedNumber from "@/components/AnimatedNumber";
 
 export default function RecoveryCard() {
   const navigate = useNavigate();
@@ -80,25 +81,34 @@ export default function RecoveryCard() {
         <div className="flex-1 min-w-0 space-y-2">
           <div className="flex items-center gap-2 text-xs">
             <span className="inline-block h-2 w-2 rounded-full" style={{ background: statusColor("recovered") }} />
-            <span className="text-foreground font-semibold">{counts.recovered}</span>
+            <AnimatedNumber value={counts.recovered} className="text-foreground font-semibold tabular-nums" />
             <span className="text-muted-foreground">recovered</span>
           </div>
           <div className="flex items-center gap-2 text-xs">
             <span className="inline-block h-2 w-2 rounded-full" style={{ background: statusColor("workable") }} />
-            <span className="text-foreground font-semibold">{counts.workable}</span>
+            <AnimatedNumber value={counts.workable} className="text-foreground font-semibold tabular-nums" />
             <span className="text-muted-foreground">workable</span>
           </div>
           <div className="flex items-center gap-2 text-xs">
             <span className="inline-block h-2 w-2 rounded-full" style={{ background: statusColor("fatigued") }} />
-            <span className="text-foreground font-semibold">{counts.fatigued}</span>
+            <AnimatedNumber value={counts.fatigued} className="text-foreground font-semibold tabular-nums" />
             <span className="text-muted-foreground">fatigued</span>
           </div>
 
-          {topFatigued.length > 0 && topFatigued[0].status === "fatigued" && (
-            <p className="text-[10px] text-muted-foreground pt-1 border-t border-border/30 mt-2">
-              Resting: {topFatigued.filter(s => s.status === "fatigued").map(s => MUSCLE_LABELS[s.region]).join(", ")}
-            </p>
-          )}
+          <AnimatePresence mode="wait">
+            {topFatigued.length > 0 && topFatigued[0].status === "fatigued" && (
+              <motion.p
+                key={topFatigued.filter(s => s.status === "fatigued").map(s => s.region).join(",")}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.25 }}
+                className="text-[10px] text-muted-foreground pt-1 border-t border-border/30 mt-2"
+              >
+                Resting: {topFatigued.filter(s => s.status === "fatigued").map(s => MUSCLE_LABELS[s.region]).join(", ")}
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.button>
