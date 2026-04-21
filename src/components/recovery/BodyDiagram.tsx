@@ -143,7 +143,14 @@ const BACK_PATHS: Record<string, string> = {
           "C148,340 144,318 140,304 Z",
 };
 
-export default function BodyDiagram({
+/** Returns which view ("front" or "back") best displays a given muscle region. */
+export function viewForMuscle(region: MuscleRegion): "front" | "back" {
+  if (FRONT_PATHS[region]) return "front";
+  if (BACK_PATHS[region]) return "back";
+  return "front";
+}
+
+
   states,
   view = "front",
   interactive = true,
