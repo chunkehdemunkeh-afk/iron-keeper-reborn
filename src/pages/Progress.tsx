@@ -184,18 +184,21 @@ function RecoveryTabContent() {
         className="glass-card rounded-xl p-4"
       >
         <h3 className="text-sm font-semibold text-foreground mb-3">All Muscle Groups</h3>
-        <div className="space-y-1">
+        <motion.div layout className="space-y-1">
           {sortedRegions.map((region) => {
             const s = states[region];
+            const color = statusColor(s.status);
             return (
-              <div
+              <motion.div
                 key={region}
+                layout
+                transition={{ layout: { duration: 0.45, ease: [0.32, 0.72, 0, 1] } }}
                 className="flex items-center justify-between py-2 border-b border-border/30 last:border-0"
               >
                 <div className="flex items-center gap-2.5">
                   <span
                     className="h-2.5 w-2.5 rounded-full transition-colors duration-500"
-                    style={{ background: statusColor(s.status) }}
+                    style={{ background: color }}
                   />
                   <div>
                     <p className="text-sm font-medium text-foreground">{MUSCLE_LABELS[region]}</p>
@@ -209,19 +212,22 @@ function RecoveryTabContent() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold" style={{ color: statusColor(s.status) }}>
-                    {Math.round(s.score * 100)}%
+                  <p
+                    className="text-sm font-bold tabular-nums transition-colors duration-500"
+                    style={{ color }}
+                  >
+                    <AnimatedNumber value={Math.round(s.score * 100)} suffix="%" />
                   </p>
                   {s.hoursUntilReady > 0 && (
-                    <p className="text-[10px] text-muted-foreground">
-                      Ready in {Math.round(s.hoursUntilReady)}h
+                    <p className="text-[10px] text-muted-foreground tabular-nums">
+                      Ready in <AnimatedNumber value={Math.round(s.hoursUntilReady)} />h
                     </p>
                   )}
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </motion.div>
 
       {/* Sleep summary */}
