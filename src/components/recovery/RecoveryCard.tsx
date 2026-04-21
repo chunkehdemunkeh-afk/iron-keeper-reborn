@@ -30,10 +30,11 @@ export default function RecoveryCard() {
   });
 
   const splitId = user ? getUserPreferences(user.id)?.splitId : null;
+  const settings = getRecoverySettings(user?.id);
 
   const states = useMemo(
-    () => computeMuscleRecovery(sets, sleepLogs, splitId),
-    [sets, sleepLogs, splitId],
+    () => computeMuscleRecovery(sets, sleepLogs, splitId, new Date(), settings),
+    [sets, sleepLogs, splitId, settings],
   );
 
   const counts = useMemo(() => {
