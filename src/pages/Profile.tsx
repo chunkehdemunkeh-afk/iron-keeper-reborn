@@ -111,9 +111,47 @@ export default function Profile() {
               <User className="h-10 w-10 text-primary-foreground" />
             </div>
           )}
-          <h1 className="font-display text-2xl font-bold mt-3">
-            {profile?.display_name || "Athlete"}
-          </h1>
+          {editingName ? (
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                autoFocus
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveName();
+                  if (e.key === "Escape") setEditingName(false);
+                }}
+                placeholder="Your name"
+                className="bg-card/60 border border-border/30 rounded-xl px-3 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 text-center"
+              />
+              <button
+                onClick={saveName}
+                disabled={savingName}
+                className="h-9 w-9 flex items-center justify-center rounded-xl bg-primary text-primary-foreground active:scale-95 transition-transform disabled:opacity-50"
+                aria-label="Save name"
+              >
+                <Check className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setEditingName(false)}
+                className="h-9 w-9 flex items-center justify-center rounded-xl bg-muted text-muted-foreground active:scale-95 transition-transform"
+                aria-label="Cancel"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={startEditName}
+              className="mt-3 inline-flex items-center gap-1.5 group"
+              aria-label="Edit name"
+            >
+              <h1 className="font-display text-2xl font-bold">
+                {profile?.display_name || "Athlete"}
+              </h1>
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+            </button>
+          )}
           <p className="text-sm text-muted-foreground">
             {user?.email}
           </p>
