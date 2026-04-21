@@ -3,6 +3,8 @@ import { toast } from "sonner";
 import { WORKOUTS, type CompletedWorkout } from "./workout-data";
 import { EXERCISE_SUBSTITUTIONS } from "./exercise-substitutions";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "./accessory-routines";
+import { EXERCISE_LIBRARY } from "./exercise-library";
+import { stripExerciseSuffixes } from "./muscle-mapping";
 
 // Save workout to Supabase (with localStorage fallback)
 export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<void> {
