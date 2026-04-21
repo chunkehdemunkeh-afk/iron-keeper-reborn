@@ -15,6 +15,7 @@ import WaterIntake from "@/components/food/WaterIntake";
 import CompleteDaySummary from "@/components/food/CompleteDaySummary";
 import WeeklyNutritionChart from "@/components/food/WeeklyNutritionChart";
 import CopyMeal from "@/components/food/CopyMeal";
+import HelpButton from "@/components/demo/HelpButton";
 import { toast } from "sonner";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
@@ -193,6 +194,7 @@ export default function FoodTracker() {
               <CheckCircle2 className="h-3.5 w-3.5" /> Complete Day
             </Button>
           )}
+          <HelpButton />
           <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
             <Settings className="h-4 w-4" />
           </Button>

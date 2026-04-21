@@ -15,6 +15,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import HelpButton from "@/components/demo/HelpButton";
 
 const Index = () => {
   const { profile, user } = useAuth();
@@ -84,11 +85,15 @@ const Index = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
+          className="flex items-start justify-between gap-2"
         >
-          <h1 className="font-display text-2xl font-bold">
-            {getGreeting()}, <span className="text-gradient-primary">{displayName}!</span>
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{headerDate}</p>
+          <div className="min-w-0">
+            <h1 className="font-display text-2xl font-bold">
+              {getGreeting()}, <span className="text-gradient-primary">{displayName}!</span>
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{headerDate}</p>
+          </div>
+          <HelpButton />
         </motion.div>
 
         {/* Stats */}

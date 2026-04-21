@@ -10,6 +10,7 @@ import { getUserPreferences, computeWeeklyStreak } from "@/lib/user-preferences"
 import { WORKOUTS } from "@/lib/workout-data";
 import { toast } from "sonner";
 import { hapticSuccess } from "@/lib/haptics";
+import HelpButton from "@/components/demo/HelpButton";
 
 /** Per-split intensity label and training focus for the Training Programme card. */
 const SPLIT_META: Record<string, { intensity: string; intensityColor: string; focus: string }> = {
@@ -124,7 +125,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-background safe-bottom">
       <div className="mx-auto max-w-lg px-4 pt-6 pb-24 space-y-5">
-
+        <div className="flex justify-end -mb-4"><HelpButton /></div>
         {/* Avatar */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
