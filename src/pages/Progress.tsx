@@ -120,6 +120,15 @@ function RecoveryTabContent() {
 
   return (
     <div className="space-y-5">
+      {/* Settings row */}
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] text-muted-foreground">
+          Model: <span className="text-foreground font-medium capitalize">{settings.model}</span>
+          {" · "}Sleep ×{settings.sleepWeight.toFixed(2)}
+        </p>
+        <RecoverySettings />
+      </div>
+
       {/* Body diagram */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
