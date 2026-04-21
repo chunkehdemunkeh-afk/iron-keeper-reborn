@@ -177,7 +177,7 @@ function nameHeuristic(name: string): MuscleHits | null {
   if (n.includes("hip thrust") || n.includes("glute bridge")) return { primary: ["glutes"], secondary: ["hamstrings"] };
   if (n.includes("rdl") || n.includes("romanian")) return { primary: ["hamstrings", "glutes"], secondary: ["lower_back"] };
   if (n.includes("good morning")) return { primary: ["hamstrings", "lower_back"], secondary: ["glutes"] };
-  if (n.includes("leg curl")) return { primary: ["hamstrings"], secondary: [] };
+  if (n.includes("hamstring curl") || n.includes("leg curl") || n.includes("lying curl")) return { primary: ["hamstrings"], secondary: [] };
   if (n.includes("leg extension")) return { primary: ["quads"], secondary: [] };
   if (n.includes("leg press")) return { primary: ["quads", "glutes"], secondary: ["hamstrings"] };
   if (n.includes("calf")) return { primary: ["calves"], secondary: [] };
