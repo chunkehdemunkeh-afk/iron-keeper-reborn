@@ -121,6 +121,16 @@ export default function History() {
     setDeletingId(null);
   };
 
+  const handleDeleteActivity = async (id: string) => {
+    const success = await deleteActivityLog(id);
+    if (success) {
+      setActivities((prev) => prev.filter((a) => a.id !== id));
+      toast.success("Activity deleted");
+    } else {
+      toast.error("Failed to delete activity");
+    }
+  };
+
   const handleExportWorkouts = async () => {
     const csv = await exportWorkoutHistoryCSV();
     downloadCSV(csv, "ironkeeper_workouts.csv");
