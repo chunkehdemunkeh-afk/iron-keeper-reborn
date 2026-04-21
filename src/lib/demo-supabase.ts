@@ -158,5 +158,27 @@ const originalFrom = realClient.from.bind(realClient);
   return originalFrom(table as any);
 };
 
+// Patch supabase.auth.getUser() so cloud-data.ts treats demo as authenticated.
+import { DEMO_USER_ID, DEMO_USER_EMAIL } from "@/lib/demo-mode";
+const originalGetUser = realClient.auth.getUser.bind(realClient.auth);
+(realClient.auth as any).getUser = async function () {
+  if (isDemoMode()) {
+    return {
+      data: {
+        user: {
+          id: DEMO_USER_ID,
+          email: DEMO_USER_EMAIL,
+          aud: "authenticated",
+          app_metadata: {},
+          user_metadata: {},
+          created_at: new Date().toISOString(),
+        },
+      },
+      error: null,
+    } as any;
+  }
+  return originalGetUser();
+};
+
 // Re-export so consumers that import from the wrapper file can opt in if needed.
 export { realClient as supabase };
