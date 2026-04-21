@@ -19,7 +19,7 @@ interface Props {
  * Anatomical body diagram backed by `react-body-highlighter`.
  * - Each muscle is colored by its recovery status (rose / amber / emerald / muted).
  * - Click a muscle to open a sheet with its details.
- * - External `highlighted` prop boosts a single muscle (white-stroked highlight).
+ * - External `highlighted` prop dims the base model and overlays a glowing copy of that muscle.
  */
 
 // Map our internal muscle regions → library muscle names.
@@ -45,7 +45,6 @@ const REGION_TO_LIB: Record<MuscleRegion, Muscle[]> = {
 };
 
 // Reverse: which of our regions does a library muscle correspond to?
-// Used to figure out which sheet to open when a user clicks a library muscle.
 const LIB_TO_REGION: Partial<Record<Muscle, MuscleRegion>> = {
   chest: "chest",
   "front-deltoids": "front_delts",
@@ -107,14 +106,6 @@ export default function BodyDiagram({
       REGION_TO_LIB[region]?.forEach((m) => buckets[status].add(m));
     });
 
-    // Highlighted muscle pushed to "fatigued" (highest frequency) so it gets
-    // the strongest visible bucket — combined with a CSS overlay glow below.
-    if (highlighted) {
-      REGION_TO_LIB[highlighted]?.forEach((m) => {
-        // Don't override a real fatigued state; otherwise pin to its actual color.
-      });
-    }
-
     return (Object.keys(buckets) as RecoveryStatus[])
       .filter((s) => buckets[s].size > 0)
       .map((status) => ({
@@ -122,21 +113,23 @@ export default function BodyDiagram({
         muscles: Array.from(buckets[status]),
         frequency: STATUS_TO_FREQUENCY[status],
       }));
-  }, [states, highlighted]);
+  }, [states]);
+
+  // Overlay data for the highlighted muscle (a glowing copy).
+  const highlightData: IExerciseData[] | null = useMemo(() => {
+    if (!highlighted) return null;
+    const muscles = REGION_TO_LIB[highlighted];
+    if (!muscles?.length) return null;
+    return [{ name: "highlight", muscles, frequency: 1 }];
+  }, [highlighted]);
+
+  const highlightColor = useMemo(() => {
+    if (!highlighted) return null;
+    return statusColor(states[highlighted]?.status ?? "workable");
+  }, [highlighted, states]);
 
   const dim = size === "lg" ? "w-full max-w-[280px]" : "w-full max-w-[120px]";
-  const hasHighlight = !!highlighted;
-
-  // CSS to dim non-highlighted muscles + glow the selected one
-  const highlightCss = useMemo(() => {
-    if (!hasHighlight || !highlighted) return null;
-    const targets = REGION_TO_LIB[highlighted] ?? [];
-    if (targets.length === 0) return null;
-    const region = states[highlighted];
-    const glow = region ? statusColor(region.status) : statusColor("workable");
-    const selectors = targets.map((m) => `[data-name="${m}"]`).join(", ");
-    return { selectors, glow };
-  }, [hasHighlight, highlighted, states]);
+  const hasHighlight = !!highlighted && !!highlightData;
 
   const handleClick = (stats: IMuscleStats) => {
     if (!interactive) return;
@@ -147,29 +140,42 @@ export default function BodyDiagram({
   return (
     <>
       <div
-        className={`mx-auto ${dim} body-diagram-wrapper`}
+        className={`mx-auto ${dim} relative`}
         style={{ filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.35))" }}
       >
-        {highlightCss && (
-          <style>
-            {`.body-diagram-wrapper svg path { transition: opacity 0.3s ease, filter 0.3s ease; }
-              .body-diagram-wrapper svg path:not(${highlightCss.selectors}) { opacity: 0.28; }
-              .body-diagram-wrapper svg ${highlightCss.selectors} {
-                filter: drop-shadow(0 0 6px ${highlightCss.glow}) drop-shadow(0 0 14px ${highlightCss.glow});
-                stroke: rgba(255,255,255,0.9);
-                stroke-width: 1.4;
-              }`}
-          </style>
+        <div
+          style={{
+            opacity: hasHighlight ? 0.25 : 1,
+            transition: "opacity 0.3s ease",
+          }}
+        >
+          <Model
+            data={data}
+            type={view === "front" ? "anterior" : "posterior"}
+            bodyColor={BODY_COLOR}
+            highlightedColors={HIGHLIGHTED_COLORS}
+            onClick={handleClick}
+            style={{ width: "100%", height: "auto", padding: 0 }}
+            svgStyle={{ width: "100%", height: "auto", cursor: interactive ? "pointer" : "default" }}
+          />
+        </div>
+        {hasHighlight && highlightData && highlightColor && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              filter: `drop-shadow(0 0 8px ${highlightColor}) drop-shadow(0 0 16px ${highlightColor})`,
+            }}
+          >
+            <Model
+              data={highlightData}
+              type={view === "front" ? "anterior" : "posterior"}
+              bodyColor="transparent"
+              highlightedColors={[highlightColor]}
+              style={{ width: "100%", height: "auto", padding: 0 }}
+              svgStyle={{ width: "100%", height: "auto" }}
+            />
+          </div>
         )}
-        <Model
-          data={data}
-          type={view === "front" ? "anterior" : "posterior"}
-          bodyColor={BODY_COLOR}
-          highlightedColors={HIGHLIGHTED_COLORS}
-          onClick={handleClick}
-          style={{ width: "100%", height: "auto", padding: 0 }}
-          svgStyle={{ width: "100%", height: "auto", cursor: interactive ? "pointer" : "default" }}
-        />
       </div>
 
       <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
