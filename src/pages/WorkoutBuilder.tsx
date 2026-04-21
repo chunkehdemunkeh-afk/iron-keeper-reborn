@@ -8,6 +8,7 @@ import { hapticMedium, hapticSuccess } from "@/lib/haptics";
 import { WORKOUTS, type Exercise, type WorkoutDay } from "@/lib/workout-data";
 import { ACCESSORY_ROUTINES } from "@/lib/accessory-routines";
 import { EXERCISE_LIBRARY, MUSCLE_GROUPS_ALL } from "@/lib/exercise-library";
+import HelpButton from "@/components/demo/HelpButton";
 
 const MUSCLE_GROUPS = MUSCLE_GROUPS_ALL.filter((g) => g !== "All");
 
@@ -382,11 +383,14 @@ export default function WorkoutBuilder() {
           <h1 className="font-display text-2xl font-bold">
             {editingId ? "Edit Workout" : "Workout Builder"}
           </h1>
-          {editingId && (
-            <button onClick={cancelEdit} className="ml-auto text-muted-foreground hover:text-foreground">
-              <X className="h-5 w-5" />
-            </button>
-          )}
+          <div className="ml-auto flex items-center gap-1">
+            <HelpButton />
+            {editingId && (
+              <button onClick={cancelEdit} className="text-muted-foreground hover:text-foreground">
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Builder form */}

@@ -62,6 +62,30 @@ export const TOURS: Record<string, Tour> = {
       { title: "Exit demo when you're done", body: "Demo data lives only in this tab. Hit Exit Demo at the top to sign up and keep your real progress." },
     ],
   },
+  "/body": {
+    id: "body",
+    steps: [
+      { title: "Track the trend, not the day", body: "Log body weight and body fat % whenever you weigh in. The chart smooths out the daily noise so you can see real progress." },
+      { title: "One tap to log", body: "Hit Log at the top, punch in a number, add an optional note (e.g. 'post-holiday') and save. Everything syncs to your account." },
+      { title: "Latest stats at a glance", body: "Your most recent weight and body fat live above the log so you always know your starting point for the week." },
+    ],
+  },
+  "/builder": {
+    id: "builder",
+    steps: [
+      { title: "Build your own workout", body: "Pick a name, emoji and colour, then add exercises from a pool of 700+ — including everything from your split and the full library." },
+      { title: "Drag to reorder, swipe to delete", body: "Use the grip handle to rearrange exercises. Swipe any row left to remove it. Sets and reps are editable inline." },
+      { title: "Save and start straight away", body: "Hit Save to add it to your Sessions list, or Save & Start to jump into the first set immediately." },
+    ],
+  },
+  "/history": {
+    id: "history",
+    steps: [
+      { title: "Every session you've crushed", body: "Tap any day on the calendar to see the workouts you logged. Coloured dots = completed sessions." },
+      { title: "Filter by workout type", body: "Use the chips above the calendar to focus on Push, Pull, Legs or any other workout. The summary cards update live." },
+      { title: "Export your data anytime", body: "Tap CSV to download a workout-level export, or Sets for the full set-by-set breakdown — perfect for spreadsheet nerds." },
+    ],
+  },
 };
 
 export function getTourForPath(pathname: string): Tour | null {
