@@ -7,6 +7,11 @@ import {
   getMusclesWorked,
   type MuscleRegion,
 } from "./muscle-mapping";
+import {
+  DEFAULT_RECOVERY_SETTINGS,
+  recoveryWindowMultiplier,
+  type RecoverySettings,
+} from "./recovery-settings";
 
 export type RecoveryStatus = "fatigued" | "workable" | "recovered" | "rested";
 
