@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { fetchWorkoutHistory, deleteWorkoutFromCloud, exportWorkoutHistoryCSV, exportSetsCSV } from "@/lib/cloud-data";
+import { fetchWorkoutHistory, deleteWorkoutFromCloud, exportWorkoutHistoryCSV, exportSetsCSV, fetchActivityLogs, deleteActivityLog, ACTIVITY_PRESETS, type ActivityLog } from "@/lib/cloud-data";
 import { WORKOUTS, type CompletedWorkout } from "@/lib/workout-data";
-import { Calendar as CalendarIcon, Clock, Dumbbell, TrendingUp, Download, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Dumbbell, TrendingUp, Download, ChevronLeft, ChevronRight, Trash2, Bed, Footprints, Activity, Waves, Bike, Flower, CircleDot, Pencil, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -11,9 +11,21 @@ import WorkoutCard from "@/components/history/WorkoutCard";
 import SummaryCards from "@/components/history/SummaryCards";
 import HelpButton from "@/components/demo/HelpButton";
 
+const ACTIVITY_ICONS: Record<string, LucideIcon> = {
+  rest: Bed,
+  walk: Footprints,
+  running: Activity,
+  swimming: Waves,
+  cycling: Bike,
+  yoga: Flower,
+  football: CircleDot,
+  other: Pencil,
+};
+
 export default function History() {
   const [searchParams] = useSearchParams();
   const [history, setHistory] = useState<CompletedWorkout[]>([]);
+  const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -21,8 +33,9 @@ export default function History() {
   const [filterWorkoutId, setFilterWorkoutId] = useState<string | null>(searchParams.get("workout") || null);
 
   useEffect(() => {
-    fetchWorkoutHistory().then((h) => {
+    Promise.all([fetchWorkoutHistory(), fetchActivityLogs()]).then(([h, a]) => {
       setHistory(h);
+      setActivities(a);
       setLoading(false);
     });
   }, []);
@@ -52,6 +65,16 @@ export default function History() {
     return map;
   }, [filteredHistory]);
 
+  const dateActivityMap = useMemo(() => {
+    const map: Record<string, ActivityLog[]> = {};
+    activities.forEach((a) => {
+      const key = a.date; // already yyyy-mm-dd
+      if (!map[key]) map[key] = [];
+      map[key].push(a);
+    });
+    return map;
+  }, [activities]);
+
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
@@ -65,6 +88,12 @@ export default function History() {
     const key = format(selectedDate, "yyyy-MM-dd");
     return dateWorkoutMap[key] || [];
   }, [selectedDate, dateWorkoutMap]);
+
+  const selectedActivities = useMemo(() => {
+    if (!selectedDate) return [];
+    const key = format(selectedDate, "yyyy-MM-dd");
+    return dateActivityMap[key] || [];
+  }, [selectedDate, dateActivityMap]);
 
   const totalMinutes = filteredHistory.reduce((s, w) => s + w.duration, 0);
 
@@ -90,6 +119,16 @@ export default function History() {
       toast.error("Failed to delete workout");
     }
     setDeletingId(null);
+  };
+
+  const handleDeleteActivity = async (id: string) => {
+    const success = await deleteActivityLog(id);
+    if (success) {
+      setActivities((prev) => prev.filter((a) => a.id !== id));
+      toast.success("Activity deleted");
+    } else {
+      toast.error("Failed to delete activity");
+    }
   };
 
   const handleExportWorkouts = async () => {
@@ -235,7 +274,10 @@ export default function History() {
             {calendarDays.map((day) => {
               const key = format(day, "yyyy-MM-dd");
               const workouts = dateWorkoutMap[key] || [];
+              const dayActivities = dateActivityMap[key] || [];
               const hasWorkout = workouts.length > 0;
+              const hasActivity = dayActivities.length > 0;
+              const isRestOnly = hasActivity && !hasWorkout && dayActivities.every((a) => a.activityType === "rest");
               const isCurrentMonth = isSameMonth(day, currentMonth);
               const isSelected = selectedDate && isSameDay(day, selectedDate);
               const isToday = isSameDay(day, new Date());
@@ -255,12 +297,24 @@ export default function History() {
                   }`}
                 >
                   <span>{format(day, "d")}</span>
-                  {hasWorkout && isCurrentMonth && (
+                  {(hasWorkout || hasActivity) && isCurrentMonth && (
                     <div className="absolute bottom-0.5 flex gap-0.5">
                       {workouts.slice(0, 3).map((_, wi) => (
                         <div
-                          key={wi}
+                          key={`w-${wi}`}
                           className={`h-1 w-1 rounded-full ${isSelected ? "bg-primary-foreground" : "bg-primary"}`}
+                        />
+                      ))}
+                      {dayActivities.slice(0, 3 - Math.min(workouts.length, 3)).map((_, ai) => (
+                        <div
+                          key={`a-${ai}`}
+                          className={`h-1 w-1 rounded-full ${
+                            isSelected
+                              ? "bg-primary-foreground/70"
+                              : isRestOnly
+                              ? "bg-blue-400"
+                              : "bg-amber-400"
+                          }`}
                         />
                       ))}
                     </div>
@@ -284,21 +338,62 @@ export default function History() {
               <h3 className="text-sm font-semibold text-foreground">
                 {format(selectedDate, "EEEE, d MMMM yyyy")}
               </h3>
-              {selectedWorkouts.length === 0 ? (
+              {selectedWorkouts.length === 0 && selectedActivities.length === 0 ? (
                 <div className="glass-card rounded-xl p-6 text-center">
-                  <p className="text-sm text-muted-foreground">No workouts on this date</p>
+                  <p className="text-sm text-muted-foreground">Nothing logged on this date</p>
                 </div>
               ) : (
-                selectedWorkouts.map((w) => (
-                  <WorkoutCard
-                    key={w.id}
-                    workout={w}
-                    icon={workoutIcons[w.workoutId] || Dumbbell}
-                    onDelete={handleDelete}
-                    isDeleting={deletingId === w.id}
-                    defaultExpanded={true}
-                  />
-                ))
+                <>
+                  {selectedWorkouts.map((w) => (
+                    <WorkoutCard
+                      key={w.id}
+                      workout={w}
+                      icon={workoutIcons[w.workoutId] || Dumbbell}
+                      onDelete={handleDelete}
+                      isDeleting={deletingId === w.id}
+                      defaultExpanded={true}
+                    />
+                  ))}
+                  {selectedActivities.map((a) => {
+                    const Icon = ACTIVITY_ICONS[a.activityType] || Pencil;
+                    const preset = ACTIVITY_PRESETS.find((p) => p.type === a.activityType);
+                    const isRest = a.activityType === "rest";
+                    return (
+                      <div key={a.id} className="glass-card rounded-xl p-3 flex items-center gap-3">
+                        <div
+                          className={`flex h-9 w-9 items-center justify-center rounded-lg flex-shrink-0 ${
+                            isRest ? "bg-blue-500/10 text-blue-400" : "bg-amber-500/10 text-amber-400"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {a.label || preset?.label || a.activityType}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {a.duration > 0 && (
+                              <>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" /> {a.duration}m
+                                </span>
+                                {a.notes && <span>·</span>}
+                              </>
+                            )}
+                            {a.notes && <span className="truncate">{a.notes}</span>}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteActivity(a.id)}
+                          aria-label="Delete activity"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </>
               )}
             </motion.div>
           )}
