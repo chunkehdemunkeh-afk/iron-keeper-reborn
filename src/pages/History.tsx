@@ -25,6 +25,7 @@ const ACTIVITY_ICONS: Record<string, LucideIcon> = {
 export default function History() {
   const [searchParams] = useSearchParams();
   const [history, setHistory] = useState<CompletedWorkout[]>([]);
+  const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -32,8 +33,9 @@ export default function History() {
   const [filterWorkoutId, setFilterWorkoutId] = useState<string | null>(searchParams.get("workout") || null);
 
   useEffect(() => {
-    fetchWorkoutHistory().then((h) => {
+    Promise.all([fetchWorkoutHistory(), fetchActivityLogs()]).then(([h, a]) => {
       setHistory(h);
+      setActivities(a);
       setLoading(false);
     });
   }, []);
