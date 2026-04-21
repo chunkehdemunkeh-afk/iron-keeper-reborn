@@ -31,12 +31,14 @@ import { changelog } from "@/lib/changelog";
 const APP_VERSION = changelog[0]?.version || "1.0.0";
 
 export default function Profile() {
-  const { user, profile, signOut, updateDisplayName } = useAuth();
+  const { user, profile, signOut, updateDisplayName, updateAvatar } = useAuth();
   const navigate = useNavigate();
 
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const startEditName = () => {
     setNameInput(profile?.display_name || "");
@@ -54,6 +56,21 @@ export default function Profile() {
     hapticSuccess();
     toast.success("Name updated");
     setEditingName(false);
+  };
+
+  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadingAvatar(true);
+    const { error } = await updateAvatar(file);
+    setUploadingAvatar(false);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    hapticSuccess();
+    toast.success("Photo updated");
   };
 
   const { data: history = [] } = useQuery({
