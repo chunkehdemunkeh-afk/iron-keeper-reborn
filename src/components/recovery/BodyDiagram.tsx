@@ -150,7 +150,7 @@ export function viewForMuscle(region: MuscleRegion): "front" | "back" {
   return "front";
 }
 
-
+export default function BodyDiagram({
   states,
   view = "front",
   interactive = true,
