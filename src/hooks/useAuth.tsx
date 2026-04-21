@@ -9,6 +9,7 @@ type AuthContextType = {
   profile: { display_name: string | null; avatar_url: string | null } | null;
   signOut: () => Promise<void>;
   updateDisplayName: (name: string) => Promise<{ error: string | null }>;
+  updateAvatar: (file: File) => Promise<{ error: string | null }>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   signOut: async () => {},
   updateDisplayName: async () => ({ error: null }),
+  updateAvatar: async () => ({ error: null }),
 });
 
 export const useAuth = () => useContext(AuthContext);
