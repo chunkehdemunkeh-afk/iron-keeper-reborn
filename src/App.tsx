@@ -10,6 +10,7 @@ import BottomNav from "@/components/BottomNav";
 import SplashScreen from "@/components/SplashScreen";
 import UpdateBanner from "@/components/UpdateBanner";
 import WhatsNewSheet from "@/components/WhatsNewSheet";
+import DemoBanner from "@/components/demo/DemoBanner";
 import { getLatestChangelog, hasSeenVersion, markVersionSeen } from "@/lib/changelog";
 import Index from "./pages/Index";
 import Sessions from "./pages/Sessions";
@@ -128,6 +129,7 @@ const AppRoutes = () => {
 
   return (
     <>
+      <DemoBanner />
       <AnimatedRoutes />
       {user && <BottomNav />}
     </>
