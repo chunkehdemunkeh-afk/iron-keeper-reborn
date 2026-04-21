@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.67",
+    version: "1.6.68",
     date: "2026-04-21",
     title: "Updates & Fixes",
     changes: [
-      "Save plan in Lovable",
+      "Improve BodyDiagram muscle path coverage and anatomical accuracy",
     ],
   },
   {
