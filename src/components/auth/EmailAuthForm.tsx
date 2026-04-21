@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { hapticMedium, hapticSuccess } from "@/lib/haptics";
@@ -12,6 +12,7 @@ export default function EmailAuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
@@ -47,6 +48,10 @@ export default function EmailAuthForm() {
       setPasswordError("Passwords don't match");
       return;
     }
+    if (mode === "signup" && displayName.trim().length < 2) {
+      setEmailError("Please enter your name");
+      return;
+    }
 
     setLoading(true);
     if (mode === "signin") {
@@ -62,7 +67,14 @@ export default function EmailAuthForm() {
       }
       hapticSuccess();
     } else {
-      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { full_name: displayName.trim() },
+        },
+      });
       setLoading(false);
       if (error) {
         if (error.message.includes("already registered")) {
@@ -146,7 +158,7 @@ export default function EmailAuthForm() {
               </button>
             </div>
 
-            {/* Confirm password (signup only) */}
+            {/* Name + Confirm password (signup only) */}
             <AnimatePresence>
               {mode === "signup" && (
                 <motion.div
@@ -155,8 +167,19 @@ export default function EmailAuthForm() {
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.18 }}
-                  className="overflow-hidden"
+                  className="overflow-hidden space-y-3"
                 >
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Your name"
+                      value={displayName}
+                      onChange={e => { setDisplayName(e.target.value); clearErrors(); }}
+                      onKeyDown={e => e.key === "Enter" && handleSubmit()}
+                      className="w-full bg-card/60 border border-border/30 rounded-2xl pl-11 pr-4 py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+                    />
+                  </div>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <input
