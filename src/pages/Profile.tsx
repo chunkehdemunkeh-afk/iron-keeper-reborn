@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchActivityLogs } from "@/lib/cloud-data";
-import { Flame, Target, Award, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2 } from "lucide-react";
+import { Flame, Target, Award, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import RecoveryTips from "@/components/RecoveryTips";
@@ -280,7 +280,29 @@ export default function Profile() {
             </motion.button>
           </div>
 
-          {prefs && splitMeta ? (
+          {prefs && prefs.splitId === "none" ? (
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 rounded-xl bg-muted/30 p-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 flex-shrink-0">
+                  <Heart className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground">You're tracking health only</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Nutrition, weight, and activity tracking — no workout programme set.
+                  </p>
+                </div>
+              </div>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/onboarding?from=profile")}
+                className="w-full flex items-center justify-between rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 text-left hover:bg-primary/15 transition-colors"
+              >
+                <p className="text-sm font-semibold text-foreground">Add a workout plan</p>
+                <ChevronRight className="h-4 w-4 text-primary flex-shrink-0" />
+              </motion.button>
+            </div>
+          ) : prefs && splitMeta ? (
             <div className="space-y-2">
               {/* Programme, Days/Week, Intensity, Focus rows */}
               {[
@@ -329,8 +351,8 @@ export default function Profile() {
           )}
         </div>
 
-        {/* Recovery / training tips specific to the user's split */}
-        <RecoveryTips splitId={prefs?.splitId} />
+        {/* Recovery / training tips specific to the user's split — hidden in no-workout mode */}
+        {prefs?.splitId !== "none" && <RecoveryTips splitId={prefs?.splitId} />}
 
         {/* Sign out */}
         <motion.button

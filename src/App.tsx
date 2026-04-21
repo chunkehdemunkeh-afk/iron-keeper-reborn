@@ -26,6 +26,7 @@ import CoachDashboard from "./pages/CoachDashboard";
 import FoodTracker from "./pages/FoodTracker";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
+import NutritionOnboarding from "./pages/NutritionOnboarding";
 import ResetPassword from "./pages/ResetPassword";
 import { isOnboardingComplete } from "@/lib/user-preferences";
 
@@ -77,6 +78,7 @@ const AnimatedRoutes = () => {
       <Routes location={location} key={location.pathname}>
         <Route path="/login" element={<PageWrapper><LoginGuard /></PageWrapper>} />
         <Route path="/onboarding" element={<PageWrapper><ProtectedRoute><Onboarding /></ProtectedRoute></PageWrapper>} />
+        <Route path="/onboarding/nutrition" element={<PageWrapper><ProtectedRoute><NutritionOnboarding /></ProtectedRoute></PageWrapper>} />
         <Route path="/" element={<PageWrapper><ProtectedRoute><RoleBasedHome /></ProtectedRoute></PageWrapper>} />
         <Route path="/coach" element={<PageWrapper><ProtectedRoute><CoachDashboard /></ProtectedRoute></PageWrapper>} />
         <Route path="/sessions" element={<PageWrapper><ProtectedRoute><Sessions /></ProtectedRoute></PageWrapper>} />
