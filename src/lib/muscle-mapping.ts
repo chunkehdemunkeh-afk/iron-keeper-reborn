@@ -14,6 +14,8 @@ export const MUSCLE_REGIONS = [
   "quads",
   "hamstrings",
   "glutes",
+  "abductors",
+  "adductors",
   "calves",
   "lats",
   "traps",
