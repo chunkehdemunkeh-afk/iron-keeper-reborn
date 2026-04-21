@@ -32,9 +32,9 @@ export default function HomeCompleteDay({ date }: Props) {
   const [showSummary, setShowSummary] = useState(false);
   const [dayCompleted, setDayCompleted] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    Promise.all([
+  const fetchStatus = async () => {
+    if (!user) return null;
+    const [weightRes, foodRes, waterRes, goalsRes, completed] = await Promise.all([
       supabase
         .from("body_measurements")
         .select("body_weight")
@@ -59,37 +59,59 @@ export default function HomeCompleteDay({ date }: Props) {
         .eq("user_id", user.id)
         .maybeSingle(),
       hasDayBeenCompleted(targetDate),
-    ]).then(([weightRes, foodRes, waterRes, goalsRes, completed]) => {
-      const foods = foodRes.data || [];
-      const totals = foods.reduce(
-        (a: any, l: any) => ({
-          calories: a.calories + l.calories,
-          protein: a.protein + l.protein_g,
-          carbs: a.carbs + l.carbs_g,
-          fat: a.fat + l.fat_g,
-        }),
-        { calories: 0, protein: 0, carbs: 0, fat: 0 }
-      );
-      const waterEntries = waterRes.data || [];
-      const waterMl = waterEntries.reduce((s: number, e: any) => s + e.amount_ml, 0);
-      const goals = goalsRes.data as any;
-      const latestWeight = weightRes.data?.[0]?.body_weight ?? null;
+    ]);
 
-      setStatus({
-        weightLogged: (weightRes.data || []).length > 0,
-        foodLogged: foods.length > 0,
-        waterLogged: waterMl > 0,
-        totals,
-        goals: goals
-          ? { calories: goals.calories, protein_g: goals.protein_g, carbs_g: goals.carbs_g, fat_g: goals.fat_g }
-          : null,
-        waterMl,
-        waterGoalMl: goals?.water_goal_ml || 2500,
-        weightKg: latestWeight ? Number(latestWeight) : null,
-      });
+    const foods = foodRes.data || [];
+    const totals = foods.reduce(
+      (a: any, l: any) => ({
+        calories: a.calories + l.calories,
+        protein: a.protein + l.protein_g,
+        carbs: a.carbs + l.carbs_g,
+        fat: a.fat + l.fat_g,
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
+    const waterEntries = waterRes.data || [];
+    const waterMl = waterEntries.reduce((s: number, e: any) => s + e.amount_ml, 0);
+    const goals = goalsRes.data as any;
+    const latestWeight = weightRes.data?.[0]?.body_weight ?? null;
 
-      setDayCompleted(completed as boolean);
-    });
+    const next: DayStatus = {
+      weightLogged: (weightRes.data || []).length > 0,
+      foodLogged: foods.length > 0,
+      waterLogged: waterMl > 0,
+      totals,
+      goals: goals
+        ? { calories: goals.calories, protein_g: goals.protein_g, carbs_g: goals.carbs_g, fat_g: goals.fat_g }
+        : null,
+      waterMl,
+      waterGoalMl: goals?.water_goal_ml || 2500,
+      weightKg: latestWeight ? Number(latestWeight) : null,
+    };
+
+    setStatus(next);
+    setDayCompleted(completed as boolean);
+    return next;
+  };
+
+  useEffect(() => {
+    fetchStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, targetDate]);
+
+  // Refresh when tab regains focus / page becomes visible (catches edits in other components)
+  useEffect(() => {
+    const onFocus = () => fetchStatus();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") fetchStatus();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, targetDate]);
 
   if (!user || !status) return null;
