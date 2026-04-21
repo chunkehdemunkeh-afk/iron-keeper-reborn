@@ -87,7 +87,7 @@ function RecoveryTabContent() {
   });
 
   const splitId = user ? getUserPreferences(user.id)?.splitId : null;
-  const settings = getRecoverySettings(user?.id);
+  const settings = useRecoverySettings(user?.id);
 
   const states = useMemo(
     () => computeMuscleRecovery(sets, sleepLogs, splitId, new Date(), settings),
