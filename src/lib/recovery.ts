@@ -173,7 +173,7 @@ export function computeMuscleRecovery(
     }
     if (state.lastWorkedAt && state.score < 1) {
       const elapsed = (now.getTime() - new Date(state.lastWorkedAt).getTime()) / 3_600_000;
-      state.hoursUntilReady = Math.max(0, RECOVERY_HOURS[region] - elapsed);
+      state.hoursUntilReady = Math.max(0, RECOVERY_HOURS[region] * windowMult - elapsed);
     }
   }
 
