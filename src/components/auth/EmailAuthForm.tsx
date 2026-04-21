@@ -67,7 +67,14 @@ export default function EmailAuthForm() {
       }
       hapticSuccess();
     } else {
-      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { full_name: displayName.trim() },
+        },
+      });
       setLoading(false);
       if (error) {
         if (error.message.includes("already registered")) {
