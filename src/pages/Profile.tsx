@@ -31,13 +31,14 @@ import { changelog } from "@/lib/changelog";
 const APP_VERSION = changelog[0]?.version || "1.0.0";
 
 export default function Profile() {
-  const { user, profile, signOut, updateDisplayName, updateAvatar } = useAuth();
+  const { user, profile, signOut, updateDisplayName, updateAvatar, removeAvatar } = useAuth();
   const navigate = useNavigate();
 
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [removingAvatar, setRemovingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const startEditName = () => {
@@ -71,6 +72,19 @@ export default function Profile() {
     }
     hapticSuccess();
     toast.success("Photo updated");
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!profile?.avatar_url) return;
+    setRemovingAvatar(true);
+    const { error } = await removeAvatar();
+    setRemovingAvatar(false);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    hapticSuccess();
+    toast.success("Photo removed");
   };
 
   const { data: history = [] } = useQuery({
@@ -150,6 +164,16 @@ export default function Profile() {
             className="hidden"
             onChange={handleAvatarFile}
           />
+          {profile?.avatar_url && (
+            <button
+              type="button"
+              onClick={handleRemoveAvatar}
+              disabled={removingAvatar || uploadingAvatar}
+              className="mt-2 text-[11px] text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+            >
+              {removingAvatar ? "Removing…" : "Remove photo"}
+            </button>
+          )}
           {editingName ? (
             <div className="mt-3 flex items-center gap-2">
               <input
