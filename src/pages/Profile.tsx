@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchActivityLogs } from "@/lib/cloud-data";
-import { Flame, Target, Award, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X } from "lucide-react";
+import { Flame, Target, Award, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import RecoveryTips from "@/components/RecoveryTips";
