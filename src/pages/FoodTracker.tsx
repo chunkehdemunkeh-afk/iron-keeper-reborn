@@ -148,6 +148,17 @@ export default function FoodTracker() {
     return () => window.removeEventListener("open-tdee-setup", handler);
   }, []);
 
+  // Auto-open TDEE setup when navigated with ?edit-goals=1
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("edit-goals") === "1") {
+      setShowSetup(true);
+      params.delete("edit-goals");
+      const newSearch = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (newSearch ? `?${newSearch}` : ""));
+    }
+  }, []);
+
   const deleteLog = async (id: string) => {
     await supabase.from("food_logs").delete().eq("id", id);
     setLogs((prev) => prev.filter((l) => l.id !== id));
