@@ -45,6 +45,9 @@ export default function NextSessionCard() {
   const splitWorkoutIds = new Set(prefs?.schedule?.map((d) => d.workoutId) ?? []);
   const otherWorkouts = allWorkouts.filter((w) => !splitWorkoutIds.has(w.id));
 
+  // No-workout mode: hide the entire card (defensive — Index.tsx also gates this)
+  if (noWorkout) return null;
+
   // ── No preferences set: show all workouts (pre-onboarding or skipped) ──
   if (!prefs || !prefs.schedule?.length) {
     return (
