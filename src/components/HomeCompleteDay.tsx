@@ -121,8 +121,17 @@ export default function HomeCompleteDay({ date }: Props) {
   if (!status.foodLogged) missingItems.push({ icon: Utensils, label: "Nutrition" });
   if (!status.waterLogged) missingItems.push({ icon: Droplet, label: "Water intake" });
 
-  const handleComplete = () => {
-    if (missingItems.length > 0) {
+  const handleComplete = async () => {
+    // Refetch right before deciding so we don't show stale "missing" warnings
+    // when the user has just logged water/food/weight elsewhere on the page.
+    const fresh = await fetchStatus();
+    const s = fresh ?? status;
+    if (!s) return;
+
+    const stillMissing =
+      !s.weightLogged || !s.foodLogged || !s.waterLogged;
+
+    if (stillMissing) {
       setShowWarning(true);
     } else {
       openSummary();
