@@ -8,7 +8,8 @@ import DailyStretchCard from "@/components/DailyStretchCard";
 import HomeDailySummary from "@/components/HomeDailySummary";
 import HomeWeightTracker from "@/components/HomeWeightTracker";
 import HomeCompleteDay from "@/components/HomeCompleteDay";
-import { isGKSplit } from "@/lib/user-preferences";
+import { isGKSplit, isNoWorkoutMode } from "@/lib/user-preferences";
+import PostOnboardingTip from "@/components/PostOnboardingTip";
 import { format, subDays, addDays, isToday } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -21,6 +22,7 @@ const Index = () => {
   const { profile, user } = useAuth();
   const displayName = profile?.display_name?.split(" ")[0] || "Athlete";
   const gkMode = user ? isGKSplit(user.id) : false;
+  const noWorkoutMode = user ? isNoWorkoutMode(user.id) : false;
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [slideDir, setSlideDir] = useState(0); // -1 left, 1 right
@@ -107,8 +109,8 @@ const Index = () => {
           <WeekStrip />
         </div>
 
-        {/* Next session — only show on today */}
-        {isCurrentDay && <NextSessionCard />}
+        {/* Next session — only show on today and when user has a workout plan */}
+        {isCurrentDay && !noWorkoutMode && <NextSessionCard />}
 
         {/* Date navigation for daily cards */}
         <div className="flex items-center justify-between">
@@ -150,9 +152,12 @@ const Index = () => {
           </motion.div>
         </AnimatePresence>
 
-        {/* Pre-workout stretches — only show on today */}
-        {isCurrentDay && <DailyStretchCard />}
+        {/* Pre-workout stretches — only show on today and when user has a workout plan */}
+        {isCurrentDay && !noWorkoutMode && <DailyStretchCard />}
       </div>
+
+      {/* One-time post-onboarding tip drawer */}
+      <PostOnboardingTip />
     </div>
   );
 };

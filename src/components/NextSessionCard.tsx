@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Play, Repeat2, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { getUserPreferences, getNextSplitDay } from "@/lib/user-preferences";
+import { getUserPreferences, getNextSplitDay, isNoWorkoutMode } from "@/lib/user-preferences";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchWorkoutHistory } from "@/lib/cloud-data";
@@ -16,6 +16,7 @@ export default function NextSessionCard() {
   const [overrideWorkoutId, setOverrideWorkoutId] = useState<string | null>(null);
 
   const prefs = user ? getUserPreferences(user.id) : null;
+  const noWorkout = user ? isNoWorkoutMode(user.id) : false;
 
   const { data: history = [] } = useQuery({
     queryKey: ["workout-history", user?.id],
@@ -43,6 +44,9 @@ export default function NextSessionCard() {
   // Workouts not in the split (for the "something different" dropdown)
   const splitWorkoutIds = new Set(prefs?.schedule?.map((d) => d.workoutId) ?? []);
   const otherWorkouts = allWorkouts.filter((w) => !splitWorkoutIds.has(w.id));
+
+  // No-workout mode: hide the entire card (defensive — Index.tsx also gates this)
+  if (noWorkout) return null;
 
   // ── No preferences set: show all workouts (pre-onboarding or skipped) ──
   if (!prefs || !prefs.schedule?.length) {

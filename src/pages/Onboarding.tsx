@@ -1,9 +1,9 @@
 import { useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronLeft, Check, Shuffle, Dumbbell } from "lucide-react";
+import { ChevronRight, ChevronLeft, Check, Shuffle, Dumbbell, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { TRAINING_SPLITS, getSplitsForDays, type TrainingSplit, type SplitDay } from "@/lib/training-splits";
+import { getSplitsForDays, type TrainingSplit, type SplitDay } from "@/lib/training-splits";
 import { saveUserPreferences } from "@/lib/user-preferences";
 import { WORKOUTS } from "@/lib/workout-data";
 import { toast } from "sonner";
@@ -41,13 +41,52 @@ export default function Onboarding() {
 
   const [step, setStep] = useState(0); // 0=days, 1=split, 2=custom, 3=summary
   const [days, setDays] = useState<number | null>(null);
+  const [noWorkout, setNoWorkout] = useState(false);
   const [selectedSplit, setSelectedSplit] = useState<TrainingSplit | null>(null);
   const [customSchedule, setCustomSchedule] = useState<SplitDay[]>([]);
 
   const availableSplits = days ? getSplitsForDays(days) : [];
 
+  const handleSelectDays = (d: number) => {
+    setNoWorkout(false);
+    setDays(d);
+  };
+
+  const handleSelectNoWorkout = () => {
+    setNoWorkout(true);
+    setDays(null);
+    setSelectedSplit(null);
+  };
+
+  const continueAfterOnboarding = () => {
+    if (!user) return;
+    if (fromProfile) {
+      navigate("/profile", { replace: true });
+    } else {
+      localStorage.setItem(`ik-onboarding-tip-${user.id}`, "pending");
+      navigate("/onboarding/nutrition", { replace: true });
+    }
+  };
+
+  const handleNoWorkoutFinish = () => {
+    if (!user) return;
+    saveUserPreferences(user.id, {
+      onboardingComplete: true,
+      daysPerWeek: 0,
+      splitId: "none",
+      splitName: "No workout plan",
+      schedule: [],
+    });
+    toast.success(fromProfile ? "Switched to health tracking only" : "You're all set!");
+    continueAfterOnboarding();
+  };
+
   // ── Step navigation ──────────────────────────────────────────────────────
   const goNext = useCallback(() => {
+    if (step === 0 && noWorkout) {
+      handleNoWorkoutFinish();
+      return;
+    }
     if (step === 0 && days) setStep(1);
     else if (step === 1 && selectedSplit) {
       if (selectedSplit.id === "custom") {
@@ -64,7 +103,7 @@ export default function Onboarding() {
     } else if (step === 2) {
       setStep(3);
     }
-  }, [step, days, selectedSplit]);
+  }, [step, days, selectedSplit, noWorkout]);
 
   const goBack = useCallback(() => {
     if (step === 2) setStep(1);
@@ -85,17 +124,17 @@ export default function Onboarding() {
       splitName: selectedSplit.name,
       schedule,
     });
-    toast.success(fromProfile ? "Training split updated! 💪" : "Programme saved! Let's get to work 💪");
-    navigate(fromProfile ? "/profile" : "/", { replace: true });
+    toast.success(fromProfile ? "Training split updated!" : "Programme saved! Let's get to work");
+    continueAfterOnboarding();
   };
 
   const canGoNext =
-    (step === 0 && days !== null) ||
+    (step === 0 && (days !== null || noWorkout)) ||
     (step === 1 && selectedSplit !== null) ||
     (step === 2 && customSchedule.length > 0) ||
     step === 3;
 
-  const totalSteps = selectedSplit?.id === "custom" ? 4 : 3;
+  const totalSteps = noWorkout ? 1 : selectedSplit?.id === "custom" ? 4 : 3;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -118,29 +157,20 @@ export default function Onboarding() {
             />
           ))}
         </div>
-        <button
-          onClick={() => {
-            if (!user) return;
-            saveUserPreferences(user.id, {
-              onboardingComplete: true,
-              daysPerWeek: 3,
-              splitId: "ppl",
-              splitName: "Push / Pull / Legs",
-              schedule: TRAINING_SPLITS[0].schedule.map(({ label, workoutId }) => ({ label, workoutId })),
-            });
-            navigate(fromProfile ? "/profile" : "/", { replace: true });
-          }}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Skip
-        </button>
+        <div className="w-10" /> {/* spacer for alignment */}
       </div>
 
       {/* Step content */}
       <div className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
           {step === 0 && (
-            <StepDays key="days" days={days} setDays={setDays} />
+            <StepDays
+              key="days"
+              days={days}
+              setDays={handleSelectDays}
+              noWorkout={noWorkout}
+              onSelectNoWorkout={handleSelectNoWorkout}
+            />
           )}
           {step === 1 && (
             <StepSplit
@@ -197,14 +227,24 @@ export default function Onboarding() {
 }
 
 // ── Step 1: Choose days ──────────────────────────────────────────────────────
-function StepDays({ days, setDays }: { days: number | null; setDays: (d: number) => void }) {
+function StepDays({
+  days,
+  setDays,
+  noWorkout,
+  onSelectNoWorkout,
+}: {
+  days: number | null;
+  setDays: (d: number) => void;
+  noWorkout: boolean;
+  onSelectNoWorkout: () => void;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -40 }}
       transition={{ duration: 0.25 }}
-      className="px-4 pt-4 pb-2"
+      className="px-4 pt-4 pb-2 overflow-y-auto max-h-[calc(100vh-200px)]"
     >
       <h1 className="font-display text-3xl font-bold text-foreground">How many days a week do you want to train?</h1>
       <p className="text-muted-foreground mt-2 text-sm">We'll build your programme around this.</p>
@@ -232,6 +272,37 @@ function StepDays({ days, setDays }: { days: number | null; setDays: (d: number)
           </motion.button>
         ))}
       </div>
+
+      <div className="flex items-center gap-3 my-5">
+        <div className="h-px flex-1 bg-border/50" />
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">or</span>
+        <div className="h-px flex-1 bg-border/50" />
+      </div>
+
+      <motion.button
+        whileTap={{ scale: 0.97 }}
+        onClick={onSelectNoWorkout}
+        className={`relative w-full rounded-2xl p-4 text-left transition-all border flex items-center gap-3 ${
+          noWorkout
+            ? "border-primary bg-primary/10 ring-1 ring-primary"
+            : "border-border/50 glass-card hover:border-primary/30"
+        }`}
+      >
+        <div className={`flex h-10 w-10 items-center justify-center rounded-xl flex-shrink-0 ${noWorkout ? "bg-primary/20" : "bg-muted/40"}`}>
+          <Heart className={`h-5 w-5 ${noWorkout ? "text-primary" : "text-muted-foreground"}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">Just track health</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Use Iron Keeper for nutrition, weight, and activity tracking only.
+          </p>
+        </div>
+        {noWorkout && (
+          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary flex-shrink-0">
+            <Check className="h-3 w-3 text-primary-foreground" />
+          </div>
+        )}
+      </motion.button>
     </motion.div>
   );
 }
