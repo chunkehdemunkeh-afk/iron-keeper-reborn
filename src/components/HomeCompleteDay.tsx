@@ -228,34 +228,41 @@ export default function HomeCompleteDay({ date }: Props) {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-lg bg-card border-t border-border rounded-t-2xl p-5"
-              style={{ paddingBottom: "max(24px, env(safe-area-inset-bottom))" }}
+              className="relative w-full max-w-lg bg-card border-t border-border rounded-t-2xl flex flex-col"
+              style={{ maxHeight: "85dvh" }}
             >
-              <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-4" />
+              {/* Scrollable body */}
+              <div className="overflow-y-auto flex-1 p-5">
+                <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-4" />
 
-              <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle className="h-5 w-5 text-amber-400" />
-                <h2 className="text-lg font-bold font-display">Before you finish...</h2>
+                <div className="flex items-center gap-2 mb-4">
+                  <AlertTriangle className="h-5 w-5 text-amber-400" />
+                  <h2 className="text-lg font-bold font-display">Before you finish...</h2>
+                </div>
+
+                <p className="text-sm text-muted-foreground mb-4">
+                  You haven't logged the following:
+                </p>
+
+                <div className="space-y-2">
+                  {missingItems.map(({ icon: Icon, label }) => (
+                    <div key={label} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
+                      <Icon className="h-4 w-4 text-amber-400" />
+                      <span className="text-sm text-foreground">{label}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <p className="text-sm text-muted-foreground mb-4">
-                You haven't logged the following:
-              </p>
-
-              <div className="space-y-2 mb-5">
-                {missingItems.map(({ icon: Icon, label }) => (
-                  <div key={label} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
-                    <Icon className="h-4 w-4 text-amber-400" />
-                    <span className="text-sm text-foreground">{label}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowWarning(false)} className="flex-1">
+              {/* Sticky footer — always reachable above the home indicator */}
+              <div
+                className="shrink-0 px-5 pt-3 border-t border-border/40 bg-card flex gap-2"
+                style={{ paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}
+              >
+                <Button variant="outline" onClick={() => setShowWarning(false)} className="flex-1 h-11">
                   Go back &amp; log
                 </Button>
-                <Button onClick={openSummary} className="flex-1">
+                <Button onClick={openSummary} className="flex-1 h-11">
                   Complete anyway
                 </Button>
               </div>
