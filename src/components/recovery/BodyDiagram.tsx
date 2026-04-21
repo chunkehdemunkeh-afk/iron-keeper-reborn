@@ -28,59 +28,69 @@ interface Props {
  *  - Calves (back): diamond/heart-shaped gastrocnemius
  */
 
-// Front silhouette — broader shoulders, V-taper torso, athletic legs.
+// Clean front silhouette: head, neck, attached arms with armpit notch,
+// V-taper torso, separated legs. Single closed path (no self-intersections).
 const FRONT_SILHOUETTE =
-  "M120,18 " +
-  // head
-  "C133,18 144,29 144,44 C144,55 140,63 134,68 " +
-  // neck → trapezius slope to shoulder
-  "C140,72 146,76 152,80 " +
-  // delts cap
-  "C168,84 184,94 192,112 " +
-  // upper arm outer edge → elbow
-  "C196,128 198,148 196,168 " +
-  "C194,184 190,200 188,212 " +
-  // forearm outer
-  "C190,228 192,244 188,260 " +
-  // wrist / hand
-  "C184,264 178,264 174,260 " +
-  "C170,244 168,228 166,212 " +
-  // back up inside of arm into armpit / lat
-  "C170,196 174,180 174,162 " +
-  // side / oblique sweep down to hip
-  "C176,182 178,202 178,222 " +
-  "C178,236 174,250 170,262 " +
-  // hip flare
-  "C172,278 172,294 168,310 " +
-  // outer thigh
-  "C166,328 162,348 160,370 " +
-  "C158,392 156,418 152,438 " +
-  // foot region
-  "C150,448 142,452 136,448 " +
-  "C132,440 130,428 128,414 " +
-  "C126,392 124,368 122,346 " +
-  // crotch dip
-  "C120,338 120,338 118,346 " +
-  "C116,368 114,392 112,414 " +
-  "C110,428 108,440 104,448 " +
-  "C98,452 90,448 88,438 " +
-  "C84,418 82,392 80,370 " +
-  "C78,348 74,328 72,310 " +
-  "C68,294 68,278 70,262 " +
-  "C66,250 62,236 62,222 " +
-  "C62,202 64,182 66,162 " +
-  "C66,180 70,196 74,212 " +
-  "C72,228 70,244 66,260 " +
-  "C62,264 56,264 52,260 " +
-  "C48,244 50,228 52,212 " +
-  "C50,200 46,184 44,168 " +
-  "C42,148 44,128 48,112 " +
-  "C56,94 72,84 88,80 " +
-  "C94,76 100,72 106,68 " +
-  "C100,63 96,55 96,44 " +
-  "C96,29 107,18 120,18 Z";
+  "M120,22 " +
+  // Head + jaw
+  "C133,22 144,32 144,46 C144,57 139,65 133,69 " +
+  // Right neck
+  "C133,73 135,77 138,80 " +
+  // Right trap → shoulder cap → outer arm
+  "C150,82 164,86 178,98 " +
+  "C188,108 194,124 196,144 " +
+  "C198,164 200,186 202,208 " +
+  "C204,228 204,248 200,266 " +
+  "C196,276 192,278 188,276 " +
+  // Right hand / wrist
+  "C184,280 178,278 176,272 " +
+  "C174,254 174,234 174,214 " +
+  "C172,196 170,178 170,160 " +
+  // Right armpit notch (curve back into torso)
+  "C168,150 164,144 158,142 " +
+  // Right side of torso (lat → waist)
+  "C156,164 158,184 158,204 " +
+  "C158,224 154,240 150,254 " +
+  // Right hip flare → outer thigh → shin → foot
+  "C156,266 160,282 162,300 " +
+  "C164,326 162,354 158,382 " +
+  "C156,408 152,432 150,446 " +
+  "C148,454 142,456 138,452 " +
+  "C136,446 134,432 133,418 " +
+  // Right inner shin → thigh going UP
+  "C130,394 128,368 126,344 " +
+  "C124,322 122,308 120,302 " +
+  // Crotch
+  "C120,300 120,300 120,302 " +
+  "C118,308 116,322 114,344 " +
+  // Left inner thigh → shin going DOWN
+  "C112,368 110,394 107,418 " +
+  "C106,432 104,446 102,452 " +
+  "C98,456 92,454 90,446 " +
+  // Left outer shin → thigh
+  "C88,432 84,408 82,382 " +
+  "C78,354 76,326 78,300 " +
+  // Left hip → waist
+  "C80,282 84,266 90,254 " +
+  "C86,240 82,224 82,204 " +
+  "C82,184 84,164 82,142 " +
+  // Left armpit notch
+  "C76,144 72,150 70,160 " +
+  "C70,178 68,196 66,214 " +
+  "C66,234 66,254 64,272 " +
+  // Left hand / wrist
+  "C62,278 56,280 52,276 " +
+  "C48,278 44,276 40,266 " +
+  // Left outer arm → shoulder
+  "C36,248 36,228 38,208 " +
+  "C40,186 42,164 44,144 " +
+  "C46,124 52,108 62,98 " +
+  "C76,86 90,82 102,80 " +
+  // Left neck
+  "C105,77 107,73 107,69 " +
+  "C101,65 96,57 96,46 C96,32 107,22 120,22 Z";
 
-// Back silhouette — same outline (back uses different muscle layer).
+// Back silhouette — identical outline; muscle layer differs.
 const BACK_SILHOUETTE = FRONT_SILHOUETTE;
 
 // FRONT muscle paths
