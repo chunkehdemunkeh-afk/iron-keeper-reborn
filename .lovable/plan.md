@@ -1,77 +1,39 @@
 
 
 ## Goal
-Chain the nutrition (TDEE) onboarding directly after workout onboarding for new users, alongside the planned "no workout plan" option and post-onboarding tip.
+Add subtle, non-alarming colour shifts to the calorie and water progress bars on the home `HomeDailySummary` card to gently signal when intake is over (calories) or under (water) target — without using a caution/warning icon.
 
-## Changes
+## Approach
+Use the existing colour language from `CompleteDaySummary` (amber for "watch this", green for "on track") so the signal feels consistent with the rest of the app. No new icons, no red, no extra components.
 
-### 1. Workout onboarding — add "Just track health" option (`src/pages/Onboarding.tsx`)
-- Add a third option below the days grid on step 0: **"Just track health"** card with a `Heart` or `Sprout` Lucide icon and subcopy *"Use Iron Keeper for nutrition, weight, and activity tracking only."*
-- When selected, skip split/custom/summary steps. Save preferences as `{ onboardingComplete: true, daysPerWeek: 0, splitId: "none", splitName: "No workout plan", schedule: [] }`.
-- Remove the misleading "Skip" button (it silently picked PPL).
-- On finish (any path), navigate to `/onboarding/nutrition` instead of `/` for new users (i.e. when `from=profile` is NOT set). Profile re-entry still returns to `/profile`.
+### Logic
 
-### 2. Helper (`src/lib/user-preferences.ts`)
-Add `isNoWorkoutMode(userId)` returning `true` when `splitId === "none"`.
+**Calories bar** (in `src/components/HomeDailySummary.tsx`):
+- `< 110%` of goal → keep current `bg-primary` (amber/orange brand) and `text-primary` for the number.
+- `≥ 110%` of goal → switch bar + number to `bg-amber-400` / `text-amber-400` (slightly more yellow than primary, reads as "heads up").
+- Bar width clamps at 100% as today (so going over doesn't visually overflow), but the colour change communicates the overage.
 
-### 3. New nutrition onboarding page (`src/pages/NutritionOnboarding.tsx`)
-A wrapper around the existing `<TDEESetup />` component (currently used inside `FoodTracker`). Two-step flow:
+**Water bar**:
+- `≥ 90%` of goal → keep `bg-blue-400` / `text-blue-400`.
+- `< 90%` → desaturate to `bg-blue-400/50` (bar) and `text-blue-400/70` (number) so it reads as "incomplete" rather than "wrong".
+- No threshold-based time-of-day logic — keeps it simple and predictable.
 
-**Step A — Intro card**
-- Heading: *"Now let's set your nutrition goals"*
-- Subcopy explaining that goals power the food tracker and macro rings.
-- Two buttons:
-  - *"Set up nutrition goals"* → goes to step B
-  - *"Skip for now"* → marks nutrition onboarding complete with no goals saved and continues
+**Macros row** — unchanged. The day-summary already gives end-of-day feedback for protein/carbs/fat; adding mid-day signals for three more bars would feel noisy.
 
-**Step B — Reuse `<TDEESetup />`**
-- Render the existing TDEESetup form. On save (it already writes to `nutrition_goals` via `cloud-data`), mark nutrition onboarding complete and continue.
+### Implementation
+Single file edit: `src/components/HomeDailySummary.tsx`
+- Compute `caloriesOver = totals.calories / goals.calories >= 1.1`
+- Compute `waterLow = waterMl / waterGoal < 0.9`
+- Apply conditional Tailwind classes to the calorie bar/number and water bar/number.
 
-In both cases, "continue" sets `localStorage["ik-nutrition-onboarding-{userId}"] = "complete"` and `localStorage["ik-onboarding-tip-{userId}"] = "pending"`, then `navigate("/", { replace: true })`.
-
-Add the route in `src/App.tsx` (auth-guarded).
-
-### 4. Refactor `TDEESetup` for reuse (`src/components/food/TDEESetup.tsx`)
-- Add an optional `onComplete?: () => void` prop fired after a successful save (in addition to the existing close behavior).
-- Add an optional `embedded?: boolean` prop to render without the modal/sheet wrapper when used inside `NutritionOnboarding`.
-- Existing `FoodTracker` usage unchanged.
-
-### 5. Hide workout-only UI in no-workout mode
-- `src/pages/Index.tsx` — hide `<NextSessionCard />` and `<DailyStretchCard />` when `isNoWorkoutMode(user.id)`.
-- `src/components/NextSessionCard.tsx` — defensive early return `null`.
-- `src/pages/Profile.tsx` — Training Programme card shows *"You're tracking health only"* + *"Add a workout plan"* button (links to `/onboarding?from=profile`). Hide `<RecoveryTips />`.
-
-### 6. Post-onboarding tip (`src/components/PostOnboardingTip.tsx`, new)
-A bottom `Sheet` mounted in `src/pages/Index.tsx`. On mount, reads `localStorage["ik-onboarding-tip-{userId}"]`. If `"pending"`, opens automatically with:
-- Title: *"You're all set"*
-- Body: *"Want to change your training plan or nutrition goals later? Head to **Profile** any time."*
-- CTA: *"Got it"* — clears the flag on dismiss.
-
-### 7. Re-entry from Profile
-Profile's existing "Edit programme" link uses `/onboarding?from=profile` — unchanged. Add a parallel link for nutrition: *"Edit nutrition goals"* uses the existing TDEESetup sheet inside `FoodTracker` (no change needed there). The chained flow only fires for new users (when `from=profile` is absent).
-
-## Flow Summary
-
-```text
-New user signup
-  → /onboarding (workout: days → split → summary OR "just track health")
-  → /onboarding/nutrition (intro → TDEESetup OR skip)
-  → / (home, with one-time PostOnboardingTip drawer)
-```
+No new dependencies, no schema changes, no new components.
 
 ## Files Touched
-- `src/pages/Onboarding.tsx` — add "Just track health" option, redirect to `/onboarding/nutrition`
-- `src/pages/NutritionOnboarding.tsx` — new
-- `src/components/food/TDEESetup.tsx` — add `onComplete` + `embedded` props
-- `src/lib/user-preferences.ts` — add `isNoWorkoutMode`
-- `src/pages/Index.tsx` — conditional cards + mount tip
-- `src/components/NextSessionCard.tsx` — defensive return
-- `src/pages/Profile.tsx` — alt programme card
-- `src/components/PostOnboardingTip.tsx` — new
-- `src/App.tsx` — register `/onboarding/nutrition` route
+- `src/components/HomeDailySummary.tsx` — conditional class names on the calories and water elements.
 
-## UX Notes
-- No emojis — Lucide icons only (`Heart`/`Sprout` for health-only, `Apple`/`Salad` for nutrition step).
-- Both onboarding screens share the same step-dot top bar styling for visual continuity.
-- Skip is always available on the nutrition step so users aren't forced into TDEE math.
+## Out of Scope
+- No caution/warning icon.
+- No changes to `CompleteDaySummary` (already handles this well at end of day).
+- No red/destructive colours.
+- No changes to macro bars.
 
