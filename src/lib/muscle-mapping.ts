@@ -225,9 +225,45 @@ function nameHeuristic(name: string): MuscleHits | null {
 }
 
 /**
+ * Strips known modifier suffixes (cable attachment, heavy stack, two-hand variant)
+ * from an exercise ID to get the underlying base ID. WorkoutSession produces IDs
+ * like "up1-mag-grip", "up8-heavy-v-bar", "acc-abs1-handles", "lg5-2h", etc.
+ *
+ * Suffix tokens (matched right-to-left, repeatedly):
+ *   handles, rope, straight-bar, v-bar, mag-grip, cuff-lat-bar, heavy, 2h
+ * Note: tokens themselves can contain hyphens.
+ */
+const SUFFIX_TOKENS = [
+  "cuff-lat-bar",
+  "straight-bar",
+  "mag-grip",
+  "v-bar",
+  "handles",
+  "rope",
+  "heavy",
+  "2h",
+];
+
+export function stripExerciseSuffixes(id: string): string {
+  let current = id;
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const tok of SUFFIX_TOKENS) {
+      const suf = `-${tok}`;
+      if (current.toLowerCase().endsWith(suf) && current.length > suf.length) {
+        current = current.slice(0, -suf.length);
+        changed = true;
+      }
+    }
+  }
+  return current;
+}
+
+/**
  * Returns the muscles worked by an exercise. Looks up in this order:
- * 1. Hard-coded ID overrides (compound lifts, library entries)
- * 2. Name keyword heuristic
+ * 1. Hard-coded ID overrides (compound lifts, library entries) — base ID
+ * 2. Name keyword heuristic (only if name differs from ID — i.e. real name)
  * 3. targetMuscle string parsing (for WORKOUTS exercises)
  * 4. EXERCISE_LIBRARY muscleGroup mapping
  */
@@ -237,13 +273,17 @@ export function getMusclesWorked(
   targetMuscle?: string,
   muscleGroup?: string,
 ): MuscleHits {
-  // 1. ID override (strip cable attachment suffix like "-rope")
-  const baseId = exerciseId.replace(/-(handles|vbar|mag|straight|rope|cuff|latbar)$/i, "");
+  // 1. ID override on base id (after stripping attachment / heavy / 2h suffixes)
+  const baseId = stripExerciseSuffixes(exerciseId);
   if (ID_OVERRIDES[baseId]) return ID_OVERRIDES[baseId];
 
-  // 2. Name heuristic
-  const heuristic = nameHeuristic(exerciseName);
-  if (heuristic) return heuristic;
+  // 2. Name heuristic — skip if the "name" is actually just the id
+  // (some legacy rows store name = id for cable-attachment variants).
+  const nameIsRealName = exerciseName && exerciseName !== exerciseId && exerciseName !== baseId;
+  if (nameIsRealName) {
+    const heuristic = nameHeuristic(exerciseName);
+    if (heuristic) return heuristic;
+  }
 
   // 3. targetMuscle string
   if (targetMuscle) {
@@ -254,6 +294,13 @@ export function getMusclesWorked(
   // 4. muscleGroup mapping
   if (muscleGroup && MUSCLE_GROUP_MAP[muscleGroup]) {
     return MUSCLE_GROUP_MAP[muscleGroup];
+  }
+
+  // 5. Last-resort: if name was the id, try heuristic anyway (catches cases
+  // where the id text itself contains keywords, e.g. "lib-db-Hack_Squat").
+  if (!nameIsRealName) {
+    const fromId = nameHeuristic(exerciseName.replace(/[_-]+/g, " "));
+    if (fromId) return fromId;
   }
 
   return { primary: [], secondary: [] };
