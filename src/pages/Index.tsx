@@ -8,6 +8,8 @@ import DailyStretchCard from "@/components/DailyStretchCard";
 import HomeDailySummary from "@/components/HomeDailySummary";
 import HomeWeightTracker from "@/components/HomeWeightTracker";
 import HomeCompleteDay from "@/components/HomeCompleteDay";
+import SleepCard from "@/components/recovery/SleepCard";
+import RecoveryCard from "@/components/recovery/RecoveryCard";
 import { isGKSplit, isNoWorkoutMode } from "@/lib/user-preferences";
 import PostOnboardingTip from "@/components/PostOnboardingTip";
 import { format, subDays, addDays, isToday } from "date-fns";
@@ -146,6 +148,12 @@ const Index = () => {
 
             {/* Body weight tracker */}
             <HomeWeightTracker date={dateStr} />
+
+            {/* Sleep tracker */}
+            <SleepCard date={dateStr} />
+
+            {/* Recovery snapshot — only on today */}
+            {isCurrentDay && <RecoveryCard />}
 
             {/* Complete Day */}
             <HomeCompleteDay date={dateStr} />
