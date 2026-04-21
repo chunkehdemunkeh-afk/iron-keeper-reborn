@@ -15,9 +15,11 @@ import {
 } from "recharts";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BodyDiagram from "@/components/recovery/BodyDiagram";
+import RecoverySettings from "@/components/recovery/RecoverySettings";
 import { computeMuscleRecovery, statusColor, statusLabel } from "@/lib/recovery";
 import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
 import { getUserPreferences } from "@/lib/user-preferences";
+import { getRecoverySettings } from "@/lib/recovery-settings";
 import { useState } from "react";
 
 function PRSwipeRow({ exId, pr, onDelete }: { exId: string; pr: any; onDelete: () => void }) {
@@ -85,10 +87,11 @@ function RecoveryTabContent() {
   });
 
   const splitId = user ? getUserPreferences(user.id)?.splitId : null;
+  const settings = getRecoverySettings(user?.id);
 
   const states = useMemo(
-    () => computeMuscleRecovery(sets, sleepLogs, splitId),
-    [sets, sleepLogs, splitId],
+    () => computeMuscleRecovery(sets, sleepLogs, splitId, new Date(), settings),
+    [sets, sleepLogs, splitId, settings],
   );
 
   const sortedRegions = useMemo(() => {
@@ -117,6 +120,15 @@ function RecoveryTabContent() {
 
   return (
     <div className="space-y-5">
+      {/* Settings row */}
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] text-muted-foreground">
+          Model: <span className="text-foreground font-medium capitalize">{settings.model}</span>
+          {" · "}Sleep ×{settings.sleepWeight.toFixed(2)}
+        </p>
+        <RecoverySettings />
+      </div>
+
       {/* Body diagram */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
