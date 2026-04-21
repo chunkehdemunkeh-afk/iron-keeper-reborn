@@ -117,17 +117,39 @@ export default function Profile() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center text-center"
         >
-          {profile?.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt="Profile"
-              className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/30"
-            />
-          ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-full gradient-primary glow-primary">
-              <User className="h-10 w-10 text-primary-foreground" />
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            aria-label="Change profile photo"
+            className="relative group active:scale-95 transition-transform disabled:opacity-70"
+          >
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt="Profile"
+                className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/30"
+              />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full gradient-primary glow-primary">
+                <User className="h-10 w-10 text-primary-foreground" />
+              </div>
+            )}
+            <span className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center ring-2 ring-background shadow-md">
+              {uploadingAvatar ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Camera className="h-3.5 w-3.5" />
+              )}
+            </span>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarFile}
+          />
           {editingName ? (
             <div className="mt-3 flex items-center gap-2">
               <input
