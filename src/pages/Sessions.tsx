@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserPreferences } from "@/lib/user-preferences";
 import type { LucideIcon } from "lucide-react";
+import HelpButton from "@/components/demo/HelpButton";
 
 type ProgrammePoint = { icon: LucideIcon; title: string; desc: string };
 
@@ -208,12 +209,15 @@ export default function Sessions() {
           >
             All Sessions
           </motion.h1>
-          <button
-            onClick={() => navigate("/builder")}
-            className="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 rounded-full px-3 py-1.5 hover:bg-primary/20 transition-colors active:scale-95"
-          >
-            <Plus className="h-3.5 w-3.5" /> Create
-          </button>
+          <div className="flex items-center gap-1">
+            <HelpButton />
+            <button
+              onClick={() => navigate("/builder")}
+              className="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 rounded-full px-3 py-1.5 hover:bg-primary/20 transition-colors active:scale-95"
+            >
+              <Plus className="h-3.5 w-3.5" /> Create
+            </button>
+          </div>
         </div>
 
         {groupedWorkouts.map((group) => {

@@ -6,6 +6,7 @@ import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import type { PanInfo } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import DailyReviewChart from "@/components/DailyReviewChart";
+import HelpButton from "@/components/demo/HelpButton";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, CartesianGrid,
@@ -133,13 +134,16 @@ export default function Progress() {
   return (
     <div className="min-h-screen bg-background safe-bottom">
       <div className="mx-auto max-w-lg px-4 pt-6 pb-24 space-y-5">
-        <motion.h1
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="font-display text-2xl font-bold"
-        >
-          Progress
-        </motion.h1>
+        <div className="flex items-center justify-between">
+          <motion.h1
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="font-display text-2xl font-bold"
+          >
+            Progress
+          </motion.h1>
+          <HelpButton />
+        </div>
 
         {/* Summary cards */}
         <div className="grid grid-cols-3 gap-2">

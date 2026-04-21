@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import { isDemoMode, exitDemo, DEMO_USER_ID, DEMO_USER_EMAIL, DEMO_DISPLAY_NAME } from "@/lib/demo-mode";
 
 type AuthContextType = {
   user: User | null;
@@ -33,6 +34,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
 
   useEffect(() => {
+    // ── Demo Mode short-circuit ──
+    if (isDemoMode()) {
+      const demoUser = {
+        id: DEMO_USER_ID,
+        email: DEMO_USER_EMAIL,
+        aud: "authenticated",
+        app_metadata: {},
+        user_metadata: { display_name: DEMO_DISPLAY_NAME },
+        created_at: new Date().toISOString(),
+      } as unknown as User;
+      setUser(demoUser);
+      setSession({ user: demoUser } as unknown as Session);
+      setProfile({ display_name: DEMO_DISPLAY_NAME, avatar_url: null });
+      setLoading(false);
+      return;
+    }
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
@@ -74,6 +92,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    if (isDemoMode()) {
+      exitDemo();
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      window.location.href = "/login";
+      return;
+    }
     await supabase.auth.signOut();
   };
 

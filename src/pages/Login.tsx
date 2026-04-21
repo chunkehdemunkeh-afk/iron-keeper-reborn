@@ -1,16 +1,26 @@
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { Zap, BarChart3, Shield, ChevronRight } from "lucide-react";
+import { Zap, BarChart3, Shield, ChevronRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import EmailAuthForm from "@/components/auth/EmailAuthForm";
+import { enterDemo } from "@/lib/demo-mode";
 
 export default function Login() {
+  const navigate = useNavigate();
+
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo: window.location.origin },
     });
     if (error) toast.error("Sign in failed. Please try again.");
+  };
+
+  const handleDemo = () => {
+    enterDemo();
+    // Hard reload so the auth provider re-mounts and picks up the demo flag
+    window.location.href = "/";
   };
 
   const features = [
@@ -115,6 +125,20 @@ export default function Login() {
           >
             <EmailAuthForm />
           </motion.div>
+
+          {/* Try the demo */}
+          <motion.button
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9, duration: 0.4 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={handleDemo}
+            className="w-full flex items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-primary/5 hover:bg-primary/10 text-foreground py-3 text-sm font-semibold tracking-wide transition-colors"
+          >
+            <Sparkles className="h-4 w-4 text-primary" />
+            Try the demo
+            <span className="text-[10px] text-muted-foreground font-normal">· no signup</span>
+          </motion.button>
 
           <motion.p
             initial={{ opacity: 0 }}

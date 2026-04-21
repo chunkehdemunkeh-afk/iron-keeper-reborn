@@ -1,6 +1,8 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+// Install demo-mode interceptor on supabase.from() — must run before any data fetches.
+import "./lib/demo-supabase";
 
 const isInIframe = (() => {
   try { return window.self !== window.top; } catch { return true; }
