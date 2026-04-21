@@ -1,16 +1,26 @@
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { Zap, BarChart3, Shield, ChevronRight } from "lucide-react";
+import { Zap, BarChart3, Shield, ChevronRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import EmailAuthForm from "@/components/auth/EmailAuthForm";
+import { enterDemo } from "@/lib/demo-mode";
 
 export default function Login() {
+  const navigate = useNavigate();
+
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo: window.location.origin },
     });
     if (error) toast.error("Sign in failed. Please try again.");
+  };
+
+  const handleDemo = () => {
+    enterDemo();
+    // Hard reload so the auth provider re-mounts and picks up the demo flag
+    window.location.href = "/";
   };
 
   const features = [
