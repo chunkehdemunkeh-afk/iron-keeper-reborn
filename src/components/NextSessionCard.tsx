@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Play, Repeat2, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { getUserPreferences, getNextSplitDay } from "@/lib/user-preferences";
+import { getUserPreferences, getNextSplitDay, isNoWorkoutMode } from "@/lib/user-preferences";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchWorkoutHistory } from "@/lib/cloud-data";
@@ -16,6 +16,9 @@ export default function NextSessionCard() {
   const [overrideWorkoutId, setOverrideWorkoutId] = useState<string | null>(null);
 
   const prefs = user ? getUserPreferences(user.id) : null;
+
+  // No-workout mode: hide the entire card
+  if (user && isNoWorkoutMode(user.id)) return null;
 
   const { data: history = [] } = useQuery({
     queryKey: ["workout-history", user?.id],

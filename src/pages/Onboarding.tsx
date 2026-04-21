@@ -134,7 +134,7 @@ export default function Onboarding() {
     (step === 2 && customSchedule.length > 0) ||
     step === 3;
 
-  const totalSteps = selectedSplit?.id === "custom" ? 4 : 3;
+  const totalSteps = noWorkout ? 1 : selectedSplit?.id === "custom" ? 4 : 3;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -227,14 +227,24 @@ export default function Onboarding() {
 }
 
 // ── Step 1: Choose days ──────────────────────────────────────────────────────
-function StepDays({ days, setDays }: { days: number | null; setDays: (d: number) => void }) {
+function StepDays({
+  days,
+  setDays,
+  noWorkout,
+  onSelectNoWorkout,
+}: {
+  days: number | null;
+  setDays: (d: number) => void;
+  noWorkout: boolean;
+  onSelectNoWorkout: () => void;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -40 }}
       transition={{ duration: 0.25 }}
-      className="px-4 pt-4 pb-2"
+      className="px-4 pt-4 pb-2 overflow-y-auto max-h-[calc(100vh-200px)]"
     >
       <h1 className="font-display text-3xl font-bold text-foreground">How many days a week do you want to train?</h1>
       <p className="text-muted-foreground mt-2 text-sm">We'll build your programme around this.</p>
@@ -262,6 +272,37 @@ function StepDays({ days, setDays }: { days: number | null; setDays: (d: number)
           </motion.button>
         ))}
       </div>
+
+      <div className="flex items-center gap-3 my-5">
+        <div className="h-px flex-1 bg-border/50" />
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">or</span>
+        <div className="h-px flex-1 bg-border/50" />
+      </div>
+
+      <motion.button
+        whileTap={{ scale: 0.97 }}
+        onClick={onSelectNoWorkout}
+        className={`relative w-full rounded-2xl p-4 text-left transition-all border flex items-center gap-3 ${
+          noWorkout
+            ? "border-primary bg-primary/10 ring-1 ring-primary"
+            : "border-border/50 glass-card hover:border-primary/30"
+        }`}
+      >
+        <div className={`flex h-10 w-10 items-center justify-center rounded-xl flex-shrink-0 ${noWorkout ? "bg-primary/20" : "bg-muted/40"}`}>
+          <Heart className={`h-5 w-5 ${noWorkout ? "text-primary" : "text-muted-foreground"}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">Just track health</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Use Iron Keeper for nutrition, weight, and activity tracking only.
+          </p>
+        </div>
+        {noWorkout && (
+          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary flex-shrink-0">
+            <Check className="h-3 w-3 text-primary-foreground" />
+          </div>
+        )}
+      </motion.button>
     </motion.div>
   );
 }
