@@ -6,7 +6,7 @@
 // the app actually uses: select / insert / update / upsert / delete with
 // operators eq, in, gte, lte, not, order, limit, single, maybeSingle.
 
-import { supabase as realClient } from "./client";
+import { supabase as realClient } from "@/integrations/supabase/client";
 import { isDemoMode } from "@/lib/demo-mode";
 import { getDemoStore, demoInsert, demoUpdate, demoDelete } from "@/lib/demo-data";
 
