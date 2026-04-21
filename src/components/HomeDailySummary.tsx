@@ -82,19 +82,19 @@ export default function HomeDailySummary({ date }: Props) {
       {/* Calories + Water row */}
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="text-center">
-          <Flame className={`h-4 w-4 mx-auto mb-1 ${calorieColor}`} />
-          <p className={`text-lg font-bold ${calorieColor}`}>{Math.round(totals.calories)}</p>
+          <Flame className={`h-4 w-4 mx-auto mb-1 transition-colors duration-500 ${calorieColor}`} />
+          <p className={`text-lg font-bold transition-colors duration-500 ${calorieColor}`}>{Math.round(totals.calories)}</p>
           <p className="text-[10px] text-muted-foreground">/ {goals.calories} kcal</p>
           <div className="h-1 bg-secondary rounded-full mt-1.5 overflow-hidden">
-            <div className={`h-full rounded-full ${calorieBar} transition-all`} style={{ width: `${pct(totals.calories, goals.calories)}%` }} />
+            <div className={`h-full rounded-full ${calorieBar} transition-[width,background-color] duration-500 ease-out`} style={{ width: `${pct(totals.calories, goals.calories)}%` }} />
           </div>
         </div>
         <div className="text-center">
-          <Droplet className={`h-4 w-4 mx-auto mb-1 ${waterTextColor}`} />
-          <p className={`text-lg font-bold ${waterTextColor}`}>{(waterMl / 1000).toFixed(1)}L</p>
+          <Droplet className={`h-4 w-4 mx-auto mb-1 transition-colors duration-500 ${waterTextColor}`} />
+          <p className={`text-lg font-bold transition-colors duration-500 ${waterTextColor}`}>{(waterMl / 1000).toFixed(1)}L</p>
           <p className="text-[10px] text-muted-foreground">/ {(waterGoal / 1000).toFixed(1)}L</p>
           <div className="h-1 bg-secondary rounded-full mt-1.5 overflow-hidden">
-            <div className={`h-full rounded-full ${waterBar} transition-all`} style={{ width: `${pct(waterMl, waterGoal)}%` }} />
+            <div className={`h-full rounded-full ${waterBar} transition-[width,background-color] duration-500 ease-out`} style={{ width: `${pct(waterMl, waterGoal)}%` }} />
           </div>
         </div>
       </div>
