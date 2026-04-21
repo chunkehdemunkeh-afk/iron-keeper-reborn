@@ -274,7 +274,10 @@ export default function History() {
             {calendarDays.map((day) => {
               const key = format(day, "yyyy-MM-dd");
               const workouts = dateWorkoutMap[key] || [];
+              const dayActivities = dateActivityMap[key] || [];
               const hasWorkout = workouts.length > 0;
+              const hasActivity = dayActivities.length > 0;
+              const isRestOnly = hasActivity && !hasWorkout && dayActivities.every((a) => a.activityType === "rest");
               const isCurrentMonth = isSameMonth(day, currentMonth);
               const isSelected = selectedDate && isSameDay(day, selectedDate);
               const isToday = isSameDay(day, new Date());
@@ -294,12 +297,24 @@ export default function History() {
                   }`}
                 >
                   <span>{format(day, "d")}</span>
-                  {hasWorkout && isCurrentMonth && (
+                  {(hasWorkout || hasActivity) && isCurrentMonth && (
                     <div className="absolute bottom-0.5 flex gap-0.5">
                       {workouts.slice(0, 3).map((_, wi) => (
                         <div
-                          key={wi}
+                          key={`w-${wi}`}
                           className={`h-1 w-1 rounded-full ${isSelected ? "bg-primary-foreground" : "bg-primary"}`}
+                        />
+                      ))}
+                      {dayActivities.slice(0, 3 - Math.min(workouts.length, 3)).map((_, ai) => (
+                        <div
+                          key={`a-${ai}`}
+                          className={`h-1 w-1 rounded-full ${
+                            isSelected
+                              ? "bg-primary-foreground/70"
+                              : isRestOnly
+                              ? "bg-blue-400"
+                              : "bg-amber-400"
+                          }`}
                         />
                       ))}
                     </div>
