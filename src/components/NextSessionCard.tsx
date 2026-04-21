@@ -16,9 +16,7 @@ export default function NextSessionCard() {
   const [overrideWorkoutId, setOverrideWorkoutId] = useState<string | null>(null);
 
   const prefs = user ? getUserPreferences(user.id) : null;
-
-  // No-workout mode: hide the entire card
-  if (user && isNoWorkoutMode(user.id)) return null;
+  const noWorkout = user ? isNoWorkoutMode(user.id) : false;
 
   const { data: history = [] } = useQuery({
     queryKey: ["workout-history", user?.id],
