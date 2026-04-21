@@ -368,6 +368,42 @@ export type Database = {
         }
         Relationships: []
       }
+      sleep_logs: {
+        Row: {
+          created_at: string
+          date: string
+          hours: number
+          id: string
+          notes: string | null
+          quality: number
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          hours: number
+          id?: string
+          notes?: string | null
+          quality: number
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          hours?: number
+          id?: string
+          notes?: string | null
+          quality?: number
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       stretch_completions: {
         Row: {
           created_at: string
