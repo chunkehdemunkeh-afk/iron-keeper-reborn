@@ -157,29 +157,20 @@ export default function Onboarding() {
             />
           ))}
         </div>
-        <button
-          onClick={() => {
-            if (!user) return;
-            saveUserPreferences(user.id, {
-              onboardingComplete: true,
-              daysPerWeek: 3,
-              splitId: "ppl",
-              splitName: "Push / Pull / Legs",
-              schedule: TRAINING_SPLITS[0].schedule.map(({ label, workoutId }) => ({ label, workoutId })),
-            });
-            navigate(fromProfile ? "/profile" : "/", { replace: true });
-          }}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Skip
-        </button>
+        <div className="w-10" /> {/* spacer for alignment */}
       </div>
 
       {/* Step content */}
       <div className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
           {step === 0 && (
-            <StepDays key="days" days={days} setDays={setDays} />
+            <StepDays
+              key="days"
+              days={days}
+              setDays={handleSelectDays}
+              noWorkout={noWorkout}
+              onSelectNoWorkout={handleSelectNoWorkout}
+            />
           )}
           {step === 1 && (
             <StepSplit
