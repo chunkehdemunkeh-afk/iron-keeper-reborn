@@ -1,82 +1,77 @@
 
 
-# Demo / Guest Mode
+## Goal
+Chain the nutrition (TDEE) onboarding directly after workout onboarding for new users, alongside the planned "no workout plan" option and post-onboarding tip.
 
-A no-signup tour that lets visitors explore Iron Keeper with realistic seeded data and inline coach-mark tips on every screen.
+## Changes
 
-## What the user gets
+### 1. Workout onboarding — add "Just track health" option (`src/pages/Onboarding.tsx`)
+- Add a third option below the days grid on step 0: **"Just track health"** card with a `Heart` or `Sprout` Lucide icon and subcopy *"Use Iron Keeper for nutrition, weight, and activity tracking only."*
+- When selected, skip split/custom/summary steps. Save preferences as `{ onboardingComplete: true, daysPerWeek: 0, splitId: "none", splitName: "No workout plan", schedule: [] }`.
+- Remove the misleading "Skip" button (it silently picked PPL).
+- On finish (any path), navigate to `/onboarding/nutrition` instead of `/` for new users (i.e. when `from=profile` is NOT set). Profile re-entry still returns to `/profile`.
 
-- A **"Try the demo"** button on the Login screen (below Google/email auth) — taps straight into the app as a guest.
-- A persistent **"Demo Mode"** ribbon at the top with **Exit demo** → returns to Login.
-- Fully populated app: 3 weeks of workouts, PRs, body weight trend, 7 days of food logs, water intake, daily completions — so every chart and stat looks alive.
-- **Guided coach-marks**: a tasteful spotlight popover appears the first time a guest lands on each main screen (Home, Sessions, Workout in-progress, Nutrition, Progress, Profile). Each one has 2–4 tip steps with Next/Skip and aesthetic glow styling consistent with the app.
-- A "?" help button in each page header re-opens that screen's tour any time.
-- All write actions (save workout, log food, etc.) are intercepted: they update demo data **in-memory only** so the user can play freely; nothing hits Supabase.
+### 2. Helper (`src/lib/user-preferences.ts`)
+Add `isNoWorkoutMode(userId)` returning `true` when `splitId === "none"`.
 
-## How it works (technical)
+### 3. New nutrition onboarding page (`src/pages/NutritionOnboarding.tsx`)
+A wrapper around the existing `<TDEESetup />` component (currently used inside `FoodTracker`). Two-step flow:
 
-### 1. Demo session flag
-- New file `src/lib/demo-mode.ts` exposes `isDemoMode()`, `enterDemo()`, `exitDemo()` backed by `sessionStorage` (`ik-demo=1`) so it auto-clears when the tab closes.
-- `useAuth.tsx` checks the flag on mount: if set and no real Supabase user, it injects a synthetic `user` (`id: "demo-user"`, `email: "demo@ironkeeper.app"`) and a profile (`display_name: "Alex"`). The rest of the app still sees a logged-in user — no protected-route changes needed.
-- `signOut()` also calls `exitDemo()`.
+**Step A — Intro card**
+- Heading: *"Now let's set your nutrition goals"*
+- Subcopy explaining that goals power the food tracker and macro rings.
+- Two buttons:
+  - *"Set up nutrition goals"* → goes to step B
+  - *"Skip for now"* → marks nutrition onboarding complete with no goals saved and continues
 
-### 2. Seeded demo data
-- New file `src/lib/demo-data.ts` builds in-memory fixtures:
-  - 12 completed workouts across last 21 days (mix of Power, Agility, Push, Pull, Legs) with realistic sets/weights and a steady upward PR trend.
-  - 7 days of food logs (breakfast/lunch/dinner/snack) hitting ~85% of macros.
-  - 7 daily water entries, 14 body-weight readings showing a -1.5 kg trend, 4 activity logs.
-  - Default `nutrition_goals`, default user preferences (`splitId: "ppl"`, onboarding complete, schedule pre-built).
-- Data lives in a singleton object with mutators (`addDemoWorkout`, `addDemoFoodLog`, etc.).
+**Step B — Reuse `<TDEESetup />`**
+- Render the existing TDEESetup form. On save (it already writes to `nutrition_goals` via `cloud-data`), mark nutrition onboarding complete and continue.
 
-### 3. Data layer interception
-- In `src/lib/cloud-data.ts`, every exported `fetch*` and `save*` function gets a guard at the top:
-  ```ts
-  if (isDemoMode()) return demoFetch.workoutHistory();
-  ```
-- Same pattern added to the few inline `supabase.from(...)` calls in `StatsBar`, `DailyReviewChart`, `NextSessionCard`, `Index` (stretch reminder), `FoodTracker`, `BodyMeasurements` — each gets a tiny `if (isDemoMode())` short-circuit returning fixture data.
-- `user-preferences.ts` already uses localStorage, so demo prefs are seeded under `ik-prefs-demo-user` on `enterDemo()`.
+In both cases, "continue" sets `localStorage["ik-nutrition-onboarding-{userId}"] = "complete"` and `localStorage["ik-onboarding-tip-{userId}"] = "pending"`, then `navigate("/", { replace: true })`.
 
-### 4. Coach-mark tour system
-- New `src/components/demo/DemoTour.tsx`: a Framer-Motion overlay with a dimmed backdrop, a glowing rounded-card popover, step counter (1/4), Skip / Next / Got it buttons. Uses the existing `gradient-primary` and `glass-card` styles.
-- New `src/lib/demo-tours.ts` defines tours per route:
-  - **Home** — "Your week at a glance", "Tap any day to view past sessions", "Next session card auto-rotates your split", "Log your weight in seconds".
-  - **Sessions** — "Browse your weekly programme", "Tap to start", "Build custom workouts via the + button".
-  - **Workout in-progress** — "Tap a set to log reps & weight", "Long-press to swap an exercise", "Rest timer auto-starts after each set".
-  - **Nutrition** — "Search foods or scan a barcode", "Macros and water update live", "Copy yesterday's meals in one tap".
-  - **Progress** — "Visualise your volume & PRs", "Swipe a PR left to delete".
-  - **Profile** — "Edit name and avatar here", "Switch your training split", "Exit demo when you're done exploring".
-- New `src/hooks/useDemoTour.tsx` hook: shows the tour on first visit per route (tracked in `sessionStorage`), exposes `restart()` for the help button.
+Add the route in `src/App.tsx` (auth-guarded).
 
-### 5. UI touches
-- New `src/components/demo/DemoBanner.tsx`: thin top ribbon (only when `isDemoMode()`), shows "Demo Mode · exploring with sample data" + Exit button. Inserted in `App.tsx` above `<AnimatedRoutes />`.
-- Help-button (`HelpCircle` icon) added to each page header, calls `restart()` for that route's tour.
-- Login screen: new ghost-styled "Continue as guest" button under the email form, with a subtle sparkle icon.
+### 4. Refactor `TDEESetup` for reuse (`src/components/food/TDEESetup.tsx`)
+- Add an optional `onComplete?: () => void` prop fired after a successful save (in addition to the existing close behavior).
+- Add an optional `embedded?: boolean` prop to render without the modal/sheet wrapper when used inside `NutritionOnboarding`.
+- Existing `FoodTracker` usage unchanged.
 
-### 6. Write-action interception
-- In `cloud-data.ts` write functions (`saveWorkoutToCloud`, `saveBodyMeasurement`, `saveDailyLog`, etc.) and food log inserts in `FoodTracker`: if demo, push into the in-memory store and invalidate the matching React Query key so UI updates. Toast: "Saved to demo (won't persist)".
+### 5. Hide workout-only UI in no-workout mode
+- `src/pages/Index.tsx` — hide `<NextSessionCard />` and `<DailyStretchCard />` when `isNoWorkoutMode(user.id)`.
+- `src/components/NextSessionCard.tsx` — defensive early return `null`.
+- `src/pages/Profile.tsx` — Training Programme card shows *"You're tracking health only"* + *"Add a workout plan"* button (links to `/onboarding?from=profile`). Hide `<RecoveryTips />`.
 
-## Files
+### 6. Post-onboarding tip (`src/components/PostOnboardingTip.tsx`, new)
+A bottom `Sheet` mounted in `src/pages/Index.tsx`. On mount, reads `localStorage["ik-onboarding-tip-{userId}"]`. If `"pending"`, opens automatically with:
+- Title: *"You're all set"*
+- Body: *"Want to change your training plan or nutrition goals later? Head to **Profile** any time."*
+- CTA: *"Got it"* — clears the flag on dismiss.
 
-**New**
-- `src/lib/demo-mode.ts`
-- `src/lib/demo-data.ts`
-- `src/lib/demo-tours.ts`
-- `src/components/demo/DemoBanner.tsx`
-- `src/components/demo/DemoTour.tsx`
-- `src/components/demo/HelpButton.tsx`
-- `src/hooks/useDemoTour.tsx`
+### 7. Re-entry from Profile
+Profile's existing "Edit programme" link uses `/onboarding?from=profile` — unchanged. Add a parallel link for nutrition: *"Edit nutrition goals"* uses the existing TDEESetup sheet inside `FoodTracker` (no change needed there). The chained flow only fires for new users (when `from=profile` is absent).
 
-**Edited**
-- `src/hooks/useAuth.tsx` — synthetic user when demo flag set
-- `src/lib/cloud-data.ts` — demo guards on every fetch/save
-- `src/pages/Login.tsx` — "Continue as guest" CTA
-- `src/App.tsx` — mount `DemoBanner`
-- `src/pages/Index.tsx`, `Sessions.tsx`, `WorkoutSession.tsx`, `FoodTracker.tsx`, `Progress.tsx`, `Profile.tsx` — header help button + tour mount
-- `src/components/StatsBar.tsx`, `NextSessionCard.tsx`, `DailyReviewChart.tsx`, `HomeWeightTracker.tsx` — demo guards on inline Supabase calls
+## Flow Summary
 
-## Out of scope
+```text
+New user signup
+  → /onboarding (workout: days → split → summary OR "just track health")
+  → /onboarding/nutrition (intro → TDEESetup OR skip)
+  → / (home, with one-time PostOnboardingTip drawer)
+```
 
-- No coach role demo (guest sees the member experience).
-- Demo data does not persist across tab closes — by design, so each visitor gets a fresh tour.
-- No gamified onboarding wizard; tours are the lightweight equivalent.
+## Files Touched
+- `src/pages/Onboarding.tsx` — add "Just track health" option, redirect to `/onboarding/nutrition`
+- `src/pages/NutritionOnboarding.tsx` — new
+- `src/components/food/TDEESetup.tsx` — add `onComplete` + `embedded` props
+- `src/lib/user-preferences.ts` — add `isNoWorkoutMode`
+- `src/pages/Index.tsx` — conditional cards + mount tip
+- `src/components/NextSessionCard.tsx` — defensive return
+- `src/pages/Profile.tsx` — alt programme card
+- `src/components/PostOnboardingTip.tsx` — new
+- `src/App.tsx` — register `/onboarding/nutrition` route
+
+## UX Notes
+- No emojis — Lucide icons only (`Heart`/`Sprout` for health-only, `Apple`/`Salad` for nutrition step).
+- Both onboarding screens share the same step-dot top bar styling for visual continuity.
+- Skip is always available on the nutrition step so users aren't forced into TDEE math.
 
