@@ -57,6 +57,12 @@ export default function HomeDailySummary({ date }: Props) {
 
   const pct = (val: number, target: number) => Math.min(100, Math.round((val / target) * 100));
   const waterGoal = goals.water_goal_ml || 2500;
+  const caloriesOver = goals.calories > 0 && totals.calories / goals.calories >= 1.1;
+  const waterLow = waterGoal > 0 && waterMl / waterGoal < 0.9;
+  const calorieColor = caloriesOver ? "text-amber-400" : "text-primary";
+  const calorieBar = caloriesOver ? "bg-amber-400" : "bg-primary";
+  const waterTextColor = waterLow ? "text-blue-400/70" : "text-blue-400";
+  const waterBar = waterLow ? "bg-blue-400/50" : "bg-blue-400";
 
   return (
     <motion.div
