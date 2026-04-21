@@ -65,6 +65,16 @@ export default function History() {
     return map;
   }, [filteredHistory]);
 
+  const dateActivityMap = useMemo(() => {
+    const map: Record<string, ActivityLog[]> = {};
+    activities.forEach((a) => {
+      const key = a.date; // already yyyy-mm-dd
+      if (!map[key]) map[key] = [];
+      map[key].push(a);
+    });
+    return map;
+  }, [activities]);
+
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
@@ -78,6 +88,12 @@ export default function History() {
     const key = format(selectedDate, "yyyy-MM-dd");
     return dateWorkoutMap[key] || [];
   }, [selectedDate, dateWorkoutMap]);
+
+  const selectedActivities = useMemo(() => {
+    if (!selectedDate) return [];
+    const key = format(selectedDate, "yyyy-MM-dd");
+    return dateActivityMap[key] || [];
+  }, [selectedDate, dateActivityMap]);
 
   const totalMinutes = filteredHistory.reduce((s, w) => s + w.duration, 0);
 
