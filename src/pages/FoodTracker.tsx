@@ -262,10 +262,18 @@ export default function FoodTracker() {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-2xl font-display font-bold leading-none">
-                  {Math.max(0, goals.calories - Math.round(totals.calories))}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Remaining</p>
+                {(() => {
+                  const diff = goals.calories - Math.round(totals.calories);
+                  const over = diff < 0;
+                  return (
+                    <>
+                      <p className={`text-2xl font-display font-bold leading-none ${over ? "text-rose-400" : ""}`}>
+                        {over ? `-${Math.abs(diff)}` : diff}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{over ? "Over" : "Remaining"}</p>
+                    </>
+                  );
+                })()}
               </div>
             </div>
 
