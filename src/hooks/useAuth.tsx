@@ -116,8 +116,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   };
 
+  const removeAvatar = async () => {
+    if (!user) return { error: "Not signed in" };
+
+    // Best-effort cleanup of any existing files in the user's folder
+    const { data: list } = await supabase.storage.from("avatars").list(user.id);
+    if (list && list.length > 0) {
+      await supabase.storage
+        .from("avatars")
+        .remove(list.map((f) => `${user.id}/${f.name}`));
+    }
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ avatar_url: null })
+      .eq("user_id", user.id);
+    if (updateError) return { error: updateError.message };
+
+    setProfile((p) => ({ display_name: p?.display_name ?? null, avatar_url: null }));
+    return { error: null };
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, profile, signOut, updateDisplayName, updateAvatar }}>
+    <AuthContext.Provider value={{ user, session, loading, profile, signOut, updateDisplayName, updateAvatar, removeAvatar }}>
       {children}
     </AuthContext.Provider>
   );
