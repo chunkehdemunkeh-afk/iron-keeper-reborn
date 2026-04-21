@@ -48,6 +48,10 @@ export default function EmailAuthForm() {
       setPasswordError("Passwords don't match");
       return;
     }
+    if (mode === "signup" && displayName.trim().length < 2) {
+      setEmailError("Please enter your name");
+      return;
+    }
 
     setLoading(true);
     if (mode === "signin") {
