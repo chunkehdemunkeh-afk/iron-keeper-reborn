@@ -9,6 +9,7 @@ export function useDemoTour() {
   const location = useLocation();
   const tour: Tour | null = isDemoMode() ? getTourForPath(location.pathname) : null;
   const [open, setOpen] = useState(false);
+  const [startAt, setStartAt] = useState(0);
 
   // Auto-open on first visit per route
   useEffect(() => {
@@ -16,7 +17,10 @@ export function useDemoTour() {
     try {
       const seen = sessionStorage.getItem(SEEN_KEY(tour.id));
       if (!seen) {
-        const t = setTimeout(() => setOpen(true), 600);
+        const t = setTimeout(() => {
+          setStartAt(0);
+          setOpen(true);
+        }, 600);
         return () => clearTimeout(t);
       }
     } catch {
@@ -31,10 +35,11 @@ export function useDemoTour() {
     }
   }, [tour]);
 
-  const restart = useCallback(() => {
+  const restart = useCallback((stepIndex = 0) => {
     if (!tour) return;
+    setStartAt(stepIndex);
     setOpen(true);
   }, [tour]);
 
-  return { tour, open, close, restart, available: !!tour };
+  return { tour, open, startAt, close, restart, available: !!tour };
 }

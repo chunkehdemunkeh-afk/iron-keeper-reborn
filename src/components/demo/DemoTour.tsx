@@ -7,15 +7,16 @@ interface Props {
   tour: Tour;
   open: boolean;
   onClose: () => void;
+  startAt?: number;
 }
 
-export default function DemoTour({ tour, open, onClose }: Props) {
-  const [step, setStep] = useState(0);
+export default function DemoTour({ tour, open, onClose, startAt = 0 }: Props) {
+  const [step, setStep] = useState(startAt);
 
   // Reset when tour changes or reopens
   useEffect(() => {
-    if (open) setStep(0);
-  }, [open, tour.id]);
+    if (open) setStep(startAt);
+  }, [open, tour.id, startAt]);
 
   const total = tour.steps.length;
   const current = tour.steps[step];
