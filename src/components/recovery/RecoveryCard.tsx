@@ -8,7 +8,7 @@ import { fetchRecentSets, fetchSleepLogs } from "@/lib/cloud-data";
 import { computeMuscleRecovery, statusColor } from "@/lib/recovery";
 import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
 import { getUserPreferences } from "@/lib/user-preferences";
-import { getRecoverySettings } from "@/lib/recovery-settings";
+import { useRecoverySettings } from "@/hooks/useRecoverySettings";
 import BodyDiagram from "./BodyDiagram";
 
 export default function RecoveryCard() {
@@ -30,7 +30,7 @@ export default function RecoveryCard() {
   });
 
   const splitId = user ? getUserPreferences(user.id)?.splitId : null;
-  const settings = getRecoverySettings(user?.id);
+  const settings = useRecoverySettings(user?.id);
 
   const states = useMemo(
     () => computeMuscleRecovery(sets, sleepLogs, splitId, new Date(), settings),

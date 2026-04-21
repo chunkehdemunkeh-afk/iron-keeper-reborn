@@ -42,6 +42,10 @@ export function getRecoverySettings(userId: string | undefined | null): Recovery
 export function saveRecoverySettings(userId: string, settings: RecoverySettings): void {
   try {
     localStorage.setItem(getKey(userId), JSON.stringify(settings));
+    // Notify same-tab subscribers (storage event only fires cross-tab).
+    window.dispatchEvent(
+      new CustomEvent("ik-recovery-settings-changed", { detail: { userId } }),
+    );
   } catch {
     console.warn("Failed to save recovery settings");
   }
