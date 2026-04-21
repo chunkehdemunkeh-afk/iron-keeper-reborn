@@ -270,7 +270,7 @@ export default function FoodTracker() {
                       <p className={`text-2xl font-display font-bold leading-none ${over ? "text-rose-400" : ""}`}>
                         {over ? `-${Math.abs(diff)}` : diff}
                       </p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Remaining</p>
+                      {!over && <p className="text-[10px] text-muted-foreground mt-0.5">Remaining</p>}
                     </>
                   );
                 })()}
