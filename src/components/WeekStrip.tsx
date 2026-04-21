@@ -40,6 +40,16 @@ function SwipeToDeleteCard({ children, onDelete }: { children: React.ReactNode; 
     </div>
   );
 }
+const ACTIVITY_ICONS: Record<string, LucideIcon> = {
+  rest: Bed,
+  walk: Footprints,
+  running: Activity,
+  swimming: Waves,
+  cycling: Bike,
+  yoga: Flower,
+  football: CircleDot,
+  other: Pencil,
+};
 
 export default function WeekStrip() {
   const todayIndex = new Date().getDay();
