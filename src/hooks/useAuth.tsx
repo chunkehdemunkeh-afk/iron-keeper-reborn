@@ -73,8 +73,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const updateDisplayName = async (name: string) => {
+    if (!user) return { error: "Not signed in" };
+    const trimmed = name.trim();
+    if (trimmed.length < 2) return { error: "Name must be at least 2 characters" };
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: trimmed })
+      .eq("user_id", user.id);
+    if (error) return { error: error.message };
+    setProfile((p) => ({ display_name: trimmed, avatar_url: p?.avatar_url ?? null }));
+    return { error: null };
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, profile, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, profile, signOut, updateDisplayName }}>
       {children}
     </AuthContext.Provider>
   );
