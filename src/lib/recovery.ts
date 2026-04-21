@@ -185,7 +185,7 @@ export function statusColor(status: RecoveryStatus): string {
     case "fatigued": return "hsl(351 85% 60%)";    // rose-500
     case "workable": return "hsl(38 95% 60%)";     // amber-400
     case "recovered": return "hsl(152 70% 50%)";   // emerald-400
-    case "rested": return "hsl(220 14% 28%)";      // muted neutral
+    case "rested": return "hsl(152 70% 50%)";      // emerald-400 — fresh = ready to train
   }
 }
 

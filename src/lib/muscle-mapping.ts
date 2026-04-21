@@ -14,6 +14,8 @@ export const MUSCLE_REGIONS = [
   "quads",
   "hamstrings",
   "glutes",
+  "abductors",
+  "adductors",
   "calves",
   "lats",
   "traps",
@@ -36,6 +38,8 @@ export const MUSCLE_LABELS: Record<MuscleRegion, string> = {
   quads: "Quads",
   hamstrings: "Hamstrings",
   glutes: "Glutes",
+  abductors: "Abductors",
+  adductors: "Adductors",
   calves: "Calves",
   lats: "Lats",
   traps: "Traps",
@@ -53,6 +57,8 @@ export const RECOVERY_HOURS: Record<MuscleRegion, number> = {
   triceps: 48,
   side_delts: 48,
   rear_delts: 48,
+  abductors: 48,
+  adductors: 48,
   chest: 72,
   front_delts: 72,
   lats: 72,
@@ -181,7 +187,9 @@ function nameHeuristic(name: string): MuscleHits | null {
   if (n.includes("leg extension")) return { primary: ["quads"], secondary: [] };
   if (n.includes("leg press")) return { primary: ["quads", "glutes"], secondary: ["hamstrings"] };
   if (n.includes("calf")) return { primary: ["calves"], secondary: [] };
-  if (n.includes("lunge") || n.includes("split squat")) return { primary: ["quads", "glutes"], secondary: ["hamstrings"] };
+  if (n.includes("hip abduction") || n.includes("abductor")) return { primary: ["abductors"], secondary: ["glutes"] };
+  if (n.includes("hip adduction") || n.includes("adductor") || n.includes("inner thigh")) return { primary: ["adductors"], secondary: [] };
+  if (n.includes("lunge") || n.includes("split squat")) return { primary: ["quads", "glutes"], secondary: ["hamstrings", "adductors"] };
 
   if (n.includes("bench") || n.includes("chest press") || n.includes("dip") || n.includes("push-up") || n.includes("pushup")) {
     return { primary: ["chest", "triceps"], secondary: ["front_delts"] };

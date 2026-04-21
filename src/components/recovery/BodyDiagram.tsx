@@ -23,11 +23,15 @@ interface Props {
  */
 
 // Map our internal muscle regions → library muscle names.
-// Some regions don't exist as separate muscles in the library and are merged.
+// Some regions don't exist as separate muscles in the library:
+//   - side_delts: library has no separate side delt path. We intentionally
+//     leave it unmapped so it doesn't get painted with the front-delt status
+//     (which previously caused the color mismatch with the muscle list).
+//   - mid_back: shares the upper-back path with lats on the back view.
 const REGION_TO_LIB: Record<MuscleRegion, Muscle[]> = {
   chest: ["chest"],
   front_delts: ["front-deltoids"],
-  side_delts: ["front-deltoids"], // library has no side delt — merge with front
+  side_delts: [], // no diagram path — shown in list only
   rear_delts: ["back-deltoids"],
   biceps: ["biceps"],
   triceps: ["triceps"],
@@ -37,6 +41,8 @@ const REGION_TO_LIB: Record<MuscleRegion, Muscle[]> = {
   quads: ["quadriceps"],
   hamstrings: ["hamstring"],
   glutes: ["gluteal"],
+  abductors: ["abductors"],
+  adductors: ["adductor"], // library typo: ABDUCTOR → 'adductor'
   calves: ["calves"],
   lats: ["upper-back"], // front view: no separate lat path; back view uses upper-back
   traps: ["trapezius"],
@@ -57,6 +63,8 @@ const LIB_TO_REGION: Partial<Record<Muscle, MuscleRegion>> = {
   quadriceps: "quads",
   hamstring: "hamstrings",
   gluteal: "glutes",
+  abductors: "abductors",
+  adductor: "adductors",
   calves: "calves",
   "upper-back": "mid_back",
   trapezius: "traps",
