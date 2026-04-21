@@ -148,33 +148,44 @@ export default function BodyDiagram({
   view = "front",
   interactive = true,
   size = "lg",
+  highlighted = null,
 }: Props) {
   const [selected, setSelected] = useState<MuscleRegion | null>(null);
   const gradId = useId();
   const glowId = useId();
   const shadeId = useId();
+  const pulseId = useId();
 
   const paths = view === "front" ? FRONT_PATHS : BACK_PATHS;
   const silhouette = view === "front" ? FRONT_SILHOUETTE : BACK_SILHOUETTE;
   const dim = size === "lg" ? "w-full max-w-[280px]" : "w-full max-w-[120px]";
 
+  const hasHighlight = !!highlighted && !!paths[highlighted];
+
   const renderRegion = (region: MuscleRegion, d: string) => {
     const state = states[region];
     if (!state) return null;
     const fill = statusColor(state.status);
+    const isHighlighted = highlighted === region;
+    const dimmed = hasHighlight && !isHighlighted;
     return (
       <motion.path
         key={region}
         d={d}
         fill={fill}
-        stroke="rgba(0,0,0,0.35)"
-        strokeWidth={0.6}
+        stroke={isHighlighted ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.35)"}
+        strokeWidth={isHighlighted ? 1.4 : 0.6}
         strokeLinejoin="round"
         initial={false}
-        animate={{ fill }}
-        transition={{ duration: 0.5, ease: "easeInOut" }}
+        animate={{ fill, opacity: dimmed ? 0.32 : 1 }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
         onClick={interactive ? () => setSelected(region) : undefined}
-        style={{ cursor: interactive ? "pointer" : "default" }}
+        style={{
+          cursor: interactive ? "pointer" : "default",
+          filter: isHighlighted
+            ? `drop-shadow(0 0 6px ${fill}) drop-shadow(0 0 12px ${fill})`
+            : undefined,
+        }}
         whileTap={interactive ? { scale: 0.97 } : undefined}
       />
     );
