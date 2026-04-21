@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchActivityLogs } from "@/lib/cloud-data";
-import { Flame, Target, Award, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart } from "lucide-react";
+import { Flame, Target, Award, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import RecoveryTips from "@/components/RecoveryTips";
@@ -300,6 +300,17 @@ export default function Profile() {
               >
                 <p className="text-sm font-semibold text-foreground">Add a workout plan</p>
                 <ChevronRight className="h-4 w-4 text-primary flex-shrink-0" />
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/food?edit-goals=1")}
+                className="w-full flex items-center justify-between rounded-xl bg-muted/40 border border-border/40 px-4 py-3 text-left hover:bg-muted/60 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Apple className="h-4 w-4 text-primary" />
+                  <p className="text-sm font-semibold text-foreground">Edit nutrition goals</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               </motion.button>
             </div>
           ) : prefs && splitMeta ? (
