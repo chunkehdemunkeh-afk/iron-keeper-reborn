@@ -101,8 +101,10 @@ export function computeMuscleRecovery(
   sleepLogs: SleepLog[],
   splitId: string | null | undefined,
   now: Date = new Date(),
+  settings: RecoverySettings = DEFAULT_RECOVERY_SETTINGS,
 ): Record<MuscleRegion, MuscleState> {
   const intensity = getIntensityMultiplier(splitId);
+  const windowMult = recoveryWindowMultiplier(settings.model);
   const result: Record<MuscleRegion, MuscleState> = {} as any;
 
   // Initialise all regions as fully rested
@@ -124,14 +126,14 @@ export function computeMuscleRecovery(
     if (volume <= 0) continue;
 
     const workoutDate = new Date(set.workoutDate);
-    const sleepMod = getSleepModifier(workoutDate, sleepLogs);
+    const sleepMod = getSleepModifier(workoutDate, sleepLogs, settings.sleepWeight);
     const fatiguePerSet = volume * intensity * sleepMod;
 
     const hits = getMusclesWorked(set.exerciseId, set.exerciseName, set.targetMuscle, set.muscleGroup);
 
     const apply = (region: MuscleRegion, weight: number) => {
       const elapsedHours = (now.getTime() - workoutDate.getTime()) / 3_600_000;
-      const recoveryHours = RECOVERY_HOURS[region];
+      const recoveryHours = RECOVERY_HOURS[region] * windowMult;
       // Decay: 0 = just done, 1 = fully recovered
       const decay = Math.min(1, Math.max(0, elapsedHours / recoveryHours));
       // Fatigue contribution scaled by how recent (newer = more fatigue remaining)
