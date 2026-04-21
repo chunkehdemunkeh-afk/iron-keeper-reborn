@@ -164,6 +164,16 @@ export default function Profile() {
             className="hidden"
             onChange={handleAvatarFile}
           />
+          {profile?.avatar_url && (
+            <button
+              type="button"
+              onClick={handleRemoveAvatar}
+              disabled={removingAvatar || uploadingAvatar}
+              className="mt-2 text-[11px] text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+            >
+              {removingAvatar ? "Removing…" : "Remove photo"}
+            </button>
+          )}
           {editingName ? (
             <div className="mt-3 flex items-center gap-2">
               <input
