@@ -8,6 +8,7 @@ import { fetchRecentSets, fetchSleepLogs } from "@/lib/cloud-data";
 import { computeMuscleRecovery, statusColor } from "@/lib/recovery";
 import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
 import { getUserPreferences } from "@/lib/user-preferences";
+import { getRecoverySettings } from "@/lib/recovery-settings";
 import BodyDiagram from "./BodyDiagram";
 
 export default function RecoveryCard() {
