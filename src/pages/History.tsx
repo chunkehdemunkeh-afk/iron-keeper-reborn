@@ -338,21 +338,62 @@ export default function History() {
               <h3 className="text-sm font-semibold text-foreground">
                 {format(selectedDate, "EEEE, d MMMM yyyy")}
               </h3>
-              {selectedWorkouts.length === 0 ? (
+              {selectedWorkouts.length === 0 && selectedActivities.length === 0 ? (
                 <div className="glass-card rounded-xl p-6 text-center">
-                  <p className="text-sm text-muted-foreground">No workouts on this date</p>
+                  <p className="text-sm text-muted-foreground">Nothing logged on this date</p>
                 </div>
               ) : (
-                selectedWorkouts.map((w) => (
-                  <WorkoutCard
-                    key={w.id}
-                    workout={w}
-                    icon={workoutIcons[w.workoutId] || Dumbbell}
-                    onDelete={handleDelete}
-                    isDeleting={deletingId === w.id}
-                    defaultExpanded={true}
-                  />
-                ))
+                <>
+                  {selectedWorkouts.map((w) => (
+                    <WorkoutCard
+                      key={w.id}
+                      workout={w}
+                      icon={workoutIcons[w.workoutId] || Dumbbell}
+                      onDelete={handleDelete}
+                      isDeleting={deletingId === w.id}
+                      defaultExpanded={true}
+                    />
+                  ))}
+                  {selectedActivities.map((a) => {
+                    const Icon = ACTIVITY_ICONS[a.activityType] || Pencil;
+                    const preset = ACTIVITY_PRESETS.find((p) => p.type === a.activityType);
+                    const isRest = a.activityType === "rest";
+                    return (
+                      <div key={a.id} className="glass-card rounded-xl p-3 flex items-center gap-3">
+                        <div
+                          className={`flex h-9 w-9 items-center justify-center rounded-lg flex-shrink-0 ${
+                            isRest ? "bg-blue-500/10 text-blue-400" : "bg-amber-500/10 text-amber-400"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {a.label || preset?.label || a.activityType}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {a.duration > 0 && (
+                              <>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" /> {a.duration}m
+                                </span>
+                                {a.notes && <span>·</span>}
+                              </>
+                            )}
+                            {a.notes && <span className="truncate">{a.notes}</span>}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteActivity(a.id)}
+                          aria-label="Delete activity"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </>
               )}
             </motion.div>
           )}
