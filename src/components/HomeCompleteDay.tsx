@@ -32,9 +32,9 @@ export default function HomeCompleteDay({ date }: Props) {
   const [showSummary, setShowSummary] = useState(false);
   const [dayCompleted, setDayCompleted] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    Promise.all([
+  const fetchStatus = async () => {
+    if (!user) return null;
+    const [weightRes, foodRes, waterRes, goalsRes, completed] = await Promise.all([
       supabase
         .from("body_measurements")
         .select("body_weight")
@@ -59,37 +59,59 @@ export default function HomeCompleteDay({ date }: Props) {
         .eq("user_id", user.id)
         .maybeSingle(),
       hasDayBeenCompleted(targetDate),
-    ]).then(([weightRes, foodRes, waterRes, goalsRes, completed]) => {
-      const foods = foodRes.data || [];
-      const totals = foods.reduce(
-        (a: any, l: any) => ({
-          calories: a.calories + l.calories,
-          protein: a.protein + l.protein_g,
-          carbs: a.carbs + l.carbs_g,
-          fat: a.fat + l.fat_g,
-        }),
-        { calories: 0, protein: 0, carbs: 0, fat: 0 }
-      );
-      const waterEntries = waterRes.data || [];
-      const waterMl = waterEntries.reduce((s: number, e: any) => s + e.amount_ml, 0);
-      const goals = goalsRes.data as any;
-      const latestWeight = weightRes.data?.[0]?.body_weight ?? null;
+    ]);
 
-      setStatus({
-        weightLogged: (weightRes.data || []).length > 0,
-        foodLogged: foods.length > 0,
-        waterLogged: waterMl > 0,
-        totals,
-        goals: goals
-          ? { calories: goals.calories, protein_g: goals.protein_g, carbs_g: goals.carbs_g, fat_g: goals.fat_g }
-          : null,
-        waterMl,
-        waterGoalMl: goals?.water_goal_ml || 2500,
-        weightKg: latestWeight ? Number(latestWeight) : null,
-      });
+    const foods = foodRes.data || [];
+    const totals = foods.reduce(
+      (a: any, l: any) => ({
+        calories: a.calories + l.calories,
+        protein: a.protein + l.protein_g,
+        carbs: a.carbs + l.carbs_g,
+        fat: a.fat + l.fat_g,
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
+    const waterEntries = waterRes.data || [];
+    const waterMl = waterEntries.reduce((s: number, e: any) => s + e.amount_ml, 0);
+    const goals = goalsRes.data as any;
+    const latestWeight = weightRes.data?.[0]?.body_weight ?? null;
 
-      setDayCompleted(completed as boolean);
-    });
+    const next: DayStatus = {
+      weightLogged: (weightRes.data || []).length > 0,
+      foodLogged: foods.length > 0,
+      waterLogged: waterMl > 0,
+      totals,
+      goals: goals
+        ? { calories: goals.calories, protein_g: goals.protein_g, carbs_g: goals.carbs_g, fat_g: goals.fat_g }
+        : null,
+      waterMl,
+      waterGoalMl: goals?.water_goal_ml || 2500,
+      weightKg: latestWeight ? Number(latestWeight) : null,
+    };
+
+    setStatus(next);
+    setDayCompleted(completed as boolean);
+    return next;
+  };
+
+  useEffect(() => {
+    fetchStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, targetDate]);
+
+  // Refresh when tab regains focus / page becomes visible (catches edits in other components)
+  useEffect(() => {
+    const onFocus = () => fetchStatus();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") fetchStatus();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, targetDate]);
 
   if (!user || !status) return null;
@@ -99,8 +121,17 @@ export default function HomeCompleteDay({ date }: Props) {
   if (!status.foodLogged) missingItems.push({ icon: Utensils, label: "Nutrition" });
   if (!status.waterLogged) missingItems.push({ icon: Droplet, label: "Water intake" });
 
-  const handleComplete = () => {
-    if (missingItems.length > 0) {
+  const handleComplete = async () => {
+    // Refetch right before deciding so we don't show stale "missing" warnings
+    // when the user has just logged water/food/weight elsewhere on the page.
+    const fresh = await fetchStatus();
+    const s = fresh ?? status;
+    if (!s) return;
+
+    const stillMissing =
+      !s.weightLogged || !s.foodLogged || !s.waterLogged;
+
+    if (stillMissing) {
       setShowWarning(true);
     } else {
       openSummary();
@@ -197,34 +228,41 @@ export default function HomeCompleteDay({ date }: Props) {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-lg bg-card border-t border-border rounded-t-2xl p-5"
-              style={{ paddingBottom: "max(24px, env(safe-area-inset-bottom))" }}
+              className="relative w-full max-w-lg bg-card border-t border-border rounded-t-2xl flex flex-col"
+              style={{ maxHeight: "85dvh" }}
             >
-              <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-4" />
+              {/* Scrollable body */}
+              <div className="overflow-y-auto flex-1 p-5">
+                <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-4" />
 
-              <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle className="h-5 w-5 text-amber-400" />
-                <h2 className="text-lg font-bold font-display">Before you finish...</h2>
+                <div className="flex items-center gap-2 mb-4">
+                  <AlertTriangle className="h-5 w-5 text-amber-400" />
+                  <h2 className="text-lg font-bold font-display">Before you finish...</h2>
+                </div>
+
+                <p className="text-sm text-muted-foreground mb-4">
+                  You haven't logged the following:
+                </p>
+
+                <div className="space-y-2">
+                  {missingItems.map(({ icon: Icon, label }) => (
+                    <div key={label} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
+                      <Icon className="h-4 w-4 text-amber-400" />
+                      <span className="text-sm text-foreground">{label}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <p className="text-sm text-muted-foreground mb-4">
-                You haven't logged the following:
-              </p>
-
-              <div className="space-y-2 mb-5">
-                {missingItems.map(({ icon: Icon, label }) => (
-                  <div key={label} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
-                    <Icon className="h-4 w-4 text-amber-400" />
-                    <span className="text-sm text-foreground">{label}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowWarning(false)} className="flex-1">
+              {/* Sticky footer — always reachable above the home indicator */}
+              <div
+                className="shrink-0 px-5 pt-3 border-t border-border/40 bg-card flex gap-2"
+                style={{ paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}
+              >
+                <Button variant="outline" onClick={() => setShowWarning(false)} className="flex-1 h-11">
                   Go back &amp; log
                 </Button>
-                <Button onClick={openSummary} className="flex-1">
+                <Button onClick={openSummary} className="flex-1 h-11">
                   Complete anyway
                 </Button>
               </div>
