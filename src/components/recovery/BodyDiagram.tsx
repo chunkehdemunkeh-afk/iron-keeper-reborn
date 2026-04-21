@@ -16,131 +16,206 @@ interface Props {
 }
 
 /**
- * Anatomical body diagram. Coordinate space: 220 x 440.
- * The silhouette is a single smooth path; muscle regions are layered on top
- * with rounded, symmetrical shapes drawn with cubic Bezier curves for a
- * polished, illustrated look (rather than the previous angular quadratics).
+ * Anatomical body diagram inspired by reference muscle charts.
+ * Coordinate space: 240 x 460. Centerline x=120.
+ *
+ * Anatomy notes:
+ *  - V-taper: shoulders ~width 168px, waist ~84px
+ *  - Pecs: clear cleavage gap, lower outline curves under
+ *  - Abs: 3 pairs of segments visible (rectus abdominis blocks)
+ *  - Lats: classic wing shape from armpit to obliques
+ *  - Quads: teardrop with vastus medialis bulge near knee
+ *  - Calves (back): diamond/heart-shaped gastrocnemius
  */
 
-// Smooth front silhouette — head, neck, shoulders, torso, arms, legs.
+// Front silhouette — broader shoulders, V-taper torso, athletic legs.
 const FRONT_SILHOUETTE =
-  "M110,18 C122,18 132,28 132,42 C132,52 128,60 122,64 C128,66 134,70 138,76 " +
-  "C146,78 160,82 168,94 C176,106 180,124 180,140 C180,156 178,172 174,184 " +
-  "C172,190 168,192 164,190 C162,188 160,184 159,178 " +
-  "C159,196 162,214 164,232 C166,254 162,278 160,300 C158,328 156,360 154,392 " +
-  "C154,406 150,418 142,420 C134,420 130,410 128,398 C126,376 126,348 124,320 " +
-  "C122,296 118,272 114,260 C112,256 108,256 106,260 C102,272 98,296 96,320 " +
-  "C94,348 94,376 92,398 C90,410 86,420 78,420 C70,418 66,406 66,392 " +
-  "C64,360 62,328 60,300 C58,278 54,254 56,232 C58,214 61,196 61,178 " +
-  "C60,184 58,188 56,190 C52,192 48,190 46,184 C42,172 40,156 40,140 " +
-  "C40,124 44,106 52,94 C60,82 74,78 82,76 C86,70 92,66 98,64 " +
-  "C92,60 88,52 88,42 C88,28 98,18 110,18 Z";
+  "M120,18 " +
+  // head
+  "C133,18 144,29 144,44 C144,55 140,63 134,68 " +
+  // neck → trapezius slope to shoulder
+  "C140,72 146,76 152,80 " +
+  // delts cap
+  "C168,84 184,94 192,112 " +
+  // upper arm outer edge → elbow
+  "C196,128 198,148 196,168 " +
+  "C194,184 190,200 188,212 " +
+  // forearm outer
+  "C190,228 192,244 188,260 " +
+  // wrist / hand
+  "C184,264 178,264 174,260 " +
+  "C170,244 168,228 166,212 " +
+  // back up inside of arm into armpit / lat
+  "C170,196 174,180 174,162 " +
+  // side / oblique sweep down to hip
+  "C176,182 178,202 178,222 " +
+  "C178,236 174,250 170,262 " +
+  // hip flare
+  "C172,278 172,294 168,310 " +
+  // outer thigh
+  "C166,328 162,348 160,370 " +
+  "C158,392 156,418 152,438 " +
+  // foot region
+  "C150,448 142,452 136,448 " +
+  "C132,440 130,428 128,414 " +
+  "C126,392 124,368 122,346 " +
+  // crotch dip
+  "C120,338 120,338 118,346 " +
+  "C116,368 114,392 112,414 " +
+  "C110,428 108,440 104,448 " +
+  "C98,452 90,448 88,438 " +
+  "C84,418 82,392 80,370 " +
+  "C78,348 74,328 72,310 " +
+  "C68,294 68,278 70,262 " +
+  "C66,250 62,236 62,222 " +
+  "C62,202 64,182 66,162 " +
+  "C66,180 70,196 74,212 " +
+  "C72,228 70,244 66,260 " +
+  "C62,264 56,264 52,260 " +
+  "C48,244 50,228 52,212 " +
+  "C50,200 46,184 44,168 " +
+  "C42,148 44,128 48,112 " +
+  "C56,94 72,84 88,80 " +
+  "C94,76 100,72 106,68 " +
+  "C100,63 96,55 96,44 " +
+  "C96,29 107,18 120,18 Z";
 
-const BACK_SILHOUETTE = FRONT_SILHOUETTE; // same outline; muscles differ
+// Back silhouette — same outline (back uses different muscle layer).
+const BACK_SILHOUETTE = FRONT_SILHOUETTE;
 
-// FRONT muscle paths — symmetrical pairs use M…Z M…Z combined.
-// Coordinate space: 220 x 440. Centerline x=110.
+// FRONT muscle paths
 const FRONT_PATHS: Record<string, string> = {
-  // Neck
-  neck: "M100,64 C104,68 116,68 120,64 C122,70 122,74 120,78 C116,80 104,80 100,78 C98,74 98,70 100,64 Z",
+  // Decorative neck shading
+  neck:
+    "M108,68 C112,72 128,72 132,68 C134,74 134,78 132,82 C128,84 112,84 108,82 C106,78 106,74 108,68 Z",
 
-  // Traps (front, small slope from neck to shoulder)
-  traps: "M96,76 C90,80 82,84 78,90 C84,86 92,84 100,82 C100,78 98,76 96,76 Z " +
-         "M124,76 C130,80 138,84 142,90 C136,86 128,84 120,82 C120,78 122,76 124,76 Z",
+  // Traps (front collar) — small slope from neck to shoulder
+  traps:
+    "M104,76 C96,80 86,84 80,90 C92,86 102,84 110,82 C112,78 110,76 104,76 Z " +
+    "M136,76 C144,80 154,84 160,90 C148,86 138,84 130,82 C128,78 130,76 136,76 Z",
 
-  // Front delts — rounded caps on shoulders
-  front_delts: "M82,86 C72,90 64,98 62,110 C70,108 78,104 84,98 C86,94 86,90 82,86 Z " +
-               "M138,86 C148,90 156,98 158,110 C150,108 142,104 136,98 C134,94 134,90 138,86 Z",
+  // Front delts — round shoulder caps
+  front_delts:
+    "M88,84 C76,90 66,100 64,116 C74,114 84,108 92,100 C94,94 92,86 88,84 Z " +
+    "M152,84 C164,90 174,100 176,116 C166,114 156,108 148,100 C146,94 148,86 152,84 Z",
 
   // Side delts — outer cap (slim, tucked outside front delts)
-  side_delts: "M62,108 C58,112 56,120 58,128 C62,126 66,122 68,116 C68,112 66,108 62,108 Z " +
-              "M158,108 C162,112 164,120 162,128 C158,126 154,122 152,116 C152,112 154,108 158,108 Z",
+  side_delts:
+    "M64,114 C58,120 56,132 60,142 C66,140 70,134 72,124 C72,118 70,112 64,114 Z " +
+    "M176,114 C182,120 184,132 180,142 C174,140 170,134 168,124 C168,118 170,112 176,114 Z",
 
-  // Chest — two pec halves with cleavage gap
-  chest: "M86,98 C92,94 100,92 108,94 C110,98 110,118 108,128 C100,134 90,134 82,128 " +
-         "C78,118 80,106 86,98 Z " +
-         "M134,98 C128,94 120,92 112,94 C110,98 110,118 112,128 C120,134 130,134 138,128 " +
-         "C142,118 140,106 134,98 Z",
+  // Pecs — pectoralis major, with cleavage gap and natural lower curve
+  chest:
+    "M94,98 C104,94 116,92 118,98 C118,118 116,134 110,140 C100,144 88,142 80,134 " +
+    "C76,122 80,108 88,100 C90,98 92,98 94,98 Z " +
+    "M146,98 C136,94 124,92 122,98 C122,118 124,134 130,140 C140,144 152,142 160,134 " +
+    "C164,122 160,108 152,100 C150,98 148,98 146,98 Z",
 
-  // Biceps
-  biceps: "M58,128 C54,134 52,148 56,160 C62,162 68,158 70,150 C70,140 66,130 60,128 Z " +
-          "M162,128 C166,134 168,148 164,160 C158,162 152,158 150,150 C150,140 154,130 160,128 Z",
+  // Biceps — bulged upper arm front
+  biceps:
+    "M52,138 C46,148 44,168 50,182 C58,184 64,178 66,168 C66,154 60,140 54,138 Z " +
+    "M188,138 C194,148 196,168 190,182 C182,184 176,178 174,168 C174,154 180,140 186,138 Z",
 
-  // Forearms
-  forearms: "M52,164 C48,178 46,196 50,212 C56,212 62,206 62,194 C62,182 58,170 54,164 Z " +
-            "M168,164 C172,178 174,196 170,212 C164,212 158,206 158,194 C158,182 162,170 166,164 Z",
+  // Forearms (brachioradialis + flexors, tapered to wrist)
+  forearms:
+    "M48,188 C44,206 44,228 48,248 C54,254 60,252 62,242 C62,222 58,202 52,188 Z " +
+    "M192,188 C196,206 196,228 192,248 C186,254 180,252 178,242 C178,222 182,202 188,188 Z",
 
-  // Abs — rectus abdominis with subtle 6-pack divisions implied via segments
-  abs: "M96,134 C104,132 116,132 124,134 C126,146 126,158 124,170 " +
-       "C116,172 104,172 96,170 C94,158 94,146 96,134 Z",
+  // Abs — rectus abdominis with 6-pack segments (defined as 3 horizontal divots)
+  abs:
+    // Outer block
+    "M104,144 C112,142 128,142 136,144 C138,160 138,178 136,196 C128,200 112,200 104,196 " +
+    "C102,178 102,160 104,144 Z",
 
-  // Obliques — flanking abs
-  obliques: "M84,134 C90,138 94,150 94,168 C90,176 82,176 78,168 C76,154 78,142 84,134 Z " +
-            "M136,134 C130,138 126,150 126,168 C130,176 138,176 142,168 C144,154 142,142 136,134 Z",
+  // Obliques — flanks beside abs
+  obliques:
+    "M88,144 C96,152 100,170 100,196 C96,206 84,206 80,196 C76,180 80,160 88,144 Z " +
+    "M152,144 C144,152 140,170 140,196 C144,206 156,206 160,196 C164,180 160,160 152,144 Z",
 
-  // Quads — long teardrop shapes
-  quads: "M76,200 C84,198 96,200 102,206 C104,224 102,250 96,278 C88,282 78,280 74,274 " +
-         "C72,252 72,222 76,200 Z " +
-         "M144,200 C136,198 124,200 118,206 C116,224 118,250 124,278 C132,282 142,280 146,274 " +
-         "C148,252 148,222 144,200 Z",
+  // Quads — teardrop shape with vastus medialis (inner head bulge near knee)
+  quads:
+    "M76,222 C90,218 102,220 108,228 C110,250 108,278 102,310 " +
+    "C96,316 86,316 80,310 C76,300 70,288 68,272 " +
+    "C66,254 70,236 76,222 Z " +
+    "M164,222 C150,218 138,220 132,228 C130,250 132,278 138,310 " +
+    "C144,316 154,316 160,310 C164,300 170,288 172,272 " +
+    "C174,254 170,236 164,222 Z",
 
-  // Calves (front view shows tibialis area — keep as calves block, slimmer)
-  calves: "M82,294 C90,294 96,298 98,306 C98,326 94,348 88,362 C82,362 76,358 74,348 " +
-          "C72,332 76,308 82,294 Z " +
-          "M138,294 C130,294 124,298 122,306 C122,326 126,348 132,362 C138,362 144,358 146,348 " +
-          "C148,332 144,308 138,294 Z",
+  // Calves (front view = tibialis anterior region — slimmer than back calves)
+  calves:
+    "M82,326 C92,326 100,332 102,342 C102,362 98,386 92,402 " +
+    "C84,402 78,398 76,388 C74,372 76,346 82,326 Z " +
+    "M158,326 C148,326 140,332 138,342 C138,362 142,386 148,402 " +
+    "C156,402 162,398 164,388 C166,372 164,346 158,326 Z",
 };
 
+// BACK muscle paths
 const BACK_PATHS: Record<string, string> = {
-  neck: "M100,64 C104,68 116,68 120,64 C122,70 122,74 120,78 C116,80 104,80 100,78 C98,74 98,70 100,64 Z",
+  neck:
+    "M108,68 C112,72 128,72 132,68 C134,74 134,78 132,82 C128,84 112,84 108,82 C106,78 106,74 108,68 Z",
 
-  // Traps (back, large kite shape from neck down between shoulder blades)
-  traps: "M110,72 C124,72 138,80 144,90 C140,96 130,100 110,100 C90,100 80,96 76,90 " +
-         "C82,80 96,72 110,72 Z",
+  // Traps — large kite from neck to mid-back between shoulder blades
+  traps:
+    "M120,74 C136,74 152,82 160,94 " +
+    "C156,102 144,108 120,110 C96,108 84,102 80,94 " +
+    "C88,82 104,74 120,74 Z",
 
-  // Rear delts — rounded caps on back of shoulders
-  rear_delts: "M82,90 C72,94 64,102 62,114 C70,112 78,108 84,102 C86,98 86,92 82,90 Z " +
-              "M138,90 C148,94 156,102 158,114 C150,112 142,108 136,102 C134,98 134,92 138,90 Z",
+  // Rear delts — round caps on back of shoulders
+  rear_delts:
+    "M88,90 C76,94 66,104 64,118 C74,116 84,110 92,104 C94,98 92,90 88,90 Z " +
+    "M152,90 C164,94 174,104 176,118 C166,116 156,110 148,104 C146,98 148,90 152,90 Z",
 
-  // Lats — wing shape under armpits, tapering to waist
-  lats: "M76,100 C70,106 64,118 62,134 C62,154 70,170 80,176 C90,178 92,166 92,148 " +
-        "C92,128 88,110 82,102 C80,100 78,100 76,100 Z " +
-        "M144,100 C150,106 156,118 158,134 C158,154 150,170 140,176 C130,178 128,166 128,148 " +
-        "C128,128 132,110 138,102 C140,100 142,100 144,100 Z",
+  // Lats — classic wing shape from armpit, sweeping to oblique
+  lats:
+    "M82,108 C74,118 66,134 64,154 C66,176 76,194 90,200 " +
+    "C100,200 104,188 104,170 C104,148 98,128 90,114 " +
+    "C88,110 84,108 82,108 Z " +
+    "M158,108 C166,118 174,134 176,154 C174,176 164,194 150,200 " +
+    "C140,200 136,188 136,170 C136,148 142,128 150,114 " +
+    "C152,110 156,108 158,108 Z",
 
-  // Mid back (rhomboids/spinal erectors area between traps and lower back)
-  mid_back: "M94,102 C104,100 116,100 126,102 C128,118 128,134 126,150 " +
-            "C116,152 104,152 94,150 C92,134 92,118 94,102 Z",
+  // Mid back (rhomboids / between shoulder blades)
+  mid_back:
+    "M104,114 C112,112 128,112 136,114 C140,134 140,154 136,172 " +
+    "C128,176 112,176 104,172 C100,154 100,134 104,114 Z",
 
-  // Lower back / spinal erectors
-  lower_back: "M96,154 C104,152 116,152 124,154 C126,166 126,180 124,192 " +
-              "C116,194 104,194 96,192 C94,180 94,166 96,154 Z",
+  // Lower back (erector spinae lumbar)
+  lower_back:
+    "M106,176 C112,174 128,174 134,176 C138,190 138,208 134,222 " +
+    "C128,226 112,226 106,222 C102,208 102,190 106,176 Z",
 
   // Triceps (back of arms — fuller than biceps)
-  triceps: "M56,128 C52,134 50,150 54,164 C62,166 70,160 72,150 C72,138 66,128 60,128 Z " +
-           "M164,128 C168,134 170,150 166,164 C158,166 150,160 148,150 C148,138 154,128 160,128 Z",
+  triceps:
+    "M50,138 C44,150 42,170 48,184 C58,186 66,180 68,168 C68,154 62,138 54,138 Z " +
+    "M190,138 C196,150 198,170 192,184 C182,186 174,180 172,168 C172,154 178,138 186,138 Z",
 
   // Forearms
-  forearms: "M52,168 C48,182 46,200 50,216 C56,216 62,210 62,198 C62,186 58,174 54,168 Z " +
-            "M168,168 C172,182 174,200 170,216 C164,216 158,210 158,198 C158,186 162,174 166,168 Z",
+  forearms:
+    "M48,188 C44,206 44,228 48,248 C54,254 60,252 62,242 C62,222 58,202 52,188 Z " +
+    "M192,188 C196,206 196,228 192,248 C186,254 180,252 178,242 C178,222 182,202 188,188 Z",
 
   // Glutes — two rounded cheeks
-  glutes: "M88,196 C100,194 108,196 110,202 C108,218 102,228 92,232 C82,230 76,222 76,210 " +
-          "C76,202 82,198 88,196 Z " +
-          "M132,196 C120,194 112,196 110,202 C112,218 118,228 128,232 C138,230 144,222 144,210 " +
-          "C144,202 138,198 132,196 Z",
+  glutes:
+    "M98,228 C112,224 120,228 120,236 C118,256 110,268 96,272 " +
+    "C84,270 78,260 78,246 C78,236 86,230 98,228 Z " +
+    "M142,228 C128,224 120,228 120,236 C122,256 130,268 144,272 " +
+    "C156,270 162,260 162,246 C162,236 154,230 142,228 Z",
 
-  // Hamstrings
-  hamstrings: "M78,236 C88,234 98,238 102,246 C104,264 100,284 94,300 C86,302 78,298 76,290 " +
-              "C72,272 72,250 78,236 Z " +
-              "M142,236 C132,234 122,238 118,246 C116,264 120,284 126,300 C134,302 142,298 144,290 " +
-              "C148,272 148,250 142,236 Z",
+  // Hamstrings — long muscles down back of thigh, slight inner/outer split
+  hamstrings:
+    "M80,278 C92,274 104,278 108,288 C110,310 106,332 100,352 " +
+    "C92,356 82,352 78,344 C72,324 72,298 80,278 Z " +
+    "M160,278 C148,274 136,278 132,288 C130,310 134,332 140,352 " +
+    "C148,356 158,352 162,344 C168,324 168,298 160,278 Z",
 
-  // Calves
-  calves: "M80,304 C90,302 98,306 100,314 C100,334 96,356 90,370 C82,370 76,366 74,356 " +
-          "C72,340 76,318 80,304 Z " +
-          "M140,304 C130,302 122,306 120,314 C120,334 124,356 130,370 C138,370 144,366 146,356 " +
-          "C148,340 144,318 140,304 Z",
+  // Calves — gastrocnemius diamond/heart shape
+  calves:
+    "M84,358 C94,356 102,360 104,372 " +
+    "C106,388 100,408 92,420 " +
+    "C84,418 78,412 76,400 C74,386 78,370 84,358 Z " +
+    "M156,358 C146,356 138,360 136,372 " +
+    "C134,388 140,408 148,420 " +
+    "C156,418 162,412 164,400 C166,386 162,370 156,358 Z",
 };
 
 /** Returns which view ("front" or "back") best displays a given muscle region. */
@@ -159,13 +234,11 @@ export default function BodyDiagram({
 }: Props) {
   const [selected, setSelected] = useState<MuscleRegion | null>(null);
   const gradId = useId();
-  const glowId = useId();
   const shadeId = useId();
-  const pulseId = useId();
 
   const paths = view === "front" ? FRONT_PATHS : BACK_PATHS;
   const silhouette = view === "front" ? FRONT_SILHOUETTE : BACK_SILHOUETTE;
-  const dim = size === "lg" ? "w-full max-w-[280px]" : "w-full max-w-[120px]";
+  const dim = size === "lg" ? "w-full max-w-[300px]" : "w-full max-w-[130px]";
 
   const hasHighlight = !!highlighted && !!paths[highlighted];
 
@@ -180,17 +253,17 @@ export default function BodyDiagram({
         key={region}
         d={d}
         fill={fill}
-        stroke={isHighlighted ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.35)"}
-        strokeWidth={isHighlighted ? 1.4 : 0.6}
+        stroke={isHighlighted ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.4)"}
+        strokeWidth={isHighlighted ? 1.6 : 0.7}
         strokeLinejoin="round"
         initial={false}
-        animate={{ fill, opacity: dimmed ? 0.32 : 1 }}
+        animate={{ fill, opacity: dimmed ? 0.3 : 1 }}
         transition={{ duration: 0.4, ease: "easeInOut" }}
         onClick={interactive ? () => setSelected(region) : undefined}
         style={{
           cursor: interactive ? "pointer" : "default",
           filter: isHighlighted
-            ? `drop-shadow(0 0 6px ${fill}) drop-shadow(0 0 12px ${fill})`
+            ? `drop-shadow(0 0 6px ${fill}) drop-shadow(0 0 14px ${fill})`
             : undefined,
         }}
         whileTap={interactive ? { scale: 0.97 } : undefined}
@@ -202,59 +275,52 @@ export default function BodyDiagram({
     <>
       <div className={`mx-auto ${dim}`}>
         <svg
-          viewBox="0 0 220 440"
+          viewBox="0 0 240 460"
           className="w-full h-auto"
           style={{ filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.35))" }}
         >
           <defs>
-            {/* Body base gradient — subtle vertical light */}
             <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="hsl(220 16% 22%)" />
-              <stop offset="55%" stopColor="hsl(220 18% 15%)" />
-              <stop offset="100%" stopColor="hsl(220 20% 10%)" />
+              <stop offset="0%" stopColor="hsl(220 16% 24%)" />
+              <stop offset="55%" stopColor="hsl(220 18% 16%)" />
+              <stop offset="100%" stopColor="hsl(220 20% 11%)" />
             </linearGradient>
-            {/* Inner shading on muscles (multiply-style depth) */}
             <radialGradient id={shadeId} cx="50%" cy="35%" r="65%">
               <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
               <stop offset="60%" stopColor="rgba(255,255,255,0)" />
               <stop offset="100%" stopColor="rgba(0,0,0,0.25)" />
             </radialGradient>
-            {/* Soft edge glow for the whole silhouette */}
-            <filter id={glowId} x="-10%" y="-10%" width="120%" height="120%">
-              <feGaussianBlur stdDeviation="1.2" />
-            </filter>
           </defs>
 
           {/* Silhouette base */}
           <path
             d={silhouette}
             fill={`url(#${gradId})`}
-            stroke="hsl(220 14% 28%)"
-            strokeWidth={1.2}
+            stroke="hsl(220 14% 30%)"
+            strokeWidth={1.4}
             strokeLinejoin="round"
           />
 
-          {/* Subtle inner highlight along the centerline for depth */}
+          {/* Subtle inner contour highlight */}
           <path
             d={silhouette}
             fill="none"
-            stroke="hsl(220 18% 30%)"
+            stroke="hsl(220 18% 32%)"
             strokeWidth={0.6}
             strokeLinejoin="round"
-            opacity={0.6}
+            opacity={0.55}
           />
 
           {/* Muscle regions */}
           <g>
             {Object.entries(paths).map(([region, d]) => {
               if (region === "neck") {
-                // Neck is decorative (not a tracked region) — render flat shading
                 return (
                   <path
                     key="neck"
                     d={d}
                     fill="hsl(220 16% 18%)"
-                    stroke="hsl(220 14% 26%)"
+                    stroke="hsl(220 14% 28%)"
                     strokeWidth={0.6}
                   />
                 );
@@ -263,15 +329,49 @@ export default function BodyDiagram({
             })}
           </g>
 
-          {/* Overlay highlight pass — subtle radial light on torso for dimension */}
+          {/* Ab segment dividers (subtle lines for the 6-pack illusion) — front view only */}
+          {view === "front" && !hasHighlight && (
+            <g
+              stroke="rgba(0,0,0,0.35)"
+              strokeWidth={0.8}
+              strokeLinecap="round"
+              fill="none"
+              pointerEvents="none"
+            >
+              {/* Linea alba (vertical centerline) */}
+              <line x1="120" y1="146" x2="120" y2="196" />
+              {/* Three horizontal divisions */}
+              <line x1="106" y1="160" x2="134" y2="160" />
+              <line x1="106" y1="174" x2="134" y2="174" />
+              <line x1="106" y1="188" x2="134" y2="188" />
+              {/* Pec separation */}
+              <line x1="120" y1="100" x2="120" y2="138" />
+            </g>
+          )}
+
+          {/* Back: spine line for definition */}
+          {view === "back" && !hasHighlight && (
+            <line
+              x1="120"
+              y1="112"
+              x2="120"
+              y2="222"
+              stroke="rgba(0,0,0,0.35)"
+              strokeWidth={0.8}
+              strokeLinecap="round"
+              pointerEvents="none"
+            />
+          )}
+
+          {/* Overlay highlight pass — soft radial light on torso for dimension */}
           <ellipse
-            cx="110"
-            cy="160"
-            rx="70"
-            ry="120"
+            cx="120"
+            cy="170"
+            rx="78"
+            ry="130"
             fill={`url(#${shadeId})`}
             pointerEvents="none"
-            opacity={0.55}
+            opacity={0.5}
           />
         </svg>
       </div>
