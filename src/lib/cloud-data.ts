@@ -646,21 +646,49 @@ export async function fetchRecentSets(daysBack: number = 7): Promise<RecentSetRe
 
   if (!sets) return [];
 
-  // Build a quick targetMuscle lookup from WORKOUTS + ACCESSORY_ROUTINES
+  // Build lookups by exercise base id (so suffixed rows like "up1-mag-grip"
+  // resolve to the underlying "up1" definition).
   const targetMap: Record<string, string> = {};
+  const nameMap: Record<string, string> = {};
   WORKOUTS.forEach((w) => w.exercises.forEach((ex: any) => {
     if (ex.targetMuscle) targetMap[ex.id] = ex.targetMuscle;
+    if (ex.name) nameMap[ex.id] = ex.name;
   }));
   ACCESSORY_ROUTINES.forEach((r) => r.exercises.forEach((ex: any) => {
     if (ex.targetMuscle) targetMap[ex.id] = ex.targetMuscle;
+    if (ex.name) nameMap[ex.id] = ex.name;
   }));
+  // Substitutes have real names too
+  Object.values(EXERCISE_SUBSTITUTIONS).flat().forEach((sub: any) => {
+    if (sub.name) nameMap[sub.id] = sub.name;
+  });
+  Object.values(ACCESSORY_SUBSTITUTIONS).flat().forEach((sub: any) => {
+    if (sub.name) nameMap[sub.id] = sub.name;
+  });
 
-  return sets.map((s: any) => ({
-    exerciseId: s.exercise_id,
-    exerciseName: s.exercise_name,
-    targetMuscle: targetMap[s.exercise_id],
-    weight: Number(s.weight),
-    reps: s.reps,
-    workoutDate: dateMap[s.workout_history_id],
-  }));
+  // Library exercises supply muscleGroup
+  const muscleGroupMap: Record<string, string> = {};
+  EXERCISE_LIBRARY.forEach((ex) => {
+    muscleGroupMap[ex.id] = ex.muscleGroup;
+    if (ex.name) nameMap[ex.id] = ex.name;
+  });
+
+  return sets.map((s: any) => {
+    const baseId = stripExerciseSuffixes(s.exercise_id);
+    // Prefer the real exercise name from our maps if the stored row has
+    // name == id (legacy cable-attachment rows). Falls back to whatever was stored.
+    const realName =
+      s.exercise_name && s.exercise_name !== s.exercise_id
+        ? s.exercise_name
+        : nameMap[baseId] ?? nameMap[s.exercise_id] ?? s.exercise_name ?? "";
+    return {
+      exerciseId: s.exercise_id,
+      exerciseName: realName,
+      targetMuscle: targetMap[baseId] ?? targetMap[s.exercise_id],
+      muscleGroup: muscleGroupMap[baseId] ?? muscleGroupMap[s.exercise_id],
+      weight: Number(s.weight),
+      reps: s.reps,
+      workoutDate: dateMap[s.workout_history_id],
+    };
+  });
 }
