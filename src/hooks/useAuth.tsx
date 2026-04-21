@@ -9,6 +9,7 @@ type AuthContextType = {
   profile: { display_name: string | null; avatar_url: string | null } | null;
   signOut: () => Promise<void>;
   updateDisplayName: (name: string) => Promise<{ error: string | null }>;
+  updateAvatar: (file: File) => Promise<{ error: string | null }>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   signOut: async () => {},
   updateDisplayName: async () => ({ error: null }),
+  updateAvatar: async () => ({ error: null }),
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -86,8 +88,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   };
 
+  const updateAvatar = async (file: File) => {
+    if (!user) return { error: "Not signed in" };
+    if (!file.type.startsWith("image/")) return { error: "File must be an image" };
+    if (file.size > 5 * 1024 * 1024) return { error: "Image must be smaller than 5MB" };
+
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (uploadError) return { error: uploadError.message };
+
+    const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+    const publicUrl = pub.publicUrl;
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ avatar_url: publicUrl })
+      .eq("user_id", user.id);
+    if (updateError) return { error: updateError.message };
+
+    setProfile((p) => ({ display_name: p?.display_name ?? null, avatar_url: publicUrl }));
+    return { error: null };
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, profile, signOut, updateDisplayName }}>
+    <AuthContext.Provider value={{ user, session, loading, profile, signOut, updateDisplayName, updateAvatar }}>
       {children}
     </AuthContext.Provider>
   );
