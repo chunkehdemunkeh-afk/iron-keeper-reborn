@@ -42,6 +42,11 @@ export function isGKSplit(userId: string): boolean {
   return getUserPreferences(userId)?.splitId === "gk";
 }
 
+/** Returns true if the user opted out of having a workout programme. */
+export function isNoWorkoutMode(userId: string): boolean {
+  return getUserPreferences(userId)?.splitId === "none";
+}
+
 /** Returns the ISO date of the Monday of the week containing dateStr. */
 function getWeekMonday(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");

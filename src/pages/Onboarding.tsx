@@ -1,9 +1,9 @@
 import { useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronLeft, Check, Shuffle, Dumbbell } from "lucide-react";
+import { ChevronRight, ChevronLeft, Check, Shuffle, Dumbbell, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { TRAINING_SPLITS, getSplitsForDays, type TrainingSplit, type SplitDay } from "@/lib/training-splits";
+import { getSplitsForDays, type TrainingSplit, type SplitDay } from "@/lib/training-splits";
 import { saveUserPreferences } from "@/lib/user-preferences";
 import { WORKOUTS } from "@/lib/workout-data";
 import { toast } from "sonner";
@@ -41,13 +41,52 @@ export default function Onboarding() {
 
   const [step, setStep] = useState(0); // 0=days, 1=split, 2=custom, 3=summary
   const [days, setDays] = useState<number | null>(null);
+  const [noWorkout, setNoWorkout] = useState(false);
   const [selectedSplit, setSelectedSplit] = useState<TrainingSplit | null>(null);
   const [customSchedule, setCustomSchedule] = useState<SplitDay[]>([]);
 
   const availableSplits = days ? getSplitsForDays(days) : [];
 
+  const handleSelectDays = (d: number) => {
+    setNoWorkout(false);
+    setDays(d);
+  };
+
+  const handleSelectNoWorkout = () => {
+    setNoWorkout(true);
+    setDays(null);
+    setSelectedSplit(null);
+  };
+
+  const continueAfterOnboarding = () => {
+    if (!user) return;
+    if (fromProfile) {
+      navigate("/profile", { replace: true });
+    } else {
+      localStorage.setItem(`ik-onboarding-tip-${user.id}`, "pending");
+      navigate("/onboarding/nutrition", { replace: true });
+    }
+  };
+
+  const handleNoWorkoutFinish = () => {
+    if (!user) return;
+    saveUserPreferences(user.id, {
+      onboardingComplete: true,
+      daysPerWeek: 0,
+      splitId: "none",
+      splitName: "No workout plan",
+      schedule: [],
+    });
+    toast.success(fromProfile ? "Switched to health tracking only" : "You're all set!");
+    continueAfterOnboarding();
+  };
+
   // ── Step navigation ──────────────────────────────────────────────────────
   const goNext = useCallback(() => {
+    if (step === 0 && noWorkout) {
+      handleNoWorkoutFinish();
+      return;
+    }
     if (step === 0 && days) setStep(1);
     else if (step === 1 && selectedSplit) {
       if (selectedSplit.id === "custom") {
@@ -64,7 +103,7 @@ export default function Onboarding() {
     } else if (step === 2) {
       setStep(3);
     }
-  }, [step, days, selectedSplit]);
+  }, [step, days, selectedSplit, noWorkout]);
 
   const goBack = useCallback(() => {
     if (step === 2) setStep(1);
@@ -85,12 +124,12 @@ export default function Onboarding() {
       splitName: selectedSplit.name,
       schedule,
     });
-    toast.success(fromProfile ? "Training split updated! 💪" : "Programme saved! Let's get to work 💪");
-    navigate(fromProfile ? "/profile" : "/", { replace: true });
+    toast.success(fromProfile ? "Training split updated!" : "Programme saved! Let's get to work");
+    continueAfterOnboarding();
   };
 
   const canGoNext =
-    (step === 0 && days !== null) ||
+    (step === 0 && (days !== null || noWorkout)) ||
     (step === 1 && selectedSplit !== null) ||
     (step === 2 && customSchedule.length > 0) ||
     step === 3;
