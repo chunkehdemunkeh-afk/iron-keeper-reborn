@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek } from "date-fns";
 import WorkoutCard from "@/components/history/WorkoutCard";
 import SummaryCards from "@/components/history/SummaryCards";
+import HelpButton from "@/components/demo/HelpButton";
 
 export default function History() {
   const [searchParams] = useSearchParams();
@@ -132,16 +133,19 @@ export default function History() {
           <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-display text-2xl font-bold">
             History
           </motion.h1>
-          {history.length > 0 && (
-            <div className="flex gap-2">
-              <button onClick={handleExportWorkouts} className="flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 rounded-full px-2.5 py-1 hover:bg-primary/20 transition-colors">
-                <Download className="h-3 w-3" /> CSV
-              </button>
-              <button onClick={handleExportSets} className="flex items-center gap-1 text-xs font-medium text-muted-foreground bg-muted/50 rounded-full px-2.5 py-1 hover:bg-muted/70 transition-colors">
-                <Download className="h-3 w-3" /> Sets
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <HelpButton />
+            {history.length > 0 && (
+              <>
+                <button onClick={handleExportWorkouts} className="flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 rounded-full px-2.5 py-1 hover:bg-primary/20 transition-colors">
+                  <Download className="h-3 w-3" /> CSV
+                </button>
+                <button onClick={handleExportSets} className="flex items-center gap-1 text-xs font-medium text-muted-foreground bg-muted/50 rounded-full px-2.5 py-1 hover:bg-muted/70 transition-colors">
+                  <Download className="h-3 w-3" /> Sets
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Filter chips */}

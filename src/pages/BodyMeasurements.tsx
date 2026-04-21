@@ -4,6 +4,7 @@ import { Plus, Scale, TrendingUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import HelpButton from "@/components/demo/HelpButton";
 
 export default function BodyMeasurements() {
   const [measurements, setMeasurements] = useState<any[]>([]);
@@ -74,12 +75,15 @@ export default function BodyMeasurements() {
           >
             Body Tracking
           </motion.h1>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 rounded-full px-3 py-1.5"
-          >
-            <Plus className="h-3.5 w-3.5" /> Log
-          </button>
+          <div className="flex items-center gap-1">
+            <HelpButton />
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 rounded-full px-3 py-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" /> Log
+            </button>
+          </div>
         </div>
 
         {/* Add measurement form */}
