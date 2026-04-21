@@ -6,6 +6,7 @@ import {
   type SetRecord,
   type SleepLog,
 } from "@/lib/recovery";
+import { getMusclesWorked, stripExerciseSuffixes } from "@/lib/muscle-mapping";
 
 describe("getIntensityMultiplier", () => {
   it("returns 1.30 for PPL", () => expect(getIntensityMultiplier("ppl")).toBe(1.30));
