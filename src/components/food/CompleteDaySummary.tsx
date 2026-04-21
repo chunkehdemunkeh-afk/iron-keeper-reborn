@@ -143,7 +143,7 @@ export default function CompleteDaySummary({ open, onClose, totals, goals, water
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-end justify-center"
+          className="fixed inset-0 z-[60] flex items-end justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -155,7 +155,7 @@ export default function CompleteDaySummary({ open, onClose, totals, goals, water
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="relative w-full max-w-lg bg-card border-t border-border rounded-t-2xl flex flex-col"
-            style={{ maxHeight: "85dvh" }}
+            style={{ maxHeight: "85dvh", marginBottom: "calc(56px + env(safe-area-inset-bottom))" }}
           >
             {/* Scrollable content */}
             <div className="overflow-y-auto flex-1 p-5">
