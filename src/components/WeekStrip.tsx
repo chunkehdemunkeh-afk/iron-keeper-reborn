@@ -345,13 +345,13 @@ export default function WeekStrip() {
                 );
               })}
 
-              {/* Allow adding activity on a day that already has a workout */}
-              {selectedDay !== null && selectedDay <= todayIndex && !selectedActivities.length && (
+              {/* Allow adding additional activities even when the day already has one */}
+              {selectedDay !== null && selectedDay <= todayIndex && (
                 <button
                   onClick={() => { setLogSheetDay(selectedDay); setSelectedDay(null); }}
                   className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-border/60 text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
                 >
-                  <Plus className="h-3 w-3" /> Log activity
+                  <Plus className="h-3 w-3" /> {selectedActivities.length || selectedWorkouts.length ? "Add another activity" : "Log activity"}
                 </button>
               )}
             </div>
