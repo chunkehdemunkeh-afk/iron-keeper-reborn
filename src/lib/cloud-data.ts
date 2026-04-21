@@ -354,13 +354,14 @@ export type ActivityLog = {
 };
 
 const ACTIVITY_PRESETS = [
-  { type: "rest", label: "Rest Day", emoji: "😴" },
-  { type: "running", label: "Running", emoji: "🏃" },
-  { type: "swimming", label: "Swimming", emoji: "🏊" },
-  { type: "cycling", label: "Cycling", emoji: "🚴" },
-  { type: "yoga", label: "Yoga", emoji: "🧘" },
-  { type: "football", label: "Football", emoji: "⚽" },
-  { type: "other", label: "Other", emoji: "✏️" },
+  { type: "rest", label: "Rest Day", icon: "bed" },
+  { type: "walk", label: "Walk", icon: "footprints" },
+  { type: "running", label: "Running", icon: "run" },
+  { type: "swimming", label: "Swimming", icon: "waves" },
+  { type: "cycling", label: "Cycling", icon: "bike" },
+  { type: "yoga", label: "Yoga", icon: "flower" },
+  { type: "football", label: "Football", icon: "circle-dot" },
+  { type: "other", label: "Other", icon: "pencil" },
 ];
 export { ACTIVITY_PRESETS };
 
