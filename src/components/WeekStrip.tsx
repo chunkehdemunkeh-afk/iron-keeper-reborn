@@ -312,10 +312,13 @@ export default function WeekStrip() {
                 return (
                   <SwipeToDeleteCard key={a.id} onDelete={() => handleDeleteActivity(a.id)}>
                     <div className="flex items-center gap-3">
-                      <div className={`flex h-9 w-9 items-center justify-center rounded-lg flex-shrink-0 text-lg ${
-                        a.activityType === "rest" ? "bg-blue-500/10" : "bg-amber-500/10"
+                      <div className={`flex h-9 w-9 items-center justify-center rounded-lg flex-shrink-0 ${
+                        a.activityType === "rest" ? "bg-blue-500/10 text-blue-400" : "bg-amber-500/10 text-amber-400"
                       }`}>
-                        {preset?.emoji || "📝"}
+                        {(() => {
+                          const Icon = ACTIVITY_ICONS[a.activityType] || Pencil;
+                          return <Icon className="h-4 w-4" />;
+                        })()}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground">{a.label || preset?.label || a.activityType}</p>
