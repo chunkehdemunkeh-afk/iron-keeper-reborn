@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchActivityLogs } from "@/lib/cloud-data";
-import { Flame, Target, Award, LogOut, Scale, BookOpen, User, Settings2, ChevronRight } from "lucide-react";
+import { Flame, Target, Award, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import RecoveryTips from "@/components/RecoveryTips";
 import { useQuery } from "@tanstack/react-query";
 import { getUserPreferences, computeWeeklyStreak } from "@/lib/user-preferences";
 import { WORKOUTS } from "@/lib/workout-data";
+import { toast } from "sonner";
+import { hapticSuccess } from "@/lib/haptics";
 
 /** Per-split intensity label and training focus for the Training Programme card. */
 const SPLIT_META: Record<string, { intensity: string; intensityColor: string; focus: string }> = {
