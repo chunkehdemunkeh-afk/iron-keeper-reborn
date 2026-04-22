@@ -290,6 +290,16 @@ export default function WorkoutSession() {
   useEffect(() => { historicalPRsRef.current = historicalPRs as any; }, [historicalPRs]);
   const sessionBestRef = useRef<Record<string, { weight: number; reps: number }>>({}); // best hit this session
 
+  // Strength profile (for tier-crossing celebration)
+  const { data: strengthProfile } = useQuery({
+    queryKey: ["strength-profile", user?.id],
+    queryFn: fetchStrengthProfile,
+    enabled: !!user,
+    staleTime: 5 * 60_000,
+  });
+  const strengthProfileRef = useRef(strengthProfile);
+  useEffect(() => { strengthProfileRef.current = strengthProfile; }, [strengthProfile]);
+
   const autoSaveKey = workout ? `workout-autosave-${workout.id}` : null;
 
   // Auto-save session state to localStorage
