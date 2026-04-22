@@ -593,6 +593,7 @@ export type Database = {
           exercise_name: string
           id: string
           reps: number
+          set_type: string
           user_id: string
           weight: number
           workout_history_id: string
@@ -603,6 +604,7 @@ export type Database = {
           exercise_name?: string
           id?: string
           reps?: number
+          set_type?: string
           user_id: string
           weight?: number
           workout_history_id: string
@@ -613,6 +615,7 @@ export type Database = {
           exercise_name?: string
           id?: string
           reps?: number
+          set_type?: string
           user_id?: string
           weight?: number
           workout_history_id?: string
