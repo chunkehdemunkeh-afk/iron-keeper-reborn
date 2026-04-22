@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Scale, TrendingUp, TrendingDown, Minus, Plus, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { format, subDays } from "date-fns";
+import { format, subDays, startOfWeek, endOfWeek } from "date-fns";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -76,18 +76,20 @@ export default function HomeWeightTracker({ date }: Props) {
   const cutoffDate = format(subDays(new Date(), rangeDays), "yyyy-MM-dd");
   const filtered = measurements.filter((m) => m.date >= cutoffDate);
 
-  // Weekly average (last 7 days)
-  const last7 = measurements.filter((m) => m.date >= format(subDays(new Date(), 7), "yyyy-MM-dd"));
-  const weekAvg = last7.length > 0 ? last7.reduce((s, m) => s + m.weight, 0) / last7.length : null;
+  // Weekly average — Monday to Sunday (current calendar week)
+  const thisWeekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const thisWeekEnd = format(endOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const thisWeek = measurements.filter((m) => m.date >= thisWeekStart && m.date <= thisWeekEnd);
+  const weekAvg = thisWeek.length > 0 ? thisWeek.reduce((s, m) => s + m.weight, 0) / thisWeek.length : null;
 
   // Latest weight
   const latest = measurements.length > 0 ? measurements[measurements.length - 1] : null;
 
-  // Trend: compare this week avg to previous week avg
-  const prev7Start = format(subDays(new Date(), 14), "yyyy-MM-dd");
-  const prev7End = format(subDays(new Date(), 7), "yyyy-MM-dd");
-  const prev7 = measurements.filter((m) => m.date >= prev7Start && m.date < prev7End);
-  const prevAvg = prev7.length > 0 ? prev7.reduce((s, m) => s + m.weight, 0) / prev7.length : null;
+  // Trend: compare this week avg to previous calendar week avg (Mon-Sun)
+  const prevWeekStart = format(startOfWeek(subDays(new Date(), 7), { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const prevWeekEnd = format(endOfWeek(subDays(new Date(), 7), { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const prevWeek = measurements.filter((m) => m.date >= prevWeekStart && m.date <= prevWeekEnd);
+  const prevAvg = prevWeek.length > 0 ? prevWeek.reduce((s, m) => s + m.weight, 0) / prevWeek.length : null;
 
   const trendDiff = weekAvg && prevAvg ? weekAvg - prevAvg : null;
   const TrendIcon = trendDiff === null ? Minus : trendDiff > 0.1 ? TrendingUp : trendDiff < -0.1 ? TrendingDown : Minus;
