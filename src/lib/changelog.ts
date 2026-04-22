@@ -12,14 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.75",
+    version: "1.6.76",
     date: "2026-04-22",
-    title: "1RM Test Sets",
+    title: "Updates & Fixes",
     changes: [
-      "New 1RM button on every exercise — log a real 1-rep max attempt",
-      "True 1RM singles now beat Epley estimates for tier placement",
-      "Test 1RM shortcut on each lift in the Strength Level card",
-      "PR celebration shows 'True 1RM!' for max attempts",
+      "Save plan in Lovable",
     ],
   },
   {
