@@ -18,9 +18,12 @@ serve(async (req) => {
   try {
     let offUrl: string;
     if (barcode) {
+      // Barcode endpoint stays unchanged — uk subdomain works well for UK barcodes
       offUrl = `https://uk.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json?fields=code,product_name,brands,serving_size,nutriments,image_front_small_url`;
     } else {
-      offUrl = `https://uk.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20&page=${page}&fields=code,product_name,brands,serving_size,nutriments,image_front_small_url`;
+      // Upgraded v2 search API: country-filtered to UK, sorted by popularity, brand-aware
+      const fields = "code,product_name,brands,brands_tags,categories_tags_en,serving_size,nutriments,image_front_small_url";
+      offUrl = `https://world.openfoodfacts.org/api/v2/search?search_terms=${encodeURIComponent(query)}&countries_tags_en=united-kingdom&sort_by=popularity_key&page_size=25&page=${page}&fields=${fields}`;
     }
 
     const res = await fetch(offUrl, {
