@@ -5,7 +5,7 @@ import { hapticSuccess } from "@/lib/haptics";
 import { TIER_COLORS, TIER_LABELS, type Tier } from "@/lib/strength-standards";
 
 interface Props {
-  pr: { name: string; weight: number; reps: number; tierUp?: { tier: Tier; liftName: string } | null } | null;
+  pr: { name: string; weight: number; reps: number; tierUp?: { tier: Tier; liftName: string } | null; isTrue1RM?: boolean } | null;
   onDismiss: () => void;
 }
 
@@ -71,7 +71,9 @@ export default function PRCelebration({ pr, onDismiss }: Props) {
               </motion.div>
 
               <div>
-                <p className="font-display text-2xl font-bold text-amber-400 tracking-widest uppercase">New PR!</p>
+                <p className="font-display text-2xl font-bold text-amber-400 tracking-widest uppercase">
+                  {pr.isTrue1RM ? "True 1RM!" : "New PR!"}
+                </p>
                 <p className="text-sm text-muted-foreground mt-0.5">{pr.name}</p>
               </div>
 
