@@ -37,10 +37,82 @@ const edgeFunctionHeaders = {
 
 // ---------- FatSecret helpers ----------
 
-/** Extract the numeric gram value from strings like "30g", "1 serving (30g)", "100 g". Returns null if undetectable. */
+/** Map of unicode fraction characters to their decimal values. */
+const UNICODE_FRACTIONS: Record<string, number> = {
+  "½": 0.5, "⅓": 1 / 3, "⅔": 2 / 3,
+  "¼": 0.25, "¾": 0.75,
+  "⅕": 0.2, "⅖": 0.4, "⅗": 0.6, "⅘": 0.8,
+  "⅙": 1 / 6, "⅚": 5 / 6,
+  "⅐": 1 / 7, "⅛": 0.125, "⅜": 0.375, "⅝": 0.625, "⅞": 0.875,
+  "⅑": 1 / 9, "⅒": 0.1,
+};
+
+/** Parse a numeric token that may be:
+ *  - a decimal: "1.5", "0.25"
+ *  - an ascii fraction: "1/2", "3/4"
+ *  - a mixed number: "1 1/2"
+ *  - a unicode fraction: "½", "¾"
+ *  - a mixed unicode: "1½"
+ *  Returns NaN when nothing parseable is found. */
+function parseNumericToken(raw: string): number {
+  const s = raw.trim();
+  if (!s) return NaN;
+
+  // Pure unicode fraction or whole + unicode fraction (e.g. "1½")
+  const uniMatch = s.match(/^(\d+)?\s*([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅐⅛⅜⅝⅞⅑⅒])$/);
+  if (uniMatch) {
+    const whole = uniMatch[1] ? parseInt(uniMatch[1], 10) : 0;
+    return whole + (UNICODE_FRACTIONS[uniMatch[2]] ?? 0);
+  }
+
+  // Mixed ascii fraction: "1 1/2"
+  const mixedMatch = s.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)$/);
+  if (mixedMatch) {
+    const denom = parseInt(mixedMatch[3], 10);
+    if (denom > 0) return parseInt(mixedMatch[1], 10) + parseInt(mixedMatch[2], 10) / denom;
+  }
+
+  // Plain ascii fraction: "1/2"
+  const fracMatch = s.match(/^(\d+)\s*\/\s*(\d+)$/);
+  if (fracMatch) {
+    const denom = parseInt(fracMatch[2], 10);
+    if (denom > 0) return parseInt(fracMatch[1], 10) / denom;
+  }
+
+  // Plain decimal/integer
+  const num = parseFloat(s);
+  return isNaN(num) ? NaN : num;
+}
+
+/** Extract the gram value from OFF/FatSecret serving strings. Handles formats like:
+ *  - "30g", "100 g", "1 serving (30g)"
+ *  - "½ bar (25g)", "1/2 pack (40g)"  → uses the parenthesised gram value
+ *  - "2 pieces (40g)", "3 cookies (45g)" → uses the parenthesised gram value
+ *  - "½ bar" (no parens, no g)        → null (cannot resolve without unit weight)
+ *  - "1.5 portions (60g)"             → uses the parenthesised gram value
+ *  Returns null if no gram value can be determined. */
 function parseServingGrams(s: string): number | null {
-  const m = s.match(/(\d+(?:\.\d+)?)\s*g\b/i);
-  return m ? parseFloat(m[1]) : null;
+  if (!s) return null;
+
+  // 1. Prefer a value explicitly inside parentheses: "(40g)", "( 25 g )"
+  //    This wins because the parenthesised value is the authoritative gram weight
+  //    even when the leading quantity is fractional or a non-mass unit ("2 pieces").
+  const paren = s.match(/\(\s*([\d.]+)\s*g\s*\)/i);
+  if (paren) {
+    const v = parseFloat(paren[1]);
+    if (!isNaN(v) && v > 0) return v;
+  }
+
+  // 2. Otherwise try to read "<number> g" anywhere in the string, where the number
+  //    may be a unicode fraction, ascii fraction, mixed number, or decimal.
+  //    Examples that match: "½ g" (rare), "1 1/2 g", "30g", "1.5 g".
+  const numMatch = s.match(/((?:\d+\s+)?\d+\s*\/\s*\d+|\d+(?:\.\d+)?|[½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅐⅛⅜⅝⅞⅑⅒]|\d+[½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅐⅛⅜⅝⅞⅑⅒])\s*g\b/i);
+  if (numMatch) {
+    const v = parseNumericToken(numMatch[1]);
+    if (!isNaN(v) && v > 0) return v;
+  }
+
+  return null;
 }
 
 function r1(n: number) { return Math.round(n * 10) / 10; }
