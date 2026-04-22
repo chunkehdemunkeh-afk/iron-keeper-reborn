@@ -23,6 +23,7 @@ import { getUserPreferences } from "@/lib/user-preferences";
 import { useRecoverySettings } from "@/hooks/useRecoverySettings";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import { useState } from "react";
+import PhotosTab from "@/components/progress/PhotosTab";
 
 function PRSwipeRow({ exId, pr, onDelete }: { exId: string; pr: any; onDelete: () => void }) {
   const x = useMotionValue(0);
@@ -301,7 +302,8 @@ export default function Progress() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = searchParams.get("tab") === "recovery" ? "recovery" : "stats";
+  const tabParam = searchParams.get("tab");
+  const tab = tabParam === "recovery" || tabParam === "photos" ? tabParam : "stats";
 
   const { data: history = [], isLoading: historyLoading } = useQuery({
     queryKey: ["workout-history", user?.id],
@@ -395,10 +397,15 @@ export default function Progress() {
             setSearchParams(next, { replace: true });
           }}
         >
-          <TabsList className="grid grid-cols-2 w-full">
+          <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="stats">Stats</TabsTrigger>
+            <TabsTrigger value="photos">Photos</TabsTrigger>
             <TabsTrigger value="recovery">Recovery</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="photos" className="mt-4">
+            <PhotosTab />
+          </TabsContent>
 
           <TabsContent value="stats" className="space-y-5 mt-4">
             {/* Summary cards */}
