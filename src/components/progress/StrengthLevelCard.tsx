@@ -12,6 +12,8 @@ import {
   TIER_LABELS,
   epley1RM,
   getStrengthRating,
+  inferLiftId,
+  overallTier,
   type LiftDef,
   type LiftId,
   type StrengthRating,
