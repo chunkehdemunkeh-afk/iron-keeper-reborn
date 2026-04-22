@@ -43,19 +43,14 @@ export default function StrengthLevelCard() {
 
   const ratings = useMemo(() => {
     if (!profile?.bodyweight || !profile?.sex) return [];
-    // Best estimated 1RM per canonical lift (across matching exercise IDs / names)
-    const bestPerLift: Record<LiftId, number> = {} as any;
-    Object.entries(prs).forEach(([exId, pr]) => {
-      const liftId = inferLiftId(exId, pr.name);
-      if (!liftId) return;
-      const oneRm = epley1RM(pr.weight, pr.reps);
-      if (!bestPerLift[liftId] || oneRm > bestPerLift[liftId]) {
-        bestPerLift[liftId] = oneRm;
-      }
-    });
     const out: { rating: StrengthRating; oneRm: number }[] = [];
     RATED_LIFTS.forEach((def) => {
-      const oneRm = bestPerLift[def.id];
+      // Prefers a real 1RM-test single when present, else best Epley estimate.
+      const oneRm = bestOneRmForLift(
+        prs,
+        (exId, name) => inferLiftId(exId, name) === def.id,
+        epley1RM,
+      );
       if (!oneRm || oneRm <= 0) return;
       const rating = getStrengthRating(def.id, oneRm, {
         bodyweight: profile.bodyweight!,
