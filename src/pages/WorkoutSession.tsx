@@ -610,6 +610,8 @@ export default function WorkoutSession() {
 
       const currentWeight = newSets[setIdx].weight;
       const currentReps = newSets[setIdx].reps;
+      const currentSetType = newSets[setIdx].setType;
+      const isOneRmTest = currentSetType === "1rm_test";
       const exercise = allExercises.find(e => e.id === exerciseId);
       const override = exerciseOverrides[exerciseId];
       const effectiveId = getEffectiveExId(exerciseId);
@@ -626,7 +628,7 @@ export default function WorkoutSession() {
         const isWeightPR = tracksWeight && currentWeight > 0 && currentWeight > Math.max(histWeight, sessBest.weight);
         const isRepPR = currentReps > Math.max(histReps, sessBest.reps);
 
-        if (isWeightPR || isRepPR) {
+        if (isWeightPR || isRepPR || isOneRmTest) {
           sessionBestRef.current[effectiveId] = {
             weight: Math.max(sessBest.weight, currentWeight),
             reps: Math.max(sessBest.reps, currentReps),
@@ -641,7 +643,8 @@ export default function WorkoutSession() {
               const prevBest = Math.max(histWeight, sessBest.weight);
               const prevReps = histReps || sessBest.reps || 1;
               const prevOneRm = prevBest > 0 ? epley1RM(prevBest, prevReps) : 0;
-              const newOneRm = epley1RM(currentWeight, currentReps);
+              // For 1RM tests, use the actual lifted weight (no Epley estimation needed)
+              const newOneRm = isOneRmTest ? currentWeight : epley1RM(currentWeight, currentReps);
               const inputs = { bodyweight: profile.bodyweight, sex: profile.sex, age: profile.age };
               const prevRating = prevOneRm > 0 ? getStrengthRating(liftId, prevOneRm, inputs) : null;
               const newRating = getStrengthRating(liftId, newOneRm, inputs);
@@ -651,35 +654,42 @@ export default function WorkoutSession() {
             }
           }
 
-          setCelebrationPR({ name: displayName, weight: currentWeight, reps: currentReps, tierUp });
+          setCelebrationPR({ name: displayName, weight: currentWeight, reps: currentReps, tierUp, isTrue1RM: isOneRmTest });
         }
       }
 
-      // Determine rep thresholds based on exercise target range
-      const isAccessoryRange = exercise?.reps?.includes("12-15");
-      const upThreshold = isAccessoryRange ? 15 : 12;
-      const downThreshold = isAccessoryRange ? 12 : 8;
+      // 1RM-test sets skip the working-set rep-range warnings (a max attempt
+      // intentionally lives outside the normal 8-12/12-15 ranges).
+      if (!isOneRmTest) {
+        // Determine rep thresholds based on exercise target range
+        const isAccessoryRange = exercise?.reps?.includes("12-15");
+        const upThreshold = isAccessoryRange ? 15 : 12;
+        const downThreshold = isAccessoryRange ? 12 : 8;
 
-      // Suggest weight increase if reps hit the top of the range
-      if (newSets[setIdx].reps >= upThreshold) {
-        const exName = exercise?.name || exerciseId;
-        toast.info(`💪 ${exName} — Set ${setIdx + 1} hit ${newSets[setIdx].reps} reps! Consider adding weight next session.`);
-        setWeightUpSuggestions(prev => {
-          const existing = prev[exerciseId] || [];
-          if (!existing.includes(setIdx)) return { ...prev, [exerciseId]: [...existing, setIdx] };
-          return prev;
-        });
-      }
+        // Suggest weight increase if reps hit the top of the range
+        if (newSets[setIdx].reps >= upThreshold) {
+          const exName = exercise?.name || exerciseId;
+          toast.info(`💪 ${exName} — Set ${setIdx + 1} hit ${newSets[setIdx].reps} reps! Consider adding weight next session.`);
+          setWeightUpSuggestions(prev => {
+            const existing = prev[exerciseId] || [];
+            if (!existing.includes(setIdx)) return { ...prev, [exerciseId]: [...existing, setIdx] };
+            return prev;
+          });
+        }
 
-      // Suggest weight decrease if reps fell below the bottom of the range
-      if (newSets[setIdx].reps > 0 && newSets[setIdx].reps < downThreshold) {
-        const exName = exercise?.name || exerciseId;
-        toast.warning(`⚠️ ${exName} — Set ${setIdx + 1} only ${newSets[setIdx].reps} reps. Consider lowering weight next session.`);
-        setWeightDownSuggestions(prev => {
-          const existing = prev[exerciseId] || [];
-          if (!existing.includes(setIdx)) return { ...prev, [exerciseId]: [...existing, setIdx] };
-          return prev;
-        });
+        // Suggest weight decrease if reps fell below the bottom of the range
+        if (newSets[setIdx].reps > 0 && newSets[setIdx].reps < downThreshold) {
+          const exName = exercise?.name || exerciseId;
+          toast.warning(`⚠️ ${exName} — Set ${setIdx + 1} only ${newSets[setIdx].reps} reps. Consider lowering weight next session.`);
+          setWeightDownSuggestions(prev => {
+            const existing = prev[exerciseId] || [];
+            if (!existing.includes(setIdx)) return { ...prev, [exerciseId]: [...existing, setIdx] };
+            return prev;
+          });
+        }
+      } else {
+        // Longer default rest after a true 1RM attempt — these need real recovery.
+        setRestDuration(300);
       }
 
       // Auto-expand next exercise if this was the last set
@@ -691,7 +701,7 @@ export default function WorkoutSession() {
         }
       }
     }
-  }, [setLogs, exerciseOrder, allExercises, exerciseOverrides, getEffectiveExId]);
+  }, [setLogs, exerciseOrder, allExercises, exerciseOverrides, getEffectiveExId, cableAttachments]);
 
   const updateSetField = useCallback(
     (exerciseId: string, setIdx: number, field: "reps" | "weight", value: number) => {
