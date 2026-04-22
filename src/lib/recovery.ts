@@ -139,6 +139,7 @@ export function computeMuscleRecovery(
   const intensity = getIntensityMultiplier(splitId);
   const windowMult = recoveryWindowMultiplier(settings.model);
   const result: Record<MuscleRegion, MuscleState> = {} as any;
+  const accruedFatigue: Partial<Record<MuscleRegion, number>> = {};
 
   // Initialise all regions as fully rested
   for (const region of MUSCLE_REGIONS) {
@@ -176,11 +177,10 @@ export function computeMuscleRecovery(
       const remainingFatigue = (1 - decay) * weight;
 
       const state = result[region];
-      // Track the most fatiguing recent contribution
-      const candidateScore = 1 - Math.min(1, remainingFatigue / FATIGUE_NORMALISATION);
-      if (candidateScore < state.score) {
-        state.score = candidateScore;
-      }
+      // Accumulate fatigue across all sets in the recent window so multi-set
+      // sessions correctly compound on a muscle.
+      accruedFatigue[region] = (accruedFatigue[region] ?? 0) + remainingFatigue;
+
       // Track the most recent session — lastVolume stays as raw kg × reps for display.
       if (!state.lastWorkedAt || workoutDate > new Date(state.lastWorkedAt)) {
         state.lastWorkedAt = set.workoutDate;
@@ -192,6 +192,14 @@ export function computeMuscleRecovery(
 
     for (const region of hits.primary) apply(region, fatiguePerSet);
     for (const region of hits.secondary) apply(region, fatiguePerSet * SECONDARY_MULTIPLIER);
+  }
+
+  // Convert accrued fatigue → score (0..1, 1 = fresh)
+  for (const region of MUSCLE_REGIONS) {
+    const f = accruedFatigue[region] ?? 0;
+    if (f > 0) {
+      result[region].score = 1 - Math.min(1, f / FATIGUE_NORMALISATION);
+    }
   }
 
   // Derive status + hours-until-ready
