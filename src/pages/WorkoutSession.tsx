@@ -1281,13 +1281,17 @@ export default function WorkoutSession() {
                                 <span className="text-center">{isTimeBased ? "Timer" : repLabel}</span>
                                 <span className="text-center">✓</span>
                               </div>
-                              {setLogs[ex.id]?.map((set, si) => (
+                              {setLogs[ex.id]?.map((set, si) => {
+                                const is1RM = set.setType === "1rm_test";
+                                return (
                                 <SwipeableSetRow
                                   key={si}
                                   onDelete={() => deleteSet(ex.id, si)}
                                 >
-                                  <div className={`grid ${isTimeBased ? "grid-cols-[28px_1fr_36px]" : showWeight ? "grid-cols-[28px_1fr_1fr_36px]" : "grid-cols-[28px_1fr_36px]"} gap-x-1.5 items-center bg-background`}>
-                                    <span className={`text-xs font-medium text-center ${set.completed ? "text-success" : "text-muted-foreground"}`}>{si + 1}</span>
+                                  <div className={`grid ${isTimeBased ? "grid-cols-[28px_1fr_36px]" : showWeight ? "grid-cols-[28px_1fr_1fr_36px]" : "grid-cols-[28px_1fr_36px]"} gap-x-1.5 items-center bg-background ${is1RM ? "rounded-lg ring-1 ring-amber-400/50 bg-amber-400/5 px-1 py-0.5" : ""}`}>
+                                    <span className={`text-xs font-medium text-center ${set.completed ? "text-success" : is1RM ? "text-amber-400" : "text-muted-foreground"}`}>
+                                      {is1RM ? <Target className="h-3 w-3 inline" /> : si + 1}
+                                    </span>
                                     {isTimeBased ? (
                                       <ExerciseTimer
                                         targetSeconds={targetSec}
@@ -1299,25 +1303,43 @@ export default function WorkoutSession() {
                                     ) : (
                                       <>
                                         {showWeight && (
-                                          <input type="number" inputMode="decimal" placeholder={lastSessionData[getEffectiveExId(ex.id)]?.[si]?.weight?.toString() || "0"} value={set.weight || ""} onChange={(e) => updateSetField(ex.id, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                          <input type="number" inputMode="decimal" placeholder={is1RM ? "1RM" : (lastSessionData[getEffectiveExId(ex.id)]?.[si]?.weight?.toString() || "0")} value={set.weight || ""} onChange={(e) => updateSetField(ex.id, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : is1RM ? "bg-amber-400/10 border border-amber-400/40 text-amber-400 font-semibold placeholder:text-amber-400/50" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
                                         )}
-                                        <input type="number" inputMode="numeric" placeholder={lastSessionData[getEffectiveExId(ex.id)]?.[si]?.reps?.toString() || "0"} value={set.reps || ""} onChange={(e) => updateSetField(ex.id, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                        {is1RM ? (
+                                          <div className={`h-9 w-full rounded-lg px-2 text-sm text-center font-bold flex items-center justify-center ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-amber-400/10 border border-amber-400/40 text-amber-400"}`}>
+                                            1
+                                          </div>
+                                        ) : (
+                                          <input type="number" inputMode="numeric" placeholder={lastSessionData[getEffectiveExId(ex.id)]?.[si]?.reps?.toString() || "0"} value={set.reps || ""} onChange={(e) => updateSetField(ex.id, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                        )}
                                       </>
                                     )}
-                                    <button onClick={() => toggleSet(ex.id, si)} className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${set.completed ? "bg-success text-success-foreground glow-success" : "bg-muted/50 text-muted-foreground border border-border/50"}`}>
+                                    <button onClick={() => toggleSet(ex.id, si)} className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${set.completed ? "bg-success text-success-foreground glow-success" : is1RM ? "bg-amber-400/20 text-amber-400 border border-amber-400/40" : "bg-muted/50 text-muted-foreground border border-border/50"}`}>
                                       <Check className="h-3.5 w-3.5" />
                                     </button>
                                   </div>
                                 </SwipeableSetRow>
-                              ))}
-                              {/* Add Set button */}
-                              <button
-                                onClick={() => addSet(ex.id)}
-                                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-border/60 text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors mt-1"
-                              >
-                                <Plus className="h-3 w-3" />
-                                Add Set
-                              </button>
+                              );})}
+                              {/* Add Set + 1RM Test buttons */}
+                              <div className="flex gap-1.5 mt-1">
+                                <button
+                                  onClick={() => addSet(ex.id)}
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-border/60 text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                  Add Set
+                                </button>
+                                {!isTimeBased && showWeight && (
+                                  <button
+                                    onClick={() => add1RMTestSet(ex.id)}
+                                    className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-dashed border-amber-400/40 text-xs text-amber-400 hover:bg-amber-400/10 transition-colors"
+                                    title="Add a single 1-rep max test set"
+                                  >
+                                    <Target className="h-3 w-3" />
+                                    1RM
+                                  </button>
+                                )}
+                              </div>
                             </>
                           );
                         })()}
