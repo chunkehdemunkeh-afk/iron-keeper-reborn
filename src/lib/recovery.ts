@@ -51,7 +51,7 @@ const SECONDARY_MULTIPLIER = 0.4;
 // 5 working sets on a primary muscle ≈ 30 raw, then ×intensity (~1.3) ×sleep (~1.0)
 // ≈ ~40. We divide by ~75 so a typical hard session lands in the "fatigued" band
 // (score < 0.5), matching the previous calibration for an average user.
-const FATIGUE_NORMALISATION = 75;
+const FATIGUE_NORMALISATION = 60;
 
 /**
  * Convert a set to PR-relative fatigue units.
