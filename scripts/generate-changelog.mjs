@@ -38,8 +38,11 @@ function bumpPatch(version) {
   return parts.join(".");
 }
 
-// Commit messages we always ignore (technical / meta / too vague)
-const NOISE_RE = /^(work in progress|wip|changes?$|misc|temp|auto-update changelog|bump.?version|applied |switch(ed)? to|hard.?code|reverted?|updated?\s*$|added?\s*$|fix\s*$|test\s*$|restored?|fix pwa|pwa |service worker|sw |auto-update|skip waiting|controllerchange|networkfirst|cache|hash poll|ik-up|fix stale|deadlock|dual.?strat|registration|deployed?|rollback|co-authored)/i;
+// Commit messages we always ignore (technical / meta / too vague).
+// "Save plan in Lovable" and bare "Changes" are Lovable's placeholder commits
+// that carry no information about what actually changed — drop them so the
+// real descriptive commit (the first one of a Lovable turn) is what surfaces.
+const NOISE_RE = /^(work in progress|wip|changes?$|misc|temp|auto-update changelog|bump.?version|applied |switch(ed)? to|hard.?code|reverted?|updated?\s*$|added?\s*$|fix\s*$|test\s*$|restored?|fix pwa|pwa |service worker|sw |auto-update|skip waiting|controllerchange|networkfirst|cache|hash poll|ik-up|fix stale|deadlock|dual.?strat|registration|deployed?|rollback|co-authored|save plan in lovable|lovable plan|lovable tool use)/i;
 const INFRA_RE = /\b(sw\.js|vite\.config|github action|workbox|service.?worker|localstorage|flag|cache-buster|supabase|schema|migration|typescript|tsx|eslint|linting|npm|bun\.lock|package\.json)\b/i;
 
 // ── Read changelog ─────────────────────────────────────────────────────────────
