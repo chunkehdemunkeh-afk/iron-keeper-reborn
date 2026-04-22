@@ -34,14 +34,44 @@ export default function History() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [filterWorkoutId, setFilterWorkoutId] = useState<string | null>(searchParams.get("workout") || null);
+  const [reviews, setReviews] = useState<WeeklyReview[]>([]);
+  const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
+  const [openReviewWeek, setOpenReviewWeek] = useState<string | null>(null);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+
+  const refreshReviews = () => {
+    Promise.all([fetchAllWeeklyReviews(), fetchProgressPhotos()]).then(([r, p]) => {
+      setReviews(r);
+      setPhotos(p);
+    });
+  };
 
   useEffect(() => {
-    Promise.all([fetchWorkoutHistory(), fetchActivityLogs()]).then(([h, a]) => {
+    Promise.all([
+      fetchWorkoutHistory(),
+      fetchActivityLogs(),
+      fetchAllWeeklyReviews(),
+      fetchProgressPhotos(),
+    ]).then(([h, a, r, p]) => {
       setHistory(h);
       setActivities(a);
+      setReviews(r);
+      setPhotos(p);
       setLoading(false);
     });
   }, []);
+
+  const photoById = useMemo(() => {
+    const m: Record<string, ProgressPhoto> = {};
+    photos.forEach((p) => (m[p.id] = p));
+    return m;
+  }, [photos]);
+
+  const currentWeekStart = getCurrentWeekStart();
+  const previousWeekStart = getPreviousWeekStart();
+  const hasCurrentReview = reviews.some((r) => r.weekStart === currentWeekStart);
+  const hasPreviousReview = reviews.some((r) => r.weekStart === previousWeekStart);
+  const visibleReviews = showAllReviews ? reviews : reviews.slice(0, 4);
 
   const workoutIcons: Record<string, LucideIcon> = {};
   WORKOUTS.forEach((w) => (workoutIcons[w.id] = w.icon));
