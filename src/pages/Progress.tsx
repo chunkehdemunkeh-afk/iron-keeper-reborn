@@ -24,6 +24,18 @@ import { useRecoverySettings } from "@/hooks/useRecoverySettings";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import { useState } from "react";
 import PhotosTab from "@/components/progress/PhotosTab";
+import StrengthLevelCard from "@/components/progress/StrengthLevelCard";
+import { fetchStrengthProfile } from "@/lib/cloud-data";
+import {
+  RATED_LIFTS,
+  TIER_COLORS,
+  TIER_SHORT_LABELS,
+  epley1RM,
+  getStrengthRating,
+  inferLiftId,
+  type LiftId,
+  type StrengthRating,
+} from "@/lib/strength-standards";
 
 function PRSwipeRow({ exId, pr, onDelete }: { exId: string; pr: any; onDelete: () => void }) {
   const x = useMotionValue(0);
@@ -495,6 +507,9 @@ export default function Progress() {
 
             {/* PR trend per exercise */}
             <PRTrendChart />
+
+            {/* Strength Level (vs published standards) */}
+            <StrengthLevelCard />
 
             {/* Personal Records */}
             <motion.div
