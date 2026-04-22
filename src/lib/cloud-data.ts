@@ -56,7 +56,8 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
           exercise_name: exerciseMap[s.exerciseId] || s.exerciseId,
           reps: s.reps,
           weight: s.weight,
-        }))
+          set_type: s.setType ?? "working",
+        } as never))
       );
 
     if (setsError) {
