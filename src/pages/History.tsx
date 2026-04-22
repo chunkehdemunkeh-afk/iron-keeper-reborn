@@ -34,14 +34,44 @@ export default function History() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [filterWorkoutId, setFilterWorkoutId] = useState<string | null>(searchParams.get("workout") || null);
+  const [reviews, setReviews] = useState<WeeklyReview[]>([]);
+  const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
+  const [openReviewWeek, setOpenReviewWeek] = useState<string | null>(null);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+
+  const refreshReviews = () => {
+    Promise.all([fetchAllWeeklyReviews(), fetchProgressPhotos()]).then(([r, p]) => {
+      setReviews(r);
+      setPhotos(p);
+    });
+  };
 
   useEffect(() => {
-    Promise.all([fetchWorkoutHistory(), fetchActivityLogs()]).then(([h, a]) => {
+    Promise.all([
+      fetchWorkoutHistory(),
+      fetchActivityLogs(),
+      fetchAllWeeklyReviews(),
+      fetchProgressPhotos(),
+    ]).then(([h, a, r, p]) => {
       setHistory(h);
       setActivities(a);
+      setReviews(r);
+      setPhotos(p);
       setLoading(false);
     });
   }, []);
+
+  const photoById = useMemo(() => {
+    const m: Record<string, ProgressPhoto> = {};
+    photos.forEach((p) => (m[p.id] = p));
+    return m;
+  }, [photos]);
+
+  const currentWeekStart = getCurrentWeekStart();
+  const previousWeekStart = getPreviousWeekStart();
+  const hasCurrentReview = reviews.some((r) => r.weekStart === currentWeekStart);
+  const hasPreviousReview = reviews.some((r) => r.weekStart === previousWeekStart);
+  const visibleReviews = showAllReviews ? reviews : reviews.slice(0, 4);
 
   const workoutIcons: Record<string, LucideIcon> = {};
   WORKOUTS.forEach((w) => (workoutIcons[w.id] = w.icon));
@@ -445,6 +475,53 @@ export default function History() {
           </div>
         )}
 
+        {/* Weekly Reviews */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              Weekly Reviews
+            </h3>
+            {(!hasCurrentReview || !hasPreviousReview) && (
+              <button
+                onClick={() => setOpenReviewWeek(hasCurrentReview ? previousWeekStart : currentWeekStart)}
+                className="text-xs font-medium text-primary bg-primary/10 rounded-full px-2.5 py-1 hover:bg-primary/20 transition-colors"
+              >
+                {hasCurrentReview ? "Review last week" : "Review this week"}
+              </button>
+            )}
+          </div>
+          {reviews.length === 0 ? (
+            <div className="glass-card rounded-xl p-5 text-center">
+              <Star className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No weekly reviews yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Reflect on your week every Sunday</p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                {visibleReviews.map((r) => (
+                  <WeeklyReviewCard
+                    key={r.id}
+                    review={r}
+                    photo={r.photoId ? photoById[r.photoId] : null}
+                    onClick={() => setOpenReviewWeek(r.weekStart)}
+                  />
+                ))}
+              </div>
+              {reviews.length > 4 && (
+                <button
+                  onClick={() => setShowAllReviews((v) => !v)}
+                  className="w-full flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+                >
+                  <ChevronDown className={`h-3 w-3 transition-transform ${showAllReviews ? "rotate-180" : ""}`} />
+                  {showAllReviews ? "Show less" : `Show ${reviews.length - 4} more`}
+                </button>
+              )}
+            </>
+          )}
+        </div>
+
         {history.length === 0 && (
           <div className="glass-card rounded-xl p-8 text-center">
             <Dumbbell className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
@@ -453,6 +530,18 @@ export default function History() {
           </div>
         )}
       </div>
+
+      {openReviewWeek && (
+        <WeeklyReviewSheet
+          open={!!openReviewWeek}
+          weekStart={openReviewWeek}
+          mode={reviews.some((r) => r.weekStart === openReviewWeek) ? "view" : "create"}
+          onClose={() => {
+            setOpenReviewWeek(null);
+            refreshReviews();
+          }}
+        />
+      )}
     </div>
   );
 }

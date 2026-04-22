@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchActivityLogs } from "@/lib/cloud-data";
-import { Flame, Target, Award, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple } from "lucide-react";
+import { Flame, Target, Award, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import RecoveryTips from "@/components/RecoveryTips";
@@ -262,6 +262,28 @@ export default function Profile() {
             <div>
               <p className="text-sm font-semibold text-foreground">Exercise Library</p>
               <p className="text-[10px] text-muted-foreground">Browse 58+ exercises</p>
+            </div>
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/history")}
+            className="glass-card rounded-xl p-4 flex items-center gap-3 text-left hover:ring-1 hover:ring-primary/30 transition-all"
+          >
+            <Star className="h-5 w-5 text-primary" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">Weekly Reviews</p>
+              <p className="text-[10px] text-muted-foreground">Reflect & track progress</p>
+            </div>
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/progress?tab=photos")}
+            className="glass-card rounded-xl p-4 flex items-center gap-3 text-left hover:ring-1 hover:ring-primary/30 transition-all"
+          >
+            <Camera className="h-5 w-5 text-primary" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">Progress Photos</p>
+              <p className="text-[10px] text-muted-foreground">Compare over time</p>
             </div>
           </motion.button>
         </div>
