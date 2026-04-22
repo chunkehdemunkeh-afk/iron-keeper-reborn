@@ -99,7 +99,8 @@ export default function History() {
 
   const weeklyData = Array.from({ length: 4 }, (_, i) => {
     const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay() - i * 7);
+    const day = weekStart.getDay() || 7; // Sunday = 7
+    weekStart.setDate(weekStart.getDate() - (day - 1) - i * 7);
     weekStart.setHours(0, 0, 0, 0);
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 7);
