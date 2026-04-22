@@ -204,13 +204,16 @@ export function bestOneRmForLift(
   prs: Record<string, PersonalRecord>,
   matcher: (exerciseId: string, exerciseName: string) => boolean,
   epley: (weight: number, reps: number) => number,
+  /** Optional multiplier applied to logged weight before Epley (e.g. ×2 for bilateral DB). */
+  weightMultiplier?: (exerciseId: string, exerciseName: string) => number,
 ): number {
   let bestTrue = 0;
   let bestEpley = 0;
   Object.entries(prs).forEach(([exId, pr]) => {
     if (!matcher(exId, pr.name)) return;
-    if (pr.bestTrue1RM && pr.bestTrue1RM > bestTrue) bestTrue = pr.bestTrue1RM;
-    const e = epley(pr.weight, pr.reps);
+    const mult = weightMultiplier ? weightMultiplier(exId, pr.name) : 1;
+    if (pr.bestTrue1RM && pr.bestTrue1RM * mult > bestTrue) bestTrue = pr.bestTrue1RM * mult;
+    const e = epley(pr.weight * mult, pr.reps);
     if (e > bestEpley) bestEpley = e;
   });
   // True 1RM wins when present, even if Epley estimate is higher

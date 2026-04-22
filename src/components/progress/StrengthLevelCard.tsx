@@ -13,6 +13,7 @@ import {
   epley1RM,
   getStrengthRating,
   inferLiftId,
+  isBilateralDumbbell,
   overallTier,
   type LiftDef,
   type LiftId,
@@ -47,10 +48,12 @@ export default function StrengthLevelCard() {
     const out: { rating: StrengthRating; oneRm: number }[] = [];
     RATED_LIFTS.forEach((def) => {
       // Prefers a real 1RM-test single when present, else best Epley estimate.
+      // Bilateral dumbbell exercises are logged per-dumbbell → double for total load.
       const oneRm = bestOneRmForLift(
         prs,
         (exId, name) => inferLiftId(exId, name) === def.id,
         epley1RM,
+        (exId, name) => isBilateralDumbbell(exId, name) ? 2 : 1,
       );
       if (!oneRm || oneRm <= 0) return;
       const rating = getStrengthRating(def.id, oneRm, {

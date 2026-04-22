@@ -445,6 +445,35 @@ export function getStrengthRating(
   };
 }
 
+// ---------- Dumbbell bilateral detection ----------
+// Bilateral DB exercises are logged as weight-per-dumbbell; total load = logged × 2.
+// Unilateral exercises (curls, single-arm rows, kickbacks) are logged as the single
+// working weight and must NOT be doubled.
+
+const UNILATERAL_INDICATORS = [
+  "one arm", "one-arm", "single arm", "single-arm", "1-arm",
+  "alternating", "alternate",
+  "concentration",
+  "preacher",
+  "cross body", "cross-body",
+  "kickback",
+  "curl",
+];
+
+const DB_INDICATORS = ["dumbbell", " db ", "db bench", "db press", "db fly", "db row", "db squat", "db shoulder", "db ohp"];
+
+/**
+ * Returns true when an exercise uses two dumbbells simultaneously (bilateral),
+ * meaning the logged weight is per-dumbbell and must be doubled for total load.
+ * Returns false for unilateral movements (curls, single-arm rows, etc.).
+ */
+export function isBilateralDumbbell(exerciseId: string, exerciseName: string): boolean {
+  const hay = `${exerciseName} ${exerciseId}`.toLowerCase();
+  if (!DB_INDICATORS.some((d) => hay.includes(d))) return false;
+  if (UNILATERAL_INDICATORS.some((u) => hay.includes(u))) return false;
+  return true;
+}
+
 // Convenience: median tier across an array of ratings → overall strength label
 export function overallTier(ratings: StrengthRating[]): Tier | null {
   if (ratings.length === 0) return null;

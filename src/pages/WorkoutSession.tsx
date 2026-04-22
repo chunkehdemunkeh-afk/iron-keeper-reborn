@@ -223,6 +223,7 @@ import {
   epley1RM,
   getStrengthRating,
   inferLiftId,
+  isBilateralDumbbell,
   type Tier,
 } from "@/lib/strength-standards";
 import { useAuth } from "@/hooks/useAuth";
@@ -640,11 +641,13 @@ export default function WorkoutSession() {
           if (profile?.bodyweight && profile?.sex) {
             const liftId = inferLiftId(effectiveId, displayName);
             if (liftId) {
+              // Bilateral dumbbell exercises log per-dumbbell weight → double for total load
+              const dbMult = isBilateralDumbbell(effectiveId, displayName) ? 2 : 1;
               const prevBest = Math.max(histWeight, sessBest.weight);
               const prevReps = histReps || sessBest.reps || 1;
-              const prevOneRm = prevBest > 0 ? epley1RM(prevBest, prevReps) : 0;
+              const prevOneRm = prevBest > 0 ? epley1RM(prevBest * dbMult, prevReps) : 0;
               // For 1RM tests, use the actual lifted weight (no Epley estimation needed)
-              const newOneRm = isOneRmTest ? currentWeight : epley1RM(currentWeight, currentReps);
+              const newOneRm = isOneRmTest ? currentWeight * dbMult : epley1RM(currentWeight * dbMult, currentReps);
               const inputs = { bodyweight: profile.bodyweight, sex: profile.sex, age: profile.age };
               const prevRating = prevOneRm > 0 ? getStrengthRating(liftId, prevOneRm, inputs) : null;
               const newRating = getStrengthRating(liftId, newOneRm, inputs);
@@ -1277,7 +1280,14 @@ export default function WorkoutSession() {
                               )}
                               <div className={`grid ${isTimeBased ? "grid-cols-[28px_1fr_36px]" : showWeight ? "grid-cols-[28px_1fr_1fr_36px]" : "grid-cols-[28px_1fr_36px]"} gap-x-1.5 items-center text-[10px] text-muted-foreground font-medium uppercase tracking-wider`}>
                                 <span className="text-center">Set</span>
-                                {!isTimeBased && showWeight && <span className="text-center">{weightLabel}</span>}
+                                {!isTimeBased && showWeight && (
+                                  <span className="text-center leading-tight">
+                                    {weightLabel}
+                                    {isBilateralDumbbell(ex.id, override?.name || ex.name || "") && (
+                                      <span className="block text-[8px] normal-case tracking-normal text-muted-foreground/60">per dumbbell</span>
+                                    )}
+                                  </span>
+                                )}
                                 <span className="text-center">{isTimeBased ? "Timer" : repLabel}</span>
                                 <span className="text-center">✓</span>
                               </div>
