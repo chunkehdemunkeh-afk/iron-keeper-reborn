@@ -1,51 +1,82 @@
 
 
-## Normalize fatigue by user strength (PR-relative volume)
+## Make food search actually find what you searched for
 
-### The problem
-Today, recovery uses raw `weight × reps` as fatigue. A beginner benching 40 kg × 8 produces 320 "fatigue", an advanced lifter benching 100 kg × 8 produces 800 — so the strong lifter looks 2.5× more wrecked even though, relative to their capacity, both did similar work. DOMS in reality scales with **relative intensity** (% of your own max), not absolute load.
+### What's wrong today
+FatSecret is queried first; Open Food Facts (OFF) is only used if FatSecret returns **zero** results. For branded UK items like "Fridge Raiders", FatSecret returns 20 unrelated generic items (cola, yogurt, chocolate) — so the OFF fallback never fires, even though OFF actually has the product. Yazio looks better because it leans heavily on OFF, which is the strongest open database for UK supermarket items.
 
-### The fix: relative-intensity fatigue
-Replace the raw volume term with a **PR-normalized** equivalent. For each set:
+The MyFitnessPal/Yazio import idea is a dead end: MFP shut its public API in 2020, and Yazio has no public API at all. The realistic path is to **fix our own search** so it surfaces the same branded items those apps do.
 
-```text
-relativeIntensity = weight / userPR(exerciseId)     (clamped 0.3–1.1)
-fatigueUnits      = reps × relativeIntensity^1.5    (per-set)
-```
+### The fix: parallel multi-source search with smart ranking
 
-Then the existing pipeline (intensity multiplier × sleep modifier × decay) runs unchanged on `fatigueUnits` instead of `weight × reps`. Two lifters doing 5×8 at the same RPE on the same lift will now generate near-identical fatigue regardless of absolute load.
+**1. Query FatSecret and Open Food Facts in parallel** (not sequentially)
+Both edge functions run at the same time; results are merged. Adds ~0ms latency vs. today (the slower of the two wins instead of the sum).
 
-Why `^1.5`? Sets at 80% of PR feel meaningfully harder than at 60% — a slight exponent makes higher relative loads weigh more, matching how DOMS actually scales.
+**2. Rank merged results by relevance, not by source order**
+A scoring function ranks every result against the query:
+- **Exact brand match** (e.g. query "fridge raiders" → brand contains "fridge raiders"): +100
+- **Exact name match**: +80
+- **All query words appear in name**: +50
+- **All query words appear in name OR brand**: +30
+- **Has a brand name** (branded products beat generic): +10
+- **Has an image** (real products usually have images): +5
+- **Generic/category-only results** (no brand, no image): −20
 
-### Handling missing PRs (new users, new exercises)
-- If no PR exists for that exercise yet → fall back to **the user's best `weight × reps` for any exercise hitting the same primary muscle** in the last ~90 days, treating it as a soft proxy.
-- If still nothing → use the current set's own `weight × reps` as a self-reference (relativeIntensity = 1.0 baseline). This means brand-new lifters always get a sensible "moderate fatigue" reading rather than 0 or extreme values.
-- Bodyweight / time-based exercises (weight = 0): use `reps × 0.6` as fatigueUnits — preserves contribution without divide-by-zero.
+Results sort by score descending; anything below a minimum score is dropped. This pushes "Fridge Raiders Southern Style Chicken Bites" to the top and buries "Classic Cola".
 
-### Normalisation constant
-The current code normalises with `remainingFatigue / 1500` to map to 0–1. Under the new scale, a hard set ≈ 8 × 0.85^1.5 ≈ 6 fatigue units. We'll re-tune the divisor to **~75 units per muscle** so a typical hard session (5 working sets on a primary muscle) lands in the "fatigued" band, matching today's behaviour for an average user.
+**3. Upgrade the Open Food Facts query**
+The current OFF query uses the legacy `cgi/search.pl` endpoint. Switch to the v2 search API with sort by `popularity_key`, country filter `united-kingdom`, and request `brands_tags` for better brand matching. This alone makes branded UK items appear far higher.
+
+**4. Upgrade the FatSecret query**
+Switch from `foods.search` to `foods.search.v3` (FatSecret's improved brand-aware search) and pass `include_food_attributes=premier_brand` so branded products are favoured over FatSecret's "Generic" entries.
+
+**5. Deduplicate across sources**
+Same product may appear from both FatSecret and OFF. Dedupe by `(brand + name)` lowercase, preferring the result with more data (image + extended nutrition wins).
+
+**6. Show the source as a subtle badge**
+Tiny "OFF" or "FS" pill on each result so power users can tell where data came from — useful for trust and reporting bad entries later.
+
+### What you'll notice
+- "Fridge raiders" returns Mattessons / Fridge Raiders products at the top, not Coca-Cola.
+- Branded UK supermarket items (Tesco, Sainsbury's, M&S, Yoplait, Walkers, etc.) appear consistently.
+- Generic "Per 100g" entries still appear, but below the branded matches that match your query.
+- Latency stays roughly the same (parallel fetches).
+
+### Why not MyFitnessPal / Yazio import?
+- **MyFitnessPal**: closed its public API in 2020. The unofficial scrapers violate ToS and break frequently. No legitimate path.
+- **Yazio**: no public API, no export-to-third-party feature.
+- **Cronometer**: has an API but only for paid users, and licensing forbids redistribution.
+The only realistic improvement is to make our own search match their quality — which the plan above does using the same underlying database (OFF) Yazio relies on.
 
 ### Technical changes
 
-**`src/lib/recovery.ts`**
-- Extend `SetRecord` with optional `userPR?: number` (the user's best weight on this exercise's base ID).
-- Replace `volume = weight * reps` with the relative-intensity formula above.
-- Re-tune the fatigue normalisation divisor (1500 → ~75).
-- Keep `lastVolume` as raw `weight × reps` for display purposes (the muscle detail sheet still shows real kg × reps, which is what users expect).
+**`supabase/functions/food-search/index.ts`** — Open Food Facts edge function
+- Switch search from `cgi/search.pl` to `https://world.openfoodfacts.org/api/v2/search` with `categories_tags_en`, `countries_tags=united-kingdom`, `sort_by=popularity_key`, page_size=25.
+- Add `brands` to the requested fields.
+- Keep the barcode endpoint unchanged.
 
-**`src/lib/cloud-data.ts` — `fetchRecentSets`**
-- Reuse existing PR query logic: build a `prMap[baseExerciseId] → maxWeight` from `workout_sets` (no new query — just aggregate the same rows we already pull, or do one extra grouped query).
-- Attach `userPR` to each returned `RecentSetRecord`.
+**`supabase/functions/fatsecret-search/index.ts`** — FatSecret edge function
+- Change `method: "foods.search"` to `method: "foods.search.v3"`.
+- Add `include_food_attributes: "true"` and `flag_default_serving: "true"`.
+- Parse the new v3 response shape (`foods_search.results.food[]` instead of `foods.food[]`); fall back to old shape if v3 is unavailable.
 
-**`src/components/recovery/RecoveryCard.tsx` & `src/pages/Progress.tsx`**
-- No API changes — they just pass `sets` through. PR data flows in automatically via `fetchRecentSets`.
+**`src/lib/open-food-facts.ts`** — client
+- Refactor `searchFoods()` to fire FatSecret + OFF in parallel via `Promise.allSettled`.
+- Add `scoreFoodItem(item, query)` ranking function.
+- Add `dedupeFoods(items)` that merges by `(brand|name)` and keeps the richest entry.
+- Tag each `FoodItem` with `source: "fatsecret" | "off"` for the badge.
+- Sort merged+deduped results by score, drop anything below minimum score.
 
-**`src/test/recovery.test.ts`**
-- Add cases: identical relative intensity (50% PR vs 50% PR at different absolute weights) produces equal fatigue; missing PR falls back gracefully; bodyweight exercises still register fatigue.
+**`src/lib/open-food-facts.ts`** — types
+- Add `source?: "fatsecret" | "off"` to the `FoodItem` interface.
 
-### What the user will notice
-- Beginners and advanced lifters who train with similar effort now show **similar muscle fatigue**.
-- Lifters going light (deload, technique work) at <50% of PR show **less** fatigue than before — which is correct.
-- Lifters pushing near-max sets show **more** fatigue per set than the old volume model — also correct.
-- No UI changes; the diagram, list, and percentages all behave the same, just calibrated to the individual.
+**`src/components/food/FoodSearch.tsx`** — UI
+- Render a small "OFF"/"FS" pill next to the kcal value on each result row.
+- No other UI changes — the same list, just better-ranked items.
+
+### What stays the same
+- Barcode scanner (already excellent — unchanged).
+- Manual entry, recents, favourites, meal grouping, water tracking — all untouched.
+- Logging flow, edit flow, extended nutrition fetch — unchanged.
+- No new env vars, no new database tables.
 
