@@ -12,7 +12,7 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.78",
+    version: "1.6.79",
     date: "2026-04-22",
     title: "Updates & Fixes",
     changes: [
@@ -20,6 +20,7 @@ export const changelog: ChangelogEntry[] = [
       "Multiple updates on the same day merge into one changelog entry",
       "Filtered out placeholder commit messages so only meaningful changes appear",
       "Double bilateral dumbbell weight in strength standards; add per-DB hint in session",
+      "Auto-scroll diagram into view when tapping a muscle row in Recovery tab",
     ],
   },
   {
