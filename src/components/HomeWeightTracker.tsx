@@ -189,7 +189,7 @@ export default function HomeWeightTracker({ date }: Props) {
         <div className="text-center">
           <Minus className="h-3.5 w-3.5 mx-auto mb-0.5 text-blue-400" />
           <p className="text-base font-bold text-foreground">{weekAvg ? weekAvg.toFixed(1) : "—"}</p>
-          <p className="text-[9px] text-muted-foreground">7-Day Avg</p>
+          <p className="text-[9px] text-muted-foreground">Week Avg (Mon–Sun)</p>
         </div>
         <div className="text-center">
           <TrendIcon className={`h-3.5 w-3.5 mx-auto mb-0.5 ${trendColor}`} />
