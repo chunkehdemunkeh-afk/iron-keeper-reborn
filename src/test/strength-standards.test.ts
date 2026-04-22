@@ -147,3 +147,22 @@ describe("TIERS order", () => {
     ]);
   });
 });
+
+import { bestOneRmForLift } from "@/lib/cloud-data";
+
+describe("bestOneRmForLift", () => {
+  const matcher = (exId: string, name: string) => inferLiftId(exId, name) === "bench";
+  it("prefers true 1RM over Epley estimate", () => {
+    const prs = {
+      ex1: { weight: 100, reps: 5, date: "", name: "Bench Press", setId: "s1", bestReps: 5, bestTrue1RM: 110 },
+    };
+    // Epley(100,5) ≈ 116.67, but true 1RM of 110 wins
+    expect(bestOneRmForLift(prs, matcher, epley1RM)).toBe(110);
+  });
+  it("falls back to Epley when no true 1RM exists", () => {
+    const prs = {
+      ex1: { weight: 100, reps: 5, date: "", name: "Bench Press", setId: "s1", bestReps: 5 },
+    };
+    expect(bestOneRmForLift(prs, matcher, epley1RM)).toBeCloseTo(116.67, 1);
+  });
+});
