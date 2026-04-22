@@ -475,8 +475,6 @@ export default function History() {
           </div>
         )}
 
-        )}
-
         {/* Weekly Reviews */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
