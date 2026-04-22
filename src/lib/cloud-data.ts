@@ -56,7 +56,8 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
           exercise_name: exerciseMap[s.exerciseId] || s.exerciseId,
           reps: s.reps,
           weight: s.weight,
-        }))
+          set_type: s.setType ?? "working",
+        } as never))
       );
 
     if (setsError) {
@@ -131,26 +132,46 @@ export async function deleteWorkoutFromCloud(workoutId: string): Promise<boolean
   return !error;
 }
 
-// Fetch personal records (max weight per exercise, plus best reps for rep-PR detection)
-export async function fetchPersonalRecords(): Promise<Record<string, { weight: number; reps: number; date: string; name: string; setId: string; bestReps: number }>> {
+// Fetch personal records (max weight per exercise, plus best reps for rep-PR detection,
+// plus the heaviest dedicated 1RM-test single ever logged for that exercise).
+export type PersonalRecord = {
+  weight: number;
+  reps: number;
+  date: string;
+  name: string;
+  setId: string;
+  bestReps: number;
+  bestTrue1RM?: number;
+};
+
+export async function fetchPersonalRecords(): Promise<Record<string, PersonalRecord>> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return {};
 
   const { data: sets } = await supabase
     .from("workout_sets")
-    .select("id, exercise_id, exercise_name, reps, weight, created_at")
+    .select("id, exercise_id, exercise_name, reps, weight, created_at, set_type")
     .eq("user_id", user.id)
     .order("weight", { ascending: false });
 
   if (!sets) return {};
 
-  const prs: Record<string, { weight: number; reps: number; date: string; name: string; setId: string; bestReps: number }> = {};
+  const prs: Record<string, PersonalRecord> = {};
   sets.forEach(s => {
     const w = Number(s.weight);
     const r = Number(s.reps);
+    const setType = (s as { set_type?: string }).set_type ?? "working";
     const existing = prs[s.exercise_id];
     if (!existing) {
-      prs[s.exercise_id] = { weight: w, reps: r, date: s.created_at, name: s.exercise_name, setId: s.id, bestReps: r };
+      prs[s.exercise_id] = {
+        weight: w,
+        reps: r,
+        date: s.created_at,
+        name: s.exercise_name,
+        setId: s.id,
+        bestReps: r,
+        bestTrue1RM: setType === "1rm_test" ? w : undefined,
+      };
     } else {
       if (w > existing.weight) {
         existing.weight = w;
@@ -160,6 +181,9 @@ export async function fetchPersonalRecords(): Promise<Record<string, { weight: n
         existing.setId = s.id;
       }
       if (r > existing.bestReps) existing.bestReps = r;
+      if (setType === "1rm_test" && (existing.bestTrue1RM === undefined || w > existing.bestTrue1RM)) {
+        existing.bestTrue1RM = w;
+      }
     }
   });
 
@@ -169,6 +193,29 @@ export async function fetchPersonalRecords(): Promise<Record<string, { weight: n
 export async function deletePersonalRecord(setId: string): Promise<boolean> {
   const { error } = await supabase.from("workout_sets").delete().eq("id", setId);
   return !error;
+}
+
+/**
+ * Best estimated 1RM for a given canonical lift across all matching exercise IDs.
+ * Prefers a real 1RM-test single when one exists; otherwise falls back to the
+ * heaviest Epley-derived estimate from working sets.
+ */
+export function bestOneRmForLift(
+  prs: Record<string, PersonalRecord>,
+  matcher: (exerciseId: string, exerciseName: string) => boolean,
+  epley: (weight: number, reps: number) => number,
+): number {
+  let bestTrue = 0;
+  let bestEpley = 0;
+  Object.entries(prs).forEach(([exId, pr]) => {
+    if (!matcher(exId, pr.name)) return;
+    if (pr.bestTrue1RM && pr.bestTrue1RM > bestTrue) bestTrue = pr.bestTrue1RM;
+    const e = epley(pr.weight, pr.reps);
+    if (e > bestEpley) bestEpley = e;
+  });
+  // True 1RM wins when present, even if Epley estimate is higher
+  // (a real single is more reliable than a multi-rep extrapolation).
+  return bestTrue > 0 ? bestTrue : bestEpley;
 }
 
 // Fetch volume data (total weight × reps per session)
