@@ -305,6 +305,43 @@ export async function fetchBodyMeasurements(): Promise<{ id: string; date: strin
   }));
 }
 
+// Strength profile: latest bodyweight + sex + age (for strength-standards rating)
+export async function fetchStrengthProfile(): Promise<{
+  bodyweight: number | null;
+  sex: "male" | "female" | null;
+  age: number | null;
+}> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { bodyweight: null, sex: null, age: null };
+
+  const [{ data: bm }, { data: ng }] = await Promise.all([
+    supabase
+      .from("body_measurements")
+      .select("body_weight, date")
+      .eq("user_id", user.id)
+      .not("body_weight", "is", null)
+      .order("date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("nutrition_goals")
+      .select("tdee_gender, tdee_age, tdee_weight_kg")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  ]);
+
+  const bodyweight =
+    (bm?.body_weight ? Number(bm.body_weight) : null) ??
+    (ng?.tdee_weight_kg ? Number(ng.tdee_weight_kg) : null);
+  const rawSex = ng?.tdee_gender?.toLowerCase() ?? null;
+  const sex: "male" | "female" | null =
+    rawSex === "male" || rawSex === "m" ? "male" :
+    rawSex === "female" || rawSex === "f" ? "female" : null;
+  const age = ng?.tdee_age ?? null;
+
+  return { bodyweight, sex, age };
+}
+
 // Export workout history as CSV
 export async function exportWorkoutHistoryCSV(): Promise<string> {
   const history = await fetchWorkoutHistory();
