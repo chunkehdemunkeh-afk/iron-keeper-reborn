@@ -726,6 +726,19 @@ export default function WorkoutSession() {
     hapticMedium();
   }, []);
 
+  /** Append a single dedicated 1RM-test set (1 rep, locked, amber styling). */
+  const add1RMTestSet = useCallback((exerciseId: string) => {
+    setSetLogs((prev) => {
+      const updated = { ...prev };
+      const sets = [...(updated[exerciseId] || [])];
+      sets.push({ reps: 1, weight: 0, completed: false, setType: "1rm_test" });
+      updated[exerciseId] = sets;
+      return updated;
+    });
+    hapticMedium();
+    toast.info("1RM test set added — go for the single 💪");
+  }, []);
+
   const deleteSet = useCallback((exerciseId: string, setIdx: number) => {
     setSetLogs((prev) => {
       const updated = { ...prev };
@@ -794,7 +807,7 @@ export default function WorkoutSession() {
       exercisesCompleted: completedExercises,
       totalExercises,
       sets: Object.entries(setLogs).flatMap(([exId, sets]) =>
-        sets.filter((s) => s.completed).map((s) => ({ exerciseId: getEffectiveExId(exId), reps: s.reps, weight: s.weight }))
+        sets.filter((s) => s.completed).map((s) => ({ exerciseId: getEffectiveExId(exId), reps: s.reps, weight: s.weight, setType: s.setType ?? "working" }))
       ),
       effortRating: effortRating > 0 ? effortRating : undefined,
       sessionNotes: sessionNotes.trim() || undefined,
