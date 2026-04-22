@@ -110,36 +110,13 @@ if (changes.length === 0) {
   process.exit(0);
 }
 
-// ── Extract existing bullets from today's entry (if any) so we merge instead
-// of clobbering. Lovable pushes commits in bursts; without merging, a later
-// "Save plan in Lovable" run wipes out the descriptive entry from earlier.
-function extractTodayBullets(src, dateStr) {
-  const dateIdx = src.indexOf(`date: "${dateStr}"`);
-  if (dateIdx === -1) return [];
-  // Find the changes: [...] array within this entry
-  const changesIdx = src.indexOf("changes:", dateIdx);
-  if (changesIdx === -1) return [];
-  const arrStart = src.indexOf("[", changesIdx);
-  const arrEnd = src.indexOf("]", arrStart);
-  if (arrStart === -1 || arrEnd === -1) return [];
-  const block = src.slice(arrStart + 1, arrEnd);
-  const matches = [...block.matchAll(/"((?:[^"\\]|\\.)*)"/g)];
-  return matches.map(m => m[1].replace(/\\"/g, '"').replace(/\\\\/g, "\\"));
-}
-
 // ── Build entry ────────────────────────────────────────────────────────────────
-
-// Merge with any existing bullets from today's entry so multiple Lovable
-// pushes throughout the day accumulate into a single, complete changelog
-// entry instead of overwriting each other.
-const existingTodayBullets = extractTodayBullets(content, today);
-const mergedChanges = [...existingTodayBullets, ...changes]
-  .filter((msg, i, arr) => arr.findIndex(m => m.toLowerCase() === msg.toLowerCase()) === i)
-  .slice(0, 8);
+// Only show the NEWEST commits since the last auto-update — do not merge with
+// previous entries from today, otherwise older bullets pile up forever.
 
 const newVersion = bumpPatch(latestVersion);
 
-const bulletList = mergedChanges
+const bulletList = changes
   .map(c => `      "${c.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`)
   .join(",\n");
 
