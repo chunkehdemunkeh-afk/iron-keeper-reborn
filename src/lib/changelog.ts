@@ -12,9 +12,9 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.71",
+    version: "1.6.72",
     date: "2026-04-22",
-    title: "Food search fixed: branded UK items now appear",
+    title: "Food search defaults to one serving",
     changes: [
       "Save plan in Lovable",
     ],

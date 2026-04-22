@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Loader2, X, Clock, RotateCcw, PenLine, ScanBarcode, Star } from "lucide-react";
-import { searchFoods, fetchExtendedNutrition, FoodItem, ServiceUnavailableError } from "@/lib/open-food-facts";
+import { searchFoods, fetchExtendedNutrition, fetchOFFProductDetails, FoodItem, ServiceUnavailableError } from "@/lib/open-food-facts";
 import ManualFoodEntry from "./ManualFoodEntry";
 import BarcodeScanner from "./BarcodeScanner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -201,7 +201,7 @@ export default function FoodSearch({ open, onClose, mealType, date, onLogged, ed
     // Default to per-serving when the food has a known serving size, otherwise 100g
     setServingGrams(food.servingWeightG ?? 100);
 
-    // If extended fields are missing but we have a FatSecret food_id, fetch them in the background
+    // FatSecret: fetch missing extended nutrition via food_id
     if (food.foodId && food.sugar == null && food.fibre == null && food.saturatedFat == null && food.salt == null) {
       fetchExtendedNutrition(food.foodId).then((ext) => {
         if (!ext) return;
@@ -209,6 +209,29 @@ export default function FoodSearch({ open, onClose, mealType, date, onLogged, ed
         if (ext.fibre != null) setBaseFibre(ext.fibre);
         if (ext.saturatedFat != null) setBaseSatFat(ext.saturatedFat);
         if (ext.salt != null) setBaseSalt(ext.salt);
+      });
+    }
+
+    // Open Food Facts: search index strips serving_size — fetch from product API
+    // so the picker can default to "1 serving" (e.g. 22.5g for Fridge Raiders).
+    if (food.source === "off" && food.barcode && food.servingWeightG == null) {
+      fetchOFFProductDetails(food.barcode).then((details) => {
+        if (!details) return;
+        // Update selected so the "Serving" pill shows up + label reflects pack size
+        setSelected((prev) => prev ? {
+          ...prev,
+          servingWeightG: details.servingWeightG ?? prev.servingWeightG,
+          servingSize: details.servingSize ?? prev.servingSize,
+        } : prev);
+        if (details.servingWeightG && details.servingWeightG !== 100) {
+          // Auto-switch picker to per-serving if user hasn't changed it
+          setServingGrams((g) => g === 100 ? details.servingWeightG! : g);
+        }
+        // Fill in any missing extended nutrition too
+        if (food.sugar == null && details.sugar != null) setBaseSugar(details.sugar);
+        if (food.fibre == null && details.fibre != null) setBaseFibre(details.fibre);
+        if (food.saturatedFat == null && details.saturatedFat != null) setBaseSatFat(details.saturatedFat);
+        if (food.salt == null && details.salt != null) setBaseSalt(details.salt);
       });
     }
   };
