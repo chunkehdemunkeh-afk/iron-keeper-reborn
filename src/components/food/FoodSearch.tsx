@@ -718,9 +718,14 @@ export default function FoodSearch({ open, onClose, mealType, date, onLogged, ed
                         <p className="text-sm font-medium truncate">{item.name}</p>
                         {item.brand && <p className="text-xs text-muted-foreground truncate">{item.brand}</p>}
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="text-right shrink-0 flex flex-col items-end gap-0.5">
                         <div className="text-sm font-bold text-primary">{item.calories}</div>
                         <div className="text-[10px] text-muted-foreground">kcal/100g</div>
+                        {item.source && (
+                          <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-secondary text-muted-foreground font-medium">
+                            {item.source === "fatsecret" ? "FS" : "OFF"}
+                          </span>
+                        )}
                       </div>
                     </button>
                   ))}
