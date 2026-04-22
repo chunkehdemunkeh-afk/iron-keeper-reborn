@@ -142,51 +142,60 @@ export default function StrengthLevelCard() {
               const entry = ratedMap.get(def.id);
               const rating = entry?.rating ?? null;
               return (
-                <button
-                  key={def.id}
-                  type="button"
-                  disabled={!rating}
-                  onClick={() => rating && setOpenLift(def.id)}
-                  className={`w-full text-left p-2 -mx-2 rounded-lg transition-colors ${
-                    rating ? "hover:bg-muted/40 active:bg-muted/60" : "opacity-40 cursor-default"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{def.name}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {rating ? (
-                          <>
-                            <span className="text-foreground font-semibold tabular-nums">
-                              {rating.oneRm}kg
-                            </span>
-                            {" · "}
-                            <span className="tabular-nums">{rating.ratio}× BW</span>
-                          </>
-                        ) : (
-                          "Log a set to see your level"
-                        )}
-                      </p>
-                    </div>
-                    {rating && (
-                      <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                        <span
-                          className="text-[11px] font-bold"
-                          style={{ color: TIER_COLORS[rating.tier] }}
-                        >
-                          {TIER_LABELS[rating.tier]}
-                        </span>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                <div key={def.id} className="space-y-1">
+                  <button
+                    type="button"
+                    disabled={!rating}
+                    onClick={() => rating && setOpenLift(def.id)}
+                    className={`w-full text-left p-2 -mx-2 rounded-lg transition-colors ${
+                      rating ? "hover:bg-muted/40 active:bg-muted/60" : "opacity-40 cursor-default"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{def.name}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {rating ? (
+                            <>
+                              <span className="text-foreground font-semibold tabular-nums">
+                                {rating.oneRm}kg
+                              </span>
+                              {" · "}
+                              <span className="tabular-nums">{rating.ratio}× BW</span>
+                            </>
+                          ) : (
+                            "Log a set to see your level"
+                          )}
+                        </p>
                       </div>
+                      {rating && (
+                        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                          <span
+                            className="text-[11px] font-bold"
+                            style={{ color: TIER_COLORS[rating.tier] }}
+                          >
+                            {TIER_LABELS[rating.tier]}
+                          </span>
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    <StrengthBar tier={rating?.tier ?? null} />
+                    {rating && rating.kgToNextTier !== null && rating.nextTier && (
+                      <p className="text-[10px] text-muted-foreground mt-1 tabular-nums">
+                        {rating.kgToNextTier}kg to {TIER_LABELS[rating.nextTier]}
+                      </p>
                     )}
-                  </div>
-                  <StrengthBar tier={rating?.tier ?? null} />
-                  {rating && rating.kgToNextTier !== null && rating.nextTier && (
-                    <p className="text-[10px] text-muted-foreground mt-1 tabular-nums">
-                      {rating.kgToNextTier}kg to {TIER_LABELS[rating.nextTier]}
-                    </p>
-                  )}
-                </button>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setTestLift(def); }}
+                    className="ml-auto flex items-center gap-1 text-[10px] text-amber-400/80 hover:text-amber-400 transition-colors px-2"
+                  >
+                    <Target className="h-2.5 w-2.5" />
+                    Test 1RM →
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -198,6 +207,11 @@ export default function StrengthLevelCard() {
         bodyweight={profile.bodyweight}
         open={!!openLift}
         onOpenChange={(o) => !o && setOpenLift(null)}
+      />
+      <Test1RMSheet
+        lift={testLift}
+        open={!!testLift}
+        onOpenChange={(o) => !o && setTestLift(null)}
       />
     </>
   );
