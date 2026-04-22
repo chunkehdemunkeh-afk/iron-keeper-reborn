@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchVolumeData, fetchPersonalRecords, deletePersonalRecord, fetchRecentSets, fetchSleepLogs } from "@/lib/cloud-data";
 import { WORKOUTS } from "@/lib/workout-data";
@@ -87,6 +87,7 @@ function RecoveryTabContent() {
   const { user } = useAuth();
   const [view, setView] = useState<"front" | "back">("front");
   const [highlighted, setHighlighted] = useState<typeof MUSCLE_REGIONS[number] | null>(null);
+  const diagramRef = useRef<HTMLDivElement>(null);
 
   const { data: sets = [] } = useQuery({
     queryKey: ["recent-sets", user?.id],
@@ -194,6 +195,7 @@ function RecoveryTabContent() {
 
       {/* Body diagram */}
       <motion.div
+        ref={diagramRef}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="glass-card rounded-xl p-4"
@@ -262,6 +264,9 @@ function RecoveryTabContent() {
                   } else {
                     setHighlighted(region);
                     setView(viewForMuscle(region));
+                    setTimeout(() => {
+                      diagramRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 50);
                   }
                 }}
                 transition={{ layout: { duration: 0.45, ease: [0.32, 0.72, 0, 1] } }}
