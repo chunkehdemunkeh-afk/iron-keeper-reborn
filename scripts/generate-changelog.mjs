@@ -99,7 +99,7 @@ const rawCommits = run(gitLogCmd)
 const changes = rawCommits
   .filter(msg => !NOISE_RE.test(msg))
   .filter(msg => !INFRA_RE.test(msg))
-  .filter(msg => msg.length >= 15 && msg.length <= 120)
+  .filter(msg => msg.length >= 8 && msg.length <= 120)
   .map(msg => msg.charAt(0).toUpperCase() + msg.slice(1))
   // Deduplicate (case-insensitive)
   .filter((msg, i, arr) => arr.findIndex(m => m.toLowerCase() === msg.toLowerCase()) === i)
@@ -108,6 +108,23 @@ const changes = rawCommits
 if (changes.length === 0) {
   console.log("No meaningful changes since last auto-update — skipping.");
   process.exit(0);
+}
+
+// ── Extract existing bullets from today's entry (if any) so we merge instead
+// of clobbering. Lovable pushes commits in bursts; without merging, a later
+// "Save plan in Lovable" run wipes out the descriptive entry from earlier.
+function extractTodayBullets(src, dateStr) {
+  const dateIdx = src.indexOf(`date: "${dateStr}"`);
+  if (dateIdx === -1) return [];
+  // Find the changes: [...] array within this entry
+  const changesIdx = src.indexOf("changes:", dateIdx);
+  if (changesIdx === -1) return [];
+  const arrStart = src.indexOf("[", changesIdx);
+  const arrEnd = src.indexOf("]", arrStart);
+  if (arrStart === -1 || arrEnd === -1) return [];
+  const block = src.slice(arrStart + 1, arrEnd);
+  const matches = [...block.matchAll(/"((?:[^"\\]|\\.)*)"/g)];
+  return matches.map(m => m[1].replace(/\\"/g, '"').replace(/\\\\/g, "\\"));
 }
 
 // ── Build entry ────────────────────────────────────────────────────────────────
