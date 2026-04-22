@@ -101,10 +101,16 @@ function RecoveryTabContent() {
   }, [states]);
 
   const last7Sleep = useMemo(() => {
+    // Current calendar week: Monday → Sunday
+    const now = new Date();
+    const day = now.getDay() || 7; // Sunday = 7
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (day - 1));
+    monday.setHours(0, 0, 0, 0);
     const out: { date: string; hours: number; quality: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
       const ds = d.toISOString().split("T")[0];
       const log = sleepLogs.find((l) => l.date === ds);
       out.push({ date: ds, hours: log?.hours ?? 0, quality: log?.quality ?? 0 });
