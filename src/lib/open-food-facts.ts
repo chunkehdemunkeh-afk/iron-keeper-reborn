@@ -304,6 +304,53 @@ export async function fetchExtendedNutrition(foodId: string): Promise<Pick<FoodI
   }
 }
 
+/** Fetch the per-product serving size + extended nutrition from Open Food Facts.
+ *  Used after a search hit is selected, because search.openfoodfacts.org doesn't
+ *  index serving_size — only the full product API has it. Returns the fields
+ *  the client needs to default the serving picker to "1 serving".
+ *
+ *  Result includes:
+ *  - servingWeightG: grams in one serving (null when unknown or = 100g)
+ *  - servingSize: human label (e.g. "1 pack (22.5g)")
+ *  - extended nutrition (sugar, fibre, sat fat, salt) per-100g if missing
+ */
+export async function fetchOFFProductDetails(barcode: string): Promise<{
+  servingSize?: string;
+  servingWeightG?: number | null;
+  sugar?: number | null;
+  fibre?: number | null;
+  saturatedFat?: number | null;
+  salt?: number | null;
+} | null> {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/functions/v1/food-search?barcode=${encodeURIComponent(barcode)}`,
+      { headers: edgeFunctionHeaders }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.status !== 1 || !data.product) return null;
+    const p = data.product as OFFProduct & { serving_quantity?: number | string };
+    const n = p.nutriments;
+
+    // Prefer numeric serving_quantity (always grams); fall back to parsing serving_size text.
+    const sqRaw = (p as { serving_quantity?: number | string }).serving_quantity;
+    const sq = typeof sqRaw === "number" ? sqRaw : sqRaw ? parseFloat(String(sqRaw)) : NaN;
+    const servingWeightG = !isNaN(sq) && sq > 0 ? sq : parseServingGrams(p.serving_size || "");
+
+    return {
+      servingSize: p.serving_size || undefined,
+      servingWeightG: (servingWeightG && servingWeightG !== 100) ? servingWeightG : null,
+      sugar: nullIfZero(n?.sugars_100g != null ? r1(n.sugars_100g) : undefined),
+      fibre: nullIfZero(n?.fiber_100g != null ? r1(n.fiber_100g) : undefined),
+      saturatedFat: nullIfZero(n?.["saturated-fat_100g"] != null ? r1(n["saturated-fat_100g"]!) : undefined),
+      salt: nullIfZero(n?.salt_100g != null ? r1(n.salt_100g) : undefined),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function lookupBarcode(barcode: string): Promise<FoodItem | null> {
   if (!barcode.trim()) return null;
 
