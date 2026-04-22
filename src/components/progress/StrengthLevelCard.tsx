@@ -27,6 +27,7 @@ export default function StrengthLevelCard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [openLift, setOpenLift] = useState<LiftId | null>(null);
+  const [testLift, setTestLift] = useState<LiftDef | null>(null);
 
   const { data: profile } = useQuery({
     queryKey: ["strength-profile", user?.id],
