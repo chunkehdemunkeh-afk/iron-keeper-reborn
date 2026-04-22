@@ -1,4 +1,4 @@
-// Food search client – FatSecret primary, Open Food Facts fallback
+// Food search client – parallel multi-source search (FatSecret + Open Food Facts) with smart ranking
 
 export interface FoodItem {
   barcode?: string;
@@ -19,6 +19,8 @@ export interface FoodItem {
   saturatedFat?: number | null;
   salt?: number | null;
   imageUrl?: string;
+  /** Which database this entry came from — surfaced as a small badge in the UI */
+  source?: "fatsecret" | "off";
 }
 
 export class ServiceUnavailableError extends Error {
@@ -91,10 +93,11 @@ function parseFatSecretFood(f: FatSecretFood): FoodItem {
     fat: parsed.fat,
     // Extended fields not available in search description — fetched later via food_id
     sugar: null, fibre: null, saturatedFat: null, salt: null,
+    source: "fatsecret",
   };
 }
 
-// ---------- Open Food Facts helpers (fallback) ----------
+// ---------- Open Food Facts helpers ----------
 
 interface OFFProduct {
   code?: string;
@@ -137,47 +140,126 @@ function parseOFFProduct(p: OFFProduct): FoodItem | null {
     saturatedFat: nullIfZero(n?.["saturated-fat_100g"] != null ? r1(n["saturated-fat_100g"]!) : undefined),
     salt: nullIfZero(n?.salt_100g != null ? r1(n.salt_100g) : undefined),
     imageUrl: p.image_front_small_url,
+    source: "off",
   };
+}
+
+// ---------- Ranking & dedupe ----------
+
+/** Score a food item against a query — higher = more relevant. */
+function scoreFoodItem(item: FoodItem, query: string): number {
+  const q = query.toLowerCase().trim();
+  const qWords = q.split(/\s+/).filter(Boolean);
+  const name = (item.name || "").toLowerCase();
+  const brand = (item.brand || "").toLowerCase();
+  const nameAndBrand = `${name} ${brand}`;
+
+  let score = 0;
+
+  // Exact brand match (e.g. searching "fridge raiders" → brand IS "fridge raiders")
+  if (brand && (brand === q || brand.includes(q))) score += 100;
+
+  // Exact name match
+  if (name === q) score += 80;
+  else if (name.includes(q)) score += 40;
+
+  // All query words present in name
+  if (qWords.every((w) => name.includes(w))) score += 50;
+  // All query words present somewhere (name or brand)
+  else if (qWords.every((w) => nameAndBrand.includes(w))) score += 30;
+
+  // Branded products beat generic
+  if (brand) score += 10;
+
+  // Has an image — real branded products usually do
+  if (item.imageUrl) score += 5;
+
+  // Penalise generic / category-only entries with no brand and no image
+  if (!brand && !item.imageUrl) score -= 20;
+
+  return score;
+}
+
+/** Deduplicate by (brand|name) lowercase, keeping the entry with the most data. */
+function dedupeFoods(items: FoodItem[]): FoodItem[] {
+  const richness = (f: FoodItem) =>
+    (f.imageUrl ? 2 : 0) +
+    (f.sugar != null || f.fibre != null || f.saturatedFat != null || f.salt != null ? 2 : 0) +
+    (f.brand ? 1 : 0);
+
+  const map = new Map<string, FoodItem>();
+  for (const item of items) {
+    const key = `${(item.brand || "").toLowerCase().trim()}|${(item.name || "").toLowerCase().trim()}`;
+    const existing = map.get(key);
+    if (!existing || richness(item) > richness(existing)) map.set(key, item);
+  }
+  return Array.from(map.values());
 }
 
 // ---------- Public API ----------
 
+const MIN_SCORE = 20;
+
 export async function searchFoods(query: string, page = 1): Promise<FoodItem[]> {
   if (!query.trim()) return [];
 
-  // Try FatSecret first
-  try {
-    const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/fatsecret-search?q=${encodeURIComponent(query)}&page=${Math.max(0, page - 1)}&region=GB&language=en`,
-      { headers: edgeFunctionHeaders }
-    );
-    if (res.ok) {
-      const data = await res.json();
-      const foodList = data?.foods?.food;
-      if (Array.isArray(foodList) && foodList.length > 0) {
-        return foodList.map(parseFatSecretFood).filter((f) => f.calories > 0);
-      }
+  const fatSecretFetch = fetch(
+    `${SUPABASE_URL}/functions/v1/fatsecret-search?q=${encodeURIComponent(query)}&page=${Math.max(0, page - 1)}&region=GB&language=en`,
+    { headers: edgeFunctionHeaders }
+  )
+    .then((res) => res.ok ? res.json() : null)
+    .then((data): FoodItem[] => {
+      if (!data) return [];
+      // v3 response shape: { foods_search: { results: { food: [...] } } }
+      // v2 response shape: { foods: { food: [...] } }
+      const v3List = data?.foods_search?.results?.food;
+      const v2List = data?.foods?.food;
+      const list = Array.isArray(v3List) ? v3List : Array.isArray(v2List) ? v2List : [];
+      return list.map(parseFatSecretFood).filter((f) => f.calories > 0);
+    })
+    .catch((e) => { console.warn("FatSecret search failed:", e); return []; });
+
+  const offFetch = fetch(
+    `${SUPABASE_URL}/functions/v1/food-search?q=${encodeURIComponent(query)}&page=${page}`,
+    { headers: edgeFunctionHeaders }
+  )
+    .then((res) => res.ok ? res.json() : null)
+    .then((data): FoodItem[] => {
+      if (!data) return [];
+      if (data.fallback) throw new ServiceUnavailableError();
+      const products = (data.products as OFFProduct[]) || [];
+      return products
+        .map(parseOFFProduct)
+        .filter((p): p is FoodItem => p !== null && p.calories > 0);
+    })
+    .catch((e) => {
+      if (e instanceof ServiceUnavailableError) throw e;
+      console.warn("Open Food Facts search failed:", e);
+      return [] as FoodItem[];
+    });
+
+  const [fsResult, offResult] = await Promise.allSettled([fatSecretFetch, offFetch]);
+
+  // Surface OFF service-unavailable errors only when both sources are empty
+  if (offResult.status === "rejected" && offResult.reason instanceof ServiceUnavailableError) {
+    if (fsResult.status === "fulfilled" && fsResult.value.length === 0) {
+      throw offResult.reason;
     }
-  } catch (e) {
-    console.warn("FatSecret search failed, falling back to Open Food Facts:", e);
   }
 
-  // Fallback to Open Food Facts
-  try {
-    const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/food-search?q=${encodeURIComponent(query)}&page=${page}`,
-      { headers: edgeFunctionHeaders }
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (data.fallback) throw new ServiceUnavailableError();
-    return (data.products as OFFProduct[])
-      .map(parseOFFProduct)
-      .filter((p): p is FoodItem => p !== null && p.calories > 0);
-  } catch (e) {
-    if (e instanceof ServiceUnavailableError) throw e;
-    return [];
-  }
+  const fsItems = fsResult.status === "fulfilled" ? fsResult.value : [];
+  const offItems = offResult.status === "fulfilled" ? offResult.value : [];
+
+  const merged = dedupeFoods([...fsItems, ...offItems]);
+
+  // Score, filter, sort
+  const ranked = merged
+    .map((item) => ({ item, score: scoreFoodItem(item, query) }))
+    .filter(({ score }) => score >= MIN_SCORE)
+    .sort((a, b) => b.score - a.score)
+    .map(({ item }) => item);
+
+  return ranked;
 }
 
 /** Fetch extended nutrition details (sugar, fibre, sat fat, salt) for a FatSecret food by its ID.
@@ -264,6 +346,7 @@ export async function lookupBarcode(barcode: string): Promise<FoodItem | null> {
             fibre: s.fiber ? r1(parseFloat(s.fiber) * factor) : null,
             saturatedFat: s.saturated_fat ? r1(parseFloat(s.saturated_fat) * factor) : null,
             salt: saltPer100g,
+            source: "fatsecret",
           };
         }
       }

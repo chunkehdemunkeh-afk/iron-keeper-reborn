@@ -99,12 +99,15 @@ serve(async (req) => {
         language,
       };
     } else {
+      // Upgraded to v3 — better brand-aware ranking, includes food attributes
       params = {
-        method: "foods.search",
+        method: "foods.search.v3",
         search_expression: query,
         format: "json",
         max_results: "20",
         page_number: page.toString(),
+        include_food_attributes: "true",
+        flag_default_serving: "true",
         region,
         language,
       };
