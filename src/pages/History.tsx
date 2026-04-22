@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { fetchWorkoutHistory, deleteWorkoutFromCloud, exportWorkoutHistoryCSV, exportSetsCSV, fetchActivityLogs, deleteActivityLog, ACTIVITY_PRESETS, type ActivityLog } from "@/lib/cloud-data";
+import { fetchWorkoutHistory, deleteWorkoutFromCloud, exportWorkoutHistoryCSV, exportSetsCSV, fetchActivityLogs, deleteActivityLog, ACTIVITY_PRESETS, type ActivityLog, fetchAllWeeklyReviews, fetchProgressPhotos, type WeeklyReview, type ProgressPhoto } from "@/lib/cloud-data";
 import { WORKOUTS, type CompletedWorkout } from "@/lib/workout-data";
-import { Calendar as CalendarIcon, Clock, Dumbbell, TrendingUp, Download, ChevronLeft, ChevronRight, Trash2, Bed, Footprints, Activity, Waves, Bike, Flower, CircleDot, Pencil, X } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Dumbbell, TrendingUp, Download, ChevronLeft, ChevronRight, Trash2, Bed, Footprints, Activity, Waves, Bike, Flower, CircleDot, Pencil, X, Star, Sparkles, ChevronDown } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -10,6 +10,9 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameM
 import WorkoutCard from "@/components/history/WorkoutCard";
 import SummaryCards from "@/components/history/SummaryCards";
 import HelpButton from "@/components/demo/HelpButton";
+import WeeklyReviewCard from "@/components/weekly/WeeklyReviewCard";
+import WeeklyReviewSheet from "@/components/weekly/WeeklyReviewSheet";
+import { getCurrentWeekStart, getPreviousWeekStart } from "@/lib/weekly-review";
 
 const ACTIVITY_ICONS: Record<string, LucideIcon> = {
   rest: Bed,

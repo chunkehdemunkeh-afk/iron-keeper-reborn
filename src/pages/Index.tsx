@@ -19,6 +19,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import HelpButton from "@/components/demo/HelpButton";
+import WeeklyReviewPrompt from "@/components/weekly/WeeklyReviewPrompt";
+import MondayBanner from "@/components/weekly/MondayBanner";
 
 const Index = () => {
   const { profile, user } = useAuth();
@@ -103,6 +105,9 @@ const Index = () => {
         {/* Stats */}
         <StatsBar />
 
+        {/* Monday catch-up banner — only Mon/Tue if last week unreviewed */}
+        {isCurrentDay && <MondayBanner />}
+
         {/* Week strip */}
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
@@ -166,6 +171,9 @@ const Index = () => {
 
       {/* One-time post-onboarding tip drawer */}
       <PostOnboardingTip />
+
+      {/* Sunday weekly review prompt */}
+      <WeeklyReviewPrompt />
     </div>
   );
 };
