@@ -8,6 +8,7 @@ import type { PanInfo } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import DailyReviewChart from "@/components/DailyReviewChart";
+import PRTrendChart from "@/components/PRTrendChart";
 import HelpButton from "@/components/demo/HelpButton";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -484,6 +485,9 @@ export default function Progress() {
 
             {/* Daily Review */}
             <DailyReviewChart />
+
+            {/* PR trend per exercise */}
+            <PRTrendChart />
 
             {/* Personal Records */}
             <motion.div
