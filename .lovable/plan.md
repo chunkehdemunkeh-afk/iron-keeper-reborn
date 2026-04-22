@@ -1,131 +1,49 @@
 
 
-## Weekly Review + Progress Photos
+## Add "Beginner" tier to Strength Standards
 
-Two connected features that finally close the loop on weekly reflection and visual progress tracking — both fully stored and viewable in History.
+Expand the strength rating scale from 5 tiers to **6 tiers** so the lightest end of the scale has a friendlier intermediate step before "Novice".
 
-### Feature 1 — Weekly Review (Sunday recap)
+### New tier order
 
-A friendly Sunday-evening prompt that summarises the week's logged data and asks for a short personal reflection. Designed to feel like a coach checking in, not a report card.
+`Untrained → Beginner → Novice → Intermediate → Advanced → Elite`
 
-**When it appears**
-- **Sunday after 6pm:** soft full-screen Sheet on app open, dismissible.
-- **Monday morning catch-up:** if Sunday was missed, a small banner appears on the Home page ("Reflect on last week →"). Tap to open the same review.
-- **Always accessible:** "Weekly Review" entry point added to the History page header (and Profile menu) so users can complete or revisit any past week.
-- Each week is keyed by Monday's date — only one review per week, editable until next Sunday.
+"Beginner" sits between Untrained and Novice — the band where someone has clearly started training and learned the lift, but hasn't yet hit the first proper strength milestone. This matches how Strength Level / Boostcamp split out their lowest categories and avoids the jarring jump from "Untrained" straight to "Novice".
 
-**What's in the review (auto-summary, top half)**
-Pulled from the user's existing logs for Mon–Sun of the week being reviewed:
-- **Workouts logged:** count + total minutes ("4 sessions · 187 min")
-- **Activities logged:** rest days + non-gym activities (walks, swims, etc.)
-- **Food logged:** days with at least one food entry ("6/7 days") + average daily calories
-- **Water logged:** days hitting goal ("4/7 days at goal")
-- **Weight logged:** entries this week + delta vs. previous week ("3 entries · –0.4 kg")
-- **Sleep logged:** average hours + average quality ("7.2h · 4/5 quality")
-- **PRs hit:** count of new personal bests this week, with names
+### Numbers (how Beginner is computed)
 
-Each row has a soft icon and a one-line celebration if the metric is good ("Strong week of training!"), neutral phrasing if average, and a gentle nudge if low ("Try logging weight more often next week — it sharpens the trends"). No red text, no failure language.
+For each lift × bodyweight × sex row, Beginner = a value placed between the existing Untrained and Novice numbers, weighted ~40% of the way from Untrained → Novice. Concretely:
 
-**What the user fills in (bottom half)**
-- **Self-rating:** 1–5 star "How did this week feel?"
-- **What went well:** free-text (optional)
-- **What to improve:** free-text (optional)
-- **Focus for next week:** free-text (optional)
-- **Add this week's progress photo:** optional camera button (same uploader as Body tab — see Feature 2). If skipped, it's still available in the Body tab.
-- Save → haptic success, toast "Week saved", Sheet closes.
+```text
+beginner_kg = round( untrained + 0.4 × (novice − untrained) )
+```
 
-### Feature 2 — Progress photos
+This keeps the existing Novice/Intermediate/Advanced/Elite thresholds **unchanged** (so anyone already rated keeps their tier), and only carves out the lower band. Age coefficient and sex tables are untouched.
 
-Lightweight photo log with comparison view. Lives in a new **Photos** tab on the Progress page.
+### What changes in the UI
 
-**Capture & storage**
-- Tap "Add photo" → native file picker with camera capture preference.
-- Stored in private Supabase Storage bucket `progress-photos` at `{user_id}/{date}-{timestamp}.jpg`.
-- DB row in `progress_photos` table links the storage path to a date, optional notes, and optional pose tag (`front` / `side` / `back` / `other`).
-
-**Browsing**
-- 2-column grid sorted newest-first.
-- Each tile shows the photo, the date below it, and the user's weight that day if logged (joined from `body_measurements`).
-- Tap a tile → full-screen view with delete and edit-notes options. Swipe-to-delete also supported (existing pattern).
-
-**Compare two photos**
-- "Compare" button in the Photos tab header opens a Sheet.
-- Two columns, each with a date dropdown of available photos.
-- Side-by-side display, dates labelled, and a weight delta between them ("–2.1 kg over 6 weeks") when both dates have weight logs.
-- Defaults: left = oldest photo, right = newest. User can swap.
-
-### History integration (the "stored and viewable" part)
-
-This is the key requirement. Every weekly review and every photo becomes part of the history record, not a one-off ephemeral thing.
-
-**On the History page, a new "Weekly Reviews" section** (collapsible, sits below the calendar):
-- Card for each completed week, newest first.
-- Each card shows: week range ("14–20 Apr"), star rating, summary stats (sessions, food days, weight delta), thumbnail of that week's photo if one was taken, and a preview of the user's "what went well" text.
-- Tap a card → opens the same review Sheet in read-only mode with an "Edit" button.
-
-**On the calendar:** Sundays with a completed review get a small star badge in the corner (alongside existing workout dots).
-
-**Photos appear in two places:**
-- Photos tab on Progress page (browse + compare)
-- Embedded as a thumbnail in the matching Weekly Review card on History
-
-### What changes for the user
-- Sunday evening: gentle pop-up summarising the week + asking for reflection. Skippable, never blocking.
-- Monday morning: small reminder banner if Sunday was missed.
-- New Photos tab on Progress page for adding & comparing pics.
-- New Weekly Reviews list on History page that grows over time — every reflection, every star rating, every photo permanently retrievable.
-- No bottom-nav changes, no changes to the home page beyond the Monday banner.
+- **StrengthBar**: now renders **6 segments** instead of 5. Beginner uses a soft amber/orange tint between the muted Untrained grey and the warmer Novice colour.
+- **StrengthLevelCard**:
+  - Tier label and "X kg to next level" calculations work off the new array — no other layout changes.
+  - The overall strength pill (median tier across rated lifts) automatically picks up Beginner as a possible value.
+- **StrengthLevelSheet** (per-lift detail): standards table grows from 5 to 6 columns. On narrow viewports the table already scrolls horizontally — no layout rework needed.
+- **Recovery tab muscle chips**: a new short label `"Beg."` is added to the abbreviation map alongside `"Unt." / "Nov." / "Int." / "Adv." / "Elite"`.
+- **PRCelebration**: tier-crossing message ("You just hit Beginner on Bench Press!") works automatically since it reads the tier name from the rating helper.
 
 ### Technical changes
 
-**Database migrations** (one new migration file)
-- `progress_photos` table: `id`, `user_id`, `date`, `storage_path`, `pose` (text, nullable: front/side/back/other), `notes`, `created_at`. RLS: user owns their rows.
-- `weekly_reviews` table: `id`, `user_id`, `week_start` (date, Monday), `rating` (1–5), `went_well`, `to_improve`, `focus_next`, `photo_id` (uuid nullable, references `progress_photos`), `created_at`, `updated_at`. UNIQUE(`user_id`, `week_start`). RLS: user owns their rows; coach SELECT via `has_role`.
-- Storage bucket `progress-photos` (private) + storage policies scoped to `(storage.foldername(name))[1] = auth.uid()::text`.
+- `src/lib/strength-standards.ts`
+  - `Tier` type: add `"beginner"` between `"untrained"` and `"novice"`.
+  - `STANDARDS_TABLE`: each row's `tiers` tuple grows from length 5 → 6. Generated by interpolating between existing Untrained and Novice values at load time (a tiny helper at the bottom of the file maps the old data to the new shape, so the source numbers stay readable and easy to edit).
+  - `getStrengthRating`: bucket logic walks the 6-element array; "kg to next tier" math is unchanged in shape.
+  - `TIER_LABELS` / `TIER_SHORT_LABELS` / `TIER_COLORS`: add a Beginner entry. Beginner colour: `hsl(35 80% 55%)` (soft amber, distinct from primary orange used for Novice).
+- `src/components/progress/StrengthBar.tsx` — render 6 segments; map Beginner to its colour token.
+- `src/components/progress/StrengthLevelSheet.tsx` — table header and row cells iterate the tier array, so growing it to 6 entries is automatic; just verify column header labels include Beginner.
+- `src/test/strength-standards.test.ts` — update existing tier-boundary tests and add cases for the new Beginner band (just-above-untrained, just-below-novice).
 
-**`src/lib/cloud-data.ts`**
-- `fetchProgressPhotos(): Promise<ProgressPhoto[]>` — selects rows, generates 5-min signed URLs.
-- `uploadProgressPhoto(file, date, pose?, notes?): Promise<{ id, storagePath } | null>`.
-- `deleteProgressPhoto(id, storagePath)`.
-- `updateProgressPhotoNotes(id, notes)`.
-- `fetchWeeklyReview(weekStart): Promise<WeeklyReview | null>`.
-- `fetchAllWeeklyReviews(): Promise<WeeklyReview[]>`.
-- `upsertWeeklyReview(review): Promise<WeeklyReview | null>` (insert or update by user_id + week_start).
-- `deleteWeeklyReview(id)`.
-- `computeWeekStats(weekStart): Promise<WeekSummary>` — single aggregator that pulls workout_history, workout_sets (PRs), food_logs, water_intake, body_measurements, sleep_logs, activity_logs for the Mon–Sun range and returns the structured summary.
+### Out of scope
 
-**`src/lib/weekly-review.ts`** (new)
-- `getCurrentWeekStart()`, `getPreviousWeekStart()`, `getMondayOf(date)`.
-- `shouldShowSundayPrompt(user, lastDismissed)` — returns true Sunday after 18:00 if no review for current week and not dismissed today.
-- `shouldShowMondayBanner(user)` — returns true Mon/Tue if previous week has no review.
-- localStorage keys: `ik-weekly-prompt-dismissed-{userId}-{weekStart}` (per-week dismissal).
-
-**New components**
-- `src/components/weekly/WeeklyReviewSheet.tsx` — the full-screen Sheet. Props: `weekStart`, `mode: "create" | "edit" | "view"`, `onClose`. Renders summary + form. Uses `computeWeekStats`. Includes inline photo uploader (reuses the upload action from Body tab).
-- `src/components/weekly/WeeklyReviewPrompt.tsx` — Sunday-evening trigger logic, mounted on Index page. Opens WeeklyReviewSheet.
-- `src/components/weekly/MondayBanner.tsx` — small dismissible banner on Home page if Monday/Tuesday and previous week unreviewed.
-- `src/components/weekly/WeeklyReviewCard.tsx` — list item used in History.
-- `src/components/progress/ProgressPhotoGrid.tsx` — 2-col grid + swipe-to-delete + tap-to-fullscreen.
-- `src/components/progress/PhotoCompareSheet.tsx` — side-by-side compare with date dropdowns + weight delta.
-- `src/components/progress/PhotosTab.tsx` — assembles the Photos tab (header with Add + Compare buttons, grid below).
-
-**Modified pages**
-- `src/pages/Progress.tsx` — add `Photos` tab to the existing tab strip (`Stats | PRs | Recovery → Stats | Photos | PRs | Recovery`). PhotosTab owns its own queries.
-- `src/pages/History.tsx` — add "Weekly Reviews" collapsible section below the calendar; add star badge overlay for Sundays with reviews; add "Weekly Review" header button to open current/previous week's review.
-- `src/pages/Index.tsx` — mount `<WeeklyReviewPrompt />` and `<MondayBanner />`.
-- `src/pages/Profile.tsx` — add a "Weekly Reviews" link entry that jumps to History's Weekly Reviews section.
-
-**PLAN.md** — replace the old Progress Photos plan section with this combined feature plan, mark completed.
-
-### What stays the same
-- Bottom navigation, Home layout, Body Measurements page, Stats/PRs/Recovery tabs all unchanged.
-- No new dependencies. Reuses Sheet, motion patterns, sonner, haptics.
-- Photo upload still goes to Supabase Storage via the existing client (no edge functions, no server routes).
-- All RLS preserved; coach can SELECT weekly reviews like other tables.
-
-### Out of scope (backlog)
-- Client-side image compression (raw upload for now).
-- Push notifications for the Sunday prompt.
-- Comparing 3+ photos at once.
-- Auto-suggested focus areas based on logged data.
+- No DB migration, no new dependencies.
+- Existing PR data, ratings logic, and overall card layout untouched.
+- No changes to age coefficient or sex-specific multipliers.
 
