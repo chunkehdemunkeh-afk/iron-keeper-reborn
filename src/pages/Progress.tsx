@@ -275,8 +275,19 @@ function RecoveryTabContent() {
                     style={{ background: color }}
                   />
                   <div>
-                    <p className={`text-sm font-medium ${isActive ? "text-primary" : "text-foreground"}`}>
+                    <p className={`text-sm font-medium flex items-center gap-1.5 ${isActive ? "text-primary" : "text-foreground"}`}>
                       {MUSCLE_LABELS[region]}
+                      {muscleToRating[region] && (
+                        <span
+                          className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide"
+                          style={{
+                            background: `${TIER_COLORS[muscleToRating[region]!.tier]}22`,
+                            color: TIER_COLORS[muscleToRating[region]!.tier],
+                          }}
+                        >
+                          {TIER_SHORT_LABELS[muscleToRating[region]!.tier]}
+                        </span>
+                      )}
                     </p>
                     {s.lastWorkedAt ? (
                       <p className="text-[10px] text-muted-foreground">
