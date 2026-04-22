@@ -12,6 +12,14 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.6.69",
+    date: "2026-04-22",
+    title: "Updates & Fixes",
+    changes: [
+      "Save plan in Lovable",
+    ],
+  },
+  {
     version: "1.6.68",
     date: "2026-04-21",
     title: "Updates & Fixes",
