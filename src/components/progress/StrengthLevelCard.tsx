@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Dumbbell, Sparkles } from "lucide-react";
+import { ChevronRight, Dumbbell, Sparkles, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchPersonalRecords, fetchStrengthProfile } from "@/lib/cloud-data";
+import { fetchPersonalRecords, fetchStrengthProfile, bestOneRmForLift } from "@/lib/cloud-data";
 import {
   RATED_LIFTS,
   TIERS,
@@ -12,14 +12,14 @@ import {
   TIER_LABELS,
   epley1RM,
   getStrengthRating,
-  inferLiftId,
-  overallTier,
+  type LiftDef,
   type LiftId,
   type StrengthRating,
   type Tier,
 } from "@/lib/strength-standards";
 import StrengthBar from "./StrengthBar";
 import StrengthLevelSheet from "./StrengthLevelSheet";
+import Test1RMSheet from "./Test1RMSheet";
 
 export default function StrengthLevelCard() {
   const { user } = useAuth();
