@@ -12,13 +12,14 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.77",
+    version: "1.6.78",
     date: "2026-04-22",
-    title: "Better Changelog",
+    title: "Updates & Fixes",
     changes: [
       "What's New popup now shows real Lovable changes instead of generic wording",
       "Multiple updates on the same day merge into one changelog entry",
       "Filtered out placeholder commit messages so only meaningful changes appear",
+      "Double bilateral dumbbell weight in strength standards; add per-DB hint in session",
     ],
   },
   {
