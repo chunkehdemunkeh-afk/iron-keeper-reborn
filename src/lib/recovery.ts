@@ -32,6 +32,10 @@ export interface SetRecord {
   weight: number;
   reps: number;
   workoutDate: string; // ISO string
+  /** User's all-time best weight on this exercise's base id. Used to normalise
+   *  fatigue by relative intensity so beginners and advanced lifters reading
+   *  the same RPE get comparable recovery scores. */
+  userPR?: number;
 }
 
 export interface SleepLog {
@@ -41,6 +45,35 @@ export interface SleepLog {
 }
 
 const SECONDARY_MULTIPLIER = 0.4;
+
+// Normalisation divisor for the new PR-relative fatigue scale.
+// One hard set near PR ≈ 8 × 0.85^1.5 ≈ 6 fatigue units.
+// 5 working sets on a primary muscle ≈ 30 raw, then ×intensity (~1.3) ×sleep (~1.0)
+// ≈ ~40. We divide by ~75 so a typical hard session lands in the "fatigued" band
+// (score < 0.5), matching the previous calibration for an average user.
+const FATIGUE_NORMALISATION = 75;
+
+/**
+ * Convert a set to PR-relative fatigue units.
+ * - With a known PR: relativeIntensity = clamp(weight/PR, 0.3, 1.1), then
+ *   fatigueUnits = reps × relativeIntensity^1.5.
+ * - Bodyweight / time-based (weight = 0): reps × 0.6 — preserves contribution.
+ * - Unknown PR with weight > 0: treat current set as ~baseline (intensity = 1.0).
+ *
+ * Exported so tests can verify identical relative intensities yield identical fatigue.
+ */
+export function setFatigueUnits(weight: number, reps: number, userPR?: number): number {
+  if (!reps || reps <= 0) return 0;
+  // Bodyweight / time-based: no weight to compare against.
+  if (!weight || weight <= 0) return reps * 0.6;
+  // Missing PR fallback: assume the current set is roughly the user's working
+  // capacity. This means brand-new lifters get a sensible "moderate fatigue"
+  // reading rather than 0 or extreme values.
+  if (!userPR || userPR <= 0) return reps * Math.pow(1.0, 1.5);
+  const ratio = weight / userPR;
+  const clamped = Math.max(0.3, Math.min(1.1, ratio));
+  return reps * Math.pow(clamped, 1.5);
+}
 
 export function getIntensityMultiplier(splitId: string | null | undefined): number {
   switch (splitId) {
@@ -121,13 +154,16 @@ export function computeMuscleRecovery(
 
   // Group sets by exerciseId+date so we accumulate per session
   for (const set of sets) {
-    if (!set.weight || !set.reps) continue;
-    const volume = set.weight * set.reps;
-    if (volume <= 0) continue;
+    if (!set.reps || set.reps <= 0) continue;
+    // Raw volume kept for display in the muscle detail sheet (users expect kg × reps).
+    const rawVolume = (set.weight || 0) * set.reps;
+    // PR-relative fatigue units — the new core of the recovery model.
+    const fatigueUnits = setFatigueUnits(set.weight, set.reps, set.userPR);
+    if (fatigueUnits <= 0) continue;
 
     const workoutDate = new Date(set.workoutDate);
     const sleepMod = getSleepModifier(workoutDate, sleepLogs, settings.sleepWeight);
-    const fatiguePerSet = volume * intensity * sleepMod;
+    const fatiguePerSet = fatigueUnits * intensity * sleepMod;
 
     const hits = getMusclesWorked(set.exerciseId, set.exerciseName, set.targetMuscle, set.muscleGroup);
 
@@ -141,16 +177,16 @@ export function computeMuscleRecovery(
 
       const state = result[region];
       // Track the most fatiguing recent contribution
-      const candidateScore = 1 - Math.min(1, remainingFatigue / 1500); // normalise: 1500 fatigue ≈ fully spent
+      const candidateScore = 1 - Math.min(1, remainingFatigue / FATIGUE_NORMALISATION);
       if (candidateScore < state.score) {
         state.score = candidateScore;
       }
-      // Track the most recent session
+      // Track the most recent session — lastVolume stays as raw kg × reps for display.
       if (!state.lastWorkedAt || workoutDate > new Date(state.lastWorkedAt)) {
         state.lastWorkedAt = set.workoutDate;
-        state.lastVolume = volume;
+        state.lastVolume = rawVolume;
       } else if (workoutDate.toISOString().split("T")[0] === state.lastWorkedAt.split("T")[0]) {
-        state.lastVolume += volume;
+        state.lastVolume += rawVolume;
       }
     };
 
