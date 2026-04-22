@@ -216,8 +216,14 @@ function ExerciseDragItem({
 }
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchPersonalRecords } from "@/lib/cloud-data";
+import { fetchPersonalRecords, fetchStrengthProfile } from "@/lib/cloud-data";
 import PRCelebration from "@/components/PRCelebration";
+import {
+  epley1RM,
+  getStrengthRating,
+  inferLiftId,
+  type Tier,
+} from "@/lib/strength-standards";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function WorkoutSession() {
@@ -271,7 +277,7 @@ export default function WorkoutSession() {
   const [addExerciseMuscle, setAddExerciseMuscle] = useState<string | null>(null);
   const [bodyweightExercises, setBodyweightExercises] = useState<Set<string>>(new Set());
   const [showResumePrompt, setShowResumePrompt] = useState(false);
-  const [celebrationPR, setCelebrationPR] = useState<{ name: string; weight: number; reps: number } | null>(null);
+  const [celebrationPR, setCelebrationPR] = useState<{ name: string; weight: number; reps: number; tierUp?: { tier: Tier; liftName: string } | null } | null>(null);
 
   // Fetch historical PRs at session start for in-session comparison
   const { data: historicalPRs = {} } = useQuery({
