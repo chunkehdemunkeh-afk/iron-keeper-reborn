@@ -216,8 +216,14 @@ function ExerciseDragItem({
 }
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchPersonalRecords } from "@/lib/cloud-data";
+import { fetchPersonalRecords, fetchStrengthProfile } from "@/lib/cloud-data";
 import PRCelebration from "@/components/PRCelebration";
+import {
+  epley1RM,
+  getStrengthRating,
+  inferLiftId,
+  type Tier,
+} from "@/lib/strength-standards";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function WorkoutSession() {
@@ -271,7 +277,7 @@ export default function WorkoutSession() {
   const [addExerciseMuscle, setAddExerciseMuscle] = useState<string | null>(null);
   const [bodyweightExercises, setBodyweightExercises] = useState<Set<string>>(new Set());
   const [showResumePrompt, setShowResumePrompt] = useState(false);
-  const [celebrationPR, setCelebrationPR] = useState<{ name: string; weight: number; reps: number } | null>(null);
+  const [celebrationPR, setCelebrationPR] = useState<{ name: string; weight: number; reps: number; tierUp?: { tier: Tier; liftName: string } | null } | null>(null);
 
   // Fetch historical PRs at session start for in-session comparison
   const { data: historicalPRs = {} } = useQuery({
@@ -283,6 +289,16 @@ export default function WorkoutSession() {
   const historicalPRsRef = useRef<Record<string, { weight: number; bestReps: number }>>({});
   useEffect(() => { historicalPRsRef.current = historicalPRs as any; }, [historicalPRs]);
   const sessionBestRef = useRef<Record<string, { weight: number; reps: number }>>({}); // best hit this session
+
+  // Strength profile (for tier-crossing celebration)
+  const { data: strengthProfile } = useQuery({
+    queryKey: ["strength-profile", user?.id],
+    queryFn: fetchStrengthProfile,
+    enabled: !!user,
+    staleTime: 5 * 60_000,
+  });
+  const strengthProfileRef = useRef(strengthProfile);
+  useEffect(() => { strengthProfileRef.current = strengthProfile; }, [strengthProfile]);
 
   const autoSaveKey = workout ? `workout-autosave-${workout.id}` : null;
 
@@ -614,7 +630,27 @@ export default function WorkoutSession() {
             weight: Math.max(sessBest.weight, currentWeight),
             reps: Math.max(sessBest.reps, currentReps),
           };
-          setCelebrationPR({ name: displayName, weight: currentWeight, reps: currentReps });
+
+          // Tier-crossing detection (vs previous best on this canonical lift)
+          let tierUp: { tier: Tier; liftName: string } | null = null;
+          const profile = strengthProfileRef.current;
+          if (profile?.bodyweight && profile?.sex) {
+            const liftId = inferLiftId(effectiveId, displayName);
+            if (liftId) {
+              const prevBest = Math.max(histWeight, sessBest.weight);
+              const prevReps = histReps || sessBest.reps || 1;
+              const prevOneRm = prevBest > 0 ? epley1RM(prevBest, prevReps) : 0;
+              const newOneRm = epley1RM(currentWeight, currentReps);
+              const inputs = { bodyweight: profile.bodyweight, sex: profile.sex, age: profile.age };
+              const prevRating = prevOneRm > 0 ? getStrengthRating(liftId, prevOneRm, inputs) : null;
+              const newRating = getStrengthRating(liftId, newOneRm, inputs);
+              if (newRating && (!prevRating || newRating.tierIndex > prevRating.tierIndex)) {
+                tierUp = { tier: newRating.tier, liftName: newRating.liftName };
+              }
+            }
+          }
+
+          setCelebrationPR({ name: displayName, weight: currentWeight, reps: currentReps, tierUp });
         }
       }
 

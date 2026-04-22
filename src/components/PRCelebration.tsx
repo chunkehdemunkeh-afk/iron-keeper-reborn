@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy } from "lucide-react";
+import { Trophy, Sparkles } from "lucide-react";
 import { hapticSuccess } from "@/lib/haptics";
+import { TIER_COLORS, TIER_LABELS, type Tier } from "@/lib/strength-standards";
 
 interface Props {
-  pr: { name: string; weight: number; reps: number } | null;
+  pr: { name: string; weight: number; reps: number; tierUp?: { tier: Tier; liftName: string } | null } | null;
   onDismiss: () => void;
 }
 
@@ -87,6 +88,24 @@ export default function PRCelebration({ pr, onDismiss }: Props) {
                   </>
                 )}
               </div>
+
+              {pr.tierUp && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full mt-1"
+                  style={{
+                    background: `${TIER_COLORS[pr.tierUp.tier]}22`,
+                    boxShadow: `0 0 0 1px ${TIER_COLORS[pr.tierUp.tier]}55`,
+                  }}
+                >
+                  <Sparkles className="h-3.5 w-3.5" style={{ color: TIER_COLORS[pr.tierUp.tier] }} />
+                  <p className="text-xs font-semibold" style={{ color: TIER_COLORS[pr.tierUp.tier] }}>
+                    {TIER_LABELS[pr.tierUp.tier]} on {pr.tierUp.liftName}!
+                  </p>
+                </motion.div>
+              )}
 
               <p className="text-xs text-muted-foreground/60 mt-1">Tap anywhere to dismiss</p>
             </motion.div>

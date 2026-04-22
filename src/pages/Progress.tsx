@@ -24,6 +24,18 @@ import { useRecoverySettings } from "@/hooks/useRecoverySettings";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import { useState } from "react";
 import PhotosTab from "@/components/progress/PhotosTab";
+import StrengthLevelCard from "@/components/progress/StrengthLevelCard";
+import { fetchStrengthProfile } from "@/lib/cloud-data";
+import {
+  RATED_LIFTS,
+  TIER_COLORS,
+  TIER_SHORT_LABELS,
+  epley1RM,
+  getStrengthRating,
+  inferLiftId,
+  type LiftId,
+  type StrengthRating,
+} from "@/lib/strength-standards";
 
 function PRSwipeRow({ exId, pr, onDelete }: { exId: string; pr: any; onDelete: () => void }) {
   const x = useMotionValue(0);
@@ -90,6 +102,19 @@ function RecoveryTabContent() {
     staleTime: 60_000,
   });
 
+  const { data: prs = {} } = useQuery({
+    queryKey: ["personal-records", user?.id],
+    queryFn: () => import("@/lib/cloud-data").then((m) => m.fetchPersonalRecords()),
+    enabled: !!user,
+  });
+
+  const { data: profile } = useQuery({
+    queryKey: ["strength-profile", user?.id],
+    queryFn: fetchStrengthProfile,
+    enabled: !!user,
+    staleTime: 5 * 60_000,
+  });
+
   const splitId = user ? getUserPreferences(user.id)?.splitId : null;
   const settings = useRecoverySettings(user?.id);
 
@@ -97,6 +122,34 @@ function RecoveryTabContent() {
     () => computeMuscleRecovery(sets, sleepLogs, splitId, new Date(), settings),
     [sets, sleepLogs, splitId, settings],
   );
+
+  // Map each muscle region → best strength rating (from the lift that targets it)
+  const muscleToRating: Partial<Record<typeof MUSCLE_REGIONS[number], StrengthRating>> = useMemo(() => {
+    if (!profile?.bodyweight || !profile?.sex) return {};
+    const bestPerLift: Record<LiftId, number> = {} as any;
+    Object.entries(prs).forEach(([exId, pr]: [string, any]) => {
+      const liftId = inferLiftId(exId, pr.name);
+      if (!liftId) return;
+      const oneRm = epley1RM(pr.weight, pr.reps);
+      if (!bestPerLift[liftId] || oneRm > bestPerLift[liftId]) bestPerLift[liftId] = oneRm;
+    });
+    const out: Partial<Record<typeof MUSCLE_REGIONS[number], StrengthRating>> = {};
+    RATED_LIFTS.forEach((def) => {
+      const oneRm = bestPerLift[def.id];
+      if (!oneRm) return;
+      const rating = getStrengthRating(def.id, oneRm, {
+        bodyweight: profile.bodyweight!,
+        sex: profile.sex!,
+        age: profile.age,
+      });
+      if (!rating) return;
+      const region = def.primaryMuscle as typeof MUSCLE_REGIONS[number];
+      const existing = out[region];
+      if (!existing || rating.tierIndex > existing.tierIndex) out[region] = rating;
+    });
+    return out;
+  }, [prs, profile]);
+
 
   const sortedRegions = useMemo(() => {
     return [...MUSCLE_REGIONS].sort((a, b) => states[a].score - states[b].score);
@@ -222,8 +275,19 @@ function RecoveryTabContent() {
                     style={{ background: color }}
                   />
                   <div>
-                    <p className={`text-sm font-medium ${isActive ? "text-primary" : "text-foreground"}`}>
+                    <p className={`text-sm font-medium flex items-center gap-1.5 ${isActive ? "text-primary" : "text-foreground"}`}>
                       {MUSCLE_LABELS[region]}
+                      {muscleToRating[region] && (
+                        <span
+                          className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide"
+                          style={{
+                            background: `${TIER_COLORS[muscleToRating[region]!.tier]}22`,
+                            color: TIER_COLORS[muscleToRating[region]!.tier],
+                          }}
+                        >
+                          {TIER_SHORT_LABELS[muscleToRating[region]!.tier]}
+                        </span>
+                      )}
                     </p>
                     {s.lastWorkedAt ? (
                       <p className="text-[10px] text-muted-foreground">
@@ -495,6 +559,9 @@ export default function Progress() {
 
             {/* PR trend per exercise */}
             <PRTrendChart />
+
+            {/* Strength Level (vs published standards) */}
+            <StrengthLevelCard />
 
             {/* Personal Records */}
             <motion.div
