@@ -715,3 +715,91 @@ export async function fetchRecentSets(daysBack: number = 7): Promise<RecentSetRe
     };
   });
 }
+
+// ── PR trend history (running max weight per exercise over time) ──────────────
+
+export interface PRTrendPoint {
+  date: string;       // ISO date
+  weight: number;     // running max as of this point
+  reps: number;       // reps performed at the new PR (only meaningful when weight increased)
+  isNewPR: boolean;   // true when this set set a new PR
+}
+
+export interface ExercisePRTrend {
+  baseId: string;     // suffix-stripped exercise id (groups cable variants)
+  name: string;       // human-readable name
+  currentPR: number;  // most recent running max
+  points: PRTrendPoint[]; // chronological points (oldest → newest)
+}
+
+/**
+ * Fetches every weighted set the user has logged and computes a running-max
+ * "PR over time" series per exercise (grouped by base id so cable attachment
+ * variants share a trend). Each series includes one point per set, and the
+ * `isNewPR` flag marks moments the running max increased.
+ */
+export async function fetchExercisePRHistory(): Promise<ExercisePRTrend[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data: sets } = await supabase
+    .from("workout_sets")
+    .select("exercise_id, exercise_name, weight, reps, created_at")
+    .eq("user_id", user.id)
+    .gt("weight", 0)
+    .order("created_at", { ascending: true });
+
+  if (!sets || sets.length === 0) return [];
+
+  // Resolve real exercise names (legacy rows can have name == id).
+  const nameMap: Record<string, string> = {};
+  WORKOUTS.forEach((w) => w.exercises.forEach((ex: any) => {
+    if (ex.name) nameMap[ex.id] = ex.name;
+  }));
+  ACCESSORY_ROUTINES.forEach((r) => r.exercises.forEach((ex: any) => {
+    if (ex.name) nameMap[ex.id] = ex.name;
+  }));
+  Object.values(EXERCISE_SUBSTITUTIONS).flat().forEach((sub: any) => {
+    if (sub.name) nameMap[sub.id] = sub.name;
+  });
+  Object.values(ACCESSORY_SUBSTITUTIONS).flat().forEach((sub: any) => {
+    if (sub.name) nameMap[sub.id] = sub.name;
+  });
+  EXERCISE_LIBRARY.forEach((ex) => { if (ex.name) nameMap[ex.id] = ex.name; });
+
+  const grouped: Record<string, { name: string; running: number; points: PRTrendPoint[] }> = {};
+
+  for (const s of sets as any[]) {
+    const baseId = stripExerciseSuffixes(s.exercise_id);
+    const w = Number(s.weight);
+    if (!w || Number.isNaN(w)) continue;
+
+    const realName =
+      s.exercise_name && s.exercise_name !== s.exercise_id
+        ? s.exercise_name
+        : nameMap[baseId] ?? nameMap[s.exercise_id] ?? s.exercise_name ?? baseId;
+
+    if (!grouped[baseId]) {
+      grouped[baseId] = { name: realName, running: 0, points: [] };
+    }
+
+    const isNew = w > grouped[baseId].running;
+    if (isNew) grouped[baseId].running = w;
+    grouped[baseId].points.push({
+      date: s.created_at,
+      weight: grouped[baseId].running,
+      reps: s.reps,
+      isNewPR: isNew,
+    });
+  }
+
+  return Object.entries(grouped)
+    .filter(([, g]) => g.points.length > 0)
+    .map(([baseId, g]) => ({
+      baseId,
+      name: g.name,
+      currentPR: g.running,
+      points: g.points,
+    }))
+    .sort((a, b) => b.currentPR - a.currentPR);
+}
