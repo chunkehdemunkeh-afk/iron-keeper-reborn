@@ -1,126 +1,51 @@
 
 
-## Goal
-Add a **Recovery** feature: a body diagram (front + back) that visualises which muscle groups are fatigued vs recovered, based on the user's logged sessions, the intensity (RIR) of their chosen training split, and how well they slept. A compact preview lives on the Home page; the full interactive view lives on a new tab in Progress.
+## Normalize fatigue by user strength (PR-relative volume)
 
-## How recovery is calculated
+### The problem
+Today, recovery uses raw `weight × reps` as fatigue. A beginner benching 40 kg × 8 produces 320 "fatigue", an advanced lifter benching 100 kg × 8 produces 800 — so the strong lifter looks 2.5× more wrecked even though, relative to their capacity, both did similar work. DOMS in reality scales with **relative intensity** (% of your own max), not absolute load.
 
-Each completed set adds **fatigue points** to the muscle groups that exercise targets. Fatigue then decays over time toward zero (recovered).
-
-**Fatigue per set** = `volume × intensityMultiplier(splitId) × sleepModifier`
-
-- `volume` = `weight (kg) × reps`. Bodyweight/plyo/cardio sets contribute **0** (out of scope, as agreed).
-- `intensityMultiplier` is derived from the split's prescribed RIR (lower RIR = more muscle damage):
-  - PPL, Bro Split: **1.30** (RIR 0–1, train to failure)
-  - PPLU, PPLUL: **1.20** (RIR 0–2)
-  - Arnold: **1.15** (high volume)
-  - Upper/Lower: **1.10** (RPE 7–9)
-  - Full Body, 5/3/1: **1.00** (RPE 6–8 / submaximal)
-  - GK Programme: **0.85** (lower-load, performance focused)
-  - Custom / unknown: **1.00**
-- `sleepModifier` is derived from the **previous night's** sleep entry:
-  - 8h+ at quality 4–5 → **0.90** (recover faster, less fatigue accrual)
-  - 7–8h at quality 3+ → **1.00** (baseline)
-  - 6–7h or quality 2 → **1.10**
-  - <6h or quality 1, or no entry for that night → **1.20**
-
-**Recovery time per muscle group** (research-backed; small muscles recover faster):
-- Calves, Forearms, Abs/Core: **24h**
-- Biceps, Triceps, Side/Rear Delts: **48h**
-- Chest, Back (lats, mid-back), Front Delts, Glutes: **72h**
-- Quads, Hamstrings, Lower Back: **96h** (largest muscles, most damage)
-
-A muscle's **recovery score (0–1)** is `clamp(elapsedHours / fullRecoveryHours, 0, 1)`, then scaled by fatigue load so a heavy session takes the full window and a light session clears faster.
-
-**Status colour:**
-- Score < 0.5 → **rose-500** (fatigued — heavy work yesterday)
-- 0.5 ≤ score < 0.85 → **amber-400** (workable but not optimal)
-- ≥ 0.85 → **emerald-400** (fully recovered)
-- No recent work → muted neutral fill
-
-## Exercise → muscle mapping
-
-A new file `src/lib/muscle-mapping.ts` exports:
-- `MUSCLE_REGIONS` — the 14 canonical regions used by the SVG: `chest, front_delts, side_delts, rear_delts, biceps, triceps, forearms, abs, obliques, quads, hamstrings, glutes, calves, lats, traps, mid_back, lower_back` (front diagram + back diagram between them cover all).
-- `getMusclesWorked(exerciseId, exerciseName)` — returns `{ primary: string[], secondary: string[] }`. Secondary muscles get **0.4×** the fatigue of primary.
-- A lookup table seeded from `WORKOUTS[].exercises[].targetMuscle` strings (e.g. `"Quads/Glutes"` → `["quads","glutes"]`) and from `EXERCISE_LIBRARY[].muscleGroup`. Compound lifts get sensible secondaries (Bench → primary chest+triceps, secondary front_delts; Squat → primary quads+glutes, secondary hamstrings+lower_back; Deadlift → primary hamstrings+glutes+lower_back, secondary lats+traps; etc.).
-- A fallback heuristic: parse the exercise name for keywords ("press", "row", "squat", "curl"…) when no exact match exists.
-
-## New components
-
-**`src/components/recovery/BodyDiagram.tsx`** — custom SVG silhouette.
-- Two SVG views: front and back, swappable via small toggle.
-- Each muscle region is a `<path>` with an `id` matching `MUSCLE_REGIONS`. `fill` is animated with Framer Motion `motion.path` and `transition-colors duration-500`, matching the calorie/water bar pattern.
-- Tap a region → small popover/sheet with: muscle name, recovery %, last worked date, last session volume, status label.
-- SVG paths are hand-crafted simplified silhouettes (anterior + posterior), styled with the app's glass-card aesthetic. No external library.
-
-**`src/components/recovery/RecoveryCard.tsx`** — Home preview.
-- Glass card sized like `HomeWeightTracker`. Shows the front silhouette only, smaller, non-interactive.
-- One-line summary underneath: "3 muscle groups recovered • 2 fatigued" with a subtle "View details" chevron linking to `/progress?tab=body`.
-
-**`src/components/recovery/SleepCard.tsx`** — Home sleep input.
-- Compact card matching `HomeWeightTracker`: shows last night's hours + 1–5 quality dots, tap to open a Sheet to log/edit.
-- Sheet inputs: hours (0.5 increments via `Slider`, 4–10h), quality (1–5 button row), optional note.
-- Stores via new `sleep_logs` table.
-
-**`src/lib/recovery.ts`** — pure calculation module.
-- `computeMuscleRecovery(sets, sleepLogs, splitId, now): Record<MuscleRegion, MuscleState>` where `MuscleState = { score, status, lastWorkedAt, lastVolume }`.
-- Fully unit-testable; no React or Supabase imports.
-
-## Data model
-
-New Supabase table **`sleep_logs`** (migration in `supabase/migrations/`):
+### The fix: relative-intensity fatigue
+Replace the raw volume term with a **PR-normalized** equivalent. For each set:
 
 ```text
-id            uuid pk default gen_random_uuid()
-user_id       uuid not null
-date          date not null               -- the night that ended on this date
-hours         numeric(3,1) not null       -- 4.0 – 12.0
-quality       smallint not null           -- 1–5
-source        text not null default 'manual'  -- future: 'healthkit','googlefit'
-notes         text
-created_at    timestamptz not null default now()
-unique (user_id, date)
+relativeIntensity = weight / userPR(exerciseId)     (clamped 0.3–1.1)
+fatigueUnits      = reps × relativeIntensity^1.5    (per-set)
 ```
-RLS: standard per-user policies (select/insert/update/delete `auth.uid() = user_id`) plus coach SELECT, mirroring `body_measurements`.
 
-`src/lib/cloud-data.ts` gains `fetchSleepLogs(daysBack=14)`, `upsertSleepLog({date, hours, quality, notes})`, `deleteSleepLog(date)`.
+Then the existing pipeline (intensity multiplier × sleep modifier × decay) runs unchanged on `fatigueUnits` instead of `weight × reps`. Two lifters doing 5×8 at the same RPE on the same lift will now generate near-identical fatigue regardless of absolute load.
 
-## Recovery tab on Progress page
+Why `^1.5`? Sets at 80% of PR feel meaningfully harder than at 60% — a slight exponent makes higher relative loads weigh more, matching how DOMS actually scales.
 
-Edit `src/pages/Progress.tsx` to introduce a tab bar at the top (using existing `@/components/ui/tabs`):
-- **Stats** (current content moves here unchanged)
-- **Recovery** (new)
-  - Front/back toggle + large interactive `BodyDiagram`.
-  - Below: scrollable list of all 14 regions sorted by lowest recovery, each row showing colour dot, name, last worked, recovery %, "ready in Xh" if <100%.
-  - Last 7 nights of sleep as a thin sparkline + average hours/quality.
+### Handling missing PRs (new users, new exercises)
+- If no PR exists for that exercise yet → fall back to **the user's best `weight × reps` for any exercise hitting the same primary muscle** in the last ~90 days, treating it as a soft proxy.
+- If still nothing → use the current set's own `weight × reps` as a self-reference (relativeIntensity = 1.0 baseline). This means brand-new lifters always get a sensible "moderate fatigue" reading rather than 0 or extreme values.
+- Bodyweight / time-based exercises (weight = 0): use `reps × 0.6` as fatigueUnits — preserves contribution without divide-by-zero.
 
-## Home page placement
+### Normalisation constant
+The current code normalises with `remainingFatigue / 1500` to map to 0–1. Under the new scale, a hard set ≈ 8 × 0.85^1.5 ≈ 6 fatigue units. We'll re-tune the divisor to **~75 units per muscle** so a typical hard session (5 working sets on a primary muscle) lands in the "fatigued" band, matching today's behaviour for an average user.
 
-In `src/pages/Index.tsx`, inside the date-aware `motion.div` (after `HomeWeightTracker`, before `HomeCompleteDay`), add:
-1. `<SleepCard date={dateStr} />` — log last night's sleep
-2. `<RecoveryCard />` — only shown for `dateStr === today` (recovery is a "now" snapshot, not historical)
+### Technical changes
 
-## Files
+**`src/lib/recovery.ts`**
+- Extend `SetRecord` with optional `userPR?: number` (the user's best weight on this exercise's base ID).
+- Replace `volume = weight * reps` with the relative-intensity formula above.
+- Re-tune the fatigue normalisation divisor (1500 → ~75).
+- Keep `lastVolume` as raw `weight × reps` for display purposes (the muscle detail sheet still shows real kg × reps, which is what users expect).
 
-**New**
-- `src/lib/muscle-mapping.ts`
-- `src/lib/recovery.ts`
-- `src/components/recovery/BodyDiagram.tsx`
-- `src/components/recovery/RecoveryCard.tsx`
-- `src/components/recovery/SleepCard.tsx`
-- `supabase/migrations/<ts>_sleep_logs.sql`
-- `src/test/recovery.test.ts` (unit tests for recovery math)
+**`src/lib/cloud-data.ts` — `fetchRecentSets`**
+- Reuse existing PR query logic: build a `prMap[baseExerciseId] → maxWeight` from `workout_sets` (no new query — just aggregate the same rows we already pull, or do one extra grouped query).
+- Attach `userPR` to each returned `RecentSetRecord`.
 
-**Edited**
-- `src/lib/cloud-data.ts` — sleep CRUD + a `fetchRecentSets(daysBack)` helper joining `workout_sets` with `workout_history`.
-- `src/pages/Progress.tsx` — wrap existing content in tabs, add Recovery tab.
-- `src/pages/Index.tsx` — mount SleepCard + RecoveryCard.
-- `src/integrations/supabase/types.ts` — auto-regenerated after migration.
+**`src/components/recovery/RecoveryCard.tsx` & `src/pages/Progress.tsx`**
+- No API changes — they just pass `sets` through. PR data flows in automatically via `fetchRecentSets`.
 
-## Out of scope (future)
-- Apple Health / Google Fit sync (schema is ready: `source` column).
-- Bodyweight/plyo fatigue contribution.
-- Per-exercise volume-landmark warnings (MEV/MRV).
-- Push notifications when a muscle group becomes ready.
+**`src/test/recovery.test.ts`**
+- Add cases: identical relative intensity (50% PR vs 50% PR at different absolute weights) produces equal fatigue; missing PR falls back gracefully; bodyweight exercises still register fatigue.
+
+### What the user will notice
+- Beginners and advanced lifters who train with similar effort now show **similar muscle fatigue**.
+- Lifters going light (deload, technique work) at <50% of PR show **less** fatigue than before — which is correct.
+- Lifters pushing near-max sets show **more** fatigue per set than the old volume model — also correct.
+- No UI changes; the diagram, list, and percentages all behave the same, just calibrated to the individual.
 
