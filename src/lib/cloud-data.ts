@@ -617,6 +617,8 @@ export interface RecentSetRecord {
   weight: number;
   reps: number;
   workoutDate: string; // ISO
+  /** User's all-time max weight on this exercise's base id (for PR-relative fatigue). */
+  userPR?: number;
 }
 
 export async function fetchRecentSets(daysBack: number = 7): Promise<RecentSetRecord[]> {
@@ -645,6 +647,26 @@ export async function fetchRecentSets(daysBack: number = 7): Promise<RecentSetRe
     .in("workout_history_id", history.map((h: any) => h.id));
 
   if (!sets) return [];
+
+  // Build a PR map from ALL the user's sets (not just recent), so beginners
+  // and lifters who haven't hit a PR in the last 7 days still get normalised
+  // fatigue. Aggregated by base id (suffix-stripped) so cable attachment
+  // variants share a PR pool with their parent exercise.
+  const prMap: Record<string, number> = {};
+  const { data: allSets } = await supabase
+    .from("workout_sets")
+    .select("exercise_id, weight")
+    .eq("user_id", user.id)
+    .gt("weight", 0);
+
+  if (allSets) {
+    for (const row of allSets as any[]) {
+      const base = stripExerciseSuffixes(row.exercise_id);
+      const w = Number(row.weight);
+      if (!w || Number.isNaN(w)) continue;
+      if (!prMap[base] || w > prMap[base]) prMap[base] = w;
+    }
+  }
 
   // Build lookups by exercise base id (so suffixed rows like "up1-mag-grip"
   // resolve to the underlying "up1" definition).
@@ -689,6 +711,7 @@ export async function fetchRecentSets(daysBack: number = 7): Promise<RecentSetRe
       weight: Number(s.weight),
       reps: s.reps,
       workoutDate: dateMap[s.workout_history_id],
+      userPR: prMap[baseId] ?? prMap[s.exercise_id],
     };
   });
 }
