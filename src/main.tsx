@@ -70,8 +70,17 @@ if (!isInIframe && !isPreviewHost) {
       })
       .catch(() => {/* SW unsupported — app works without it */});
 
-    // Fires when sw.js itself changed and the new SW took control
-    navigator.serviceWorker.addEventListener("controllerchange", applyUpdate);
+    // Fires when sw.js itself changed and the new SW took control.
+    // CRITICAL: On a brand-new visit (no prior controller), the very first
+    // SW activation also fires controllerchange — but that's the initial
+    // takeover, NOT an update. Treating it as one causes an infinite
+    // "Updating Iron Keeper…" reload loop on first-ever page load.
+    // Only react to controller changes when there was already a controller.
+    const hadInitialController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!hadInitialController) return; // first activation — ignore
+      applyUpdate();
+    });
 
     // Fires when the SW's NetworkFirst handler detected new HTML content
     // (The SW broadcasts this to ALL open windows — see public/sw.js)
