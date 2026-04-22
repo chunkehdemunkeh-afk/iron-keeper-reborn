@@ -368,6 +368,36 @@ export type Database = {
         }
         Relationships: []
       }
+      progress_photos: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          pose: string | null
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          pose?: string | null
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          pose?: string | null
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sleep_logs: {
         Row: {
           created_at: string
@@ -466,6 +496,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      weekly_reviews: {
+        Row: {
+          created_at: string
+          focus_next: string | null
+          id: string
+          photo_id: string | null
+          rating: number
+          to_improve: string | null
+          updated_at: string
+          user_id: string
+          week_start: string
+          went_well: string | null
+        }
+        Insert: {
+          created_at?: string
+          focus_next?: string | null
+          id?: string
+          photo_id?: string | null
+          rating: number
+          to_improve?: string | null
+          updated_at?: string
+          user_id: string
+          week_start: string
+          went_well?: string | null
+        }
+        Update: {
+          created_at?: string
+          focus_next?: string | null
+          id?: string
+          photo_id?: string | null
+          rating?: number
+          to_improve?: string | null
+          updated_at?: string
+          user_id?: string
+          week_start?: string
+          went_well?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reviews_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "progress_photos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workout_history: {
         Row: {
