@@ -129,9 +129,17 @@ function extractTodayBullets(src, dateStr) {
 
 // ── Build entry ────────────────────────────────────────────────────────────────
 
+// Merge with any existing bullets from today's entry so multiple Lovable
+// pushes throughout the day accumulate into a single, complete changelog
+// entry instead of overwriting each other.
+const existingTodayBullets = extractTodayBullets(content, today);
+const mergedChanges = [...existingTodayBullets, ...changes]
+  .filter((msg, i, arr) => arr.findIndex(m => m.toLowerCase() === msg.toLowerCase()) === i)
+  .slice(0, 8);
+
 const newVersion = bumpPatch(latestVersion);
 
-const bulletList = changes
+const bulletList = mergedChanges
   .map(c => `      "${c.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`)
   .join(",\n");
 
