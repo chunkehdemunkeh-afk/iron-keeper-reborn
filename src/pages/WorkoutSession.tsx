@@ -630,7 +630,27 @@ export default function WorkoutSession() {
             weight: Math.max(sessBest.weight, currentWeight),
             reps: Math.max(sessBest.reps, currentReps),
           };
-          setCelebrationPR({ name: displayName, weight: currentWeight, reps: currentReps });
+
+          // Tier-crossing detection (vs previous best on this canonical lift)
+          let tierUp: { tier: Tier; liftName: string } | null = null;
+          const profile = strengthProfileRef.current;
+          if (profile?.bodyweight && profile?.sex) {
+            const liftId = inferLiftId(effectiveId, displayName);
+            if (liftId) {
+              const prevBest = Math.max(histWeight, sessBest.weight);
+              const prevReps = histReps || sessBest.reps || 1;
+              const prevOneRm = prevBest > 0 ? epley1RM(prevBest, prevReps) : 0;
+              const newOneRm = epley1RM(currentWeight, currentReps);
+              const inputs = { bodyweight: profile.bodyweight, sex: profile.sex, age: profile.age };
+              const prevRating = prevOneRm > 0 ? getStrengthRating(liftId, prevOneRm, inputs) : null;
+              const newRating = getStrengthRating(liftId, newOneRm, inputs);
+              if (newRating && (!prevRating || newRating.tierIndex > prevRating.tierIndex)) {
+                tierUp = { tier: newRating.tier, liftName: newRating.liftName };
+              }
+            }
+          }
+
+          setCelebrationPR({ name: displayName, weight: currentWeight, reps: currentReps, tierUp });
         }
       }
 
