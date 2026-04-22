@@ -38,8 +38,11 @@ function bumpPatch(version) {
   return parts.join(".");
 }
 
-// Commit messages we always ignore (technical / meta / too vague)
-const NOISE_RE = /^(work in progress|wip|changes?$|misc|temp|auto-update changelog|bump.?version|applied |switch(ed)? to|hard.?code|reverted?|updated?\s*$|added?\s*$|fix\s*$|test\s*$|restored?|fix pwa|pwa |service worker|sw |auto-update|skip waiting|controllerchange|networkfirst|cache|hash poll|ik-up|fix stale|deadlock|dual.?strat|registration|deployed?|rollback|co-authored)/i;
+// Commit messages we always ignore (technical / meta / too vague).
+// "Save plan in Lovable" and bare "Changes" are Lovable's placeholder commits
+// that carry no information about what actually changed — drop them so the
+// real descriptive commit (the first one of a Lovable turn) is what surfaces.
+const NOISE_RE = /^(work in progress|wip|changes?$|misc|temp|auto-update changelog|bump.?version|applied |switch(ed)? to|hard.?code|reverted?|updated?\s*$|added?\s*$|fix\s*$|test\s*$|restored?|fix pwa|pwa |service worker|sw |auto-update|skip waiting|controllerchange|networkfirst|cache|hash poll|ik-up|fix stale|deadlock|dual.?strat|registration|deployed?|rollback|co-authored|save plan in lovable|lovable plan|lovable tool use)/i;
 const INFRA_RE = /\b(sw\.js|vite\.config|github action|workbox|service.?worker|localstorage|flag|cache-buster|supabase|schema|migration|typescript|tsx|eslint|linting|npm|bun\.lock|package\.json)\b/i;
 
 // ── Read changelog ─────────────────────────────────────────────────────────────
@@ -96,7 +99,7 @@ const rawCommits = run(gitLogCmd)
 const changes = rawCommits
   .filter(msg => !NOISE_RE.test(msg))
   .filter(msg => !INFRA_RE.test(msg))
-  .filter(msg => msg.length >= 15 && msg.length <= 120)
+  .filter(msg => msg.length >= 8 && msg.length <= 120)
   .map(msg => msg.charAt(0).toUpperCase() + msg.slice(1))
   // Deduplicate (case-insensitive)
   .filter((msg, i, arr) => arr.findIndex(m => m.toLowerCase() === msg.toLowerCase()) === i)
@@ -107,11 +110,36 @@ if (changes.length === 0) {
   process.exit(0);
 }
 
+// ── Extract existing bullets from today's entry (if any) so we merge instead
+// of clobbering. Lovable pushes commits in bursts; without merging, a later
+// "Save plan in Lovable" run wipes out the descriptive entry from earlier.
+function extractTodayBullets(src, dateStr) {
+  const dateIdx = src.indexOf(`date: "${dateStr}"`);
+  if (dateIdx === -1) return [];
+  // Find the changes: [...] array within this entry
+  const changesIdx = src.indexOf("changes:", dateIdx);
+  if (changesIdx === -1) return [];
+  const arrStart = src.indexOf("[", changesIdx);
+  const arrEnd = src.indexOf("]", arrStart);
+  if (arrStart === -1 || arrEnd === -1) return [];
+  const block = src.slice(arrStart + 1, arrEnd);
+  const matches = [...block.matchAll(/"((?:[^"\\]|\\.)*)"/g)];
+  return matches.map(m => m[1].replace(/\\"/g, '"').replace(/\\\\/g, "\\"));
+}
+
 // ── Build entry ────────────────────────────────────────────────────────────────
+
+// Merge with any existing bullets from today's entry so multiple Lovable
+// pushes throughout the day accumulate into a single, complete changelog
+// entry instead of overwriting each other.
+const existingTodayBullets = extractTodayBullets(content, today);
+const mergedChanges = [...existingTodayBullets, ...changes]
+  .filter((msg, i, arr) => arr.findIndex(m => m.toLowerCase() === msg.toLowerCase()) === i)
+  .slice(0, 8);
 
 const newVersion = bumpPatch(latestVersion);
 
-const bulletList = changes
+const bulletList = mergedChanges
   .map(c => `      "${c.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`)
   .join(",\n");
 

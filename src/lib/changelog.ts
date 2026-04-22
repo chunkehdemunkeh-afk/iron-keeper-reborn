@@ -12,19 +12,32 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.76",
+    version: "1.6.77",
     date: "2026-04-22",
-    title: "Updates & Fixes",
+    title: "Better Changelog",
     changes: [
-      "Save plan in Lovable",
+      "What's New popup now shows real Lovable changes instead of generic wording",
+      "Multiple updates on the same day merge into one changelog entry",
+      "Filtered out placeholder commit messages so only meaningful changes appear",
     ],
   },
   {
-    version: "1.6.74",
+    version: "1.6.75",
     date: "2026-04-22",
-    title: "Updates & Fixes",
+    title: "1RM Test Sets",
     changes: [
-      "Save plan in Lovable",
+      "New 1RM button on every exercise — log a real 1-rep max attempt",
+      "True 1RM singles now beat Epley estimates for tier placement",
+      "Test 1RM shortcut on each lift in the Strength Level card",
+      "PR celebration shows 'True 1RM!' for max attempts",
+    ],
+  },
+  {
+    version: "1.6.73",
+    date: "2026-04-22",
+    title: "Beginner Strength Tier",
+    changes: [
+      "Added Beginner tier between Untrained and Novice in Strength Standards",
     ],
   },
   {
