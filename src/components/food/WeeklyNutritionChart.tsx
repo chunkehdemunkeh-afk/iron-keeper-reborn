@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { format, subDays } from "date-fns";
+import { format, startOfWeek, addDays } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Flame, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,9 +30,10 @@ export default function WeeklyNutritionChart({ goals }: { goals: Goals | null })
 
   useEffect(() => {
     if (!user) return;
-    const today = new Date();
-    const startDate = format(subDays(today, 6), "yyyy-MM-dd");
-    const endDate = format(today, "yyyy-MM-dd");
+    const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const weekEnd = addDays(weekStart, 6);
+    const startDate = format(weekStart, "yyyy-MM-dd");
+    const endDate = format(weekEnd, "yyyy-MM-dd");
 
     supabase
       .from("food_logs")
@@ -41,10 +42,10 @@ export default function WeeklyNutritionChart({ goals }: { goals: Goals | null })
       .gte("date", startDate)
       .lte("date", endDate)
       .then(({ data: logs }) => {
-        // Build 7-day array
+        // Build Mon-Sun array
         const days: DayData[] = [];
-        for (let i = 6; i >= 0; i--) {
-          const d = subDays(today, i);
+        for (let i = 0; i < 7; i++) {
+          const d = addDays(weekStart, i);
           const dateStr = format(d, "yyyy-MM-dd");
           const dayLogs = (logs || []).filter((l: any) => l.date === dateStr);
           days.push({
