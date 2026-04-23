@@ -12,6 +12,14 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.6.80",
+    date: "2026-04-23",
+    title: "Updates & Fixes",
+    changes: [
+      "Rework FoodTracker calorie summary and surface adjust-for-activity toggle",
+    ],
+  },
+  {
     version: "1.6.79",
     date: "2026-04-22",
     title: "Updates & Fixes",
