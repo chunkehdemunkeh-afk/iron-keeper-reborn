@@ -46,29 +46,22 @@ export default function ExerciseVideoSheet({ open, onOpenChange, exerciseName, e
   const images = getExerciseImages(exerciseId || "");
   const videoUrl = images ? null : getExerciseVideoUrl(exerciseId || "", exerciseName);
 
-  // YouTube state
   const isShort = videoUrl?.includes("/shorts/");
   const shortId = isShort ? videoUrl!.split("/shorts/")[1]?.split("?")[0] : null;
   const videoId = shortId || (videoUrl?.match(/[?&]v=([^&]+)/) || [])[1] || null;
   const youtubeWatchUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : videoUrl || "";
-  const embedUrl = videoId
-    ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&loop=1&rel=0&modestbranding=1`
-    : null;
   const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
 
-  const [embedFailed, setEmbedFailed] = useState(false);
-  const [embedLoaded, setEmbedLoaded] = useState(false);
+  const [thumbLoaded, setThumbLoaded] = useState(false);
+  const [thumbFailed, setThumbFailed] = useState(false);
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      setEmbedFailed(false);
-      setEmbedLoaded(false);
+      setThumbLoaded(false);
+      setThumbFailed(false);
     }
     onOpenChange(isOpen);
   };
-
-  const showEmbed = open && embedUrl && !embedFailed;
-  const showFallback = open && videoUrl && (!embedUrl || embedFailed);
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -104,51 +97,39 @@ export default function ExerciseVideoSheet({ open, onOpenChange, exerciseName, e
             </div>
           )}
 
-          {/* YouTube embed */}
-          {showEmbed && (
-            <div className="relative" style={{ height: "calc(100% - 60px)" }}>
-              {!embedLoaded && thumbnailUrl && (
-                <div className="absolute inset-0 rounded-xl overflow-hidden flex items-center justify-center bg-muted/30">
-                  <img src={thumbnailUrl} alt={exerciseName} className="w-full h-full object-cover rounded-xl opacity-60" />
+          {/* YouTube thumbnail for exercises with a video URL */}
+          {!images && thumbnailUrl && (
+            <div className="flex flex-col gap-4">
+              <div className="relative rounded-xl overflow-hidden bg-muted/30 aspect-video">
+                {!thumbLoaded && !thumbFailed && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="h-12 w-12 rounded-full bg-primary/80 flex items-center justify-center animate-pulse">
-                      <Play className="h-5 w-5 text-primary-foreground ml-0.5" />
-                    </div>
+                    <Dumbbell className="h-8 w-8 text-muted-foreground/30 animate-pulse" />
                   </div>
-                </div>
-              )}
-              <iframe
-                src={embedUrl!}
-                className={`w-full h-full rounded-xl transition-opacity duration-300 ${embedLoaded ? "opacity-100" : "opacity-0"}`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                title={`${exerciseName} tutorial`}
-                onLoad={() => setEmbedLoaded(true)}
-                onError={() => setEmbedFailed(true)}
-              />
-            </div>
-          )}
-
-          {/* YouTube fallback */}
-          {showFallback && (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-xl overflow-hidden relative" style={{ height: "calc(100% - 60px)" }}>
-              {thumbnailUrl && (
-                <img src={thumbnailUrl} alt={exerciseName} className="absolute inset-0 w-full h-full object-cover rounded-xl opacity-30" />
-              )}
-              <div className="relative z-10 flex flex-col items-center gap-4">
-                <p className="text-muted-foreground text-sm text-center max-w-xs">
-                  Embedded playback unavailable. Open the video directly in YouTube instead.
-                </p>
-                <a
-                  href={youtubeWatchUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl gradient-primary px-6 py-3 text-sm font-semibold text-primary-foreground glow-primary flex items-center gap-2"
-                >
-                  <Play className="h-4 w-4" />
-                  Open in YouTube
-                </a>
+                )}
+                {!thumbFailed && (
+                  <img
+                    src={thumbnailUrl}
+                    alt={exerciseName}
+                    className={`w-full h-full object-cover transition-opacity duration-300 ${thumbLoaded ? "opacity-100" : "opacity-0"}`}
+                    onLoad={() => setThumbLoaded(true)}
+                    onError={() => setThumbFailed(true)}
+                  />
+                )}
+                {thumbFailed && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Dumbbell className="h-8 w-8 text-muted-foreground/20" />
+                  </div>
+                )}
               </div>
+              <a
+                href={youtubeWatchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/20 transition-colors"
+              >
+                <Play className="h-4 w-4" />
+                Watch on YouTube
+              </a>
             </div>
           )}
 
