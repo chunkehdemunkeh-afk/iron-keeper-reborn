@@ -384,17 +384,22 @@ export default function WeekStrip() {
             setLogSheetDay(null);
             setShowOtherInput(false);
             setOtherLabel("");
+            setPendingType(null);
+            setLogDuration("");
+            setLogNotes("");
+            setLogDistance("");
+            setLogIncline("");
           }
         }}
       >
-        <SheetContent side="bottom" className="rounded-t-2xl bg-card border-border/50 max-h-[70vh]">
+        <SheetContent side="bottom" className="rounded-t-2xl bg-card border-border/50 max-h-[80vh] overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-foreground">
-              Log Activity — {logSheetDay !== null ? WEEK_DAYS[logSheetDay] : ""}
+              {pendingType ? `Log ${pendingType.label}` : `Log Activity`} — {logSheetDay !== null ? WEEK_DAYS[logSheetDay] : ""}
             </SheetTitle>
           </SheetHeader>
           <div className="space-y-4 mt-4 pb-6">
-            {!showOtherInput ? (
+            {!showOtherInput && !pendingType ? (
               <div className="grid grid-cols-3 gap-2">
                 {ACTIVITY_PRESETS.map((preset) => {
                   const Icon = ACTIVITY_ICONS[preset.type] || Pencil;
