@@ -57,7 +57,10 @@ export default function WeekStrip() {
   const [activityDays, setActivityDays] = useState<Record<number, ActivityLog[]>>({});
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [logSheetDay, setLogSheetDay] = useState<number | null>(null);
+  const [pendingActivity, setPendingActivity] = useState<{ type: string; label: string } | null>(null);
   const [logDuration, setLogDuration] = useState("");
+  const [logDistance, setLogDistance] = useState("");
+  const [logIncline, setLogIncline] = useState("");
   const [logNotes, setLogNotes] = useState("");
   const [otherLabel, setOtherLabel] = useState("");
   const [showOtherInput, setShowOtherInput] = useState(false);
