@@ -19,7 +19,7 @@ export default function HomeDailySummary({ date }: Props) {
   const navigate = useNavigate();
   const targetDate = date || format(new Date(), "yyyy-MM-dd");
   const [totals, setTotals] = useState({ calories: 0, protein: 0, carbs: 0, fat: 0 });
-  const [goals, setGoals] = useState<{ calories: number; protein_g: number; carbs_g: number; fat_g: number; water_goal_ml?: number } | null>(null);
+  const [goals, setGoals] = useState<{ calories: number; protein_g: number; carbs_g: number; fat_g: number; water_goal_ml?: number; adjust_for_activity?: boolean } | null>(null);
   const [waterMl, setWaterMl] = useState(0);
   const [burn, setBurn] = useState<{ totalKcal: number; strengthKcal: number; cardioKcal: number }>({ totalKcal: 0, strengthKcal: 0, cardioKcal: 0 });
   const [view, setView] = useState<ViewMode>(() => {
