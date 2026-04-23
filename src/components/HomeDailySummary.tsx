@@ -119,6 +119,19 @@ export default function HomeDailySummary({ date }: Props) {
           </div>
         ))}
       </div>
+
+      {burnedKcal > 0 && (
+        <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Activity className="h-3.5 w-3.5 text-amber-400" />
+            <span>Burned today</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-amber-400">{burnedKcal} kcal</span>
+            <span className="text-[10px] text-muted-foreground">This week →</span>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
