@@ -82,6 +82,22 @@ function isCableAttachmentExercise(name: string): boolean {
   ].some((kw) => dn.includes(kw));
 }
 
+/** Warm-up prescription based on the warm-up's position and total warm-ups for an exercise.
+ *  2 warm-ups → 50% × 5, 75% × 5
+ *  3 warm-ups → 40% × 5, 60% × 4, 80% × 3 */
+function warmupScheme(idx: number, total: number): { pct: number; reps: string } {
+  if (total <= 1) return { pct: 60, reps: "5" };
+  if (total === 2) return idx === 0 ? { pct: 50, reps: "5" } : { pct: 75, reps: "5" };
+  if (idx === 0) return { pct: 40, reps: "5" };
+  if (idx === 1) return { pct: 60, reps: "4" };
+  return { pct: 80, reps: "3" };
+}
+
+/** Round to nearest 2.5 kg (typical smallest plate increment). */
+function roundToPlate(weight: number): number {
+  return Math.round(weight / 2.5) * 2.5;
+}
+
 function SwipeableSetRow({ children, onDelete }: { children: React.ReactNode; onDelete: () => void }) {
   const x = useMotionValue(0);
   const deleteOpacity = useTransform(x, [-100, -60], [1, 0]);
@@ -601,6 +617,24 @@ export default function WorkoutSession() {
       i === setIdx ? { ...s, completed: !wasCompleted } : s
     );
 
+    // For warm-ups being completed, auto-fill weight + reps from the scheme
+    if (!wasCompleted && newSets[setIdx].setType === "warmup") {
+      const warmupCount = newSets.filter((s) => s.setType === "warmup").length;
+      let wuPos = 0;
+      for (let i = 0; i < setIdx; i++) {
+        if (newSets[i].setType === "warmup") wuPos++;
+      }
+      const scheme = warmupScheme(wuPos, warmupCount);
+      const firstWorking = newSets.find((s) => s.setType !== "warmup");
+      const lastFirstWeight = lastSessionData[getEffectiveExId(exerciseId)]?.[0]?.weight ?? 0;
+      const workingWeight = firstWorking?.weight && firstWorking.weight > 0
+        ? firstWorking.weight
+        : lastFirstWeight;
+      const wuWeight = workingWeight > 0 ? roundToPlate((workingWeight * scheme.pct) / 100) : 0;
+      const wuReps = parseInt(scheme.reps, 10) || 5;
+      newSets[setIdx] = { ...newSets[setIdx], weight: wuWeight, reps: wuReps };
+    }
+
     // Pure state update
     setSetLogs(prev => ({ ...prev, [exerciseId]: newSets }));
 
@@ -736,15 +770,21 @@ export default function WorkoutSession() {
     hapticMedium();
   }, []);
 
-  /** Add a warm-up set (lighter style, excluded from PRs and burn calc). */
+  /** Add a warm-up set. If no warm-ups exist yet, seeds 2 (50% × 5, 75% × 5).
+   *  Subsequent presses add one more, capped at 3 total (40 / 60 / 80%). */
   const addWarmupSet = useCallback((exerciseId: string) => {
     setSetLogs((prev) => {
       const updated = { ...prev };
       const sets = [...(updated[exerciseId] || [])];
-      // Insert at the top — warm-ups should come before working sets.
+      const existingWarmups = sets.filter((s) => s.setType === "warmup").length;
+      if (existingWarmups >= 3) return prev;
+      const toAdd = existingWarmups === 0 ? 2 : 1;
       const firstWorkingIdx = sets.findIndex((s) => s.setType !== "warmup");
       const insertAt = firstWorkingIdx === -1 ? sets.length : firstWorkingIdx;
-      sets.splice(insertAt, 0, { reps: 0, weight: 0, completed: false, setType: "warmup" });
+      const newWarmups: SetLog[] = Array.from({ length: toAdd }, () => ({
+        reps: 0, weight: 0, completed: false, setType: "warmup",
+      }));
+      sets.splice(insertAt, 0, ...newWarmups);
       updated[exerciseId] = sets;
       return updated;
     });
@@ -1328,17 +1368,32 @@ export default function WorkoutSession() {
                                 <span className="text-center">{isTimeBased ? "Timer" : repLabel}</span>
                                 <span className="text-center">✓</span>
                               </div>
-                              {setLogs[ex.id]?.map((set, si) => {
-                                const is1RM = set.setType === "1rm_test";
-                                const isWarmup = set.setType === "warmup";
-                                return (
+                              {(() => {
+                                const setsArr = setLogs[ex.id] || [];
+                                const warmupCount = setsArr.filter((s) => s.setType === "warmup").length;
+                                // Working weight = first working set's entered weight, else last session's first set
+                                const firstWorking = setsArr.find((s) => s.setType !== "warmup");
+                                const lastFirstWeight = lastSessionData[getEffectiveExId(ex.id)]?.[0]?.weight ?? 0;
+                                const workingWeight = firstWorking?.weight && firstWorking.weight > 0
+                                  ? firstWorking.weight
+                                  : lastFirstWeight;
+                                let warmupIdxCounter = 0;
+                                return setsArr.map((set, si) => {
+                                  const is1RM = set.setType === "1rm_test";
+                                  const isWarmup = set.setType === "warmup";
+                                  const wuIdx = isWarmup ? warmupIdxCounter++ : -1;
+                                  const wuScheme = isWarmup ? warmupScheme(wuIdx, warmupCount) : null;
+                                  const wuWeight = isWarmup && workingWeight > 0
+                                    ? roundToPlate((workingWeight * wuScheme!.pct) / 100)
+                                    : 0;
+                                  return (
                                 <SwipeableSetRow
                                   key={si}
                                   onDelete={() => deleteSet(ex.id, si)}
                                 >
-                                  <div className={`grid ${isTimeBased ? "grid-cols-[28px_1fr_36px]" : showWeight ? "grid-cols-[28px_1fr_1fr_36px]" : "grid-cols-[28px_1fr_36px]"} gap-x-1.5 items-center bg-background ${is1RM ? "rounded-lg ring-1 ring-amber-400/50 bg-amber-400/5 px-1 py-0.5" : isWarmup ? "rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 px-1 py-0.5 opacity-80" : ""}`}>
-                                    <span className={`text-xs font-medium text-center ${set.completed ? "text-success" : is1RM ? "text-amber-400" : isWarmup ? "text-muted-foreground/70" : "text-muted-foreground"}`}>
-                                      {is1RM ? <Target className="h-3 w-3 inline" /> : isWarmup ? "W" : si + 1}
+                                  <div className={`grid ${isTimeBased ? "grid-cols-[28px_1fr_36px]" : showWeight ? "grid-cols-[28px_1fr_1fr_36px]" : "grid-cols-[28px_1fr_36px]"} gap-x-1.5 items-center bg-background ${is1RM ? "rounded-lg ring-1 ring-amber-400/50 bg-amber-400/5 px-1 py-0.5" : isWarmup ? "rounded-lg bg-orange-400/5 px-1 py-0.5" : ""}`}>
+                                    <span className={`text-xs font-bold text-center ${set.completed ? "text-success" : is1RM ? "text-amber-400" : isWarmup ? "text-orange-400/80" : "text-muted-foreground"}`}>
+                                      {is1RM ? <Target className="h-3 w-3 inline" /> : isWarmup ? <Flame className="h-3 w-3 inline" /> : si + 1}
                                     </span>
                                     {isTimeBased ? (
                                       <ExerciseTimer
@@ -1348,40 +1403,38 @@ export default function WorkoutSession() {
                                           toggleSet(ex.id, si);
                                         }}
                                       />
+                                    ) : isWarmup ? (
+                                      <>
+                                        {showWeight && (
+                                          <div className={`h-9 w-full rounded-lg px-2 text-xs flex flex-col items-center justify-center leading-tight ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-orange-400/10 border border-orange-400/30 text-orange-400/90"}`}>
+                                            <span className="font-bold">{wuScheme!.pct}%</span>
+                                            {wuWeight > 0 && <span className="text-[9px] opacity-80">{wuWeight} kg</span>}
+                                          </div>
+                                        )}
+                                        <div className={`h-9 w-full rounded-lg px-2 text-xs flex items-center justify-center font-semibold ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-orange-400/10 border border-orange-400/30 text-orange-400/90"}`}>
+                                          {wuScheme!.reps} reps
+                                        </div>
+                                      </>
                                     ) : (
                                       <>
                                         {showWeight && (
-                                          <input type="number" inputMode="decimal" placeholder={is1RM ? "1RM" : (lastSessionData[getEffectiveExId(ex.id)]?.[si]?.weight?.toString() || "0")} value={set.weight || ""} onChange={(e) => updateSetField(ex.id, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : is1RM ? "bg-amber-400/10 border border-amber-400/40 text-amber-400 font-semibold placeholder:text-amber-400/50" : isWarmup ? "bg-muted/20 border border-muted-foreground/20 text-muted-foreground placeholder:text-muted-foreground/30" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                          <input type="number" inputMode="decimal" placeholder={is1RM ? "1RM" : (lastSessionData[getEffectiveExId(ex.id)]?.[si]?.weight?.toString() || "0")} value={set.weight || ""} onChange={(e) => updateSetField(ex.id, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : is1RM ? "bg-amber-400/10 border border-amber-400/40 text-amber-400 font-semibold placeholder:text-amber-400/50" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
                                         )}
                                         {is1RM ? (
                                           <div className={`h-9 w-full rounded-lg px-2 text-sm text-center font-bold flex items-center justify-center ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-amber-400/10 border border-amber-400/40 text-amber-400"}`}>
                                             1
                                           </div>
                                         ) : (
-                                          <input type="number" inputMode="numeric" placeholder={lastSessionData[getEffectiveExId(ex.id)]?.[si]?.reps?.toString() || "0"} value={set.reps || ""} onChange={(e) => updateSetField(ex.id, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : isWarmup ? "bg-muted/20 border border-muted-foreground/20 text-muted-foreground placeholder:text-muted-foreground/30" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                          <input type="number" inputMode="numeric" placeholder={lastSessionData[getEffectiveExId(ex.id)]?.[si]?.reps?.toString() || "0"} value={set.reps || ""} onChange={(e) => updateSetField(ex.id, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
                                         )}
                                       </>
                                     )}
-                                    <div className="flex items-center gap-1">
-                                      {!is1RM && !isTimeBased && (
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); toggleWarmup(ex.id, si); }}
-                                          title={isWarmup ? "Mark as working set" : "Mark as warm-up"}
-                                          className={`flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-bold transition-all ${isWarmup ? "bg-muted-foreground/20 text-muted-foreground border border-muted-foreground/40" : "bg-muted/40 text-muted-foreground/50 border border-border/40 hover:text-muted-foreground"}`}
-                                        >
-                                          W
-                                        </button>
-                                      )}
-                                      <button onClick={() => toggleSet(ex.id, si)} className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${set.completed ? "bg-success text-success-foreground glow-success" : is1RM ? "bg-amber-400/20 text-amber-400 border border-amber-400/40" : isWarmup ? "bg-muted/40 text-muted-foreground border border-dashed border-muted-foreground/30" : "bg-muted/50 text-muted-foreground border border-border/50"}`}>
-                                        <Check className="h-3.5 w-3.5" />
-                                      </button>
-                                    </div>
+                                    <button onClick={() => toggleSet(ex.id, si)} className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${set.completed ? "bg-success text-success-foreground glow-success" : is1RM ? "bg-amber-400/20 text-amber-400 border border-amber-400/40" : isWarmup ? "bg-orange-400/15 text-orange-400 border border-orange-400/30" : "bg-muted/50 text-muted-foreground border border-border/50"}`}>
+                                      <Check className="h-3.5 w-3.5" />
+                                    </button>
                                   </div>
-                                  {isWarmup && (
-                                    <p className="text-[9px] uppercase tracking-wider text-muted-foreground/60 mt-0.5 ml-8">Warm-up · excluded from PRs</p>
-                                  )}
                                 </SwipeableSetRow>
-                              );})}
+                              );});})()}
                               {/* Add Set + Warm-up + 1RM Test buttons */}
                               <div className="flex gap-1.5 mt-1">
                                 <button
