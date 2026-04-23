@@ -103,6 +103,14 @@ export default function Profile() {
   const totalWorkouts = history.length;
   const totalMinutes = history.reduce((s, w) => s + (w.duration || 0), 0);
 
+  const thisWeekStart = mondayOfWeek(new Date());
+  const { data: weekBurn } = useQuery({
+    queryKey: ["weekly-burn-profile", user?.id, thisWeekStart],
+    queryFn: () => fetchWeeklyBurn(thisWeekStart),
+    enabled: !!user,
+  });
+  const weekKcal = weekBurn?.totalKcal ?? 0;
+
   const prefs = user ? getUserPreferences(user.id) : null;
   const weekGoal = prefs?.daysPerWeek ?? 4;
 
