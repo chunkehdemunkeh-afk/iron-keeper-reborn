@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.80",
+    version: "1.6.81",
     date: "2026-04-23",
     title: "Updates & Fixes",
     changes: [
-      "Rework FoodTracker calorie summary and surface adjust-for-activity toggle",
+      "Update cable attachments: add No Attachment option, split Cuff & Lat Bar",
     ],
   },
   {
