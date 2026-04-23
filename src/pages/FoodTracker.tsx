@@ -348,7 +348,8 @@ export default function FoodTracker() {
             <ChevronRight className="h-3 w-3 text-muted-foreground" />
           </div>
         </motion.div>
-      )}
+        );
+      })()}
 
       {/* Weekly nutrition chart */}
       <WeeklyNutritionChart goals={goals} />
