@@ -43,6 +43,20 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
     return;
   }
 
+  // Estimate calories burned client-side so the value is available immediately.
+  // SQL functions exist as a backstop for backfills but the live path computes here.
+  let caloriesBurned: number | null = null;
+  try {
+    const bodyweight = await lookupUserBodyweight(user.id);
+    caloriesBurned = estimateStrengthBurn({
+      sets: workout.sets,
+      durationMin: workout.duration,
+      weightKg: bodyweight,
+    });
+  } catch (e) {
+    console.error("Burn estimate failed:", e);
+  }
+
   const { data: historyRow, error: historyError } = await supabase
     .from("workout_history")
     .insert({
@@ -55,6 +69,7 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
       total_exercises: workout.totalExercises,
       effort_rating: workout.effortRating ?? null,
       session_notes: workout.sessionNotes ?? null,
+      calories_burned: caloriesBurned,
     })
     .select("id")
     .single();
