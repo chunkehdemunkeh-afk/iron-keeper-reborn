@@ -82,6 +82,22 @@ function isCableAttachmentExercise(name: string): boolean {
   ].some((kw) => dn.includes(kw));
 }
 
+/** Warm-up prescription based on the warm-up's position and total warm-ups for an exercise.
+ *  2 warm-ups → 50% × 5, 75% × 5
+ *  3 warm-ups → 40% × 5, 60% × 4, 80% × 3 */
+function warmupScheme(idx: number, total: number): { pct: number; reps: string } {
+  if (total <= 1) return { pct: 60, reps: "5" };
+  if (total === 2) return idx === 0 ? { pct: 50, reps: "5" } : { pct: 75, reps: "5" };
+  if (idx === 0) return { pct: 40, reps: "5" };
+  if (idx === 1) return { pct: 60, reps: "4" };
+  return { pct: 80, reps: "3" };
+}
+
+/** Round to nearest 2.5 kg (typical smallest plate increment). */
+function roundToPlate(weight: number): number {
+  return Math.round(weight / 2.5) * 2.5;
+}
+
 function SwipeableSetRow({ children, onDelete }: { children: React.ReactNode; onDelete: () => void }) {
   const x = useMotionValue(0);
   const deleteOpacity = useTransform(x, [-100, -60], [1, 0]);
