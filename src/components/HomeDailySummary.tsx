@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { Flame, Beef, Wheat, Droplets, Droplet, ChevronRight, Activity } from "lucide-react";
+import { Flame, Beef, Wheat, Droplets, Droplet, ChevronRight, Activity, Dumbbell, Footprints } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,9 @@ interface Props {
   date?: string;
 }
 
+type ViewMode = "macros" | "burn";
+const VIEW_KEY = "ik-home-summary-view";
+
 export default function HomeDailySummary({ date }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -18,7 +21,15 @@ export default function HomeDailySummary({ date }: Props) {
   const [totals, setTotals] = useState({ calories: 0, protein: 0, carbs: 0, fat: 0 });
   const [goals, setGoals] = useState<{ calories: number; protein_g: number; carbs_g: number; fat_g: number; water_goal_ml?: number } | null>(null);
   const [waterMl, setWaterMl] = useState(0);
-  const [burnedKcal, setBurnedKcal] = useState(0);
+  const [burn, setBurn] = useState<{ totalKcal: number; strengthKcal: number; cardioKcal: number }>({ totalKcal: 0, strengthKcal: 0, cardioKcal: 0 });
+  const [view, setView] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "macros";
+    return (localStorage.getItem(VIEW_KEY) as ViewMode) || "macros";
+  });
+
+  useEffect(() => {
+    localStorage.setItem(VIEW_KEY, view);
+  }, [view]);
 
   useEffect(() => {
     if (!user) return;
@@ -53,7 +64,7 @@ export default function HomeDailySummary({ date }: Props) {
       const water = waterRes.data || [];
       setWaterMl(water.reduce((s: number, e: any) => s + e.amount_ml, 0));
     });
-    fetchDailyBurn(targetDate).then((b) => setBurnedKcal(b.totalKcal));
+    fetchDailyBurn(targetDate).then((b) => setBurn(b));
   }, [user, targetDate]);
 
   if (!goals) return null;
@@ -77,12 +88,37 @@ export default function HomeDailySummary({ date }: Props) {
     >
       <div className="flex items-center justify-between mb-3">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-          Nutrition
+          {view === "macros" ? "Nutrition" : "Energy Balance"}
         </p>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-0.5 bg-secondary rounded-full p-0.5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setView("macros")}
+              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
+                view === "macros" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+              aria-label="Show macros"
+            >
+              Macros
+            </button>
+            <button
+              onClick={() => setView("burn")}
+              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
+                view === "burn" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+              aria-label="Show burn"
+            >
+              Burn
+            </button>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </div>
       </div>
 
-      {/* Calories + Water row */}
+      {/* Calories + Water row (always visible) */}
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="text-center">
           <Flame className={`h-4 w-4 mx-auto mb-1 transition-colors duration-500 ${calorieColor}`} />
@@ -102,36 +138,77 @@ export default function HomeDailySummary({ date }: Props) {
         </div>
       </div>
 
-      {/* Macros row */}
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { label: "Protein", value: totals.protein, target: goals.protein_g, color: "bg-blue-400", icon: Beef },
-          { label: "Carbs", value: totals.carbs, target: goals.carbs_g, color: "bg-amber-400", icon: Wheat },
-          { label: "Fat", value: totals.fat, target: goals.fat_g, color: "bg-rose-400", icon: Droplets },
-        ].map((m) => (
-          <div key={m.label} className="text-center">
-            <m.icon className="h-3 w-3 mx-auto mb-0.5 text-muted-foreground" />
-            <p className="text-xs font-semibold">{Math.round(m.value)}g</p>
-            <div className="h-1 bg-secondary rounded-full mt-1 overflow-hidden">
-              <div className={`h-full rounded-full ${m.color} transition-all`} style={{ width: `${pct(m.value, m.target)}%` }} />
+      <AnimatePresence mode="wait" initial={false}>
+        {view === "macros" ? (
+          <motion.div
+            key="macros"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+            className="grid grid-cols-3 gap-2"
+          >
+            {[
+              { label: "Protein", value: totals.protein, target: goals.protein_g, color: "bg-blue-400", icon: Beef },
+              { label: "Carbs", value: totals.carbs, target: goals.carbs_g, color: "bg-amber-400", icon: Wheat },
+              { label: "Fat", value: totals.fat, target: goals.fat_g, color: "bg-rose-400", icon: Droplets },
+            ].map((m) => (
+              <div key={m.label} className="text-center">
+                <m.icon className="h-3 w-3 mx-auto mb-0.5 text-muted-foreground" />
+                <p className="text-xs font-semibold">{Math.round(m.value)}g</p>
+                <div className="h-1 bg-secondary rounded-full mt-1 overflow-hidden">
+                  <div className={`h-full rounded-full ${m.color} transition-all`} style={{ width: `${pct(m.value, m.target)}%` }} />
+                </div>
+                <p className="text-[9px] text-muted-foreground mt-0.5">{m.label}</p>
+              </div>
+            ))}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="burn"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate("/progress");
+            }}
+            className="space-y-2"
+          >
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center">
+                <Activity className="h-3.5 w-3.5 mx-auto mb-0.5 text-amber-400" />
+                <p className="text-base font-bold text-amber-400">{burn.totalKcal}</p>
+                <p className="text-[9px] text-muted-foreground mt-0.5">Total kcal</p>
+              </div>
+              <div className="text-center">
+                <Dumbbell className="h-3.5 w-3.5 mx-auto mb-0.5 text-muted-foreground" />
+                <p className="text-base font-bold">{burn.strengthKcal}</p>
+                <p className="text-[9px] text-muted-foreground mt-0.5">Strength</p>
+              </div>
+              <div className="text-center">
+                <Footprints className="h-3.5 w-3.5 mx-auto mb-0.5 text-muted-foreground" />
+                <p className="text-base font-bold">{burn.cardioKcal}</p>
+                <p className="text-[9px] text-muted-foreground mt-0.5">Cardio</p>
+              </div>
             </div>
-            <p className="text-[9px] text-muted-foreground mt-0.5">{m.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {burnedKcal > 0 && (
-        <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Activity className="h-3.5 w-3.5 text-amber-400" />
-            <span>Burned today</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-amber-400">{burnedKcal} kcal</span>
-            <span className="text-[10px] text-muted-foreground">This week →</span>
-          </div>
-        </div>
-      )}
+            {burn.totalKcal > 0 && (
+              <div className="h-1.5 bg-secondary rounded-full overflow-hidden flex">
+                <div
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${(burn.strengthKcal / burn.totalKcal) * 100}%` }}
+                />
+                <div
+                  className="h-full bg-amber-400 transition-all"
+                  style={{ width: `${(burn.cardioKcal / burn.totalKcal) * 100}%` }}
+                />
+              </div>
+            )}
+            <p className="text-[10px] text-muted-foreground text-right">View weekly trend →</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
