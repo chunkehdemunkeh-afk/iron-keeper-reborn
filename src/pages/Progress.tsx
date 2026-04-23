@@ -126,19 +126,19 @@ function RecoveryTabContent() {
   );
 
   // Map each muscle region → best strength rating (from the lift that targets it)
+  // Uses the same logic as StrengthLevelCard: prefers true 1RM tests, doubles
+  // bilateral dumbbell loads, so the tier here matches what's shown in Stats.
   const muscleToRating: Partial<Record<typeof MUSCLE_REGIONS[number], StrengthRating>> = useMemo(() => {
     if (!profile?.bodyweight || !profile?.sex) return {};
-    const bestPerLift: Record<LiftId, number> = {} as any;
-    Object.entries(prs).forEach(([exId, pr]: [string, any]) => {
-      const liftId = inferLiftId(exId, pr.name);
-      if (!liftId) return;
-      const oneRm = epley1RM(pr.weight, pr.reps);
-      if (!bestPerLift[liftId] || oneRm > bestPerLift[liftId]) bestPerLift[liftId] = oneRm;
-    });
     const out: Partial<Record<typeof MUSCLE_REGIONS[number], StrengthRating>> = {};
     RATED_LIFTS.forEach((def) => {
-      const oneRm = bestPerLift[def.id];
-      if (!oneRm) return;
+      const oneRm = bestOneRmForLift(
+        prs,
+        (exId, name) => inferLiftId(exId, name) === def.id,
+        epley1RM,
+        (exId, name) => isBilateralDumbbell(exId, name) ? 2 : 1,
+      );
+      if (!oneRm || oneRm <= 0) return;
       const rating = getStrengthRating(def.id, oneRm, {
         bodyweight: profile.bodyweight!,
         sex: profile.sex!,
