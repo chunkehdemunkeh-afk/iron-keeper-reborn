@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchWorkoutHistory, fetchActivityLogs } from "@/lib/cloud-data";
+import { fetchWorkoutHistory, fetchActivityLogs, fetchWeeklyBurn, mondayOfWeek } from "@/lib/cloud-data";
 import { Flame, Target, Award, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";

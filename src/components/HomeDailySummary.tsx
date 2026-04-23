@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { Flame, Beef, Wheat, Droplets, Droplet, ChevronRight } from "lucide-react";
+import { Flame, Beef, Wheat, Droplets, Droplet, ChevronRight, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { fetchDailyBurn } from "@/lib/cloud-data";
 
 interface Props {
   date?: string;
