@@ -1,61 +1,80 @@
 
 
-## Add a "1RM Test" set type to sessions
+## Cardio + Strength burn (with warm-ups, weekly rollup, backfill)
 
-You're right that it's worth adding — Epley gives a solid estimate from a 5-rep top set, but the strength tiers feel more "earned" when you can actually load a single and see it land. Right now there's no way to log a 1-rep max attempt that's clearly distinguished from a regular working set, and a failed top-end attempt at 1 rep gets misread as a poor set (it would trigger the "consider lowering weight" warning).
+Extending the previous plan with three additions: **warm-up set tagging**, **weekly burn rollup**, and a **one-shot historical backfill** so existing data shows real numbers immediately.
 
-### What the user gets
+### 1. Warm-up set tagging (UI for the existing `set_type` column)
 
-**1. A "1RM Test" mode toggle on any exercise during a session**
-- In the expanded exercise card, a small icon button next to "Add Set" labelled `1RM` (Target/Crosshair icon).
-- Tapping it adds a single dedicated **1RM test set** at the bottom of that exercise's set list, visually distinct (amber/gold border, "1RM Test" label, single rep field locked to 1).
-- The user enters the weight and taps complete. No reps input — it's understood to be 1.
-- A 1RM test set:
-  - Suppresses the "only X reps — lower weight" warning (it's a max attempt, not a working set).
-  - Triggers PR detection and tier-crossing celebration directly off the lifted weight (no Epley estimation needed — the actual 1RM beats any estimate).
-  - Auto-starts a longer rest timer (5 min default vs. the usual 2-3) since maxes need real recovery.
-  - Counts as 1 set toward volume but is tagged `setType: "1rm_test"` in storage.
+The `workout_sets.set_type` column already exists (`working` | `warmup` | `1rm_test`). Adding the missing UI:
 
-**2. A "Test 1RM" shortcut on the Strength Level card**
-- On the Progress → Stats tab, each rated lift row gets a subtle `Test 1RM →` link.
-- Tapping it opens a tiny sheet: "Start a 1RM test for Bench Press?" → "Add to current session" (if a session is open for a workout containing that lift) or "Start empty 1RM session" (creates an ad-hoc session containing just that lift, pre-loaded with a 1RM test set).
-- This is the friction-killer — most people never test their max because it's awkward to set up; this turns it into one tap from the card that motivated them.
+- In `WorkoutSession.tsx`, each set row gets a small **W** toggle pill next to the rep/weight inputs. Tap to flip a set between `working` ↔ `warmup`. Warm-up sets render with a muted/dashed style and a "Warm-up" microlabel.
+- Warm-up sets are **excluded from**:
+  - Strength burn estimate (mechanical work term skipped)
+  - PR detection / tier-crossing
+  - Volume tag in the exercise card header
+- They still **count toward** session duration and the metabolic-cost term (low MET 3.5), since you're still moving.
+- Default rest timer for warm-ups is 60s instead of 2–3 min.
+- Persisted via the same `setType` field added in the 1RM Test feature — no new schema work.
 
-**3. PR celebration upgrade for true 1RM**
-- When the completed set is a `1rm_test`, the celebration banner reads "True 1RM!" instead of "PR!" and uses the gold/amber accent. Tier-crossing message ("You just hit Intermediate on Bench Press!") works as before but is now backed by a real single, not an estimate.
+### 2. Weekly burn rollup
 
-### Why this is worth doing (vs. relying on Epley)
+- **`Progress` page → Stats tab**: new "Weekly Energy" card above the volume chart, showing:
+  - Total kcal burned this week (workouts + cardio combined)
+  - Breakdown bar: Strength | Cardio segments
+  - 4-week mini sparkline for week-over-week trend
+- **Profile page**: weekly burn appears as a stat alongside existing weekly volume / session count.
+- **`HomeDailySummary.tsx`**: the "Burned today" line gets a tappable "This week: X kcal →" link that jumps to the Progress card.
+- Data source: `fetchWeeklyBurn(weekStart)` in `cloud-data.ts` — sums `workout_history.calories_burned` + `activity_logs.calories_burned` for the week, grouped by day for the sparkline.
 
-- **Accuracy at the top end.** Epley is well-calibrated for 3–8 reps but drifts at 1–2 reps and at very high reps. A real single removes the guesswork at exactly the moment that matters most for tier placement.
-- **Psychology.** Users who see "Intermediate" want to know if they're really there. A "Test 1RM" button gives them a path to confirm it.
-- **Doesn't break anything.** Working sets keep contributing to the rating via Epley exactly as today; the test set is just a higher-confidence input that wins when present.
+### 3. Historical backfill (one-shot)
 
-### What gets stored
+A migration runs once to populate `calories_burned` on every existing `workout_history` and `activity_logs` row using the same formulas the live app will use.
 
-- `workout_sets` row gets an optional `set_type` column with values `"working" | "warmup" | "1rm_test"` (default `"working"`). Existing sets implicitly count as `"working"`.
-- `setLogs` state in WorkoutSession adds `setType?: "1rm_test"` per set; auto-save persists it alongside the existing fields.
-- The strength rating logic prefers a `1rm_test` set's actual weight over any Epley-derived estimate when computing the best 1RM for that lift.
+**Approach**: pure SQL `UPDATE` statements driven by the Compendium MET tables and the work formula, joined against `body_measurements` (latest weight before each session) → `nutrition_goals.tdee_weight_kg` → 75 kg fallback. Implemented as PL/pgSQL functions in the migration so the math stays readable and we don't have to push 717 hardcoded MET values into SQL.
 
-### Technical changes
+**Why SQL not a one-off script**: keeps the operation atomic, runs against production data without needing `SUPABASE_ACCESS_TOKEN`, and re-runs idempotently (skips rows where `calories_burned IS NOT NULL`).
 
-- **DB migration**: add `set_type TEXT DEFAULT 'working'` to `workout_sets` (nullable, no backfill needed). RLS unchanged.
-- **`src/lib/cloud-data.ts`**:
-  - Persist `setType` in `saveWorkoutToCloud`.
-  - `fetchPersonalRecords` returns an extra `bestTrue1RM?: number` per exercise — the heaviest `1rm_test` set ever logged.
-  - New `bestOneRmForLift(prs, liftId)` helper: returns true 1RM if present, otherwise Epley from the heaviest working set, used by both `StrengthLevelCard` and `WorkoutSession`'s tier-crossing detection.
-- **`src/pages/WorkoutSession.tsx`**:
-  - Extend `SetLog` with `setType?: "1rm_test"`.
-  - Per-exercise "1RM" button next to "Add Set"; appends one set with `reps: 1`, `setType: "1rm_test"`, and renders it with a distinct amber pill.
-  - In `toggleSet`: skip the rep-range warnings when `setType === "1rm_test"`; pass `currentWeight` (not Epley) into the tier check; use 5-minute rest default.
-- **`src/components/PRCelebration.tsx`**: accept an `isTrue1RM?: boolean` prop; render the gold "True 1RM!" header variant when set.
-- **`src/components/progress/StrengthLevelCard.tsx`**: add the `Test 1RM →` link per row, and use `bestOneRmForLift` so true-1RM data wins over Epley.
-- **New tiny sheet `src/components/progress/Test1RMSheet.tsx`**: confirms and routes to either an existing session or an ad-hoc one.
-- **Tests** (`src/test/strength-standards.test.ts` + a new `cloud-data` test): cover `bestOneRmForLift` precedence (true 1RM beats higher Epley estimate, and vice versa when no test exists).
+**Backfill rules:**
+- Cardio rows missing `distance_km` (e.g. your existing 24m / 3.36 km run was logged before the field existed) get burn estimated from duration alone using a fixed mid-band MET per activity type — flagged with a small "estimated" badge in the UI when distance was inferred. Once you edit the entry to add distance, save recalculates precisely.
+- Strength sessions: sum `weight × reps × 0.0035` across all sets in `workout_sets` for that session, plus a baseline MET 5.5 × bodyweight × duration_hr. Warm-up exclusion isn't applied to historical sets (they're all `working` by default), so historical burn will be slightly inflated vs. future sessions — acceptable trade-off, noted in the migration comment.
+- Bodyweight lookup: `SELECT body_weight FROM body_measurements WHERE user_id = X AND date <= session.date ORDER BY date DESC LIMIT 1`, fallback to `nutrition_goals.tdee_weight_kg`, fallback to 75.
 
-### Out of scope (backlog)
+### 4. Updated DB migration
 
-- Warmup-set tagging UI (the schema would support it via `set_type: "warmup"`, but no UI in this pass).
-- Deload/RPE entry per set.
-- Estimated 1RM history chart (could come once people have a few tests logged).
-- Auto-suggesting when to test (e.g. "you've added 10 % since your last test — time to retest?").
+```sql
+ALTER TABLE public.activity_logs
+  ADD COLUMN IF NOT EXISTS distance_km NUMERIC,
+  ADD COLUMN IF NOT EXISTS calories_burned INTEGER,
+  ADD COLUMN IF NOT EXISTS incline_pct INTEGER;
+
+ALTER TABLE public.workout_history
+  ADD COLUMN IF NOT EXISTS calories_burned INTEGER;
+
+ALTER TABLE public.nutrition_goals
+  ADD COLUMN IF NOT EXISTS adjust_for_activity BOOLEAN NOT NULL DEFAULT false;
+
+-- Backfill helpers (PL/pgSQL functions for cardio MET + strength burn)
+-- + UPDATE statements that populate calories_burned on existing rows
+-- (see migration body — full SQL written at implementation time)
+```
+
+All additive, nullable, RLS unchanged.
+
+### 5. Code changes (delta from previous plan)
+
+- **`src/lib/calorie-burn.ts`** — `estimateStrengthBurn` skips sets where `setType === "warmup"` for the work term but includes them in metabolic cost at MET 3.5.
+- **`src/lib/cloud-data.ts`** — add `fetchWeeklyBurn(userId, weekStart)` returning `{ totalKcal, strengthKcal, cardioKcal, dailyBreakdown[] }`.
+- **`src/pages/WorkoutSession.tsx`** — warm-up toggle UI on each set row; visual styling; rest timer override; pass `setType` through to `estimateStrengthBurn`.
+- **`src/pages/Progress.tsx`** — new "Weekly Energy" card on the Stats tab.
+- **`src/pages/Profile.tsx`** — weekly burn stat in the existing stats grid.
+- **`src/components/HomeDailySummary.tsx`** — "This week →" link.
+- **Tests** — `src/test/calorie-burn.test.ts` adds warm-up exclusion case; new `src/test/weekly-burn.test.ts` for the rollup helper.
+
+### 6. Out of scope (still backlog)
+
+- Cycling/running incline.
+- Wearable HR-based burn.
+- Per-session burn editing (to override estimate manually).
+- Monthly rollups beyond the 4-week sparkline.
 
