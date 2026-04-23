@@ -53,6 +53,7 @@ export default function HomeDailySummary({ date }: Props) {
       const water = waterRes.data || [];
       setWaterMl(water.reduce((s: number, e: any) => s + e.amount_ml, 0));
     });
+    fetchDailyBurn(targetDate).then((b) => setBurnedKcal(b.totalKcal));
   }, [user, targetDate]);
 
   if (!goals) return null;
