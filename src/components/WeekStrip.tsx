@@ -347,16 +347,38 @@ export default function WeekStrip() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground">{a.label || preset?.label || a.activityType}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                           {a.duration > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" /> {a.duration}m
+                            </span>
+                          )}
+                          {a.distanceKm != null && a.distanceKm > 0 && (
                             <>
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" /> {a.duration}m
-                              </span>
-                              {a.notes && <span>·</span>}
+                              {a.duration > 0 && <span>·</span>}
+                              <span>{a.distanceKm} km</span>
                             </>
                           )}
-                          {a.notes && <span className="truncate">{a.notes}</span>}
+                          {a.inclinePct != null && a.inclinePct > 0 && (
+                            <>
+                              <span>·</span>
+                              <span>{a.inclinePct}% incline</span>
+                            </>
+                          )}
+                          {a.caloriesBurned != null && a.caloriesBurned > 0 && (
+                            <>
+                              <span>·</span>
+                              <span className="flex items-center gap-1 text-amber-400">
+                                <Flame className="h-3 w-3" /> {a.caloriesBurned} kcal
+                              </span>
+                            </>
+                          )}
+                          {a.notes && (
+                            <>
+                              <span>·</span>
+                              <span className="truncate">{a.notes}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                       <button
