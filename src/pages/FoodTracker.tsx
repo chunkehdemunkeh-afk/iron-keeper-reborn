@@ -50,6 +50,7 @@ interface Goals {
   protein_g: number;
   carbs_g: number;
   fat_g: number;
+  adjust_for_activity?: boolean;
 }
 
 const MEALS: { type: MealType; label: string; icon: LucideIcon }[] = [
