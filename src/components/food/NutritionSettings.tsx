@@ -25,6 +25,7 @@ export default function NutritionSettings({ open, onClose, onSaved }: Props) {
   const [carbsPct, setCarbsPct] = useState(45);
   const [fatPct, setFatPct] = useState(25);
   const [waterGoalMl, setWaterGoalMl] = useState(2500);
+  const [adjustForActivity, setAdjustForActivity] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
