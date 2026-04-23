@@ -18,6 +18,7 @@ export default function HomeDailySummary({ date }: Props) {
   const [totals, setTotals] = useState({ calories: 0, protein: 0, carbs: 0, fat: 0 });
   const [goals, setGoals] = useState<{ calories: number; protein_g: number; carbs_g: number; fat_g: number; water_goal_ml?: number } | null>(null);
   const [waterMl, setWaterMl] = useState(0);
+  const [burnedKcal, setBurnedKcal] = useState(0);
 
   useEffect(() => {
     if (!user) return;
