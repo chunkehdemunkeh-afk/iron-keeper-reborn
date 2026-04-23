@@ -27,7 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-type SetType = "working" | "1rm_test";
+type SetType = "working" | "warmup" | "1rm_test";
 type SetLog = { reps: number; weight: number; completed: boolean; setType?: SetType };
 
 // Combined search pool for swap sheet — includes all workout exercises + library
