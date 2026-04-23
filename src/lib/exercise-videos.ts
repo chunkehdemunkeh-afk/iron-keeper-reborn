@@ -459,10 +459,161 @@ export function getExerciseVideoUrl(exerciseId: string, exerciseName: string): s
 
 const GITHUB_BASE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises";
 
-// Returns start/end form images for lib-db-* exercises, null for everything else
+// Maps custom exercise IDs to free-exercise-db folder names
+const EXERCISE_DB_FOLDERS: Record<string, string> = {
+  // Power day
+  pw1: "Box_Jump_Multiple_Response",
+  pw2: "Depth_Jump_Leap",
+  pw3: "One-Arm_Medicine_Ball_Slam",
+  pw5: "One-Arm_Kettlebell_Swings",
+  pw6: "Plyo_Kettlebell_Pushups",
+  pw7: "Lateral_Box_Jump",
+
+  // Agility day
+  ag4: "Lateral_Box_Jump",
+  ag6: "Carioca_Quick_Step",
+
+  // Strength day
+  st2: "Romanian_Deadlift_from_Deficit",
+  st3: "Split_Squat_with_Dumbbells",
+
+  // Reflexes day
+  rf1: "Medicine_Ball_Chest_Pass",
+  rf2: "Face_Pull",
+  rf4: "Palms-Up_Dumbbell_Wrist_Curl_Over_A_Bench",
+  rf5: "Dumbbell_Shoulder_Press",
+
+  // Push day
+  pu1: "Incline_Dumbbell_Bench_With_Palms_Facing_In",
+  pu2: "Side_Lateral_Raise",
+  pu3: "Incline_Dumbbell_Bench_With_Palms_Facing_In",
+  pu4: "Dumbbell_Flyes",
+  pu5: "Kneeling_Cable_Triceps_Extension",
+  pu6: "Cable_One_Arm_Tricep_Extension",
+
+  // Pull day
+  pl1: "Seated_Cable_Rows",
+  pl2: "T-Bar_Row_with_Handle",
+  pl3: "Wide-Grip_Lat_Pulldown",
+  pl4: "Face_Pull",
+  pl5: "Two-Arm_Dumbbell_Preacher_Curl",
+  pl6: "Preacher_Hammer_Dumbbell_Curl",
+
+  // Legs day
+  lg1: "Seated_Leg_Curl",
+  lg2: "Romanian_Deadlift_from_Deficit",
+  lg3: "Split_Squat_with_Dumbbells",
+  lg5: "Leg_Extensions",
+  lg6: "Standing_Calf_Raises",
+
+  // Upper day
+  up1: "Seated_Cable_Rows",
+  up2: "Wide-Grip_Lat_Pulldown",
+  up3: "Dumbbell_Bench_Press",
+  up4: "Low_Cable_Crossover",
+  up5: "Dumbbell_Shoulder_Press",
+  up6: "Two-Arm_Dumbbell_Preacher_Curl",
+  up7: "Preacher_Hammer_Dumbbell_Curl",
+  up8: "Triceps_Pushdown_-_Rope_Attachment",
+
+  // Full Body
+  fb1: "Barbell_Squat",
+  fb2: "Romanian_Deadlift_from_Deficit",
+  fb3: "Barbell_Bench_Press_-_Medium_Grip",
+  fb4: "Bent_Over_Barbell_Row",
+  fb5: "Barbell_Shoulder_Press",
+  fb6: "Side_Lateral_Raise",
+
+  // 5/3/1 Squat Day
+  sq1: "Barbell_Squat",
+  sq2: "Front_Barbell_Squat",
+  sq3: "Narrow_Stance_Leg_Press",
+  sq4: "Leg_Extensions",
+  sq5: "Bodyweight_Walking_Lunge",
+  sq6: "Seated_Leg_Curl",
+
+  // 5/3/1 Bench Day
+  bn1: "Barbell_Bench_Press_-_Medium_Grip",
+  bn2: "Barbell_Incline_Bench_Press_-_Medium_Grip",
+  bn3: "Incline_Dumbbell_Bench_With_Palms_Facing_In",
+  bn4: "Cable_Crossover",
+  bn5: "EZ-Bar_Skullcrusher",
+  bn6: "Kneeling_Cable_Triceps_Extension",
+
+  // 5/3/1 Deadlift Day
+  dl1: "Barbell_Deadlift",
+  dl2: "Rack_Pulls",
+  dl3: "Bent_Over_Barbell_Row",
+  dl4: "Wide-Grip_Lat_Pulldown",
+  dl5: "One-Arm_Dumbbell_Row",
+  dl6: "Face_Pull",
+
+  // 5/3/1 Press Day
+  pr1: "Barbell_Shoulder_Press",
+  pr2: "Arnold_Dumbbell_Press",
+  pr3: "Side_Lateral_Raise",
+  pr4: "Front_Incline_Dumbbell_Raise",
+  pr5: "Face_Pull",
+  pr6: "Upright_Barbell_Row",
+
+  // Arnold Split — Chest & Back
+  cb1: "Barbell_Bench_Press_-_Medium_Grip",
+  cb2: "Bent_Over_Barbell_Row",
+  cb3: "Incline_Dumbbell_Bench_With_Palms_Facing_In",
+  cb4: "Wide-Grip_Lat_Pulldown",
+  cb5: "Cable_Crossover",
+  cb6: "Seated_Cable_Rows",
+
+  // Arnold Split — Shoulders & Arms
+  sa1: "Arnold_Dumbbell_Press",
+  sa2: "Side_Lateral_Raise",
+  sa3: "Wide-Grip_Standing_Barbell_Curl",
+  sa4: "EZ-Bar_Skullcrusher",
+  sa5: "Preacher_Hammer_Dumbbell_Curl",
+  sa6: "Triceps_Pushdown_-_Rope_Attachment",
+
+  // Bro Split — Chest Day
+  ch1: "Barbell_Bench_Press_-_Medium_Grip",
+  ch2: "Barbell_Incline_Bench_Press_-_Medium_Grip",
+  ch3: "Incline_Dumbbell_Bench_With_Palms_Facing_In",
+  ch4: "Dumbbell_Flyes",
+  ch5: "Cable_Crossover",
+  ch6: "Dips_-_Triceps_Version",
+
+  // Bro Split — Back Day
+  bk1: "Barbell_Deadlift",
+  bk2: "Bent_Over_Barbell_Row",
+  bk3: "Wide-Grip_Lat_Pulldown",
+  bk4: "Seated_Cable_Rows",
+  bk5: "One-Arm_Dumbbell_Row",
+  bk6: "Face_Pull",
+
+  // Bro Split — Shoulders Day
+  sh1: "Barbell_Shoulder_Press",
+  sh2: "Arnold_Dumbbell_Press",
+  sh3: "Side_Lateral_Raise",
+  sh4: "Front_Incline_Dumbbell_Raise",
+  sh5: "Dumbbell_Lying_One-Arm_Rear_Lateral_Raise",
+  sh6: "Barbell_Shrug",
+
+  // Bro Split — Arms Day
+  am1: "Wide-Grip_Standing_Barbell_Curl",
+  am2: "EZ-Bar_Skullcrusher",
+  am3: "Alternate_Incline_Dumbbell_Curl",
+  am4: "Close-Grip_Barbell_Bench_Press",
+  am5: "Preacher_Hammer_Dumbbell_Curl",
+  am6: "Triceps_Pushdown_-_Rope_Attachment",
+};
+
+// Returns start/end form images for lib-db-* exercises and mapped custom exercises
 export function getExerciseImages(exerciseId: string): { frame0: string; frame1: string } | null {
-  if (!exerciseId.startsWith("lib-db-")) return null;
-  const folder = exerciseId.replace("lib-db-", "");
+  let folder: string | null = null;
+  if (exerciseId.startsWith("lib-db-")) {
+    folder = exerciseId.replace("lib-db-", "");
+  } else {
+    folder = EXERCISE_DB_FOLDERS[exerciseId] ?? null;
+  }
+  if (!folder) return null;
   return {
     frame0: `${GITHUB_BASE}/${folder}/0.jpg`,
     frame1: `${GITHUB_BASE}/${folder}/1.jpg`,
