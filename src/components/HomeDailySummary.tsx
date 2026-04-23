@@ -41,7 +41,7 @@ export default function HomeDailySummary({ date }: Props) {
         .eq("date", targetDate),
       supabase
         .from("nutrition_goals")
-        .select("calories, protein_g, carbs_g, fat_g, water_goal_ml")
+        .select("calories, protein_g, carbs_g, fat_g, water_goal_ml, adjust_for_activity")
         .eq("user_id", user.id)
         .maybeSingle(),
       supabase
