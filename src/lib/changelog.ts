@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.81",
+    version: "1.6.82",
     date: "2026-04-23",
     title: "Updates & Fixes",
     changes: [
-      "Update cable attachments: add No Attachment option, split Cuff & Lat Bar",
+      "Replace YouTube embeds with static form images for lib-db-* exercises",
     ],
   },
   {
