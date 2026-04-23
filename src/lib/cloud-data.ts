@@ -145,10 +145,12 @@ export async function fetchWorkoutHistory(): Promise<CompletedWorkout[]> {
     duration: h.duration,
     exercisesCompleted: h.exercises_completed,
     totalExercises: h.total_exercises,
+    caloriesBurned: (h as { calories_burned?: number | null }).calories_burned ?? null,
     sets: (setsMap[h.id] || []).map(s => ({
       exerciseId: s.exercise_id,
       reps: s.reps,
       weight: Number(s.weight),
+      setType: ((s as { set_type?: string }).set_type ?? "working") as "working" | "warmup" | "1rm_test",
     })),
   }));
 }
