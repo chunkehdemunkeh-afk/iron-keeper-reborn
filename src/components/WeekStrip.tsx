@@ -125,12 +125,21 @@ export default function WeekStrip() {
     return `${s.reps} ${(ex?.repLabel || "reps").toLowerCase()}`;
   };
 
+  const SUPPORTS_DISTANCE = new Set(["walk", "running", "cycling", "swimming"]);
+  const SUPPORTS_INCLINE = new Set(["walk", "running"]);
+
   const handlePresetClick = (activityType: string, label: string) => {
     if (activityType === "other") {
       setShowOtherInput(true);
       return;
     }
-    handleLogActivity(activityType, label);
+    if (activityType === "rest") {
+      // Rest day logs instantly with no extra inputs
+      handleLogActivity(activityType, label);
+      return;
+    }
+    // For everything else, open the detail form so user can add duration/distance
+    setPendingType({ type: activityType, label });
   };
 
   const handleLogActivity = async (activityType: string, label: string) => {
@@ -142,6 +151,8 @@ export default function WeekStrip() {
       label,
       duration: logDuration ? parseInt(logDuration) : 0,
       notes: logNotes.trim() || undefined,
+      distanceKm: logDistance ? parseFloat(logDistance) : null,
+      inclinePct: logIncline ? parseInt(logIncline) : null,
     });
     if (success) {
       hapticMedium();
@@ -149,7 +160,10 @@ export default function WeekStrip() {
       setLogSheetDay(null);
       setLogDuration("");
       setLogNotes("");
+      setLogDistance("");
+      setLogIncline("");
       setOtherLabel("");
+      setPendingType(null);
       setShowOtherInput(false);
       setRefreshKey((k) => k + 1);
     } else {
