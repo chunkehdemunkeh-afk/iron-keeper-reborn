@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.83",
+    version: "1.6.84",
     date: "2026-04-23",
     title: "Updates & Fixes",
     changes: [
-      "Replace YouTube iframes with static thumbnail JPEGs for all exercises",
+      "Map all custom exercises to free-exercise-db start/finish JPEGs",
     ],
   },
   {
