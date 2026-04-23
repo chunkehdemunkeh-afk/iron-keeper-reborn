@@ -106,6 +106,7 @@ export default function FoodTracker() {
   const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set());
   const [waterMl, setWaterMl] = useState(0);
   const [waterGoalMl, setWaterGoalMl] = useState(2500);
+  const [burnedKcal, setBurnedKcal] = useState(0);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
