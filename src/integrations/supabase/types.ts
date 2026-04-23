@@ -17,30 +17,39 @@ export type Database = {
       activity_logs: {
         Row: {
           activity_type: string
+          calories_burned: number | null
           created_at: string
           date: string
+          distance_km: number | null
           duration: number | null
           id: string
+          incline_pct: number | null
           label: string | null
           notes: string | null
           user_id: string
         }
         Insert: {
           activity_type?: string
+          calories_burned?: number | null
           created_at?: string
           date?: string
+          distance_km?: number | null
           duration?: number | null
           id?: string
+          incline_pct?: number | null
           label?: string | null
           notes?: string | null
           user_id: string
         }
         Update: {
           activity_type?: string
+          calories_burned?: number | null
           created_at?: string
           date?: string
+          distance_km?: number | null
           duration?: number | null
           id?: string
+          incline_pct?: number | null
           label?: string | null
           notes?: string | null
           user_id?: string
@@ -286,6 +295,7 @@ export type Database = {
       }
       nutrition_goals: {
         Row: {
+          adjust_for_activity: boolean
           calories: number
           carbs_g: number
           created_at: string
@@ -303,6 +313,7 @@ export type Database = {
           water_goal_ml: number
         }
         Insert: {
+          adjust_for_activity?: boolean
           calories?: number
           carbs_g?: number
           created_at?: string
@@ -320,6 +331,7 @@ export type Database = {
           water_goal_ml?: number
         }
         Update: {
+          adjust_for_activity?: boolean
           calories?: number
           carbs_g?: number
           created_at?: string
@@ -546,6 +558,7 @@ export type Database = {
       }
       workout_history: {
         Row: {
+          calories_burned: number | null
           created_at: string
           date: string
           duration: number
@@ -559,6 +572,7 @@ export type Database = {
           workout_name: string
         }
         Insert: {
+          calories_burned?: number | null
           created_at?: string
           date?: string
           duration?: number
@@ -572,6 +586,7 @@ export type Database = {
           workout_name: string
         }
         Update: {
+          calories_burned?: number | null
           created_at?: string
           date?: string
           duration?: number
@@ -635,12 +650,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      estimate_cardio_burn: {
+        Args: {
+          _activity_type: string
+          _distance_km: number
+          _duration_min: number
+          _incline_pct: number
+          _weight_kg: number
+        }
+        Returns: number
+      }
+      estimate_strength_burn: {
+        Args: {
+          _duration_min: number
+          _weight_kg: number
+          _workout_history_id: string
+        }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      lookup_user_bodyweight: {
+        Args: { _on_date: string; _user_id: string }
+        Returns: number
       }
     }
     Enums: {
