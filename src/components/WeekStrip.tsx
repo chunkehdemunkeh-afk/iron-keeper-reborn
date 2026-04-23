@@ -284,12 +284,20 @@ export default function WeekStrip() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground">{w.workoutName}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" /> {w.duration}m
                           </span>
                           <span>·</span>
                           <span>{w.exercisesCompleted}/{w.totalExercises} exercises</span>
+                          {w.caloriesBurned != null && w.caloriesBurned > 0 && (
+                            <>
+                              <span>·</span>
+                              <span className="flex items-center gap-1 text-amber-400">
+                                <Flame className="h-3 w-3" /> {w.caloriesBurned} kcal
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                       <button
