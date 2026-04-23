@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, useMotionValue, animate } from "framer-motion";
 import type { PanInfo } from "framer-motion";
 import { format, addDays, subDays } from "date-fns";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Plus, Settings, Trash2, CheckCircle2, Copy, Sunrise, Sun, Moon, Apple, Flame, type LucideIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Plus, Settings, Trash2, CheckCircle2, Copy, Sunrise, Sun, Moon, Apple, Flame, Activity, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -164,6 +164,16 @@ export default function FoodTracker() {
     }
   }, []);
 
+  const toggleAdjustForActivity = async () => {
+    if (!user || !goals) return;
+    const next = !goals.adjust_for_activity;
+    setGoals({ ...goals, adjust_for_activity: next });
+    await supabase
+      .from("nutrition_goals")
+      .update({ adjust_for_activity: next })
+      .eq("user_id", user.id);
+  };
+
   const deleteLog = async (id: string) => {
     await supabase.from("food_logs").delete().eq("id", id);
     setLogs((prev) => prev.filter((l) => l.id !== id));
@@ -248,104 +258,126 @@ export default function FoodTracker() {
       {goals && (() => {
         const adjust = !!goals.adjust_for_activity;
         const effectiveGoal = adjust ? goals.calories + burnedKcal : goals.calories;
-        const showBurnTile = burnedKcal > 0;
+        const diff = effectiveGoal - Math.round(totals.calories);
+        const over = diff < 0;
         return (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mx-4 p-4 rounded-2xl bg-card border border-border mb-4 cursor-pointer active:opacity-80 transition-opacity"
-          onClick={() => setShowNutritionSheet(true)}
+          className="mx-4 rounded-2xl bg-card border border-border mb-4 overflow-hidden"
         >
-          {/* Calorie ring — Eaten · Ring · Burned/Goal */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-center w-16">
-              <p className="text-xl font-display font-bold leading-none">{Math.round(totals.calories)}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">Eaten</p>
-            </div>
-
-            <div className="relative h-28 w-28">
-              <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
-                <path
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="hsl(var(--secondary))"
-                  strokeWidth="3.5"
-                />
-                <path
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="3.5"
-                  strokeDasharray={`${pct(totals.calories, effectiveGoal)}, 100`}
-                  strokeLinecap="round"
-                  className="transition-all duration-500"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                {(() => {
-                  const diff = effectiveGoal - Math.round(totals.calories);
-                  const over = diff < 0;
-                  return (
-                    <>
-                      <p className={`text-2xl font-display font-bold leading-none ${over ? "text-rose-400" : ""}`}>
-                        {over ? `-${Math.abs(diff)}` : diff}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5 h-[12px]">{over ? "" : "Remaining"}</p>
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-
-            {showBurnTile ? (
+          {/* Tappable calorie ring area */}
+          <div
+            className="p-4 cursor-pointer active:opacity-80 transition-opacity"
+            onClick={() => setShowNutritionSheet(true)}
+          >
+            {/* Calorie ring — Eaten · Ring · Remaining (always consistent) */}
+            <div className="flex items-center justify-between mb-4">
               <div className="text-center w-16">
-                <p className="text-xl font-display font-bold leading-none text-amber-400 flex items-center justify-center gap-0.5">
-                  <Flame className="h-3.5 w-3.5" />
-                  {burnedKcal}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-1">Burned</p>
-                <p className="text-[9px] text-muted-foreground/70 mt-0.5">
-                  Goal {effectiveGoal}
-                </p>
+                <p className="text-xl font-display font-bold leading-none">{Math.round(totals.calories)}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Eaten</p>
               </div>
-            ) : (
+
+              <div className="relative h-28 w-28">
+                <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="hsl(var(--secondary))"
+                    strokeWidth="3.5"
+                  />
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth="3.5"
+                    strokeDasharray={`${pct(totals.calories, effectiveGoal)}, 100`}
+                    strokeLinecap="round"
+                    className="transition-all duration-500"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <p className={`text-2xl font-display font-bold leading-none ${over ? "text-rose-400" : ""}`}>
+                    {over ? `-${Math.abs(diff)}` : diff}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{over ? "over" : "remaining"}</p>
+                </div>
+              </div>
+
               <div className="text-center w-16">
-                <p className="text-xl font-display font-bold leading-none">{goals.calories}</p>
+                <p className="text-xl font-display font-bold leading-none">{effectiveGoal}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">Goal</p>
               </div>
-            )}
-          </div>
+            </div>
 
-          {adjust && burnedKcal > 0 && (
-            <p className="text-[10px] text-center text-amber-400/80 -mt-2 mb-3">
-              +{burnedKcal} kcal added from today's activity
-            </p>
-          )}
-
-          {/* Macros */}
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { label: "Carbs",   value: totals.carbs,   target: goals.carbs_g,   color: "bg-amber-400" },
-              { label: "Protein", value: totals.protein, target: goals.protein_g, color: "bg-primary" },
-              { label: "Fat",     value: totals.fat,     target: goals.fat_g,     color: "bg-rose-400" },
-            ].map((m) => (
-              <div key={m.label}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] text-muted-foreground">{m.label}</span>
-                  <span className="text-[10px] font-medium">{Math.round(m.value)} / {m.target}g</span>
-                </div>
-                <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${m.color} transition-all duration-500`}
-                    style={{ width: `${pct(m.value, m.target)}%` }}
-                  />
-                </div>
+            {/* Goal breakdown — only shown when there are burned calories */}
+            {burnedKcal > 0 && (
+              <div className="flex items-center justify-center gap-1.5 text-[11px] mb-4 -mt-1">
+                <span className="text-muted-foreground">{goals.calories} base</span>
+                <span className="text-muted-foreground/50">+</span>
+                <span className="text-amber-400 flex items-center gap-0.5">
+                  <Flame className="h-3 w-3" />{burnedKcal} burned
+                </span>
+                {adjust && (
+                  <>
+                    <span className="text-muted-foreground/50">=</span>
+                    <span className="font-semibold">{effectiveGoal} goal</span>
+                  </>
+                )}
               </div>
-            ))}
+            )}
+
+            {/* Macros */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: "Carbs",   value: totals.carbs,   target: goals.carbs_g,   color: "bg-amber-400" },
+                { label: "Protein", value: totals.protein, target: goals.protein_g, color: "bg-primary" },
+                { label: "Fat",     value: totals.fat,     target: goals.fat_g,     color: "bg-rose-400" },
+              ].map((m) => (
+                <div key={m.label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-muted-foreground">{m.label}</span>
+                    <span className="text-[10px] font-medium">{Math.round(m.value)} / {m.target}g</span>
+                  </div>
+                  <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${m.color} transition-all duration-500`}
+                      style={{ width: `${pct(m.value, m.target)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-center gap-1 mt-3 pt-2 border-t border-border/50">
+              <span className="text-[10px] text-muted-foreground">Full breakdown</span>
+              <ChevronRight className="h-3 w-3 text-muted-foreground" />
+            </div>
           </div>
-          <div className="flex items-center justify-center gap-1 mt-3 pt-2 border-t border-border/50">
-            <span className="text-[10px] text-muted-foreground">Full breakdown</span>
-            <ChevronRight className="h-3 w-3 text-muted-foreground" />
+
+          {/* Add burned calories toggle — inline, not buried in settings */}
+          <div
+            className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-secondary/20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <Activity className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">Add burned calories to goal</span>
+            </div>
+            <button
+              onClick={toggleAdjustForActivity}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none ${
+                adjust ? "bg-primary" : "bg-secondary"
+              }`}
+              role="switch"
+              aria-checked={adjust}
+            >
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200 ${
+                  adjust ? "translate-x-4" : "translate-x-0"
+                }`}
+              />
+            </button>
           </div>
         </motion.div>
         );
@@ -634,22 +666,48 @@ export default function FoodTracker() {
             </SheetHeader>
 
             {/* Calorie overview */}
-            <div className="flex items-center justify-between px-1 mb-6">
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-2xl font-display font-bold">{Math.round(totals.calories)}</span>
-                <span className="text-[11px] text-muted-foreground">Eaten</span>
-              </div>
-              <div className="flex-1 mx-4 h-px bg-border" />
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-2xl font-display font-bold text-primary">{Math.max(0, goals.calories - Math.round(totals.calories))}</span>
-                <span className="text-[11px] text-muted-foreground">Remaining</span>
-              </div>
-              <div className="flex-1 mx-4 h-px bg-border" />
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-2xl font-display font-bold">{goals.calories}</span>
-                <span className="text-[11px] text-muted-foreground">Goal</span>
-              </div>
-            </div>
+            {(() => {
+              const adjust = !!goals.adjust_for_activity;
+              const effectiveGoal = adjust ? goals.calories + burnedKcal : goals.calories;
+              const remaining = effectiveGoal - Math.round(totals.calories);
+              return (
+                <>
+                  <div className="flex items-center justify-between px-1 mb-3">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="text-2xl font-display font-bold">{Math.round(totals.calories)}</span>
+                      <span className="text-[11px] text-muted-foreground">Eaten</span>
+                    </div>
+                    <div className="flex-1 mx-4 h-px bg-border" />
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className={`text-2xl font-display font-bold ${remaining < 0 ? "text-rose-400" : "text-primary"}`}>
+                        {remaining < 0 ? `-${Math.abs(remaining)}` : remaining}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">{remaining < 0 ? "Over" : "Remaining"}</span>
+                    </div>
+                    <div className="flex-1 mx-4 h-px bg-border" />
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="text-2xl font-display font-bold">{effectiveGoal}</span>
+                      <span className="text-[11px] text-muted-foreground">Goal</span>
+                    </div>
+                  </div>
+                  {burnedKcal > 0 && (
+                    <div className="flex items-center justify-center gap-1.5 text-[11px] mb-6">
+                      <span className="text-muted-foreground">{goals.calories} base</span>
+                      <span className="text-muted-foreground/50">+</span>
+                      <span className="text-amber-400 flex items-center gap-0.5">
+                        <Flame className="h-3 w-3" />{burnedKcal} burned
+                      </span>
+                      {adjust && (
+                        <>
+                          <span className="text-muted-foreground/50">=</span>
+                          <span className="font-semibold">{effectiveGoal} goal</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
 
             {/* Macros */}
             <div className="mb-6">

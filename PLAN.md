@@ -4,7 +4,55 @@
 
 ## Current Status
 
-**NEXT: Progress Photos + Body Tab** — planned, not yet started. See implementation plan below.
+**NEXT: TBD** — All planned features are now complete. See Backlog for ideas.
+
+**Calorie burn tracking complete** (2026-04-23):
+- Migration `20260423...`: `calories_burned` on `workout_history` + `activity_logs`; `distance_km`, `incline_pct` on `activity_logs`; `adjust_for_activity` on `nutrition_goals`
+- DB helper functions: `lookup_user_bodyweight`, `estimate_cardio_burn`, `estimate_strength_burn` + backfill UPDATE statements
+- `src/lib/calorie-burn.ts` — pure TS burn estimation (MET-based cardio, mechanical-work strength), mirrors SQL functions
+- `src/components/WeeklyEnergyCard.tsx` — weekly kcal card with stacked bar + 4-week sparkline, shown in Stats tab
+- `HomeDailySummary` now toggles Macros/Burn view; respects `adjust_for_activity` to inflate calorie goal
+- `FoodTracker` shows burned tile + adjusts goal when `adjust_for_activity` enabled
+- `NutritionSettings` has "Add burned calories to goal" toggle
+- `WeekStrip` activity logging now collects distance/incline, displays kcal on cards
+- `WorkoutSession` warm-up sets: auto-scheme (50%/75% → 40/60/80%), auto-fill on completion, 60s rest timer, excluded from PR/rep-range checks; `set_type: "warmup"` now saved to DB
+- `Profile` page shows weekly kcal burn stat
+
+**Progress Photos + Weekly Reviews + Strength Standards complete** (2026-04-22):
+- `progress_photos` + `weekly_reviews` tables + `progress-photos` storage bucket — migration `20260422133535...`
+- `workout_sets.set_type` column (`"working"` | `"1rm_test"`) — migration `20260422151128...`
+- `src/components/progress/PhotosTab.tsx`, `ProgressPhotoGrid.tsx`, `PhotoCompareSheet.tsx` — full photo upload/grid/compare UI
+- `src/lib/strength-standards.ts` — 6-tier Untrained→Elite rating for 8 lifts (Kilgore/ExRx norms). `epley1RM`, `getStrengthRating`, `inferLiftId`, `overallTier`
+- `src/components/progress/StrengthLevelCard.tsx`, `StrengthLevelSheet.tsx`, `StrengthBar.tsx`, `Test1RMSheet.tsx`
+- `src/components/PRTrendChart.tsx` — per-exercise PR history AreaChart, shown in Stats tab
+- `src/lib/weekly-review.ts` — ISO week helpers + localStorage prompt-dismissal logic
+- `src/components/weekly/WeeklyReviewSheet.tsx`, `WeeklyReviewCard.tsx`, `WeeklyReviewPrompt.tsx`, `MondayBanner.tsx`
+- Progress page now has **3 tabs: Stats | Photos | Recovery** (`?tab=photos` / `?tab=recovery`)
+- History page shows all `WeeklyReviewCard` entries
+- Home page: `MondayBanner` (Mondays, if last-week review missing) + `WeeklyReviewPrompt` (Sundays)
+- WorkoutSession: `setType: "1rm_test"` sets skip rep-range toasts; weight-range coaching toasts added for working sets
+- `cloud-data.ts` additions: `fetchExercisePRHistory`, `fetchProgressPhotos`, `uploadProgressPhoto`, `deleteProgressPhoto`, `updateProgressPhotoNotes`, `fetchWeeklyReview`, `fetchAllWeeklyReviews`, `upsertWeeklyReview`, `deleteWeeklyReview`, `computeWeekStats`, `fetchStrengthProfile`, `bestOneRmForLift`
+- Unit tests: `src/test/strength-standards.test.ts`
+
+**Recovery feature is complete** (2026-04-21), BodyDiagram redesigned (2026-04-22):
+- `sleep_logs` table (migration applied), `fetchRecentSets`, `fetchSleepLogs`, `upsertSleepLog`, `deleteSleepLog` in `cloud-data.ts`
+- `src/lib/muscle-mapping.ts`, `src/lib/recovery.ts`, `src/lib/recovery-settings.ts` — pure calculation
+- `src/components/recovery/BodyDiagram.tsx` — fully redesigned with anatomically accurate silhouette + muscle paths (coordinate space 240×460). Accepts `highlighted` prop for external control. `viewForMuscle(region)` exported.
+- `RecoveryCard.tsx` (home preview), `SleepCard.tsx` (home sleep input), `RecoverySettings.tsx`
+- Muscle rows in Recovery tab are clickable buttons — tapping a row sets `highlighted` on the diagram and auto-switches front/back via `viewForMuscle`
+- `src/hooks/useRecoverySettings.tsx`, `src/hooks/useDemoTour.tsx`
+- Unit tests: `src/test/recovery.test.ts`
+
+**Demo mode is complete** (2026-04-21):
+- `src/lib/demo-mode.ts` (sessionStorage flag), `src/lib/demo-data.ts`, `src/lib/demo-supabase.ts`, `src/lib/demo-tours.ts`
+- Components: `src/components/demo/DemoBanner.tsx`, `DemoTour.tsx`, `HelpButton.tsx`
+- Login page has "Try Demo" button → `enterDemo()` → hard reload with demo user shim in `useAuth`
+
+**Avatar upload is complete** (2026-04-21):
+- `useAuth` exposes `updateAvatar(file)`, `removeAvatar()` backed by Supabase Storage bucket `avatars` (public)
+- Migration: `supabase/migrations/20260421122511_…sql`
+
+**No-workout mode** added to user preferences (`splitId === "none"`); `isNoWorkoutMode()` in `user-preferences.ts`; `NutritionOnboarding.tsx` page added.
 
 **Supabase migration is complete** (2026-04-20):
 - New project: `kzwkdhwselqchhcqkyzs` (Iron Keeper V2), owned by the user
@@ -149,123 +197,6 @@ This makes login/signup redirects work correctly.
 
 ---
 
-## Progress Photos — Implementation Plan
-
-### Goal
-Weekly progress photos stored in Supabase Storage, displayed and compared in a new **Body** tab on the Progress page. Integrated with the existing `body_measurements` table (linked by date).
-
-### Architecture decisions
-- **No new nav slot.** Progress page gets a 3-tab strip: `Stats | Body | PRs`.
-- **Private Supabase Storage bucket** (`progress-photos`). Files at `{user_id}/{date}-{timestamp}.jpg`. Display via signed URLs (5-min expiry, generated at fetch time).
-- **`progress_photos` DB table** links storage path to date + notes. Joined with `body_measurements` by date in the UI to show weight alongside each photo.
-- **`/body` route** (BodyMeasurements page) stays as-is — still reachable from Profile. The Body tab reuses the same React Query key `["body-measurements"]` so there's no double-fetch.
-- Photo upload uses a hidden `<input type="file" accept="image/*" capture="environment">` — no third-party library needed. Images are uploaded as-is (no client-side resize for now).
-
-### Step-by-step
-
-#### Step 1 — DB migration
-File: `supabase/migrations/20260419_progress_photos.sql`
-
-```sql
-create table progress_photos (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users not null,
-  date date not null default current_date,
-  storage_path text not null,
-  notes text,
-  created_at timestamptz default now()
-);
-alter table progress_photos enable row level security;
-create policy "Users own photos"
-  on progress_photos for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-```
-
-Storage bucket `progress-photos` must be created in Supabase dashboard (Storage → New bucket → private). Then add two storage policies:
-- SELECT: `(storage.foldername(name))[1] = auth.uid()::text`
-- INSERT/DELETE: same condition
-
-Push with: `npx supabase db push`
-
-#### Step 2 — `cloud-data.ts` additions
-
-Three new exported functions:
-```typescript
-fetchProgressPhotos(): Promise<ProgressPhoto[]>
-// Fetches all rows, generates signed URLs for each storage_path.
-// Returns sorted desc by date. ProgressPhoto = { id, date, signedUrl, notes, storagePath }
-
-uploadProgressPhoto(file: File, date: string, notes?: string): Promise<boolean>
-// 1. Upload file to progress-photos/{user_id}/{date}-{Date.now()}.jpg
-// 2. Insert row into progress_photos
-// Returns true on success.
-
-deleteProgressPhoto(id: string, storagePath: string): Promise<boolean>
-// 1. Delete from storage
-// 2. Delete DB row
-```
-
-#### Step 3 — New components
-
-**`src/components/progress/LogBodySheet.tsx`**
-Bottom Sheet containing:
-- Date picker (defaults today, `<input type="date">` styled)
-- Weight (kg) + body fat (%) inputs — same as BodyMeasurements form
-- Photo section: tap area with camera icon → triggers hidden file input; shows preview thumbnail once selected
-- Save button: calls `saveBodyMeasurement` + `uploadProgressPhoto` in parallel if photo selected
-- Haptic: `hapticSuccess()` on save
-
-**`src/components/progress/ProgressPhotoGrid.tsx`**
-- 2-column grid, sorted desc by date
-- Each cell: photo thumbnail, date label below, weight overlay (matched from body_measurements by date)
-- Tap → full-screen view (simple `<img>` inside another Sheet)
-- Swipe-to-delete: matches established pattern (`useMotionValue`, `useTransform(x, [-100,-30],[1,0])`, red bg, `deleteProgressPhoto`)
-
-**`src/components/progress/PhotoCompareSheet.tsx`**
-- Bottom Sheet triggered by "Compare" button
-- Two columns, each with a date-selector dropdown (populated from available photo dates)
-- Displays the two selected photos side by side with date labels
-- Weight delta label between them: e.g. `↓ 3.2 kg` in primary color
-
-**`src/components/progress/BodyTab.tsx`**
-Assembles the Body tab:
-- Weight trend `LineChart` (same Recharts setup as BodyMeasurements)
-- "Compare" button (top right) → opens PhotoCompareSheet
-- "Log Entry" FAB → opens LogBodySheet
-- ProgressPhotoGrid below the chart
-- Empty state if no measurements yet
-
-#### Step 4 — Progress.tsx refactor
-
-Add tab state `("stats" | "body" | "prs")` defaulting to `"stats"`. Render a pill tab strip:
-
-```
-[ Stats ]  [ Body ]  [ PRs ]
-```
-
-- Stats tab: existing content (frequency chart, volume, DailyReviewChart)
-- Body tab: `<BodyTab />`
-- PRs tab: existing PR list with swipe-to-delete
-
-Add `useQuery` for `fetchProgressPhotos` (key: `["progress-photos", user?.id]`) at the Progress level and pass data down, or let BodyTab own it — **BodyTab owns its own queries** to keep Progress.tsx from growing further.
-
-### File list
-
-| Action | File |
-|--------|------|
-| New migration | `supabase/migrations/20260419_progress_photos.sql` |
-| Modified | `src/lib/cloud-data.ts` |
-| New | `src/components/progress/LogBodySheet.tsx` |
-| New | `src/components/progress/ProgressPhotoGrid.tsx` |
-| New | `src/components/progress/PhotoCompareSheet.tsx` |
-| New | `src/components/progress/BodyTab.tsx` |
-| Modified | `src/pages/Progress.tsx` |
-
-### Out of scope (backlog)
-- Client-side image compression/resize before upload
-- Coach view of athlete progress photos
-- Photo tagging (front/side/back angles)
 
 ## Core Architecture Constraints
 
@@ -288,7 +219,15 @@ Add `useQuery` for `fetchProgressPhotos` (key: `["progress-photos", user?.id]`) 
 | Active session page | `src/pages/WorkoutSession.tsx` |
 | History cards | `src/components/history/WorkoutCard.tsx` |
 | Home week strip | `src/components/WeekStrip.tsx` |
-| Progress & PRs | `src/pages/Progress.tsx` |
+| Progress (Stats + Photos + Recovery tabs) | `src/pages/Progress.tsx` |
+| Recovery calc | `src/lib/recovery.ts` |
+| Calorie burn estimation | `src/lib/calorie-burn.ts` |
+| Muscle mapping | `src/lib/muscle-mapping.ts` |
+| Body diagram | `src/components/recovery/BodyDiagram.tsx` |
+| Sleep card (home) | `src/components/recovery/SleepCard.tsx` |
+| Strength standards | `src/lib/strength-standards.ts` |
+| Weekly review helpers | `src/lib/weekly-review.ts` |
+| Weekly review sheet | `src/components/weekly/WeeklyReviewSheet.tsx` |
 | Food tracker | `src/pages/FoodTracker.tsx` |
 | Auth context | `src/hooks/useAuth.tsx` |
 | Role routing | `src/hooks/useUserRole.tsx` |
@@ -304,6 +243,8 @@ Add `useQuery` for `fetchProgressPhotos` (key: `["progress-photos", user?.id]`) 
 ## Backlog / Ideas (not committed)
 
 - Coach dashboard features (bulk session assignment, athlete progress view)
+- Progress photo: client-side image compression before upload
+- Progress photo: pose tagging (front/side/back angles)
 - Nutrition: weekly macro trend charts
 - Workout templates / programme scheduling UI
 - Push notifications for rest timer
