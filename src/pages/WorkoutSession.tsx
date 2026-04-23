@@ -620,8 +620,9 @@ export default function WorkoutSession() {
       const isTimeBased = (override?.repLabel || exercise?.repLabel) === "Sec";
       const tracksWeight = (override?.trackWeight ?? exercise?.trackWeight) !== false;
 
-      // Check for new personal record (weight PR OR rep PR) — keyed by effective (post-swap) ID
-      if (!isTimeBased && currentReps > 0) {
+      // Check for new personal record (weight PR OR rep PR) — keyed by effective (post-swap) ID.
+      // Warm-up sets are excluded — they're light by design and shouldn't trigger PRs.
+      if (!isTimeBased && currentReps > 0 && currentSetType !== "warmup") {
         const histWeight = historicalPRsRef.current[effectiveId]?.weight ?? 0;
         const histReps = historicalPRsRef.current[effectiveId]?.bestReps ?? 0;
         const sessBest = sessionBestRef.current[effectiveId] ?? { weight: 0, reps: 0 };
