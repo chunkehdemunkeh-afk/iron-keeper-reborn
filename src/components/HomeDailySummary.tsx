@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { Flame, Beef, Wheat, Droplets, Droplet, ChevronRight, Activity } from "lucide-react";
+import { Flame, Beef, Wheat, Droplets, Droplet, ChevronRight, Activity, Dumbbell, Footprints } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,9 @@ interface Props {
   date?: string;
 }
 
+type ViewMode = "macros" | "burn";
+const VIEW_KEY = "ik-home-summary-view";
+
 export default function HomeDailySummary({ date }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -18,7 +21,15 @@ export default function HomeDailySummary({ date }: Props) {
   const [totals, setTotals] = useState({ calories: 0, protein: 0, carbs: 0, fat: 0 });
   const [goals, setGoals] = useState<{ calories: number; protein_g: number; carbs_g: number; fat_g: number; water_goal_ml?: number } | null>(null);
   const [waterMl, setWaterMl] = useState(0);
-  const [burnedKcal, setBurnedKcal] = useState(0);
+  const [burn, setBurn] = useState<{ totalKcal: number; strengthKcal: number; cardioKcal: number }>({ totalKcal: 0, strengthKcal: 0, cardioKcal: 0 });
+  const [view, setView] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "macros";
+    return (localStorage.getItem(VIEW_KEY) as ViewMode) || "macros";
+  });
+
+  useEffect(() => {
+    localStorage.setItem(VIEW_KEY, view);
+  }, [view]);
 
   useEffect(() => {
     if (!user) return;
