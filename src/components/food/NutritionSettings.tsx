@@ -120,6 +120,7 @@ export default function NutritionSettings({ open, onClose, onSaved }: Props) {
         carbs_g: carbsG,
         fat_g: fatG,
         water_goal_ml: waterGoalMl,
+        adjust_for_activity: adjustForActivity,
       })
       .eq("user_id", user.id);
     setSaving(false);
