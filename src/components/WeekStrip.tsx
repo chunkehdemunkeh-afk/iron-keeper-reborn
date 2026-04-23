@@ -59,6 +59,9 @@ export default function WeekStrip() {
   const [logSheetDay, setLogSheetDay] = useState<number | null>(null);
   const [logDuration, setLogDuration] = useState("");
   const [logNotes, setLogNotes] = useState("");
+  const [logDistance, setLogDistance] = useState("");
+  const [logIncline, setLogIncline] = useState("");
+  const [pendingType, setPendingType] = useState<{ type: string; label: string } | null>(null);
   const [otherLabel, setOtherLabel] = useState("");
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
