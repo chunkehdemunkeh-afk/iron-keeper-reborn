@@ -484,6 +484,9 @@ export type ActivityLog = {
   label: string | null;
   duration: number;
   notes: string | null;
+  distanceKm: number | null;
+  inclinePct: number | null;
+  caloriesBurned: number | null;
 };
 
 const ACTIVITY_PRESETS = [
@@ -498,9 +501,28 @@ const ACTIVITY_PRESETS = [
 ];
 export { ACTIVITY_PRESETS };
 
-export async function saveActivityLog(data: { date: string; activityType: string; label?: string; duration?: number; notes?: string }): Promise<boolean> {
+export async function saveActivityLog(data: {
+  date: string;
+  activityType: string;
+  label?: string;
+  duration?: number;
+  notes?: string;
+  distanceKm?: number | null;
+  inclinePct?: number | null;
+}): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
+
+  // Compute estimated burn client-side using the same formulas as the SQL fn.
+  const { estimateCardioBurn } = await import("./calorie-burn");
+  const bodyweight = await lookupUserBodyweight(user.id);
+  const caloriesBurned = estimateCardioBurn({
+    activityType: data.activityType,
+    durationMin: data.duration || 0,
+    distanceKm: data.distanceKm ?? null,
+    inclinePct: data.inclinePct ?? null,
+    weightKg: bodyweight,
+  });
 
   const { error } = await supabase
     .from("activity_logs")
@@ -511,6 +533,9 @@ export async function saveActivityLog(data: { date: string; activityType: string
       label: data.label || null,
       duration: data.duration || 0,
       notes: data.notes || null,
+      distance_km: data.distanceKm ?? null,
+      incline_pct: data.inclinePct ?? null,
+      calories_burned: caloriesBurned,
     });
 
   return !error;
@@ -535,6 +560,9 @@ export async function fetchActivityLogs(): Promise<ActivityLog[]> {
     label: a.label,
     duration: a.duration ?? 0,
     notes: a.notes,
+    distanceKm: a.distance_km !== null && a.distance_km !== undefined ? Number(a.distance_km) : null,
+    inclinePct: a.incline_pct ?? null,
+    caloriesBurned: a.calories_burned ?? null,
   }));
 }
 
