@@ -59,7 +59,7 @@ for (const ex of EXERCISE_LIBRARY) {
   }
 }
 
-const CABLE_ATTACHMENTS = ["Handles", "V-Bar", "MAG Grip", "Straight Bar", "Rope", "Cuff & Lat Bar"] as const;
+const CABLE_ATTACHMENTS = ["No Attachment", "Handles", "V-Bar", "MAG Grip", "Straight Bar", "Rope", "Cuff", "Lat Bar"] as const;
 type CableAttachment = typeof CABLE_ATTACHMENTS[number];
 
 function attachmentKey(att: string) {
