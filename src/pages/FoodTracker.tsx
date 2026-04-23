@@ -245,14 +245,18 @@ export default function FoodTracker() {
       })()}
 
       {/* Summary */}
-      {goals && (
+      {goals && (() => {
+        const adjust = !!goals.adjust_for_activity;
+        const effectiveGoal = adjust ? goals.calories + burnedKcal : goals.calories;
+        const showBurnTile = burnedKcal > 0;
+        return (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mx-4 p-4 rounded-2xl bg-card border border-border mb-4 cursor-pointer active:opacity-80 transition-opacity"
           onClick={() => setShowNutritionSheet(true)}
         >
-          {/* Calorie ring — centred with flanking stats */}
+          {/* Calorie ring — Eaten · Ring · Burned/Goal */}
           <div className="flex items-center justify-between mb-4">
             <div className="text-center w-16">
               <p className="text-xl font-display font-bold leading-none">{Math.round(totals.calories)}</p>
@@ -272,14 +276,14 @@ export default function FoodTracker() {
                   fill="none"
                   stroke="hsl(var(--primary))"
                   strokeWidth="3.5"
-                  strokeDasharray={`${pct(totals.calories, goals.calories)}, 100`}
+                  strokeDasharray={`${pct(totals.calories, effectiveGoal)}, 100`}
                   strokeLinecap="round"
                   className="transition-all duration-500"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 {(() => {
-                  const diff = goals.calories - Math.round(totals.calories);
+                  const diff = effectiveGoal - Math.round(totals.calories);
                   const over = diff < 0;
                   return (
                     <>
@@ -293,11 +297,30 @@ export default function FoodTracker() {
               </div>
             </div>
 
-            <div className="text-center w-16">
-              <p className="text-xl font-display font-bold leading-none">{goals.calories}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">Goal</p>
-            </div>
+            {showBurnTile ? (
+              <div className="text-center w-16">
+                <p className="text-xl font-display font-bold leading-none text-amber-400 flex items-center justify-center gap-0.5">
+                  <Flame className="h-3.5 w-3.5" />
+                  {burnedKcal}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">Burned</p>
+                <p className="text-[9px] text-muted-foreground/70 mt-0.5">
+                  Goal {effectiveGoal}
+                </p>
+              </div>
+            ) : (
+              <div className="text-center w-16">
+                <p className="text-xl font-display font-bold leading-none">{goals.calories}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Goal</p>
+              </div>
+            )}
           </div>
+
+          {adjust && burnedKcal > 0 && (
+            <p className="text-[10px] text-center text-amber-400/80 -mt-2 mb-3">
+              +{burnedKcal} kcal added from today's activity
+            </p>
+          )}
 
           {/* Macros */}
           <div className="grid grid-cols-3 gap-3">
