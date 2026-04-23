@@ -456,3 +456,15 @@ export function getExerciseVideoUrl(exerciseId: string, exerciseName: string): s
   const query = encodeURIComponent(`${exerciseName} exercise form tutorial short`);
   return `https://www.youtube.com/results?search_query=${query}&sp=EgIYAQ%253D%253D`;
 }
+
+const GITHUB_BASE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises";
+
+// Returns start/end form images for lib-db-* exercises, null for everything else
+export function getExerciseImages(exerciseId: string): { frame0: string; frame1: string } | null {
+  if (!exerciseId.startsWith("lib-db-")) return null;
+  const folder = exerciseId.replace("lib-db-", "");
+  return {
+    frame0: `${GITHUB_BASE}/${folder}/0.jpg`,
+    frame1: `${GITHUB_BASE}/${folder}/1.jpg`,
+  };
+}
