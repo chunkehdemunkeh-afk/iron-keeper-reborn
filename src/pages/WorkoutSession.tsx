@@ -690,9 +690,12 @@ export default function WorkoutSession() {
             return prev;
           });
         }
+      } else if (currentSetType === "warmup") {
+        // Warm-ups don't need a long rest — keep things moving.
+        setRestDuration(60);
       } else {
         // Longer default rest after a true 1RM attempt — these need real recovery.
-        setRestDuration(300);
+        if (isOneRmTest) setRestDuration(300);
       }
 
       // Auto-expand next exercise if this was the last set
