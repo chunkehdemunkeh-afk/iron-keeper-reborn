@@ -5,6 +5,33 @@ import { EXERCISE_SUBSTITUTIONS } from "./exercise-substitutions";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "./accessory-routines";
 import { EXERCISE_LIBRARY } from "./exercise-library";
 import { stripExerciseSuffixes } from "./muscle-mapping";
+import { estimateStrengthBurn } from "./calorie-burn";
+
+/**
+ * Look up the most recent body weight to use as the reference for burn
+ * calculations. Falls back to the TDEE weight from nutrition_goals, then
+ * to a 75 kg default. Mirrors the SQL `lookup_user_bodyweight` function.
+ */
+export async function lookupUserBodyweight(userId: string): Promise<number> {
+  const [{ data: bm }, { data: ng }] = await Promise.all([
+    supabase
+      .from("body_measurements")
+      .select("body_weight")
+      .eq("user_id", userId)
+      .not("body_weight", "is", null)
+      .order("date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("nutrition_goals")
+      .select("tdee_weight_kg")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  const bw = bm?.body_weight ? Number(bm.body_weight) : null;
+  const tdeeBw = ng?.tdee_weight_kg ? Number(ng.tdee_weight_kg) : null;
+  return bw ?? tdeeBw ?? 75;
+}
 
 // Save workout to Supabase (with localStorage fallback)
 export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<void> {
