@@ -34,13 +34,14 @@ export default function NutritionSettings({ open, onClose, onSaved }: Props) {
     setLoading(true);
     supabase
       .from("nutrition_goals")
-      .select("calories, protein_g, carbs_g, fat_g, water_goal_ml")
+      .select("calories, protein_g, carbs_g, fat_g, water_goal_ml, adjust_for_activity")
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
           setCalories(data.calories);
           setWaterGoalMl(data.water_goal_ml);
+          setAdjustForActivity(!!data.adjust_for_activity);
           // Calculate current percentages from grams
           const totalCalsFromMacros = data.protein_g * 4 + data.carbs_g * 4 + data.fat_g * 9;
           if (totalCalsFromMacros > 0) {
