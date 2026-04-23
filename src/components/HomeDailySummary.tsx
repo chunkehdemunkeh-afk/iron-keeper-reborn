@@ -125,9 +125,9 @@ export default function HomeDailySummary({ date }: Props) {
         <div className="text-center">
           <Flame className={`h-4 w-4 mx-auto mb-1 transition-colors duration-500 ${calorieColor}`} />
           <p className={`text-lg font-bold transition-colors duration-500 ${calorieColor}`}>{Math.round(totals.calories)}</p>
-          <p className="text-[10px] text-muted-foreground">/ {goals.calories} kcal</p>
+          <p className="text-[10px] text-muted-foreground">/ {effectiveCalorieGoal} kcal{adjustForActivity && burn.totalKcal > 0 ? <span className="text-amber-400/80"> (+{burn.totalKcal})</span> : null}</p>
           <div className="h-1 bg-secondary rounded-full mt-1.5 overflow-hidden">
-            <div className={`h-full rounded-full ${calorieBar} transition-[width,background-color] duration-500 ease-out`} style={{ width: `${pct(totals.calories, goals.calories)}%` }} />
+            <div className={`h-full rounded-full ${calorieBar} transition-[width,background-color] duration-500 ease-out`} style={{ width: `${pct(totals.calories, effectiveCalorieGoal)}%` }} />
           </div>
         </div>
         <div className="text-center">
