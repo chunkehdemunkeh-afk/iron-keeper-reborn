@@ -735,6 +735,36 @@ export default function WorkoutSession() {
     hapticMedium();
   }, []);
 
+  /** Add a warm-up set (lighter style, excluded from PRs and burn calc). */
+  const addWarmupSet = useCallback((exerciseId: string) => {
+    setSetLogs((prev) => {
+      const updated = { ...prev };
+      const sets = [...(updated[exerciseId] || [])];
+      // Insert at the top — warm-ups should come before working sets.
+      const firstWorkingIdx = sets.findIndex((s) => s.setType !== "warmup");
+      const insertAt = firstWorkingIdx === -1 ? sets.length : firstWorkingIdx;
+      sets.splice(insertAt, 0, { reps: 0, weight: 0, completed: false, setType: "warmup" });
+      updated[exerciseId] = sets;
+      return updated;
+    });
+    hapticMedium();
+  }, []);
+
+  /** Toggle a single set between working ↔ warmup. */
+  const toggleWarmup = useCallback((exerciseId: string, setIdx: number) => {
+    setSetLogs((prev) => {
+      const updated = { ...prev };
+      const sets = [...(updated[exerciseId] || [])];
+      if (!sets[setIdx]) return prev;
+      const current = sets[setIdx].setType;
+      const next: SetType = current === "warmup" ? "working" : "warmup";
+      sets[setIdx] = { ...sets[setIdx], setType: next };
+      updated[exerciseId] = sets;
+      return updated;
+    });
+    hapticMedium();
+  }, []);
+
   /** Append a single dedicated 1RM-test set (1 rep, locked, amber styling). */
   const add1RMTestSet = useCallback((exerciseId: string) => {
     setSetLogs((prev) => {
