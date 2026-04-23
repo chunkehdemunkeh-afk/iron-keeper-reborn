@@ -4,7 +4,7 @@ import type { CompletedWorkout } from "@/lib/workout-data";
 import { useEffect, useState, useCallback } from "react";
 import { motion, animate, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import type { PanInfo } from "framer-motion";
-import { CheckCircle2, Circle, X, Dumbbell, Clock, Bed, Plus, Trash2, Footprints, Waves, Bike, Flower, CircleDot, Pencil, Activity } from "lucide-react";
+import { CheckCircle2, Circle, X, Dumbbell, Clock, Bed, Plus, Trash2, Footprints, Waves, Bike, Flower, CircleDot, Pencil, Activity, Flame } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
