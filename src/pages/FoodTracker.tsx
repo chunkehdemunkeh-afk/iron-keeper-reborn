@@ -111,7 +111,7 @@ export default function FoodTracker() {
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [logsRes, goalsRes, waterRes] = await Promise.all([
+    const [logsRes, goalsRes, waterRes, burn] = await Promise.all([
       supabase
         .from("food_logs")
         .select("id, meal_type, food_name, brand, serving_qty, serving_size, calories, protein_g, carbs_g, fat_g, sugar_g, fibre_g, saturated_fat_g, salt_g, barcode")
@@ -120,7 +120,7 @@ export default function FoodTracker() {
         .order("created_at"),
       supabase
         .from("nutrition_goals")
-        .select("calories, protein_g, carbs_g, fat_g, water_goal_ml")
+        .select("calories, protein_g, carbs_g, fat_g, water_goal_ml, adjust_for_activity")
         .eq("user_id", user.id)
         .maybeSingle(),
       supabase
@@ -128,6 +128,7 @@ export default function FoodTracker() {
         .select("amount_ml")
         .eq("user_id", user.id)
         .eq("date", date),
+      fetchDailyBurn(date),
     ]);
     setLogs((logsRes.data as unknown as FoodLog[]) || []);
     if (goalsRes.data) {
@@ -139,6 +140,7 @@ export default function FoodTracker() {
     }
     const water = waterRes.data || [];
     setWaterMl(water.reduce((s: number, e: any) => s + e.amount_ml, 0));
+    setBurnedKcal(burn.totalKcal || 0);
     setLoading(false);
   }, [user, date]);
 
