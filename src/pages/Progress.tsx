@@ -1,6 +1,6 @@
 import { useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchWorkoutHistory, fetchVolumeData, fetchPersonalRecords, deletePersonalRecord, fetchRecentSets, fetchSleepLogs } from "@/lib/cloud-data";
+import { fetchWorkoutHistory, fetchVolumeData, fetchPersonalRecords, deletePersonalRecord, fetchRecentSets, fetchSleepLogs, bestOneRmForLift } from "@/lib/cloud-data";
 import { WORKOUTS } from "@/lib/workout-data";
 import { BarChart3, Trophy, Calendar, TrendingUp, Dumbbell, Clock, Trash2, Activity, Moon } from "lucide-react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
@@ -34,7 +34,7 @@ import {
   epley1RM,
   getStrengthRating,
   inferLiftId,
-  type LiftId,
+  isBilateralDumbbell,
   type StrengthRating,
 } from "@/lib/strength-standards";
 
