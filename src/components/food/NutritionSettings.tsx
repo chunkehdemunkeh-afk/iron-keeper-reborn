@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -23,6 +25,7 @@ export default function NutritionSettings({ open, onClose, onSaved }: Props) {
   const [carbsPct, setCarbsPct] = useState(45);
   const [fatPct, setFatPct] = useState(25);
   const [waterGoalMl, setWaterGoalMl] = useState(2500);
+  const [adjustForActivity, setAdjustForActivity] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -31,13 +34,14 @@ export default function NutritionSettings({ open, onClose, onSaved }: Props) {
     setLoading(true);
     supabase
       .from("nutrition_goals")
-      .select("calories, protein_g, carbs_g, fat_g, water_goal_ml")
+      .select("calories, protein_g, carbs_g, fat_g, water_goal_ml, adjust_for_activity")
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
           setCalories(data.calories);
           setWaterGoalMl(data.water_goal_ml);
+          setAdjustForActivity(!!data.adjust_for_activity);
           // Calculate current percentages from grams
           const totalCalsFromMacros = data.protein_g * 4 + data.carbs_g * 4 + data.fat_g * 9;
           if (totalCalsFromMacros > 0) {
@@ -116,6 +120,7 @@ export default function NutritionSettings({ open, onClose, onSaved }: Props) {
         carbs_g: carbsG,
         fat_g: fatG,
         water_goal_ml: waterGoalMl,
+        adjust_for_activity: adjustForActivity,
       })
       .eq("user_id", user.id);
     setSaving(false);
@@ -252,6 +257,28 @@ export default function NutritionSettings({ open, onClose, onSaved }: Props) {
                     {ml / 1000}L
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Adjust for activity */}
+            <div className="rounded-xl border border-border bg-card p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <Flame className="h-3.5 w-3.5 text-amber-400" />
+                    <Label htmlFor="adjust-activity" className="text-sm font-semibold cursor-pointer">
+                      Add burned calories to goal
+                    </Label>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+                    When on, your daily calorie target increases by the calories you burn from workouts and cardio.
+                  </p>
+                </div>
+                <Switch
+                  id="adjust-activity"
+                  checked={adjustForActivity}
+                  onCheckedChange={setAdjustForActivity}
+                />
               </div>
             </div>
 

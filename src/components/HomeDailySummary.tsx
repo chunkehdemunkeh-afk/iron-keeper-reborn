@@ -19,7 +19,7 @@ export default function HomeDailySummary({ date }: Props) {
   const navigate = useNavigate();
   const targetDate = date || format(new Date(), "yyyy-MM-dd");
   const [totals, setTotals] = useState({ calories: 0, protein: 0, carbs: 0, fat: 0 });
-  const [goals, setGoals] = useState<{ calories: number; protein_g: number; carbs_g: number; fat_g: number; water_goal_ml?: number } | null>(null);
+  const [goals, setGoals] = useState<{ calories: number; protein_g: number; carbs_g: number; fat_g: number; water_goal_ml?: number; adjust_for_activity?: boolean } | null>(null);
   const [waterMl, setWaterMl] = useState(0);
   const [burn, setBurn] = useState<{ totalKcal: number; strengthKcal: number; cardioKcal: number }>({ totalKcal: 0, strengthKcal: 0, cardioKcal: 0 });
   const [view, setView] = useState<ViewMode>(() => {
@@ -41,7 +41,7 @@ export default function HomeDailySummary({ date }: Props) {
         .eq("date", targetDate),
       supabase
         .from("nutrition_goals")
-        .select("calories, protein_g, carbs_g, fat_g, water_goal_ml")
+        .select("calories, protein_g, carbs_g, fat_g, water_goal_ml, adjust_for_activity")
         .eq("user_id", user.id)
         .maybeSingle(),
       supabase
@@ -71,7 +71,9 @@ export default function HomeDailySummary({ date }: Props) {
 
   const pct = (val: number, target: number) => Math.min(100, Math.round((val / target) * 100));
   const waterGoal = goals.water_goal_ml || 2500;
-  const caloriesOver = goals.calories > 0 && totals.calories / goals.calories >= 1.1;
+  const adjustForActivity = !!goals.adjust_for_activity;
+  const effectiveCalorieGoal = adjustForActivity ? goals.calories + burn.totalKcal : goals.calories;
+  const caloriesOver = effectiveCalorieGoal > 0 && totals.calories / effectiveCalorieGoal >= 1.1;
   const waterLow = waterGoal > 0 && waterMl / waterGoal < 0.9;
   const calorieColor = caloriesOver ? "text-amber-400" : "text-primary";
   const calorieBar = caloriesOver ? "bg-amber-400" : "bg-primary";
@@ -123,9 +125,9 @@ export default function HomeDailySummary({ date }: Props) {
         <div className="text-center">
           <Flame className={`h-4 w-4 mx-auto mb-1 transition-colors duration-500 ${calorieColor}`} />
           <p className={`text-lg font-bold transition-colors duration-500 ${calorieColor}`}>{Math.round(totals.calories)}</p>
-          <p className="text-[10px] text-muted-foreground">/ {goals.calories} kcal</p>
+          <p className="text-[10px] text-muted-foreground">/ {effectiveCalorieGoal} kcal{adjustForActivity && burn.totalKcal > 0 ? <span className="text-amber-400/80"> (+{burn.totalKcal})</span> : null}</p>
           <div className="h-1 bg-secondary rounded-full mt-1.5 overflow-hidden">
-            <div className={`h-full rounded-full ${calorieBar} transition-[width,background-color] duration-500 ease-out`} style={{ width: `${pct(totals.calories, goals.calories)}%` }} />
+            <div className={`h-full rounded-full ${calorieBar} transition-[width,background-color] duration-500 ease-out`} style={{ width: `${pct(totals.calories, effectiveCalorieGoal)}%` }} />
           </div>
         </div>
         <div className="text-center">

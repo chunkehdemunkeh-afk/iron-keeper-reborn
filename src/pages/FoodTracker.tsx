@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, useMotionValue, animate } from "framer-motion";
 import type { PanInfo } from "framer-motion";
 import { format, addDays, subDays } from "date-fns";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Plus, Settings, Trash2, CheckCircle2, Copy, Sunrise, Sun, Moon, Apple, type LucideIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Plus, Settings, Trash2, CheckCircle2, Copy, Sunrise, Sun, Moon, Apple, Flame, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchDailyBurn } from "@/lib/cloud-data";
 import FoodSearch from "@/components/food/FoodSearch";
 import TDEESetup from "@/components/food/TDEESetup";
 import NutritionSettings from "@/components/food/NutritionSettings";
@@ -49,6 +50,7 @@ interface Goals {
   protein_g: number;
   carbs_g: number;
   fat_g: number;
+  adjust_for_activity?: boolean;
 }
 
 const MEALS: { type: MealType; label: string; icon: LucideIcon }[] = [
@@ -104,11 +106,12 @@ export default function FoodTracker() {
   const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set());
   const [waterMl, setWaterMl] = useState(0);
   const [waterGoalMl, setWaterGoalMl] = useState(2500);
+  const [burnedKcal, setBurnedKcal] = useState(0);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [logsRes, goalsRes, waterRes] = await Promise.all([
+    const [logsRes, goalsRes, waterRes, burn] = await Promise.all([
       supabase
         .from("food_logs")
         .select("id, meal_type, food_name, brand, serving_qty, serving_size, calories, protein_g, carbs_g, fat_g, sugar_g, fibre_g, saturated_fat_g, salt_g, barcode")
@@ -117,7 +120,7 @@ export default function FoodTracker() {
         .order("created_at"),
       supabase
         .from("nutrition_goals")
-        .select("calories, protein_g, carbs_g, fat_g, water_goal_ml")
+        .select("calories, protein_g, carbs_g, fat_g, water_goal_ml, adjust_for_activity")
         .eq("user_id", user.id)
         .maybeSingle(),
       supabase
@@ -125,6 +128,7 @@ export default function FoodTracker() {
         .select("amount_ml")
         .eq("user_id", user.id)
         .eq("date", date),
+      fetchDailyBurn(date),
     ]);
     setLogs((logsRes.data as unknown as FoodLog[]) || []);
     if (goalsRes.data) {
@@ -136,6 +140,7 @@ export default function FoodTracker() {
     }
     const water = waterRes.data || [];
     setWaterMl(water.reduce((s: number, e: any) => s + e.amount_ml, 0));
+    setBurnedKcal(burn.totalKcal || 0);
     setLoading(false);
   }, [user, date]);
 
@@ -240,14 +245,18 @@ export default function FoodTracker() {
       })()}
 
       {/* Summary */}
-      {goals && (
+      {goals && (() => {
+        const adjust = !!goals.adjust_for_activity;
+        const effectiveGoal = adjust ? goals.calories + burnedKcal : goals.calories;
+        const showBurnTile = burnedKcal > 0;
+        return (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mx-4 p-4 rounded-2xl bg-card border border-border mb-4 cursor-pointer active:opacity-80 transition-opacity"
           onClick={() => setShowNutritionSheet(true)}
         >
-          {/* Calorie ring — centred with flanking stats */}
+          {/* Calorie ring — Eaten · Ring · Burned/Goal */}
           <div className="flex items-center justify-between mb-4">
             <div className="text-center w-16">
               <p className="text-xl font-display font-bold leading-none">{Math.round(totals.calories)}</p>
@@ -267,14 +276,14 @@ export default function FoodTracker() {
                   fill="none"
                   stroke="hsl(var(--primary))"
                   strokeWidth="3.5"
-                  strokeDasharray={`${pct(totals.calories, goals.calories)}, 100`}
+                  strokeDasharray={`${pct(totals.calories, effectiveGoal)}, 100`}
                   strokeLinecap="round"
                   className="transition-all duration-500"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 {(() => {
-                  const diff = goals.calories - Math.round(totals.calories);
+                  const diff = effectiveGoal - Math.round(totals.calories);
                   const over = diff < 0;
                   return (
                     <>
@@ -288,11 +297,30 @@ export default function FoodTracker() {
               </div>
             </div>
 
-            <div className="text-center w-16">
-              <p className="text-xl font-display font-bold leading-none">{goals.calories}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">Goal</p>
-            </div>
+            {showBurnTile ? (
+              <div className="text-center w-16">
+                <p className="text-xl font-display font-bold leading-none text-amber-400 flex items-center justify-center gap-0.5">
+                  <Flame className="h-3.5 w-3.5" />
+                  {burnedKcal}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">Burned</p>
+                <p className="text-[9px] text-muted-foreground/70 mt-0.5">
+                  Goal {effectiveGoal}
+                </p>
+              </div>
+            ) : (
+              <div className="text-center w-16">
+                <p className="text-xl font-display font-bold leading-none">{goals.calories}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Goal</p>
+              </div>
+            )}
           </div>
+
+          {adjust && burnedKcal > 0 && (
+            <p className="text-[10px] text-center text-amber-400/80 -mt-2 mb-3">
+              +{burnedKcal} kcal added from today's activity
+            </p>
+          )}
 
           {/* Macros */}
           <div className="grid grid-cols-3 gap-3">
@@ -320,7 +348,8 @@ export default function FoodTracker() {
             <ChevronRight className="h-3 w-3 text-muted-foreground" />
           </div>
         </motion.div>
-      )}
+        );
+      })()}
 
       {/* Weekly nutrition chart */}
       <WeeklyNutritionChart goals={goals} />
