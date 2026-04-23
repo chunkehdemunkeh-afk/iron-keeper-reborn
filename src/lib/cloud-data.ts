@@ -5,6 +5,33 @@ import { EXERCISE_SUBSTITUTIONS } from "./exercise-substitutions";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "./accessory-routines";
 import { EXERCISE_LIBRARY } from "./exercise-library";
 import { stripExerciseSuffixes } from "./muscle-mapping";
+import { estimateStrengthBurn } from "./calorie-burn";
+
+/**
+ * Look up the most recent body weight to use as the reference for burn
+ * calculations. Falls back to the TDEE weight from nutrition_goals, then
+ * to a 75 kg default. Mirrors the SQL `lookup_user_bodyweight` function.
+ */
+export async function lookupUserBodyweight(userId: string): Promise<number> {
+  const [{ data: bm }, { data: ng }] = await Promise.all([
+    supabase
+      .from("body_measurements")
+      .select("body_weight")
+      .eq("user_id", userId)
+      .not("body_weight", "is", null)
+      .order("date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("nutrition_goals")
+      .select("tdee_weight_kg")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  const bw = bm?.body_weight ? Number(bm.body_weight) : null;
+  const tdeeBw = ng?.tdee_weight_kg ? Number(ng.tdee_weight_kg) : null;
+  return bw ?? tdeeBw ?? 75;
+}
 
 // Save workout to Supabase (with localStorage fallback)
 export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<void> {
@@ -14,6 +41,20 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
     const { saveWorkout } = await import("./workout-data");
     saveWorkout(workout);
     return;
+  }
+
+  // Estimate calories burned client-side so the value is available immediately.
+  // SQL functions exist as a backstop for backfills but the live path computes here.
+  let caloriesBurned: number | null = null;
+  try {
+    const bodyweight = await lookupUserBodyweight(user.id);
+    caloriesBurned = estimateStrengthBurn({
+      sets: workout.sets,
+      durationMin: workout.duration,
+      weightKg: bodyweight,
+    });
+  } catch (e) {
+    console.error("Burn estimate failed:", e);
   }
 
   const { data: historyRow, error: historyError } = await supabase
@@ -28,6 +69,7 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
       total_exercises: workout.totalExercises,
       effort_rating: workout.effortRating ?? null,
       session_notes: workout.sessionNotes ?? null,
+      calories_burned: caloriesBurned,
     })
     .select("id")
     .single();
@@ -103,10 +145,12 @@ export async function fetchWorkoutHistory(): Promise<CompletedWorkout[]> {
     duration: h.duration,
     exercisesCompleted: h.exercises_completed,
     totalExercises: h.total_exercises,
+    caloriesBurned: (h as { calories_burned?: number | null }).calories_burned ?? null,
     sets: (setsMap[h.id] || []).map(s => ({
       exerciseId: s.exercise_id,
       reps: s.reps,
       weight: Number(s.weight),
+      setType: ((s as { set_type?: string }).set_type ?? "working") as "working" | "warmup" | "1rm_test",
     })),
   }));
 }
@@ -440,6 +484,9 @@ export type ActivityLog = {
   label: string | null;
   duration: number;
   notes: string | null;
+  distanceKm: number | null;
+  inclinePct: number | null;
+  caloriesBurned: number | null;
 };
 
 const ACTIVITY_PRESETS = [
@@ -454,9 +501,28 @@ const ACTIVITY_PRESETS = [
 ];
 export { ACTIVITY_PRESETS };
 
-export async function saveActivityLog(data: { date: string; activityType: string; label?: string; duration?: number; notes?: string }): Promise<boolean> {
+export async function saveActivityLog(data: {
+  date: string;
+  activityType: string;
+  label?: string;
+  duration?: number;
+  notes?: string;
+  distanceKm?: number | null;
+  inclinePct?: number | null;
+}): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
+
+  // Compute estimated burn client-side using the same formulas as the SQL fn.
+  const { estimateCardioBurn } = await import("./calorie-burn");
+  const bodyweight = await lookupUserBodyweight(user.id);
+  const caloriesBurned = estimateCardioBurn({
+    activityType: data.activityType,
+    durationMin: data.duration || 0,
+    distanceKm: data.distanceKm ?? null,
+    inclinePct: data.inclinePct ?? null,
+    weightKg: bodyweight,
+  });
 
   const { error } = await supabase
     .from("activity_logs")
@@ -467,6 +533,9 @@ export async function saveActivityLog(data: { date: string; activityType: string
       label: data.label || null,
       duration: data.duration || 0,
       notes: data.notes || null,
+      distance_km: data.distanceKm ?? null,
+      incline_pct: data.inclinePct ?? null,
+      calories_burned: caloriesBurned,
     });
 
   return !error;
@@ -491,6 +560,9 @@ export async function fetchActivityLogs(): Promise<ActivityLog[]> {
     label: a.label,
     duration: a.duration ?? 0,
     notes: a.notes,
+    distanceKm: a.distance_km !== null && a.distance_km !== undefined ? Number(a.distance_km) : null,
+    inclinePct: a.incline_pct ?? null,
+    caloriesBurned: a.calories_burned ?? null,
   }));
 }
 
@@ -1328,5 +1400,148 @@ export async function computeWeekStats(weekStart: string): Promise<WeekSummary> 
   }
 
   return empty;
+}
+
+// ── Calorie burn rollups ─────────────────────────────────────────────────────
+
+export type DailyBurn = {
+  date: string;
+  strengthKcal: number;
+  cardioKcal: number;
+  totalKcal: number;
+};
+
+export type WeeklyBurn = {
+  weekStart: string;
+  totalKcal: number;
+  strengthKcal: number;
+  cardioKcal: number;
+  dailyBreakdown: DailyBurn[];
+};
+
+/** Sum strength + cardio kcal for a single date (local YYYY-MM-DD). */
+export async function fetchDailyBurn(date: string): Promise<DailyBurn> {
+  const { data: { user } } = await supabase.auth.getUser();
+  const empty: DailyBurn = { date, strengthKcal: 0, cardioKcal: 0, totalKcal: 0 };
+  if (!user) return empty;
+
+  // workout_history.date is timestamptz — match the calendar day.
+  const startISO = `${date}T00:00:00.000Z`;
+  const endISO = `${date}T23:59:59.999Z`;
+
+  const [{ data: wh }, { data: al }] = await Promise.all([
+    supabase
+      .from("workout_history")
+      .select("calories_burned")
+      .eq("user_id", user.id)
+      .gte("date", startISO)
+      .lte("date", endISO),
+    supabase
+      .from("activity_logs")
+      .select("calories_burned")
+      .eq("user_id", user.id)
+      .eq("date", date),
+  ]);
+
+  const strengthKcal = (wh || []).reduce((s, r: { calories_burned: number | null }) => s + (r.calories_burned ?? 0), 0);
+  const cardioKcal = (al || []).reduce((s, r: { calories_burned: number | null }) => s + (r.calories_burned ?? 0), 0);
+  return { date, strengthKcal, cardioKcal, totalKcal: strengthKcal + cardioKcal };
+}
+
+/**
+ * Weekly burn rollup. `weekStart` should be a Monday in `YYYY-MM-DD`.
+ * Returns daily breakdown for the 7 days starting at `weekStart`.
+ */
+export async function fetchWeeklyBurn(weekStart: string): Promise<WeeklyBurn> {
+  const { data: { user } } = await supabase.auth.getUser();
+  const start = new Date(weekStart + "T00:00:00");
+  const days: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    days.push(
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
+    );
+  }
+  const empty: WeeklyBurn = {
+    weekStart,
+    totalKcal: 0,
+    strengthKcal: 0,
+    cardioKcal: 0,
+    dailyBreakdown: days.map((date) => ({ date, strengthKcal: 0, cardioKcal: 0, totalKcal: 0 })),
+  };
+  if (!user) return empty;
+
+  const startISO = `${days[0]}T00:00:00.000Z`;
+  const endISO = `${days[6]}T23:59:59.999Z`;
+
+  const [{ data: wh }, { data: al }] = await Promise.all([
+    supabase
+      .from("workout_history")
+      .select("date, calories_burned")
+      .eq("user_id", user.id)
+      .gte("date", startISO)
+      .lte("date", endISO),
+    supabase
+      .from("activity_logs")
+      .select("date, calories_burned")
+      .eq("user_id", user.id)
+      .gte("date", days[0])
+      .lte("date", days[6]),
+  ]);
+
+  const dayMap: Record<string, DailyBurn> = {};
+  days.forEach((d) => (dayMap[d] = { date: d, strengthKcal: 0, cardioKcal: 0, totalKcal: 0 }));
+
+  (wh || []).forEach((r: { date: string; calories_burned: number | null }) => {
+    const d = new Date(r.date);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    if (dayMap[key]) {
+      dayMap[key].strengthKcal += r.calories_burned ?? 0;
+    }
+  });
+  (al || []).forEach((r: { date: string; calories_burned: number | null }) => {
+    if (dayMap[r.date]) {
+      dayMap[r.date].cardioKcal += r.calories_burned ?? 0;
+    }
+  });
+
+  const dailyBreakdown = days.map((d) => {
+    const day = dayMap[d];
+    return { ...day, totalKcal: day.strengthKcal + day.cardioKcal };
+  });
+
+  const strengthKcal = dailyBreakdown.reduce((s, d) => s + d.strengthKcal, 0);
+  const cardioKcal = dailyBreakdown.reduce((s, d) => s + d.cardioKcal, 0);
+
+  return {
+    weekStart,
+    strengthKcal,
+    cardioKcal,
+    totalKcal: strengthKcal + cardioKcal,
+    dailyBreakdown,
+  };
+}
+
+/** Monday of the week containing `date` as YYYY-MM-DD (local). */
+export function mondayOfWeek(date: Date): string {
+  const d = new Date(date);
+  const day = d.getDay() || 7; // Sun=0 → 7
+  d.setDate(d.getDate() - (day - 1));
+  d.setHours(0, 0, 0, 0);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Last N ISO Mondays including the current week, oldest → newest. */
+export function recentMondays(weeks = 4): string[] {
+  const now = new Date();
+  const start = new Date(mondayOfWeek(now));
+  const out: string[] = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    const d = new Date(start);
+    d.setDate(start.getDate() - i * 7);
+    out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+  }
+  return out;
 }
 

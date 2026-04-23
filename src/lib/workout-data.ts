@@ -34,6 +34,7 @@ export type CompletedWorkout = {
   sets: { exerciseId: string; reps: number; weight: number; setType?: "working" | "warmup" | "1rm_test" }[];
   effortRating?: number;    // 1-5 star rating
   sessionNotes?: string;    // notes for coach
+  caloriesBurned?: number | null;
 };
 
 export type WeekScheduleItem = {
