@@ -152,25 +152,19 @@ const App = () => {
     return () => window.removeEventListener("ik-updating", handler);
   }, []);
 
-  // Show "What's New" after an update reload OR if changelog is unseen
+  // Show "What's New" only when the latest changelog entry is genuinely unseen.
+  // Previously, any update reload (ik-just-updated flag) would force the sheet
+  // open even if the latest version had already been shown — causing the popup
+  // to repeatedly display old changes after every background update poll.
   useEffect(() => {
     if (!splashDone) return;
-    const justUpdated = localStorage.getItem("ik-just-updated") === "1";
-    if (justUpdated) {
-      localStorage.removeItem("ik-just-updated");
-      const latest = getLatestChangelog();
-      if (latest) {
-        markVersionSeen(latest.version);
-        const timer = setTimeout(() => setShowWhatsNew(true), 800);
-        return () => clearTimeout(timer);
-      }
-    } else {
-      const latest = getLatestChangelog();
-      if (latest && !hasSeenVersion(latest.version)) {
-        const timer = setTimeout(() => setShowWhatsNew(true), 800);
-        return () => clearTimeout(timer);
-      }
-    }
+    // Always clear the flag so it can't accumulate across reloads
+    localStorage.removeItem("ik-just-updated");
+    const latest = getLatestChangelog();
+    if (!latest) return;
+    if (hasSeenVersion(latest.version)) return;
+    const timer = setTimeout(() => setShowWhatsNew(true), 800);
+    return () => clearTimeout(timer);
   }, [splashDone]);
 
   const latestEntry = getLatestChangelog();
