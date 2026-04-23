@@ -4,7 +4,7 @@ import type { CompletedWorkout } from "@/lib/workout-data";
 import { useEffect, useState, useCallback } from "react";
 import { motion, animate, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import type { PanInfo } from "framer-motion";
-import { CheckCircle2, Circle, X, Dumbbell, Clock, Bed, Plus, Trash2, Footprints, Waves, Bike, Flower, CircleDot, Pencil, Activity } from "lucide-react";
+import { CheckCircle2, Circle, X, Dumbbell, Clock, Bed, Plus, Trash2, Footprints, Waves, Bike, Flower, CircleDot, Pencil, Activity, Flame } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
@@ -59,6 +59,9 @@ export default function WeekStrip() {
   const [logSheetDay, setLogSheetDay] = useState<number | null>(null);
   const [logDuration, setLogDuration] = useState("");
   const [logNotes, setLogNotes] = useState("");
+  const [logDistance, setLogDistance] = useState("");
+  const [logIncline, setLogIncline] = useState("");
+  const [pendingType, setPendingType] = useState<{ type: string; label: string } | null>(null);
   const [otherLabel, setOtherLabel] = useState("");
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -122,12 +125,21 @@ export default function WeekStrip() {
     return `${s.reps} ${(ex?.repLabel || "reps").toLowerCase()}`;
   };
 
+  const SUPPORTS_DISTANCE = new Set(["walk", "running", "cycling", "swimming"]);
+  const SUPPORTS_INCLINE = new Set(["walk", "running"]);
+
   const handlePresetClick = (activityType: string, label: string) => {
     if (activityType === "other") {
       setShowOtherInput(true);
       return;
     }
-    handleLogActivity(activityType, label);
+    if (activityType === "rest") {
+      // Rest day logs instantly with no extra inputs
+      handleLogActivity(activityType, label);
+      return;
+    }
+    // For everything else, open the detail form so user can add duration/distance
+    setPendingType({ type: activityType, label });
   };
 
   const handleLogActivity = async (activityType: string, label: string) => {
@@ -139,6 +151,8 @@ export default function WeekStrip() {
       label,
       duration: logDuration ? parseInt(logDuration) : 0,
       notes: logNotes.trim() || undefined,
+      distanceKm: logDistance ? parseFloat(logDistance) : null,
+      inclinePct: logIncline ? parseInt(logIncline) : null,
     });
     if (success) {
       hapticMedium();
@@ -146,7 +160,10 @@ export default function WeekStrip() {
       setLogSheetDay(null);
       setLogDuration("");
       setLogNotes("");
+      setLogDistance("");
+      setLogIncline("");
       setOtherLabel("");
+      setPendingType(null);
       setShowOtherInput(false);
       setRefreshKey((k) => k + 1);
     } else {
@@ -267,12 +284,20 @@ export default function WeekStrip() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground">{w.workoutName}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" /> {w.duration}m
                           </span>
                           <span>·</span>
                           <span>{w.exercisesCompleted}/{w.totalExercises} exercises</span>
+                          {w.caloriesBurned != null && w.caloriesBurned > 0 && (
+                            <>
+                              <span>·</span>
+                              <span className="flex items-center gap-1 text-amber-400">
+                                <Flame className="h-3 w-3" /> {w.caloriesBurned} kcal
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                       <button
@@ -322,16 +347,38 @@ export default function WeekStrip() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground">{a.label || preset?.label || a.activityType}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                           {a.duration > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" /> {a.duration}m
+                            </span>
+                          )}
+                          {a.distanceKm != null && a.distanceKm > 0 && (
                             <>
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" /> {a.duration}m
-                              </span>
-                              {a.notes && <span>·</span>}
+                              {a.duration > 0 && <span>·</span>}
+                              <span>{a.distanceKm} km</span>
                             </>
                           )}
-                          {a.notes && <span className="truncate">{a.notes}</span>}
+                          {a.inclinePct != null && a.inclinePct > 0 && (
+                            <>
+                              <span>·</span>
+                              <span>{a.inclinePct}% incline</span>
+                            </>
+                          )}
+                          {a.caloriesBurned != null && a.caloriesBurned > 0 && (
+                            <>
+                              <span>·</span>
+                              <span className="flex items-center gap-1 text-amber-400">
+                                <Flame className="h-3 w-3" /> {a.caloriesBurned} kcal
+                              </span>
+                            </>
+                          )}
+                          {a.notes && (
+                            <>
+                              <span>·</span>
+                              <span className="truncate">{a.notes}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                       <button
@@ -367,17 +414,22 @@ export default function WeekStrip() {
             setLogSheetDay(null);
             setShowOtherInput(false);
             setOtherLabel("");
+            setPendingType(null);
+            setLogDuration("");
+            setLogNotes("");
+            setLogDistance("");
+            setLogIncline("");
           }
         }}
       >
-        <SheetContent side="bottom" className="rounded-t-2xl bg-card border-border/50 max-h-[70vh]">
+        <SheetContent side="bottom" className="rounded-t-2xl bg-card border-border/50 max-h-[80vh] overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-foreground">
-              Log Activity — {logSheetDay !== null ? WEEK_DAYS[logSheetDay] : ""}
+              {pendingType ? `Log ${pendingType.label}` : `Log Activity`} — {logSheetDay !== null ? WEEK_DAYS[logSheetDay] : ""}
             </SheetTitle>
           </SheetHeader>
           <div className="space-y-4 mt-4 pb-6">
-            {!showOtherInput ? (
+            {!showOtherInput && !pendingType ? (
               <div className="grid grid-cols-3 gap-2">
                 {ACTIVITY_PRESETS.map((preset) => {
                   const Icon = ACTIVITY_ICONS[preset.type] || Pencil;
@@ -393,7 +445,7 @@ export default function WeekStrip() {
                   );
                 })}
               </div>
-            ) : (
+            ) : showOtherInput ? (
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   What activity?
@@ -406,46 +458,96 @@ export default function WeekStrip() {
                   onChange={(e) => setOtherLabel(e.target.value)}
                   className="w-full rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:ring-1 focus:ring-primary/50"
                 />
+              </div>
+            ) : null}
+
+            {(pendingType || showOtherInput) && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Duration (min)</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="Minutes"
+                    value={logDuration}
+                    onChange={(e) => setLogDuration(e.target.value)}
+                    className="w-full rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:ring-1 focus:ring-primary/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                </div>
+
+                {pendingType && SUPPORTS_DISTANCE.has(pendingType.type) && (
+                  <div className={`grid gap-2 ${SUPPORTS_INCLINE.has(pendingType.type) ? "grid-cols-2" : "grid-cols-1"}`}>
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Distance (km)</label>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        placeholder="e.g. 5"
+                        value={logDistance}
+                        onChange={(e) => setLogDistance(e.target.value)}
+                        className="w-full rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:ring-1 focus:ring-primary/50"
+                      />
+                    </div>
+                    {SUPPORTS_INCLINE.has(pendingType.type) && (
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Incline (%)</label>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          step="1"
+                          placeholder="0"
+                          value={logIncline}
+                          onChange={(e) => setLogIncline(e.target.value)}
+                          className="w-full rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:ring-1 focus:ring-primary/50"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Notes (optional)</label>
+                  <textarea
+                    placeholder="e.g. easy pace…"
+                    value={logNotes}
+                    onChange={(e) => setLogNotes(e.target.value)}
+                    rows={2}
+                    className="w-full rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:ring-1 focus:ring-primary/50 resize-none"
+                  />
+                </div>
+
                 <div className="flex gap-2 pt-1">
                   <button
-                    onClick={() => { setShowOtherInput(false); setOtherLabel(""); }}
+                    onClick={() => {
+                      setShowOtherInput(false);
+                      setOtherLabel("");
+                      setPendingType(null);
+                      setLogDuration("");
+                      setLogNotes("");
+                      setLogDistance("");
+                      setLogIncline("");
+                    }}
                     className="flex-1 rounded-xl border border-border/50 bg-muted/30 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
                   >
                     Back
                   </button>
                   <button
-                    disabled={!otherLabel.trim()}
-                    onClick={() => handleLogActivity("other", otherLabel.trim())}
+                    disabled={showOtherInput ? !otherLabel.trim() : false}
+                    onClick={() => {
+                      if (showOtherInput) {
+                        handleLogActivity("other", otherLabel.trim());
+                      } else if (pendingType) {
+                        handleLogActivity(pendingType.type, pendingType.label);
+                      }
+                    }}
                     className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Log
                   </button>
                 </div>
-              </div>
+              </>
             )}
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Duration (optional)</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                placeholder="Minutes"
-                value={logDuration}
-                onChange={(e) => setLogDuration(e.target.value)}
-                className="w-full rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:ring-1 focus:ring-primary/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Notes (optional)</label>
-              <textarea
-                placeholder="e.g. 5km run, easy pace..."
-                value={logNotes}
-                onChange={(e) => setLogNotes(e.target.value)}
-                rows={2}
-                className="w-full rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:ring-1 focus:ring-primary/50 resize-none"
-              />
-            </div>
           </div>
         </SheetContent>
       </Sheet>

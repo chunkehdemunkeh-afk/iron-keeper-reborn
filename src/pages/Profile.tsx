@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchWorkoutHistory, fetchActivityLogs } from "@/lib/cloud-data";
-import { Flame, Target, Award, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star } from "lucide-react";
+import { fetchWorkoutHistory, fetchActivityLogs, fetchWeeklyBurn, mondayOfWeek } from "@/lib/cloud-data";
+import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import RecoveryTips from "@/components/RecoveryTips";
@@ -101,7 +101,14 @@ export default function Profile() {
   });
 
   const totalWorkouts = history.length;
-  const totalMinutes = history.reduce((s, w) => s + (w.duration || 0), 0);
+
+  const thisWeekStart = mondayOfWeek(new Date());
+  const { data: weekBurn } = useQuery({
+    queryKey: ["weekly-burn-profile", user?.id, thisWeekStart],
+    queryFn: () => fetchWeeklyBurn(thisWeekStart),
+    enabled: !!user,
+  });
+  const weekKcal = weekBurn?.totalKcal ?? 0;
 
   const prefs = user ? getUserPreferences(user.id) : null;
   const weekGoal = prefs?.daysPerWeek ?? 4;
@@ -226,7 +233,7 @@ export default function Profile() {
           {[
             { icon: Flame,  label: "Streak",   value: streak > 0 ? `${streak} week` : "—", color: streak > 0 ? "text-primary" : "text-muted-foreground", onClick: undefined },
             { icon: Target, label: "Workouts", value: totalWorkouts, color: "text-success", onClick: () => navigate("/history") },
-            { icon: Award,  label: "Minutes",  value: totalMinutes, color: "text-foreground", onClick: undefined },
+            { icon: Activity, label: "Week Burn", value: weekKcal > 0 ? `${weekKcal >= 1000 ? (weekKcal/1000).toFixed(1)+"k" : weekKcal}` : "—", color: weekKcal > 0 ? "text-amber-400" : "text-muted-foreground", onClick: () => navigate("/progress") },
           ].map(({ icon: Icon, label, value, color, onClick }) => (
             <div
               key={label}

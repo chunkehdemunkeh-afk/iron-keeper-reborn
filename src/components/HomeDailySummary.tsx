@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { Flame, Beef, Wheat, Droplets, Droplet, ChevronRight } from "lucide-react";
+import { Flame, Beef, Wheat, Droplets, Droplet, ChevronRight, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { fetchDailyBurn } from "@/lib/cloud-data";
 
 interface Props {
   date?: string;
@@ -17,6 +18,7 @@ export default function HomeDailySummary({ date }: Props) {
   const [totals, setTotals] = useState({ calories: 0, protein: 0, carbs: 0, fat: 0 });
   const [goals, setGoals] = useState<{ calories: number; protein_g: number; carbs_g: number; fat_g: number; water_goal_ml?: number } | null>(null);
   const [waterMl, setWaterMl] = useState(0);
+  const [burnedKcal, setBurnedKcal] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -51,6 +53,7 @@ export default function HomeDailySummary({ date }: Props) {
       const water = waterRes.data || [];
       setWaterMl(water.reduce((s: number, e: any) => s + e.amount_ml, 0));
     });
+    fetchDailyBurn(targetDate).then((b) => setBurnedKcal(b.totalKcal));
   }, [user, targetDate]);
 
   if (!goals) return null;
@@ -116,6 +119,19 @@ export default function HomeDailySummary({ date }: Props) {
           </div>
         ))}
       </div>
+
+      {burnedKcal > 0 && (
+        <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Activity className="h-3.5 w-3.5 text-amber-400" />
+            <span>Burned today</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-amber-400">{burnedKcal} kcal</span>
+            <span className="text-[10px] text-muted-foreground">This week →</span>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
