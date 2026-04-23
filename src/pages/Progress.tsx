@@ -25,6 +25,7 @@ import AnimatedNumber from "@/components/AnimatedNumber";
 import { useState } from "react";
 import PhotosTab from "@/components/progress/PhotosTab";
 import StrengthLevelCard from "@/components/progress/StrengthLevelCard";
+import WeeklyEnergyCard from "@/components/WeeklyEnergyCard";
 import { fetchStrengthProfile } from "@/lib/cloud-data";
 import {
   RATED_LIFTS,
@@ -497,6 +498,9 @@ export default function Progress() {
                 </motion.div>
               ))}
             </div>
+
+            {/* Weekly Energy (kcal burned) */}
+            <WeeklyEnergyCard />
 
             {/* Volume over time chart */}
             {volumeData.length > 0 && (

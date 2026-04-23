@@ -27,7 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-type SetType = "working" | "1rm_test";
+type SetType = "working" | "warmup" | "1rm_test";
 type SetLog = { reps: number; weight: number; completed: boolean; setType?: SetType };
 
 // Combined search pool for swap sheet — includes all workout exercises + library
@@ -620,8 +620,9 @@ export default function WorkoutSession() {
       const isTimeBased = (override?.repLabel || exercise?.repLabel) === "Sec";
       const tracksWeight = (override?.trackWeight ?? exercise?.trackWeight) !== false;
 
-      // Check for new personal record (weight PR OR rep PR) — keyed by effective (post-swap) ID
-      if (!isTimeBased && currentReps > 0) {
+      // Check for new personal record (weight PR OR rep PR) — keyed by effective (post-swap) ID.
+      // Warm-up sets are excluded — they're light by design and shouldn't trigger PRs.
+      if (!isTimeBased && currentReps > 0 && currentSetType !== "warmup") {
         const histWeight = historicalPRsRef.current[effectiveId]?.weight ?? 0;
         const histReps = historicalPRsRef.current[effectiveId]?.bestReps ?? 0;
         const sessBest = sessionBestRef.current[effectiveId] ?? { weight: 0, reps: 0 };
@@ -662,8 +663,9 @@ export default function WorkoutSession() {
       }
 
       // 1RM-test sets skip the working-set rep-range warnings (a max attempt
-      // intentionally lives outside the normal 8-12/12-15 ranges).
-      if (!isOneRmTest) {
+      // intentionally lives outside the normal 8-12/12-15 ranges). Warm-ups
+      // also skip the warnings — they're light by design.
+      if (!isOneRmTest && currentSetType !== "warmup") {
         // Determine rep thresholds based on exercise target range
         const isAccessoryRange = exercise?.reps?.includes("12-15");
         const upThreshold = isAccessoryRange ? 15 : 12;
@@ -690,7 +692,12 @@ export default function WorkoutSession() {
             return prev;
           });
         }
-      } else {
+      }
+
+      // Adjust rest timer based on set type.
+      if (currentSetType === "warmup") {
+        setRestDuration(60);
+      } else if (isOneRmTest) {
         // Longer default rest after a true 1RM attempt — these need real recovery.
         setRestDuration(300);
       }
@@ -723,6 +730,36 @@ export default function WorkoutSession() {
       const updated = { ...prev };
       const sets = [...(updated[exerciseId] || [])];
       sets.push({ reps: 0, weight: 0, completed: false });
+      updated[exerciseId] = sets;
+      return updated;
+    });
+    hapticMedium();
+  }, []);
+
+  /** Add a warm-up set (lighter style, excluded from PRs and burn calc). */
+  const addWarmupSet = useCallback((exerciseId: string) => {
+    setSetLogs((prev) => {
+      const updated = { ...prev };
+      const sets = [...(updated[exerciseId] || [])];
+      // Insert at the top — warm-ups should come before working sets.
+      const firstWorkingIdx = sets.findIndex((s) => s.setType !== "warmup");
+      const insertAt = firstWorkingIdx === -1 ? sets.length : firstWorkingIdx;
+      sets.splice(insertAt, 0, { reps: 0, weight: 0, completed: false, setType: "warmup" });
+      updated[exerciseId] = sets;
+      return updated;
+    });
+    hapticMedium();
+  }, []);
+
+  /** Toggle a single set between working ↔ warmup. */
+  const toggleWarmup = useCallback((exerciseId: string, setIdx: number) => {
+    setSetLogs((prev) => {
+      const updated = { ...prev };
+      const sets = [...(updated[exerciseId] || [])];
+      if (!sets[setIdx]) return prev;
+      const current = sets[setIdx].setType;
+      const next: SetType = current === "warmup" ? "working" : "warmup";
+      sets[setIdx] = { ...sets[setIdx], setType: next };
       updated[exerciseId] = sets;
       return updated;
     });
@@ -1293,14 +1330,15 @@ export default function WorkoutSession() {
                               </div>
                               {setLogs[ex.id]?.map((set, si) => {
                                 const is1RM = set.setType === "1rm_test";
+                                const isWarmup = set.setType === "warmup";
                                 return (
                                 <SwipeableSetRow
                                   key={si}
                                   onDelete={() => deleteSet(ex.id, si)}
                                 >
-                                  <div className={`grid ${isTimeBased ? "grid-cols-[28px_1fr_36px]" : showWeight ? "grid-cols-[28px_1fr_1fr_36px]" : "grid-cols-[28px_1fr_36px]"} gap-x-1.5 items-center bg-background ${is1RM ? "rounded-lg ring-1 ring-amber-400/50 bg-amber-400/5 px-1 py-0.5" : ""}`}>
-                                    <span className={`text-xs font-medium text-center ${set.completed ? "text-success" : is1RM ? "text-amber-400" : "text-muted-foreground"}`}>
-                                      {is1RM ? <Target className="h-3 w-3 inline" /> : si + 1}
+                                  <div className={`grid ${isTimeBased ? "grid-cols-[28px_1fr_36px]" : showWeight ? "grid-cols-[28px_1fr_1fr_36px]" : "grid-cols-[28px_1fr_36px]"} gap-x-1.5 items-center bg-background ${is1RM ? "rounded-lg ring-1 ring-amber-400/50 bg-amber-400/5 px-1 py-0.5" : isWarmup ? "rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 px-1 py-0.5 opacity-80" : ""}`}>
+                                    <span className={`text-xs font-medium text-center ${set.completed ? "text-success" : is1RM ? "text-amber-400" : isWarmup ? "text-muted-foreground/70" : "text-muted-foreground"}`}>
+                                      {is1RM ? <Target className="h-3 w-3 inline" /> : isWarmup ? "W" : si + 1}
                                     </span>
                                     {isTimeBased ? (
                                       <ExerciseTimer
@@ -1313,24 +1351,38 @@ export default function WorkoutSession() {
                                     ) : (
                                       <>
                                         {showWeight && (
-                                          <input type="number" inputMode="decimal" placeholder={is1RM ? "1RM" : (lastSessionData[getEffectiveExId(ex.id)]?.[si]?.weight?.toString() || "0")} value={set.weight || ""} onChange={(e) => updateSetField(ex.id, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : is1RM ? "bg-amber-400/10 border border-amber-400/40 text-amber-400 font-semibold placeholder:text-amber-400/50" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                          <input type="number" inputMode="decimal" placeholder={is1RM ? "1RM" : (lastSessionData[getEffectiveExId(ex.id)]?.[si]?.weight?.toString() || "0")} value={set.weight || ""} onChange={(e) => updateSetField(ex.id, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : is1RM ? "bg-amber-400/10 border border-amber-400/40 text-amber-400 font-semibold placeholder:text-amber-400/50" : isWarmup ? "bg-muted/20 border border-muted-foreground/20 text-muted-foreground placeholder:text-muted-foreground/30" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
                                         )}
                                         {is1RM ? (
                                           <div className={`h-9 w-full rounded-lg px-2 text-sm text-center font-bold flex items-center justify-center ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-amber-400/10 border border-amber-400/40 text-amber-400"}`}>
                                             1
                                           </div>
                                         ) : (
-                                          <input type="number" inputMode="numeric" placeholder={lastSessionData[getEffectiveExId(ex.id)]?.[si]?.reps?.toString() || "0"} value={set.reps || ""} onChange={(e) => updateSetField(ex.id, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                          <input type="number" inputMode="numeric" placeholder={lastSessionData[getEffectiveExId(ex.id)]?.[si]?.reps?.toString() || "0"} value={set.reps || ""} onChange={(e) => updateSetField(ex.id, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : isWarmup ? "bg-muted/20 border border-muted-foreground/20 text-muted-foreground placeholder:text-muted-foreground/30" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
                                         )}
                                       </>
                                     )}
-                                    <button onClick={() => toggleSet(ex.id, si)} className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${set.completed ? "bg-success text-success-foreground glow-success" : is1RM ? "bg-amber-400/20 text-amber-400 border border-amber-400/40" : "bg-muted/50 text-muted-foreground border border-border/50"}`}>
-                                      <Check className="h-3.5 w-3.5" />
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                      {!is1RM && !isTimeBased && (
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); toggleWarmup(ex.id, si); }}
+                                          title={isWarmup ? "Mark as working set" : "Mark as warm-up"}
+                                          className={`flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-bold transition-all ${isWarmup ? "bg-muted-foreground/20 text-muted-foreground border border-muted-foreground/40" : "bg-muted/40 text-muted-foreground/50 border border-border/40 hover:text-muted-foreground"}`}
+                                        >
+                                          W
+                                        </button>
+                                      )}
+                                      <button onClick={() => toggleSet(ex.id, si)} className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${set.completed ? "bg-success text-success-foreground glow-success" : is1RM ? "bg-amber-400/20 text-amber-400 border border-amber-400/40" : isWarmup ? "bg-muted/40 text-muted-foreground border border-dashed border-muted-foreground/30" : "bg-muted/50 text-muted-foreground border border-border/50"}`}>
+                                        <Check className="h-3.5 w-3.5" />
+                                      </button>
+                                    </div>
                                   </div>
+                                  {isWarmup && (
+                                    <p className="text-[9px] uppercase tracking-wider text-muted-foreground/60 mt-0.5 ml-8">Warm-up · excluded from PRs</p>
+                                  )}
                                 </SwipeableSetRow>
                               );})}
-                              {/* Add Set + 1RM Test buttons */}
+                              {/* Add Set + Warm-up + 1RM Test buttons */}
                               <div className="flex gap-1.5 mt-1">
                                 <button
                                   onClick={() => addSet(ex.id)}
@@ -1339,6 +1391,16 @@ export default function WorkoutSession() {
                                   <Plus className="h-3 w-3" />
                                   Add Set
                                 </button>
+                                {!isTimeBased && (
+                                  <button
+                                    onClick={() => addWarmupSet(ex.id)}
+                                    className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-dashed border-muted-foreground/40 text-xs text-muted-foreground hover:bg-muted/40 transition-colors"
+                                    title="Add a warm-up set (excluded from PRs and burn calc)"
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                    Warm-up
+                                  </button>
+                                )}
                                 {!isTimeBased && showWeight && (
                                   <button
                                     onClick={() => add1RMTestSet(ex.id)}
