@@ -260,6 +260,28 @@ export default function NutritionSettings({ open, onClose, onSaved }: Props) {
               </div>
             </div>
 
+            {/* Adjust for activity */}
+            <div className="rounded-xl border border-border bg-card p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <Flame className="h-3.5 w-3.5 text-amber-400" />
+                    <Label htmlFor="adjust-activity" className="text-sm font-semibold cursor-pointer">
+                      Add burned calories to goal
+                    </Label>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+                    When on, your daily calorie target increases by the calories you burn from workouts and cardio.
+                  </p>
+                </div>
+                <Switch
+                  id="adjust-activity"
+                  checked={adjustForActivity}
+                  onCheckedChange={setAdjustForActivity}
+                />
+              </div>
+            </div>
+
             {/* Re-run TDEE */}
             <Button
               variant="outline"
