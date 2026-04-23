@@ -736,15 +736,21 @@ export default function WorkoutSession() {
     hapticMedium();
   }, []);
 
-  /** Add a warm-up set (lighter style, excluded from PRs and burn calc). */
+  /** Add a warm-up set. If no warm-ups exist yet, seeds 2 (50% × 5, 75% × 5).
+   *  Subsequent presses add one more, capped at 3 total (40 / 60 / 80%). */
   const addWarmupSet = useCallback((exerciseId: string) => {
     setSetLogs((prev) => {
       const updated = { ...prev };
       const sets = [...(updated[exerciseId] || [])];
-      // Insert at the top — warm-ups should come before working sets.
+      const existingWarmups = sets.filter((s) => s.setType === "warmup").length;
+      if (existingWarmups >= 3) return prev;
+      const toAdd = existingWarmups === 0 ? 2 : 1;
       const firstWorkingIdx = sets.findIndex((s) => s.setType !== "warmup");
       const insertAt = firstWorkingIdx === -1 ? sets.length : firstWorkingIdx;
-      sets.splice(insertAt, 0, { reps: 0, weight: 0, completed: false, setType: "warmup" });
+      const newWarmups: SetLog[] = Array.from({ length: toAdd }, () => ({
+        reps: 0, weight: 0, completed: false, setType: "warmup",
+      }));
+      sets.splice(insertAt, 0, ...newWarmups);
       updated[exerciseId] = sets;
       return updated;
     });
