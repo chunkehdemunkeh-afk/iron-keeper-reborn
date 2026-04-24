@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.85",
+    version: "1.6.86",
     date: "2026-04-24",
     title: "Updates & Fixes",
     changes: [
-      "Reduce strength burn work-term coefficient to narrow load-based gap",
+      "Fix McDonald's and apostrophe-brand searches returning no results",
     ],
   },
   {
