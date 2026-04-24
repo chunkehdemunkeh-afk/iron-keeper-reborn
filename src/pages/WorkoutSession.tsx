@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { WORKOUTS, type CompletedWorkout, type Exercise } from "@/lib/workout-data";
 import { getAllCustomWorkouts } from "@/pages/WorkoutBuilder";
 import { saveWorkoutToCloud, fetchLastSessionData, fetchExerciseLastData } from "@/lib/cloud-data";
-import { ArrowLeft, Check, Timer, ChevronDown, ChevronUp, Trophy, Play, RotateCcw, TrendingUp, TrendingDown, GripVertical, Shuffle, Star, MessageSquare, Plus, Trash2, Flame, Grip, History, Search, Hand, Zap, Dumbbell, Target } from "lucide-react";
+import { ArrowLeft, Check, Timer, ChevronDown, ChevronUp, Trophy, Play, RotateCcw, TrendingUp, TrendingDown, GripVertical, Shuffle, Star, MessageSquare, Plus, Trash2, Flame, Grip, History, Search, Hand, Zap, Dumbbell, Target, HelpCircle } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { motion, animate, AnimatePresence, Reorder, useDragControls, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { toast } from "sonner";
 import RestTimer from "@/components/RestTimer";
@@ -1302,35 +1303,56 @@ export default function WorkoutSession() {
                                       const isBenchOrMachine = ["lat pull", "pulldown", "pull down", "seated row", "machine row", "machine fly", "pec deck", "t-bar", "t bar", "leg"].some(kw => dn.includes(kw));
                                       return isCableType && !isBenchOrMachine;
                                     })() && (
-                                      <div className="flex items-center rounded-full bg-muted/50 p-0.5 select-none">
-                                        <button
-                                          onClick={() => heavyStackExercises.has(ex.id) && setHeavyStackExercises(prev => {
-                                            const next = new Set(prev);
-                                            next.delete(ex.id);
-                                            return next;
-                                          })}
-                                          className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
-                                            !heavyStackExercises.has(ex.id)
-                                              ? "bg-background text-foreground shadow-sm"
-                                              : "text-muted-foreground"
-                                          }`}
-                                        >
-                                          Light
-                                        </button>
-                                        <button
-                                          onClick={() => !heavyStackExercises.has(ex.id) && setHeavyStackExercises(prev => {
-                                            const next = new Set(prev);
-                                            next.add(ex.id);
-                                            return next;
-                                          })}
-                                          className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
-                                            heavyStackExercises.has(ex.id)
-                                              ? "bg-background text-foreground shadow-sm"
-                                              : "text-muted-foreground"
-                                          }`}
-                                        >
-                                          Heavy
-                                        </button>
+                                      <div className="flex items-center gap-1">
+                                        <div className="flex items-center rounded-full bg-muted/50 p-0.5 select-none">
+                                          <button
+                                            onClick={() => heavyStackExercises.has(ex.id) && setHeavyStackExercises(prev => {
+                                              const next = new Set(prev);
+                                              next.delete(ex.id);
+                                              return next;
+                                            })}
+                                            className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
+                                              !heavyStackExercises.has(ex.id)
+                                                ? "bg-background text-foreground shadow-sm"
+                                                : "text-muted-foreground"
+                                            }`}
+                                          >
+                                            Light
+                                          </button>
+                                          <button
+                                            onClick={() => !heavyStackExercises.has(ex.id) && setHeavyStackExercises(prev => {
+                                              const next = new Set(prev);
+                                              next.add(ex.id);
+                                              return next;
+                                            })}
+                                            className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
+                                              heavyStackExercises.has(ex.id)
+                                                ? "bg-background text-foreground shadow-sm"
+                                                : "text-muted-foreground"
+                                            }`}
+                                          >
+                                            Heavy
+                                          </button>
+                                        </div>
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <button
+                                              type="button"
+                                              aria-label="What does Light vs Heavy mean?"
+                                              className="text-muted-foreground/60 hover:text-foreground transition-colors"
+                                              onClick={(e) => e.stopPropagation()}
+                                            >
+                                              <HelpCircle className="h-3.5 w-3.5" />
+                                            </button>
+                                          </PopoverTrigger>
+                                          <PopoverContent side="top" align="end" className="w-64 text-xs leading-relaxed">
+                                            <p className="font-semibold text-foreground mb-1">Light vs Heavy stack</p>
+                                            <p className="text-muted-foreground">
+                                              Cable machines use different pulley ratios. <span className="text-foreground font-medium">Heavy</span> stacks have a 1:1 pulley (often where the cables sit far apart) so the plate weight matches what you feel. <span className="text-foreground font-medium">Light</span> stacks use a 2:1 pulley — the actual load is roughly half the stack number.
+                                            </p>
+                                            <p className="text-muted-foreground mt-2">Tip: cables far apart = usually heavy. Cables close together = usually light.</p>
+                                          </PopoverContent>
+                                        </Popover>
                                       </div>
                                     )}
                                     {isCableAttachmentExercise(displayName) && (
