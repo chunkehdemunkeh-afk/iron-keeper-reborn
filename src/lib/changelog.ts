@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.86",
+    version: "1.6.87",
     date: "2026-04-24",
     title: "Updates & Fixes",
     changes: [
-      "Fix McDonald's and apostrophe-brand searches returning no results",
+      "Document native app feature backlog (Capacitor, HealthKit, steps, push)",
     ],
   },
   {
