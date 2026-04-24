@@ -218,25 +218,35 @@ function parseOFFProduct(p: OFFProduct): FoodItem | null {
 
 // ---------- Ranking & dedupe ----------
 
+/** Strip punctuation/apostrophes for fuzzy matching (e.g. "McDonald's" → "mcdonalds"). */
+function norm(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
+}
+
 /** Score a food item against a query — higher = more relevant. */
 function scoreFoodItem(item: FoodItem, query: string): number {
   const q = query.toLowerCase().trim();
-  const qWords = q.split(/\s+/).filter(Boolean);
+  const qNorm = norm(query);
+  const qWords = qNorm.split(/\s+/).filter(Boolean);
   const name = (item.name || "").toLowerCase();
   const brand = (item.brand || "").toLowerCase();
-  const nameAndBrand = `${name} ${brand}`;
+  const nameNorm = norm(item.name || "");
+  const brandNorm = norm(item.brand || "");
+  const nameAndBrand = `${nameNorm} ${brandNorm}`;
 
   let score = 0;
 
   // Exact brand match (e.g. searching "fridge raiders" → brand IS "fridge raiders")
-  if (brand && (brand === q || brand.includes(q))) score += 100;
+  if (brand && (brandNorm === qNorm || brandNorm.includes(qNorm) || brand === q || brand.includes(q))) score += 100;
 
   // Exact name match
-  if (name === q) score += 80;
+  if (nameNorm === qNorm) score += 80;
+  else if (nameNorm.includes(qNorm)) score += 40;
+  else if (name === q) score += 80;
   else if (name.includes(q)) score += 40;
 
   // All query words present in name
-  if (qWords.every((w) => name.includes(w))) score += 50;
+  if (qWords.every((w) => nameNorm.includes(w))) score += 50;
   // All query words present somewhere (name or brand)
   else if (qWords.every((w) => nameAndBrand.includes(w))) score += 30;
 
