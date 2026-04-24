@@ -12,6 +12,14 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.6.85",
+    date: "2026-04-24",
+    title: "Updates & Fixes",
+    changes: [
+      "Reduce strength burn work-term coefficient to narrow load-based gap",
+    ],
+  },
+  {
     version: "1.6.84",
     date: "2026-04-23",
     title: "Updates & Fixes",
