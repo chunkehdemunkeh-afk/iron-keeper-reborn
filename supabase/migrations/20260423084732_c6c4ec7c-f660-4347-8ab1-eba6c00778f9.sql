@@ -135,11 +135,11 @@ BEGIN
 
   hours := _duration_min::NUMERIC / 60.0;
 
-  -- Work term: weight * reps * 0.0035 across all working sets
+  -- Work term: weight * reps * 0.001 across all working sets
   -- (historical: all sets treated as working since warm-up tagging is new)
   SELECT COALESCE(SUM(
     CASE
-      WHEN weight > 0 THEN weight * reps * 0.0035
+      WHEN weight > 0 THEN weight * reps * 0.001
       ELSE _weight_kg * reps * 0.0025  -- bodyweight exercise fallback
     END
   ), 0) INTO work_kcal

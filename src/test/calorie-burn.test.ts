@@ -80,9 +80,9 @@ describe("estimateStrengthBurn", () => {
   });
 
   it("computes a sensible total for a typical session", () => {
-    // 4 sets × 100kg × 5 reps = 2000kg lifted → 2000 × 0.0035 = 7 kcal work
+    // 4 sets × 100kg × 5 reps = 2000kg lifted → 2000 × 0.001 = 2 kcal work
     // Metabolic: 5.5 × 80 × (45/60) = 330 kcal
-    // Total ≈ 337 → rounds to 335
+    // Total ≈ 332 → rounds to 330
     const burn = estimateStrengthBurn({
       sets: [
         { weight: 100, reps: 5 },
@@ -93,7 +93,7 @@ describe("estimateStrengthBurn", () => {
       durationMin: 45,
       weightKg: 80,
     });
-    expect(burn).toBe(335);
+    expect(burn).toBe(330);
   });
 
   it("handles bodyweight movements (weight = 0)", () => {
