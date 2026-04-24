@@ -250,6 +250,17 @@ This makes login/signup redirects work correctly.
 - Push notifications for rest timer
 - Barbell plate calculator overlay
 
+## Native App (App Store / Play Store) — Deferred Feature Set
+
+When the app is published natively via **Capacitor**, the following become possible:
+
+- **Step tracking** — HealthKit (iOS) + Health Connect (Android) via `@capacitor-community/health-kit` / `@capacitor/health`. Not possible from a PWA; Apple blocks all web API access to Health data.
+- **Auto sleep logging** — same Health plugins can pull sleep data, replacing the manual SleepCard entry flow.
+- **Push notifications** — native push for rest timer, workout reminders, weekly review prompts. PWA push works on Android but not iOS.
+- **Active calories from Health** — could supplement or replace the manual MET-based burn estimation.
+
+**Implementation note:** Capacitor wraps the existing React/Vite app with no code changes required to the core app. Plugins are added as needed and gate-checked at runtime (`Capacitor.isNativePlatform()`). The Lovable build pipeline would need a separate Capacitor build step for app store submissions.
+
 ## Git Reminder
 
 ```bash

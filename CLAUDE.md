@@ -76,6 +76,8 @@ npx supabase functions deploy <name>   # Deploy a single edge function (fatsecre
 - `src/components/WeekStrip.tsx` — Weekly activity strip. Activity logs now store `distanceKm`, `inclinePct`, `caloriesBurned` and display them in the card. Logging flow: rest days log instantly; all other activities open a detail form (pendingType state) before saving. `SUPPORTS_DISTANCE` set (walk/running/cycling/swimming) shows distance field; `SUPPORTS_INCLINE` set (walk/running) shows incline field. Strength workout cards display `caloriesBurned` (amber Flame icon) if set.
 - `src/components/food/NutritionSettings.tsx` — Nutrition goals sheet. New "Add burned calories to goal" toggle (`adjust_for_activity`) — when on, FoodTracker and HomeDailySummary add today's burned kcal to the calorie goal.
 
+**Native app note:** This is currently a PWA. HealthKit (iOS) and Health Connect (Android) are inaccessible from a web context — Apple blocks it entirely. Step tracking, auto sleep import, and reliable iOS push notifications all require a native wrapper. The plan is to use **Capacitor** when publishing to App Store / Play Store; existing React code needs no changes. See PLAN.md → "Native App" section for the full deferred feature list.
+
 **Routing** is in `src/App.tsx`. All routes are protected by auth guards. `Index.tsx` does role-based redirect.
 
 **Pages:**
