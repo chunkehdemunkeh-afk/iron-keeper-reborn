@@ -43,15 +43,61 @@ export default function WorkoutCard({ workout: w, icon: Icon, onDelete, isDeleti
     }
   }
 
-  const allExercises = WORKOUTS.flatMap((wk) => wk.exercises);
-  const getExerciseMeta = (id: string) => allExercises.find((e) => e.id === id);
+  // Build a comprehensive lookup across every exercise source the app knows about,
+  // so set rows can resolve a friendly name even when the DB stored the raw ID
+  // (e.g. legacy cable-attachment rows like "up1-mag-grip" or library rows like "lib-44").
+  const { metaById, nameById } = useMemo(() => {
+    const meta: Record<string, { name: string; repLabel?: string; weightLabel?: string; trackWeight?: boolean; notes?: string }> = {};
+    const names: Record<string, string> = {};
+
+    // Built-in workouts + their substitutes
+    for (const wk of WORKOUTS) {
+      for (const ex of wk.exercises) {
+        meta[ex.id] = { name: ex.name, repLabel: ex.repLabel, weightLabel: ex.weightLabel, trackWeight: ex.trackWeight, notes: ex.notes };
+        names[ex.id] = ex.name;
+      }
+    }
+    Object.values(EXERCISE_SUBSTITUTIONS).flat().forEach((sub: { id: string; name: string }) => {
+      if (sub?.id && sub?.name) { names[sub.id] = sub.name; meta[sub.id] = meta[sub.id] ?? { name: sub.name }; }
+    });
+
+    // Accessory routines + their substitutes
+    for (const r of ACCESSORY_ROUTINES) {
+      for (const ex of r.exercises) {
+        meta[ex.id] = { name: ex.name, repLabel: ex.repLabel, weightLabel: ex.weightLabel, trackWeight: ex.trackWeight, notes: ex.notes };
+        names[ex.id] = ex.name;
+      }
+    }
+    Object.values(ACCESSORY_SUBSTITUTIONS).flat().forEach((sub: { id: string; name: string }) => {
+      if (sub?.id && sub?.name) { names[sub.id] = sub.name; meta[sub.id] = meta[sub.id] ?? { name: sub.name }; }
+    });
+
+    // Exercise library
+    for (const ex of EXERCISE_LIBRARY) {
+      names[ex.id] = ex.name;
+      meta[ex.id] = meta[ex.id] ?? { name: ex.name };
+    }
+
+    return { metaById: meta, nameById: names };
+  }, []);
+
+  const getExerciseMeta = (id: string) => {
+    const base = stripExerciseSuffixes(id);
+    return metaById[id] ?? metaById[base];
+  };
+
+  const resolveName = (s: { exerciseId: string; exerciseName?: string }): string => {
+    // Prefer stored name when it isn't the raw ID (legacy rows saved id == name)
+    if (s.exerciseName && s.exerciseName !== s.exerciseId) return s.exerciseName;
+    const base = stripExerciseSuffixes(s.exerciseId);
+    return nameById[s.exerciseId] ?? nameById[base] ?? s.exerciseName ?? s.exerciseId;
+  };
 
   // Group sets by exercise, preserving order
   const groupedSets: [string, { exerciseId: string; reps: number; weight: number; name: string }[]][] = [];
   const seen = new Set<string>();
   for (const s of w.sets) {
-    const ex = getExerciseMeta(s.exerciseId);
-    const name = ex?.name || s.exerciseId;
+    const name = resolveName(s);
     if (!seen.has(name)) {
       seen.add(name);
       groupedSets.push([name, []]);
