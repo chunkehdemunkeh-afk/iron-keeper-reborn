@@ -1899,7 +1899,11 @@ export default function WorkoutSession() {
                                   ...prev,
                                   [swapExerciseId]: { name: ex.name, targetMuscle: ex.muscleGroup, substituteId: ex.id },
                                 }));
-                                const effId = getEffectiveExId(swapExerciseId).replace(swapExerciseId, ex.id);
+                                let effId = ex.id;
+                                if (twoHandedExercises.has(swapExerciseId)) effId += "-2h";
+                                if (heavyStackExercises.has(swapExerciseId)) effId += "-heavy";
+                                const att = cableAttachments[swapExerciseId];
+                                if (att) effId += `-${attachmentKey(att)}`;
                                 const idsToFetch = Array.from(new Set([ex.id, effId]));
                                 await Promise.all(idsToFetch.map(async (id) => {
                                   if (lastSessionData[id]) return;
