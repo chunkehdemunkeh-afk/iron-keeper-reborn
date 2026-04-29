@@ -1890,10 +1890,17 @@ export default function WorkoutSession() {
                           return (
                             <button
                               key={ex.id}
-                              onClick={() => {
+                              onClick={async () => {
                                 setExerciseOverrides(prev => ({
                                   ...prev,
                                   [swapExerciseId]: { name: ex.name, targetMuscle: ex.muscleGroup, substituteId: ex.id },
+                                }));
+                                const effId = getEffectiveExId(swapExerciseId).replace(swapExerciseId, ex.id);
+                                const idsToFetch = Array.from(new Set([ex.id, effId]));
+                                await Promise.all(idsToFetch.map(async (id) => {
+                                  if (lastSessionData[id]) return;
+                                  const subData = await fetchExerciseLastData(id);
+                                  if (subData.length > 0) setLastSessionData(prev => ({ ...prev, [id]: subData }));
                                 }));
                                 setSwapExerciseId(null);
                                 setSwapSearch("");
