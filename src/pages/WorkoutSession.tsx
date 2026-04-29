@@ -1838,10 +1838,14 @@ export default function WorkoutSession() {
                               ...prev,
                               [swapExerciseId]: { name: sub.name, notes: sub.notes, targetMuscle: sub.targetMuscle, trackWeight: sub.trackWeight, repLabel: sub.repLabel, weightLabel: sub.weightLabel, substituteId: sub.id },
                             }));
-                            if (!lastSessionData[sub.id]) {
-                              const subData = await fetchExerciseLastData(sub.id);
-                              if (subData.length > 0) setLastSessionData(prev => ({ ...prev, [sub.id]: subData }));
-                            }
+                            // Fetch history for the swapped-in exercise (and its effective variant if a cable attachment / 2h / heavy is already selected)
+                            const effId = getEffectiveExId(swapExerciseId).replace(swapExerciseId, sub.id);
+                            const idsToFetch = Array.from(new Set([sub.id, effId]));
+                            await Promise.all(idsToFetch.map(async (id) => {
+                              if (lastSessionData[id]) return;
+                              const subData = await fetchExerciseLastData(id);
+                              if (subData.length > 0) setLastSessionData(prev => ({ ...prev, [id]: subData }));
+                            }));
                             setSwapExerciseId(null);
                             setSwapSearch("");
                             hapticMedium();
