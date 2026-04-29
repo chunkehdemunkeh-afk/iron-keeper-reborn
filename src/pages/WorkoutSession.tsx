@@ -1838,8 +1838,12 @@ export default function WorkoutSession() {
                               ...prev,
                               [swapExerciseId]: { name: sub.name, notes: sub.notes, targetMuscle: sub.targetMuscle, trackWeight: sub.trackWeight, repLabel: sub.repLabel, weightLabel: sub.weightLabel, substituteId: sub.id },
                             }));
-                            // Fetch history for the swapped-in exercise (and its effective variant if a cable attachment / 2h / heavy is already selected)
-                            const effId = getEffectiveExId(swapExerciseId).replace(swapExerciseId, sub.id);
+                            // Compute the effective ID for the swapped-in exercise using the original slot's modifiers
+                            let effId = sub.id;
+                            if (twoHandedExercises.has(swapExerciseId)) effId += "-2h";
+                            if (heavyStackExercises.has(swapExerciseId)) effId += "-heavy";
+                            const att = cableAttachments[swapExerciseId];
+                            if (att) effId += `-${attachmentKey(att)}`;
                             const idsToFetch = Array.from(new Set([sub.id, effId]));
                             await Promise.all(idsToFetch.map(async (id) => {
                               if (lastSessionData[id]) return;
