@@ -1838,10 +1838,18 @@ export default function WorkoutSession() {
                               ...prev,
                               [swapExerciseId]: { name: sub.name, notes: sub.notes, targetMuscle: sub.targetMuscle, trackWeight: sub.trackWeight, repLabel: sub.repLabel, weightLabel: sub.weightLabel, substituteId: sub.id },
                             }));
-                            if (!lastSessionData[sub.id]) {
-                              const subData = await fetchExerciseLastData(sub.id);
-                              if (subData.length > 0) setLastSessionData(prev => ({ ...prev, [sub.id]: subData }));
-                            }
+                            // Compute the effective ID for the swapped-in exercise using the original slot's modifiers
+                            let effId = sub.id;
+                            if (twoHandedExercises.has(swapExerciseId)) effId += "-2h";
+                            if (heavyStackExercises.has(swapExerciseId)) effId += "-heavy";
+                            const att = cableAttachments[swapExerciseId];
+                            if (att) effId += `-${attachmentKey(att)}`;
+                            const idsToFetch = Array.from(new Set([sub.id, effId]));
+                            await Promise.all(idsToFetch.map(async (id) => {
+                              if (lastSessionData[id]) return;
+                              const subData = await fetchExerciseLastData(id);
+                              if (subData.length > 0) setLastSessionData(prev => ({ ...prev, [id]: subData }));
+                            }));
                             setSwapExerciseId(null);
                             setSwapSearch("");
                             hapticMedium();
@@ -1886,10 +1894,21 @@ export default function WorkoutSession() {
                           return (
                             <button
                               key={ex.id}
-                              onClick={() => {
+                              onClick={async () => {
                                 setExerciseOverrides(prev => ({
                                   ...prev,
                                   [swapExerciseId]: { name: ex.name, targetMuscle: ex.muscleGroup, substituteId: ex.id },
+                                }));
+                                let effId = ex.id;
+                                if (twoHandedExercises.has(swapExerciseId)) effId += "-2h";
+                                if (heavyStackExercises.has(swapExerciseId)) effId += "-heavy";
+                                const att = cableAttachments[swapExerciseId];
+                                if (att) effId += `-${attachmentKey(att)}`;
+                                const idsToFetch = Array.from(new Set([ex.id, effId]));
+                                await Promise.all(idsToFetch.map(async (id) => {
+                                  if (lastSessionData[id]) return;
+                                  const subData = await fetchExerciseLastData(id);
+                                  if (subData.length > 0) setLastSessionData(prev => ({ ...prev, [id]: subData }));
                                 }));
                                 setSwapExerciseId(null);
                                 setSwapSearch("");
