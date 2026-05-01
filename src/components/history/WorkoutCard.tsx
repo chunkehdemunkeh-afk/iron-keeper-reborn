@@ -93,16 +93,23 @@ export default function WorkoutCard({ workout: w, icon: Icon, onDelete, isDeleti
     return nameById[s.exerciseId] ?? nameById[base] ?? s.exerciseName ?? s.exerciseId;
   };
 
-  // Group sets by exercise, preserving order
-  const groupedSets: [string, { exerciseId: string; reps: number; weight: number; name: string }[]][] = [];
+  // Group sets by exercise, preserving order. Each group splits warm-ups from
+  // working sets so they render as visually distinct sections (warm-ups don't
+  // hijack "Set 1/2" of the working table).
+  type GroupedSet = { exerciseId: string; reps: number; weight: number; name: string; setType: "working" | "warmup" | "1rm_test" };
+  const groupedSets: [string, { working: GroupedSet[]; warmups: GroupedSet[] }][] = [];
   const seen = new Set<string>();
   for (const s of w.sets) {
     const name = resolveName(s);
+    const setType = (s as { setType?: "working" | "warmup" | "1rm_test" }).setType ?? "working";
     if (!seen.has(name)) {
       seen.add(name);
-      groupedSets.push([name, []]);
+      groupedSets.push([name, { working: [], warmups: [] }]);
     }
-    groupedSets.find(([n]) => n === name)![1].push({ ...s, name });
+    const bucket = groupedSets.find(([n]) => n === name)![1];
+    const row: GroupedSet = { ...s, name, setType };
+    if (setType === "warmup") bucket.warmups.push(row);
+    else bucket.working.push(row);
   }
 
   const getSetLabel = (s: { exerciseId: string; reps: number; weight: number }) => {
