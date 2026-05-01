@@ -4,7 +4,7 @@ import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "@/lib/accessory-rou
 import { EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import { EXERCISE_SUBSTITUTIONS } from "@/lib/exercise-substitutions";
 import { stripExerciseSuffixes } from "@/lib/muscle-mapping";
-import { Clock, Check, Trash2, ChevronDown, ChevronUp, AlertTriangle, Star, MessageSquare, Dumbbell } from "lucide-react";
+import { Clock, Check, Trash2, ChevronDown, ChevronUp, AlertTriangle, Star, MessageSquare, Dumbbell, Flame } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { motion, animate, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import type { PanInfo } from "framer-motion";
