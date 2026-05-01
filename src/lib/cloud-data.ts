@@ -322,11 +322,14 @@ export async function fetchLastSessionData(workoutId: string): Promise<Record<st
   if (lastWorkout) {
     const { data: sets } = await supabase
       .from("workout_sets")
-      .select("exercise_id, reps, weight")
+      .select("exercise_id, reps, weight, set_type")
       .eq("workout_history_id", lastWorkout.id)
       .order("created_at", { ascending: true });
 
+    // Exclude warm-ups so placeholders/"Last:" preview reflect only real working sets.
     sets?.forEach(s => {
+      const st = (s as { set_type?: string }).set_type ?? "working";
+      if (st === "warmup") return;
       if (!result[s.exercise_id]) result[s.exercise_id] = [];
       result[s.exercise_id].push({ reps: s.reps, weight: Number(s.weight) });
     });
