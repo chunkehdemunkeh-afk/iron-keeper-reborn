@@ -344,11 +344,14 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
   if (!user) return [];
 
   // Find the most recent workout_history that contains this exercise
+  // Find the most recent workout_history that contains a WORKING set for this exercise
+  // (warm-ups must not pollute the auto-fill placeholders or the "Last:" preview line).
   const { data: latestSet } = await supabase
     .from("workout_sets")
     .select("workout_history_id")
     .eq("user_id", user.id)
     .eq("exercise_id", exerciseId)
+    .neq("set_type", "warmup")
     .order("created_at", { ascending: false })
     .limit(1)
     .single();
@@ -357,9 +360,10 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
 
   const { data: sets } = await supabase
     .from("workout_sets")
-    .select("reps, weight")
+    .select("reps, weight, set_type")
     .eq("workout_history_id", latestSet.workout_history_id)
     .eq("exercise_id", exerciseId)
+    .neq("set_type", "warmup")
     .order("created_at", { ascending: true });
 
   return (sets || []).map(s => ({ reps: s.reps, weight: Number(s.weight) }));
