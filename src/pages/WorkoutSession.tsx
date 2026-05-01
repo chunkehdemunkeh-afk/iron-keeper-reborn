@@ -83,15 +83,26 @@ function isCableAttachmentExercise(name: string): boolean {
   ].some((kw) => dn.includes(kw));
 }
 
-/** Warm-up prescription based on the warm-up's position and total warm-ups for an exercise.
- *  2 warm-ups → 50% × 5, 75% × 5
- *  3 warm-ups → 40% × 5, 60% × 4, 80% × 3 */
-function warmupScheme(idx: number, total: number): { pct: number; reps: string } {
-  if (total <= 1) return { pct: 60, reps: "5" };
-  if (total === 2) return idx === 0 ? { pct: 50, reps: "5" } : { pct: 75, reps: "5" };
-  if (idx === 0) return { pct: 40, reps: "5" };
-  if (idx === 1) return { pct: 60, reps: "4" };
-  return { pct: 80, reps: "3" };
+/** Warm-up ramp anchored to the working weight `W`. Returns absolute kg + reps,
+ *  snapped to the nearest 2.5 kg plate. Reps descend as weight rises so the lifter
+ *  primes the nervous system without burning out before the working sets.
+ *
+ *    1 warm-up  → ~50% × 5
+ *    2 warm-ups → ~40% × 8, halfway × 5
+ *    3 warm-ups → ~40% × 8, halfway × 5, ~10kg-below × 3
+ *
+ *  Floor: 20 kg for barbell-style lifts, 2.5 kg for dumbbells (per-dumbbell weight). */
+function warmupRamp(W: number, idx: number, total: number, isDumbbell: boolean): { weight: number; reps: number } {
+  const floor = isDumbbell ? 2.5 : 20;
+  if (!W || W <= floor) return { weight: 0, reps: total <= 1 ? 5 : (idx === 0 ? 8 : idx === 1 ? 5 : 3) };
+  const wu1 = Math.max(floor, roundToPlate(W * 0.4));
+  const wu2 = roundToPlate((W + wu1) / 2);
+  const wu3 = roundToPlate(Math.max(W - 10, W * 0.9));
+  if (total <= 1) return { weight: roundToPlate(W * 0.5), reps: 5 };
+  if (total === 2) return idx === 0 ? { weight: wu1, reps: 8 } : { weight: wu2, reps: 5 };
+  if (idx === 0) return { weight: wu1, reps: 8 };
+  if (idx === 1) return { weight: wu2, reps: 5 };
+  return { weight: wu3, reps: 3 };
 }
 
 /** Round to nearest 2.5 kg (typical smallest plate increment). */
@@ -618,22 +629,23 @@ export default function WorkoutSession() {
       i === setIdx ? { ...s, completed: !wasCompleted } : s
     );
 
-    // For warm-ups being completed, auto-fill weight + reps from the scheme
+    // For warm-ups being completed, auto-fill weight + reps from the ramp.
     if (!wasCompleted && newSets[setIdx].setType === "warmup") {
       const warmupCount = newSets.filter((s) => s.setType === "warmup").length;
       let wuPos = 0;
       for (let i = 0; i < setIdx; i++) {
         if (newSets[i].setType === "warmup") wuPos++;
       }
-      const scheme = warmupScheme(wuPos, warmupCount);
       const firstWorking = newSets.find((s) => s.setType !== "warmup");
       const lastFirstWeight = lastSessionData[getEffectiveExId(exerciseId)]?.[0]?.weight ?? 0;
       const workingWeight = firstWorking?.weight && firstWorking.weight > 0
         ? firstWorking.weight
         : lastFirstWeight;
-      const wuWeight = workingWeight > 0 ? roundToPlate((workingWeight * scheme.pct) / 100) : 0;
-      const wuReps = parseInt(scheme.reps, 10) || 5;
-      newSets[setIdx] = { ...newSets[setIdx], weight: wuWeight, reps: wuReps };
+      const exMeta = allExercises.find(e => e.id === exerciseId);
+      const exNameForRamp = exerciseOverrides[exerciseId]?.name || exMeta?.name || "";
+      const isDb = isBilateralDumbbell(getEffectiveExId(exerciseId), exNameForRamp);
+      const ramp = warmupRamp(workingWeight, wuPos, warmupCount, isDb);
+      newSets[setIdx] = { ...newSets[setIdx], weight: ramp.weight, reps: ramp.reps };
     }
 
     // Pure state update
@@ -1400,14 +1412,13 @@ export default function WorkoutSession() {
                                   ? firstWorking.weight
                                   : lastFirstWeight;
                                 let warmupIdxCounter = 0;
+                                const exNameForRamp = override?.name || ex.name || "";
+                                const isDb = isBilateralDumbbell(getEffectiveExId(ex.id), exNameForRamp);
                                 return setsArr.map((set, si) => {
                                   const is1RM = set.setType === "1rm_test";
                                   const isWarmup = set.setType === "warmup";
                                   const wuIdx = isWarmup ? warmupIdxCounter++ : -1;
-                                  const wuScheme = isWarmup ? warmupScheme(wuIdx, warmupCount) : null;
-                                  const wuWeight = isWarmup && workingWeight > 0
-                                    ? roundToPlate((workingWeight * wuScheme!.pct) / 100)
-                                    : 0;
+                                  const wuRamp = isWarmup ? warmupRamp(workingWeight, wuIdx, warmupCount, isDb) : null;
                                   return (
                                 <SwipeableSetRow
                                   key={si}
@@ -1428,13 +1439,12 @@ export default function WorkoutSession() {
                                     ) : isWarmup ? (
                                       <>
                                         {showWeight && (
-                                          <div className={`h-9 w-full rounded-lg px-2 text-xs flex flex-col items-center justify-center leading-tight ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-orange-400/10 border border-orange-400/30 text-orange-400/90"}`}>
-                                            <span className="font-bold">{wuScheme!.pct}%</span>
-                                            {wuWeight > 0 && <span className="text-[9px] opacity-80">{wuWeight} kg</span>}
+                                          <div className={`h-9 w-full rounded-lg px-2 text-xs flex items-center justify-center font-bold ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-orange-400/10 border border-orange-400/30 text-orange-400/90"}`}>
+                                            {wuRamp!.weight > 0 ? `${wuRamp!.weight} kg` : "—"}
                                           </div>
                                         )}
                                         <div className={`h-9 w-full rounded-lg px-2 text-xs flex items-center justify-center font-semibold ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-orange-400/10 border border-orange-400/30 text-orange-400/90"}`}>
-                                          {wuScheme!.reps} reps
+                                          {wuRamp!.reps} reps
                                         </div>
                                       </>
                                     ) : (

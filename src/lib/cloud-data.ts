@@ -206,6 +206,8 @@ export async function fetchPersonalRecords(): Promise<Record<string, PersonalRec
     const w = Number(s.weight);
     const r = Number(s.reps);
     const setType = (s as { set_type?: string }).set_type ?? "working";
+    // Warm-ups are intentionally light/easy and must never count toward PRs or best reps.
+    if (setType === "warmup") return;
     const existing = prs[s.exercise_id];
     if (!existing) {
       prs[s.exercise_id] = {
@@ -322,11 +324,14 @@ export async function fetchLastSessionData(workoutId: string): Promise<Record<st
   if (lastWorkout) {
     const { data: sets } = await supabase
       .from("workout_sets")
-      .select("exercise_id, reps, weight")
+      .select("exercise_id, reps, weight, set_type")
       .eq("workout_history_id", lastWorkout.id)
       .order("created_at", { ascending: true });
 
+    // Exclude warm-ups so placeholders/"Last:" preview reflect only real working sets.
     sets?.forEach(s => {
+      const st = (s as { set_type?: string }).set_type ?? "working";
+      if (st === "warmup") return;
       if (!result[s.exercise_id]) result[s.exercise_id] = [];
       result[s.exercise_id].push({ reps: s.reps, weight: Number(s.weight) });
     });
@@ -341,11 +346,14 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
   if (!user) return [];
 
   // Find the most recent workout_history that contains this exercise
+  // Find the most recent workout_history that contains a WORKING set for this exercise
+  // (warm-ups must not pollute the auto-fill placeholders or the "Last:" preview line).
   const { data: latestSet } = await supabase
     .from("workout_sets")
     .select("workout_history_id")
     .eq("user_id", user.id)
     .eq("exercise_id", exerciseId)
+    .neq("set_type", "warmup")
     .order("created_at", { ascending: false })
     .limit(1)
     .single();
@@ -354,9 +362,10 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
 
   const { data: sets } = await supabase
     .from("workout_sets")
-    .select("reps, weight")
+    .select("reps, weight, set_type")
     .eq("workout_history_id", latestSet.workout_history_id)
     .eq("exercise_id", exerciseId)
+    .neq("set_type", "warmup")
     .order("created_at", { ascending: true });
 
   return (sets || []).map(s => ({ reps: s.reps, weight: Number(s.weight) }));

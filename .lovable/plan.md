@@ -1,80 +1,67 @@
+## Problem
 
+Warm-up sets are bleeding into the working-set data:
 
-## Cardio + Strength burn (with warm-ups, weekly rollup, backfill)
+1. **History view** — `WorkoutCard` groups by exercise name and renders every set in one list. Warm-ups appear as "Set 1" and "Set 2" alongside working sets, so the first two rows of every exercise look like real working sets at a much lower weight.
+2. **Active session "Last:" line and placeholders** — `fetchExerciseLastData` / `fetchLastSessionData` return all sets in chronological order without filtering by `set_type`. So:
+   - The `Last: 40kg×5, 60kg×5, 100kg×8…` line includes warm-ups.
+   - The reps/weight input placeholders are indexed positionally (`lastSessionData[id][si]`), meaning working set #1 shows the warm-up's `40` as its placeholder.
+3. **Personal record `bestReps`** — counted across all sets including warm-ups (minor, but inconsistent).
+4. **% prescription is impractical** — exact percentages of an unknown working weight, rounded to 2.5 kg, don't translate well in the gym (e.g. "40% of 92.5 = 37.5"). A simpler, weight-anchored ramp is more useful.
 
-Extending the previous plan with three additions: **warm-up set tagging**, **weekly burn rollup**, and a **one-shot historical backfill** so existing data shows real numbers immediately.
+## Fix
 
-### 1. Warm-up set tagging (UI for the existing `set_type` column)
+### 1. Filter warm-ups out of "last session" data (DB layer)
 
-The `workout_sets.set_type` column already exists (`working` | `warmup` | `1rm_test`). Adding the missing UI:
+In `src/lib/cloud-data.ts`:
+- `fetchLastSessionData` and `fetchExerciseLastData` — add `.eq("set_type", "working")` (or `.in("set_type", ["working", "1rm_test"])`) so the placeholders, the "Last:" preview line, and the swap-history fetch only ever see real working sets.
+- `fetchPersonalRecords` — skip rows with `set_type === "warmup"` entirely when building `bestReps` / `weight` (true 1RM logic stays as-is).
 
-- In `WorkoutSession.tsx`, each set row gets a small **W** toggle pill next to the rep/weight inputs. Tap to flip a set between `working` ↔ `warmup`. Warm-up sets render with a muted/dashed style and a "Warm-up" microlabel.
-- Warm-up sets are **excluded from**:
-  - Strength burn estimate (mechanical work term skipped)
-  - PR detection / tier-crossing
-  - Volume tag in the exercise card header
-- They still **count toward** session duration and the metabolic-cost term (low MET 3.5), since you're still moving.
-- Default rest timer for warm-ups is 60s instead of 2–3 min.
-- Persisted via the same `setType` field added in the 1RM Test feature — no new schema work.
+### 2. Display warm-ups as a separate section in History
 
-### 2. Weekly burn rollup
+In `src/components/history/WorkoutCard.tsx`:
+- When grouping sets per exercise, split each group into `warmupSets` and `workingSets` based on `setType` (already returned by `fetchWorkoutHistory`).
+- Render warm-ups in a small, muted "Warm-up" sub-section above the working sets table — orange flame icon, smaller text, no "Set 1/2" numbering (use a flame glyph instead). Working sets keep their own numbering starting at 1, unaffected.
+- If no warm-ups for that exercise, the section is omitted entirely (no visual change for older sessions).
+- Volume calc already filters by `trackWeight` — also exclude warm-ups from the per-card volume tonnage.
 
-- **`Progress` page → Stats tab**: new "Weekly Energy" card above the volume chart, showing:
-  - Total kcal burned this week (workouts + cardio combined)
-  - Breakdown bar: Strength | Cardio segments
-  - 4-week mini sparkline for week-over-week trend
-- **Profile page**: weekly burn appears as a stat alongside existing weekly volume / session count.
-- **`HomeDailySummary.tsx`**: the "Burned today" line gets a tappable "This week: X kcal →" link that jumps to the Progress card.
-- Data source: `fetchWeeklyBurn(weekStart)` in `cloud-data.ts` — sums `workout_history.calories_burned` + `activity_logs.calories_burned` for the week, grouped by day for the sparkline.
+### 3. Replace the % scheme with a fixed plate-ramp
 
-### 3. Historical backfill (one-shot)
+In `src/pages/WorkoutSession.tsx`:
+- Remove `warmupScheme(idx, total)` (the 40/60/80% logic).
+- Replace with a **descending-rep, ascending-weight ramp** anchored to the working weight `W` (taken from the first working set, or last session's first working weight). The ramp is in absolute kg, snapped to 2.5 kg plates:
 
-A migration runs once to populate `calories_burned` on every existing `workout_history` and `activity_logs` row using the same formulas the live app will use.
+  | Warm-up # | Weight | Reps |
+  |-----------|--------|------|
+  | 1         | Empty bar (or 40% of W, whichever is heavier) | 8 |
+  | 2         | Halfway between bar and W                     | 5 |
+  | 3 (opt.)  | ~10 kg below W                                | 3 |
 
-**Approach**: pure SQL `UPDATE` statements driven by the Compendium MET tables and the work formula, joined against `body_measurements` (latest weight before each session) → `nutrition_goals.tdee_weight_kg` → 75 kg fallback. Implemented as PL/pgSQL functions in the migration so the math stays readable and we don't have to push 717 hardcoded MET values into SQL.
+  Concretely, given `W`:
+  - `wu1 = max(20, roundToPlate(W * 0.4))`, reps 8
+  - `wu2 = roundToPlate((W + wu1) / 2)`, reps 5
+  - `wu3 = roundToPlate(max(W - 10, W * 0.9))`, reps 3
+  - For dumbbell exercises (per-dumbbell logging), use `max(2.5, …)` instead of bar weight; detected via existing `isBilateralDumbbell`/dumbbell heuristics.
 
-**Why SQL not a one-off script**: keeps the operation atomic, runs against production data without needing `SUPABASE_ACCESS_TOKEN`, and re-runs idempotently (skips rows where `calories_burned IS NOT NULL`).
+- The "Add Warm-up" button still seeds 2 warm-ups on first press, adds a 3rd on second press, capped at 3.
+- Set rows show **`{weight}kg × {reps}`** instead of `{pct}%` — much clearer at a glance. If no working weight is known yet (first ever session), show `— × {reps}` and let the user fill it in manually.
+- Auto-fill on completion uses the same ramp values.
+- Keep the orange flame styling and 60s rest timer.
 
-**Backfill rules:**
-- Cardio rows missing `distance_km` (e.g. your existing 24m / 3.36 km run was logged before the field existed) get burn estimated from duration alone using a fixed mid-band MET per activity type — flagged with a small "estimated" badge in the UI when distance was inferred. Once you edit the entry to add distance, save recalculates precisely.
-- Strength sessions: sum `weight × reps × 0.0035` across all sets in `workout_sets` for that session, plus a baseline MET 5.5 × bodyweight × duration_hr. Warm-up exclusion isn't applied to historical sets (they're all `working` by default), so historical burn will be slightly inflated vs. future sessions — acceptable trade-off, noted in the migration comment.
-- Bodyweight lookup: `SELECT body_weight FROM body_measurements WHERE user_id = X AND date <= session.date ORDER BY date DESC LIMIT 1`, fallback to `nutrition_goals.tdee_weight_kg`, fallback to 75.
+### 4. Keep all existing exclusions
 
-### 4. Updated DB migration
+No change needed — these already work and remain correct after the above:
+- Warm-ups already excluded from PR detection, tier-crossing, rep-range toasts, calorie burn work term.
+- `set_type` already persisted to `workout_sets` so historical data loads with the right type.
 
-```sql
-ALTER TABLE public.activity_logs
-  ADD COLUMN IF NOT EXISTS distance_km NUMERIC,
-  ADD COLUMN IF NOT EXISTS calories_burned INTEGER,
-  ADD COLUMN IF NOT EXISTS incline_pct INTEGER;
+## Files touched
 
-ALTER TABLE public.workout_history
-  ADD COLUMN IF NOT EXISTS calories_burned INTEGER;
+- `src/lib/cloud-data.ts` — filter warm-ups in `fetchLastSessionData`, `fetchExerciseLastData`, `fetchPersonalRecords`.
+- `src/components/history/WorkoutCard.tsx` — split warm-ups into a separate sub-section per exercise; exclude from volume.
+- `src/pages/WorkoutSession.tsx` — replace `warmupScheme` with `warmupRamp(W, idx, total, isDumbbell)` returning `{weight, reps}`; update the row UI (lines ~1428–1438) to display weight+reps instead of percentage; update auto-fill (lines ~621–637) to use the new ramp.
 
-ALTER TABLE public.nutrition_goals
-  ADD COLUMN IF NOT EXISTS adjust_for_activity BOOLEAN NOT NULL DEFAULT false;
+## Out of scope
 
--- Backfill helpers (PL/pgSQL functions for cardio MET + strength burn)
--- + UPDATE statements that populate calories_burned on existing rows
--- (see migration body — full SQL written at implementation time)
-```
-
-All additive, nullable, RLS unchanged.
-
-### 5. Code changes (delta from previous plan)
-
-- **`src/lib/calorie-burn.ts`** — `estimateStrengthBurn` skips sets where `setType === "warmup"` for the work term but includes them in metabolic cost at MET 3.5.
-- **`src/lib/cloud-data.ts`** — add `fetchWeeklyBurn(userId, weekStart)` returning `{ totalKcal, strengthKcal, cardioKcal, dailyBreakdown[] }`.
-- **`src/pages/WorkoutSession.tsx`** — warm-up toggle UI on each set row; visual styling; rest timer override; pass `setType` through to `estimateStrengthBurn`.
-- **`src/pages/Progress.tsx`** — new "Weekly Energy" card on the Stats tab.
-- **`src/pages/Profile.tsx`** — weekly burn stat in the existing stats grid.
-- **`src/components/HomeDailySummary.tsx`** — "This week →" link.
-- **Tests** — `src/test/calorie-burn.test.ts` adds warm-up exclusion case; new `src/test/weekly-burn.test.ts` for the rollup helper.
-
-### 6. Out of scope (still backlog)
-
-- Cycling/running incline.
-- Wearable HR-based burn.
-- Per-session burn editing (to override estimate manually).
-- Monthly rollups beyond the 4-week sparkline.
-
+- No DB migration — `set_type` column already exists and is populated.
+- No change to the 1RM-test flow.
+- No change to the "Last:" preview line format itself, only its data source.
