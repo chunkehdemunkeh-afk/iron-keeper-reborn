@@ -629,22 +629,23 @@ export default function WorkoutSession() {
       i === setIdx ? { ...s, completed: !wasCompleted } : s
     );
 
-    // For warm-ups being completed, auto-fill weight + reps from the scheme
+    // For warm-ups being completed, auto-fill weight + reps from the ramp.
     if (!wasCompleted && newSets[setIdx].setType === "warmup") {
       const warmupCount = newSets.filter((s) => s.setType === "warmup").length;
       let wuPos = 0;
       for (let i = 0; i < setIdx; i++) {
         if (newSets[i].setType === "warmup") wuPos++;
       }
-      const scheme = warmupScheme(wuPos, warmupCount);
       const firstWorking = newSets.find((s) => s.setType !== "warmup");
       const lastFirstWeight = lastSessionData[getEffectiveExId(exerciseId)]?.[0]?.weight ?? 0;
       const workingWeight = firstWorking?.weight && firstWorking.weight > 0
         ? firstWorking.weight
         : lastFirstWeight;
-      const wuWeight = workingWeight > 0 ? roundToPlate((workingWeight * scheme.pct) / 100) : 0;
-      const wuReps = parseInt(scheme.reps, 10) || 5;
-      newSets[setIdx] = { ...newSets[setIdx], weight: wuWeight, reps: wuReps };
+      const exMeta = allExercises.find(e => e.id === exerciseId);
+      const exNameForRamp = exerciseOverrides[exerciseId]?.name || exMeta?.name || "";
+      const isDb = isBilateralDumbbell(getEffectiveExId(exerciseId), exNameForRamp);
+      const ramp = warmupRamp(workingWeight, wuPos, warmupCount, isDb);
+      newSets[setIdx] = { ...newSets[setIdx], weight: ramp.weight, reps: ramp.reps };
     }
 
     // Pure state update
