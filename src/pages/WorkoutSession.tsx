@@ -1412,14 +1412,13 @@ export default function WorkoutSession() {
                                   ? firstWorking.weight
                                   : lastFirstWeight;
                                 let warmupIdxCounter = 0;
+                                const exNameForRamp = override?.name || ex.name || "";
+                                const isDb = isBilateralDumbbell(getEffectiveExId(ex.id), exNameForRamp);
                                 return setsArr.map((set, si) => {
                                   const is1RM = set.setType === "1rm_test";
                                   const isWarmup = set.setType === "warmup";
                                   const wuIdx = isWarmup ? warmupIdxCounter++ : -1;
-                                  const wuScheme = isWarmup ? warmupScheme(wuIdx, warmupCount) : null;
-                                  const wuWeight = isWarmup && workingWeight > 0
-                                    ? roundToPlate((workingWeight * wuScheme!.pct) / 100)
-                                    : 0;
+                                  const wuRamp = isWarmup ? warmupRamp(workingWeight, wuIdx, warmupCount, isDb) : null;
                                   return (
                                 <SwipeableSetRow
                                   key={si}
@@ -1440,13 +1439,12 @@ export default function WorkoutSession() {
                                     ) : isWarmup ? (
                                       <>
                                         {showWeight && (
-                                          <div className={`h-9 w-full rounded-lg px-2 text-xs flex flex-col items-center justify-center leading-tight ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-orange-400/10 border border-orange-400/30 text-orange-400/90"}`}>
-                                            <span className="font-bold">{wuScheme!.pct}%</span>
-                                            {wuWeight > 0 && <span className="text-[9px] opacity-80">{wuWeight} kg</span>}
+                                          <div className={`h-9 w-full rounded-lg px-2 text-xs flex items-center justify-center font-bold ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-orange-400/10 border border-orange-400/30 text-orange-400/90"}`}>
+                                            {wuRamp!.weight > 0 ? `${wuRamp!.weight} kg` : "—"}
                                           </div>
                                         )}
                                         <div className={`h-9 w-full rounded-lg px-2 text-xs flex items-center justify-center font-semibold ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-orange-400/10 border border-orange-400/30 text-orange-400/90"}`}>
-                                          {wuScheme!.reps} reps
+                                          {wuRamp!.reps} reps
                                         </div>
                                       </>
                                     ) : (
