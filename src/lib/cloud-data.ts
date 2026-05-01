@@ -206,6 +206,8 @@ export async function fetchPersonalRecords(): Promise<Record<string, PersonalRec
     const w = Number(s.weight);
     const r = Number(s.reps);
     const setType = (s as { set_type?: string }).set_type ?? "working";
+    // Warm-ups are intentionally light/easy and must never count toward PRs or best reps.
+    if (setType === "warmup") return;
     const existing = prs[s.exercise_id];
     if (!existing) {
       prs[s.exercise_id] = {
