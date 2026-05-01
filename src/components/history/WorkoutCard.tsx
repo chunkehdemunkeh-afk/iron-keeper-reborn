@@ -212,7 +212,14 @@ export default function WorkoutCard({ workout: w, icon: Icon, onDelete, isDeleti
               {groupedSets.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-2">No set data recorded</p>
               ) : (
-                groupedSets.map(([name, sets], exIdx) => (
+                groupedSets.map(([name, { working, warmups }]) => {
+                  const refSet = working[0] ?? warmups[0];
+                  const ex = getExerciseMeta(refSet.exerciseId);
+                  const isTimeBased = ex?.repLabel === "Sec";
+                  const showWeight = ex?.trackWeight !== false;
+                  const weightLabel = ex?.weightLabel || "Kg";
+                  const repHeader = isTimeBased ? "Time" : (ex?.repLabel || "Reps");
+                  return (
                   <div key={name} className="glass-card rounded-xl overflow-hidden">
                     {/* Exercise header */}
                     <div className="px-3 py-2.5">
@@ -222,69 +229,89 @@ export default function WorkoutCard({ workout: w, icon: Icon, onDelete, isDeleti
                         </span>
                         <p className="text-sm font-medium text-foreground flex-1">{name}</p>
                         <span className="text-[10px] text-muted-foreground bg-muted/50 rounded-md px-1.5 py-0.5">
-                          {sets.length} {sets.length === 1 ? "set" : "sets"}
+                          {working.length} {working.length === 1 ? "set" : "sets"}
                         </span>
                       </div>
-                      {(() => {
-                        const ex = getExerciseMeta(sets[0].exerciseId);
-                        return ex?.notes ? (
-                          <p className="text-[11px] text-muted-foreground mt-1.5 ml-[34px] leading-relaxed">{ex.notes}</p>
-                        ) : null;
-                      })()}
+                      {ex?.notes ? (
+                        <p className="text-[11px] text-muted-foreground mt-1.5 ml-[34px] leading-relaxed">{ex.notes}</p>
+                      ) : null}
                     </div>
 
-                    {/* Column headers */}
-                    <div className="grid grid-cols-[28px_1fr_1fr_36px] gap-x-1.5 items-center px-3 pb-1 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                      <span className="text-center">Set</span>
-                      <span className="text-center">
-                        {getExerciseMeta(sets[0].exerciseId)?.weightLabel || "Kg"}
-                      </span>
-                      <span className="text-center">
-                        {getExerciseMeta(sets[0].exerciseId)?.repLabel === "Sec" ? "Time" : getExerciseMeta(sets[0].exerciseId)?.repLabel || "Reps"}
-                      </span>
-                      <span className="text-center">✓</span>
-                    </div>
-
-                    {/* Set rows */}
-                    <div className="px-3 pb-2.5 space-y-1">
-                      {sets.map((s, si) => {
-                        const label = getSetLabel(s);
-                        const ex = getExerciseMeta(s.exerciseId);
-                        const isTimeBased = ex?.repLabel === "Sec";
-                        const showWeight = ex?.trackWeight !== false;
-                        return (
-                          <div
-                            key={si}
-                            className="grid grid-cols-[28px_1fr_1fr_36px] gap-x-1.5 items-center"
-                          >
-                            <span className="text-xs font-medium text-center text-success">{si + 1}</span>
-                            {isTimeBased ? (
-                              <>
-                                <div className="col-span-2 h-9 rounded-lg bg-success/15 border border-success/40 flex items-center justify-center">
-                                  <span className="text-sm font-semibold text-success">{s.reps}s</span>
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <div className={`h-9 rounded-lg flex items-center justify-center ${showWeight && s.weight > 0 ? "bg-success/15 border border-success/40" : "bg-muted/40 border border-border/50"}`}>
-                                  <span className={`text-sm font-semibold ${showWeight && s.weight > 0 ? "text-success" : "text-muted-foreground"}`}>
-                                    {showWeight ? (s.weight || "—") : "—"}
-                                  </span>
-                                </div>
-                                <div className="h-9 rounded-lg bg-success/15 border border-success/40 flex items-center justify-center">
-                                  <span className="text-sm font-semibold text-success">{s.reps}</span>
-                                </div>
-                              </>
-                            )}
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-success text-success-foreground">
-                              <Check className="h-3.5 w-3.5" />
+                    {/* Warm-up sub-section (only if any) */}
+                    {warmups.length > 0 && (
+                      <div className="px-3 pb-2">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <Flame className="h-3 w-3 text-orange-400" />
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-400/90">
+                            Warm-up
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            · {warmups.length} {warmups.length === 1 ? "set" : "sets"}
+                          </span>
+                        </div>
+                        <div className="space-y-1">
+                          {warmups.map((s, si) => (
+                            <div
+                              key={`wu-${si}`}
+                              className="flex items-center gap-2 rounded-md bg-orange-400/5 border border-orange-400/15 px-2.5 py-1.5"
+                            >
+                              <Flame className="h-3 w-3 text-orange-400/70 flex-shrink-0" />
+                              <span className="text-xs text-orange-400/90 font-medium">
+                                {showWeight && s.weight > 0 ? `${s.weight}${(ex?.weightLabel || "kg").toLowerCase()} × ${s.reps}` : `${s.reps} reps`}
+                              </span>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {working.length > 0 && (
+                      <>
+                        {/* Column headers */}
+                        <div className="grid grid-cols-[28px_1fr_1fr_36px] gap-x-1.5 items-center px-3 pb-1 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                          <span className="text-center">Set</span>
+                          <span className="text-center">{weightLabel}</span>
+                          <span className="text-center">{repHeader}</span>
+                          <span className="text-center">✓</span>
+                        </div>
+
+                        {/* Working set rows */}
+                        <div className="px-3 pb-2.5 space-y-1">
+                          {working.map((s, si) => {
+                            return (
+                              <div
+                                key={si}
+                                className="grid grid-cols-[28px_1fr_1fr_36px] gap-x-1.5 items-center"
+                              >
+                                <span className="text-xs font-medium text-center text-success">{si + 1}</span>
+                                {isTimeBased ? (
+                                  <div className="col-span-2 h-9 rounded-lg bg-success/15 border border-success/40 flex items-center justify-center">
+                                    <span className="text-sm font-semibold text-success">{s.reps}s</span>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className={`h-9 rounded-lg flex items-center justify-center ${showWeight && s.weight > 0 ? "bg-success/15 border border-success/40" : "bg-muted/40 border border-border/50"}`}>
+                                      <span className={`text-sm font-semibold ${showWeight && s.weight > 0 ? "text-success" : "text-muted-foreground"}`}>
+                                        {showWeight ? (s.weight || "—") : "—"}
+                                      </span>
+                                    </div>
+                                    <div className="h-9 rounded-lg bg-success/15 border border-success/40 flex items-center justify-center">
+                                      <span className="text-sm font-semibold text-success">{s.reps}</span>
+                                    </div>
+                                  </>
+                                )}
+                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-success text-success-foreground">
+                                  <Check className="h-3.5 w-3.5" />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
                   </div>
-                ))
+                  );
+                })
               )}
 
               {/* Session notes */}
