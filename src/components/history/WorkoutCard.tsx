@@ -125,6 +125,7 @@ export default function WorkoutCard({ workout: w, icon: Icon, onDelete, isDeleti
 
   const totalVolume = w.sets
     .filter((s) => getExerciseMeta(s.exerciseId)?.trackWeight !== false)
+    .filter((s) => ((s as { setType?: string }).setType ?? "working") !== "warmup")
     .reduce((sum, s) => sum + s.weight * s.reps, 0);
 
   const effortLabels = ["", "Easy", "Light", "Moderate", "Hard", "Max effort"];
