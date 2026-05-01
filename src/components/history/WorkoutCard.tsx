@@ -112,16 +112,6 @@ export default function WorkoutCard({ workout: w, icon: Icon, onDelete, isDeleti
     else bucket.working.push(row);
   }
 
-  const getSetLabel = (s: { exerciseId: string; reps: number; weight: number }) => {
-    const ex = getExerciseMeta(s.exerciseId);
-    const isTimeBased = ex?.repLabel === "Sec";
-    if (isTimeBased) return { primary: `${s.reps}s`, secondary: "" };
-    const showWeight = ex?.trackWeight !== false;
-    const repLabel = ex?.repLabel || "reps";
-    const weightLabel = ex?.weightLabel || "kg";
-    if (showWeight && s.weight > 0) return { primary: `${s.weight}${weightLabel}`, secondary: `${s.reps} ${repLabel}` };
-    return { primary: `${s.reps}`, secondary: repLabel.toLowerCase() };
-  };
 
   const totalVolume = w.sets
     .filter((s) => getExerciseMeta(s.exerciseId)?.trackWeight !== false)
