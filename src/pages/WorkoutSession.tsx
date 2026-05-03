@@ -899,9 +899,18 @@ export default function WorkoutSession() {
       duration: elapsed > 0 ? Math.max(1, Math.ceil(elapsed / 60)) : 0,
       exercisesCompleted: completedExercises,
       totalExercises,
-      sets: Object.entries(setLogs).flatMap(([exId, sets]) =>
-        sets.filter((s) => s.completed).map((s) => ({ exerciseId: getEffectiveExId(exId), reps: s.reps, weight: s.weight, setType: s.setType ?? "working" }))
-      ),
+      sets: Object.entries(setLogs).flatMap(([exId, sets]) => {
+        const ex = allExercises.find(e => e.id === exId);
+        const override = exerciseOverrides[exId];
+        const liveName = override?.name ?? ex?.name;
+        return sets.filter((s) => s.completed).map((s) => ({
+          exerciseId: getEffectiveExId(exId),
+          exerciseName: liveName,
+          reps: s.reps,
+          weight: s.weight,
+          setType: s.setType ?? "working",
+        }));
+      }),
       effortRating: effortRating > 0 ? effortRating : undefined,
       sessionNotes: sessionNotes.trim() || undefined,
     };
