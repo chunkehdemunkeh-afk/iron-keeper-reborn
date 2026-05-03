@@ -242,12 +242,15 @@ function nameHeuristic(name: string): MuscleHits | null {
  * Note: tokens themselves can contain hyphens.
  */
 const SUFFIX_TOKENS = [
+  "no-attachment",
   "cuff-lat-bar",
   "straight-bar",
   "mag-grip",
+  "lat-bar",
   "v-bar",
   "handles",
   "rope",
+  "cuff",
   "heavy",
   "2h",
 ];
