@@ -81,11 +81,21 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
 
   const exerciseMap: Record<string, string> = {};
   WORKOUTS.forEach(w => w.exercises.forEach(ex => { exerciseMap[ex.id] = ex.name; }));
-  // Include substitutes
   Object.values(EXERCISE_SUBSTITUTIONS).flat().forEach(sub => { exerciseMap[sub.id] = sub.name; });
-  // Include accessories and their substitutes
   ACCESSORY_ROUTINES.forEach(r => r.exercises.forEach(ex => { exerciseMap[ex.id] = ex.name; }));
   Object.values(ACCESSORY_SUBSTITUTIONS).flat().forEach(sub => { exerciseMap[sub.id] = sub.name; });
+  EXERCISE_LIBRARY.forEach(ex => { exerciseMap[ex.id] = ex.name; });
+
+  // Resolve a friendly name even when the ID has modifier suffixes
+  // (e.g. "up1-mag-grip", "lg5-2h", "up8-heavy-v-bar"). Falls back to the
+  // base-ID lookup via stripExerciseSuffixes, then to s.exerciseName, then ID.
+  const resolveName = (id: string, fallback?: string): string => {
+    if (exerciseMap[id]) return exerciseMap[id];
+    const base = stripExerciseSuffixes(id);
+    if (base !== id && exerciseMap[base]) return exerciseMap[base];
+    if (fallback && fallback !== id) return fallback;
+    return exerciseMap[base] ?? id;
+  };
 
   if (workout.sets.length > 0) {
     const { error: setsError } = await supabase
@@ -95,7 +105,7 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
           workout_history_id: historyRow.id,
           user_id: user.id,
           exercise_id: s.exerciseId,
-          exercise_name: exerciseMap[s.exerciseId] || s.exerciseId,
+          exercise_name: resolveName(s.exerciseId, s.exerciseName),
           reps: s.reps,
           weight: s.weight,
           set_type: s.setType ?? "working",
