@@ -28,6 +28,7 @@ import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
 import NutritionOnboarding from "./pages/NutritionOnboarding";
 import ResetPassword from "./pages/ResetPassword";
+import Leaderboard from "./pages/Leaderboard";
 import { isOnboardingComplete } from "@/lib/user-preferences";
 
 const queryClient = new QueryClient();
@@ -90,6 +91,7 @@ const AnimatedRoutes = () => {
         <Route path="/profile" element={<PageWrapper><ProtectedRoute><Profile /></ProtectedRoute></PageWrapper>} />
         <Route path="/exercises" element={<PageWrapper><ProtectedRoute><ExerciseLibrary /></ProtectedRoute></PageWrapper>} />
         <Route path="/body" element={<PageWrapper><ProtectedRoute><BodyMeasurements /></ProtectedRoute></PageWrapper>} />
+        <Route path="/leaderboard" element={<PageWrapper><ProtectedRoute><Leaderboard /></ProtectedRoute></PageWrapper>} />
         <Route path="/reset-password" element={<PageWrapper><ResetPassword /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>

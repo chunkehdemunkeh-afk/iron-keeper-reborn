@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchWorkoutHistory, fetchActivityLogs, fetchWeeklyBurn, mondayOfWeek } from "@/lib/cloud-data";
-import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity } from "lucide-react";
+import { fetchWorkoutHistory, fetchActivityLogs, fetchWeeklyBurn, mondayOfWeek, fetchLeaderboardVisibility, updateLeaderboardVisibility } from "@/lib/cloud-data";
+import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import RecoveryTips from "@/components/RecoveryTips";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getUserPreferences, computeWeeklyStreak } from "@/lib/user-preferences";
 import { WORKOUTS } from "@/lib/workout-data";
 import { toast } from "sonner";
@@ -41,6 +41,7 @@ export default function Profile() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [removingAvatar, setRemovingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   const startEditName = () => {
     setNameInput(profile?.display_name || "");
@@ -109,6 +110,23 @@ export default function Profile() {
     enabled: !!user,
   });
   const weekKcal = weekBurn?.totalKcal ?? 0;
+
+  const { data: leaderboardVisible = true } = useQuery({
+    queryKey: ["leaderboard-visibility", user?.id],
+    queryFn: fetchLeaderboardVisibility,
+    enabled: !!user,
+    staleTime: 5 * 60_000,
+  });
+
+  const handleLeaderboardToggle = async (visible: boolean) => {
+    await updateLeaderboardVisibility(visible);
+    queryClient.setQueryData(["leaderboard-visibility", user?.id], visible);
+    queryClient.invalidateQueries({ queryKey: ["leaderboard-1rm"] });
+    queryClient.invalidateQueries({ queryKey: ["leaderboard-max-weight"] });
+    queryClient.invalidateQueries({ queryKey: ["leaderboard-max-reps"] });
+    queryClient.invalidateQueries({ queryKey: ["leaderboard-session-volume"] });
+    toast.success(visible ? "You're on the leaderboard" : "Hidden from leaderboard");
+  };
 
   const prefs = user ? getUserPreferences(user.id) : null;
   const weekGoal = prefs?.daysPerWeek ?? 4;
@@ -393,6 +411,33 @@ export default function Profile() {
 
         {/* Recovery / training tips specific to the user's split — hidden in no-workout mode */}
         {prefs?.splitId !== "none" && <RecoveryTips splitId={prefs?.splitId} />}
+
+        {/* Leaderboard privacy */}
+        <div className="glass-card rounded-xl p-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 flex-shrink-0">
+              <Trophy className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Show me on leaderboards</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Others can see your rank and stats</p>
+            </div>
+          </div>
+          <button
+            onClick={() => handleLeaderboardToggle(!leaderboardVisible)}
+            className={`relative h-6 w-11 rounded-full transition-colors flex-shrink-0 ${
+              leaderboardVisible ? "bg-primary" : "bg-muted"
+            }`}
+            aria-checked={leaderboardVisible}
+            role="switch"
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                leaderboardVisible ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+        </div>
 
         {/* Sign out */}
         <motion.button
