@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, ChevronDown, Dumbbell } from "lucide-react";
+import { Trophy, ChevronDown, Dumbbell, Info } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   fetchTopExercises,
@@ -13,6 +13,7 @@ import {
   type LeaderboardEntry,
   type VolumeLeaderboardEntry,
 } from "@/lib/cloud-data";
+import { isBilateralDumbbell } from "@/lib/strength-standards";
 import LeaderboardPodium from "@/components/leaderboard/LeaderboardPodium";
 import LeaderboardRow from "@/components/leaderboard/LeaderboardRow";
 import {
@@ -37,7 +38,7 @@ const CATEGORIES: { id: Category; label: string }[] = [
   { id: "volume",    label: "Volume"     },
 ];
 
-const TIME_OPTIONS: { value: TimeFilter; label: string }[] = [
+const TIME_OPTIONS: { value: "all" | "monthly" | "weekly"; label: string }[] = [
   { value: "all",     label: "All Time" },
   { value: "monthly", label: "Monthly"  },
   { value: "weekly",  label: "Weekly"   },
@@ -123,16 +124,24 @@ function ExercisePicker({
   );
 }
 
-function fmt1RM(e: LeaderboardEntry)     { return `${e.value.toFixed(1)} kg`; }
-function fmtWeight(e: LeaderboardEntry)  { return `${e.value} kg`; }
-function fmtReps(e: LeaderboardEntry)    { return `${e.value} reps`; }
-function fmtVolume(e: LeaderboardEntry)  {
+function fmt1RM(e: LeaderboardEntry)    { return `${e.value.toFixed(1)} kg`; }
+function fmtWeight(e: LeaderboardEntry) { return `${e.value} kg`; }
+function fmtReps(e: LeaderboardEntry)   { return `${e.value} reps`; }
+function fmtVolume(e: LeaderboardEntry) {
   return e.value >= 1000 ? `${(e.value / 1000).toFixed(1)}t` : `${Math.round(e.value)} kg`;
 }
 
-function sub1RM(e: LeaderboardEntry)    { return e.reps === 1 ? `${e.weight} kg × 1` : `${e.weight} kg × ${e.reps} (Epley)`; }
+function sub1RM(e: LeaderboardEntry) {
+  if (e.isTested) return "Actual test";
+  if ((e.reps ?? 0) <= 1) return `${e.weight} kg × 1`;
+  return `${e.weight} kg × ${e.reps} reps (Epley)`;
+}
 function subWeight(e: LeaderboardEntry) { return e.reps ? `${e.reps} reps at this weight` : undefined; }
 function subReps(e: LeaderboardEntry)   { return e.weight ? `at ${e.weight} kg` : undefined; }
+function subVolume(e: LeaderboardEntry) {
+  const sc = (e as VolumeLeaderboardEntry).sessionCount ?? 0;
+  return `${sc} session${sc !== 1 ? "s" : ""}`;
+}
 
 function YourRankBanner({
   entry, total, valueFn,
@@ -169,11 +178,19 @@ function YourRankBanner({
 export default function Leaderboard() {
   const { user } = useAuth();
   const [category, setCategory] = useState<Category>("1rm");
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
+  const [timeFilter, setTimeFilter] = useState<"all" | "monthly" | "weekly">("all");
   const [sessionType, setSessionType] = useState("All");
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>("");
 
   const isExerciseCategory = category !== "volume";
+
+  // Comparison time filter for trend arrows (prev period vs current)
+  const compTimeFilter: TimeFilter | null =
+    timeFilter === "weekly"  ? "prev_weekly"  :
+    timeFilter === "monthly" ? "prev_monthly" :
+    null;
+
+  // ── Main queries ─────────────────────────────────────────────────────────────
 
   const { data: topExercises = [], isLoading: exercisesLoading } = useQuery({
     queryKey: ["leaderboard-top-exercises", timeFilter],
@@ -183,6 +200,8 @@ export default function Leaderboard() {
   });
 
   const exerciseId = selectedExerciseId || topExercises[0]?.exerciseId || "";
+  const exerciseName = topExercises.find((e) => e.exerciseId === exerciseId)?.exerciseName ?? "";
+  const isPerDB = category === "1rm" && isBilateralDumbbell(exerciseId, exerciseName);
 
   const { data: entries1rm = [], isLoading: loading1rm } = useQuery({
     queryKey: ["leaderboard-1rm", exerciseId, timeFilter],
@@ -212,11 +231,61 @@ export default function Leaderboard() {
     enabled: !!user && category === "volume",
   });
 
+  // ── Comparison queries (prev period) for trend arrows ────────────────────────
+
+  const { data: comp1rm = [] } = useQuery({
+    queryKey: ["leaderboard-1rm", exerciseId, compTimeFilter],
+    queryFn: () => fetchLeaderboard1RM(exerciseId, compTimeFilter!),
+    staleTime: 5 * 60_000,
+    enabled: !!user && category === "1rm" && !!exerciseId && !!compTimeFilter,
+  });
+
+  const { data: compMaxWeight = [] } = useQuery({
+    queryKey: ["leaderboard-max-weight", exerciseId, compTimeFilter],
+    queryFn: () => fetchLeaderboardMaxWeight(exerciseId, compTimeFilter!),
+    staleTime: 5 * 60_000,
+    enabled: !!user && category === "maxweight" && !!exerciseId && !!compTimeFilter,
+  });
+
+  const { data: compMaxReps = [] } = useQuery({
+    queryKey: ["leaderboard-max-reps", exerciseId, compTimeFilter],
+    queryFn: () => fetchLeaderboardMaxReps(exerciseId, compTimeFilter!),
+    staleTime: 5 * 60_000,
+    enabled: !!user && category === "maxreps" && !!exerciseId && !!compTimeFilter,
+  });
+
+  const { data: compVolume = [] } = useQuery({
+    queryKey: ["leaderboard-session-volume", sessionType, compTimeFilter],
+    queryFn: () => fetchLeaderboardSessionVolume(sessionType, compTimeFilter!),
+    staleTime: 5 * 60_000,
+    enabled: !!user && category === "volume" && !!compTimeFilter,
+  });
+
+  // ── Derived state ────────────────────────────────────────────────────────────
+
   const activeEntries: LeaderboardEntry[] =
     category === "1rm"       ? entries1rm :
     category === "maxweight" ? entriesMaxWeight :
     category === "maxreps"   ? entriesMaxReps :
     entriesVolume;
+
+  const compEntries: LeaderboardEntry[] =
+    category === "1rm"       ? comp1rm :
+    category === "maxweight" ? compMaxWeight :
+    category === "maxreps"   ? compMaxReps :
+    compVolume;
+
+  const prevRankMap = useMemo(() => {
+    const map = new Map<string, number>();
+    compEntries.forEach((e) => map.set(e.userId, e.rank));
+    return map;
+  }, [compEntries]);
+
+  const getRankDelta = (entry: LeaderboardEntry): number | null => {
+    if (!compTimeFilter) return null;
+    const prev = prevRankMap.get(entry.userId);
+    return prev !== undefined ? prev - entry.rank : null;
+  };
 
   const isLoading =
     category === "1rm"       ? (loading1rm || (isExerciseCategory && exercisesLoading)) :
@@ -234,7 +303,7 @@ export default function Leaderboard() {
     category === "1rm"       ? sub1RM :
     category === "maxweight" ? subWeight :
     category === "maxreps"   ? subReps :
-    (e: LeaderboardEntry) => (e as VolumeLeaderboardEntry).workoutName;
+    subVolume;
 
   const podiumEntries = activeEntries.slice(0, 3);
   const listEntries   = activeEntries.slice(3);
@@ -291,11 +360,26 @@ export default function Leaderboard() {
             <button
               key={id}
               onClick={() => setCategory(id)}
-              className={`relative flex-shrink-0 pb-2.5 text-sm font-semibold transition-colors ${
+              className={`relative flex-shrink-0 pb-2.5 text-sm font-semibold transition-colors flex items-center gap-1 ${
                 category === id ? "text-foreground" : "text-muted-foreground/40 hover:text-muted-foreground/70"
               }`}
             >
               {label}
+              {id === "1rm" && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <span
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center cursor-help"
+                    >
+                      <Info className="w-3 h-3 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors" />
+                    </span>
+                  </PopoverTrigger>
+                  <PopoverContent side="bottom" align="start" className="text-xs max-w-[220px] p-3 leading-relaxed">
+                    Estimated via the Epley formula: 1RM = weight × (1 + reps ÷ 30). Actual 1RM test sets use the recorded weight directly.
+                  </PopoverContent>
+                </Popover>
+              )}
               {category === id && (
                 <motion.div
                   layoutId="cat-underline"
@@ -388,7 +472,12 @@ export default function Leaderboard() {
               {/* Podium */}
               {podiumEntries.length > 0 && (
                 <div className="mb-2">
-                  <LeaderboardPodium entries={podiumEntries} valueLabel={valueFn} />
+                  <LeaderboardPodium
+                    entries={podiumEntries}
+                    valueLabel={valueFn}
+                    getRankDelta={getRankDelta}
+                    isPerDB={isPerDB}
+                  />
                 </div>
               )}
 
@@ -405,6 +494,8 @@ export default function Leaderboard() {
                       valueLabel={valueFn(entry)}
                       subLabel={subFn(entry)}
                       index={i}
+                      rankDelta={getRankDelta(entry)}
+                      isPerDB={isPerDB}
                     />
                   ))}
                 </div>

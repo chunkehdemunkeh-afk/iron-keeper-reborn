@@ -6,6 +6,8 @@ interface Props {
   valueLabel: string;
   subLabel?: string;
   index: number;
+  rankDelta?: number | null;
+  isPerDB?: boolean;
 }
 
 function Avatar({ entry }: { entry: LeaderboardEntry }) {
@@ -26,11 +28,17 @@ function Avatar({ entry }: { entry: LeaderboardEntry }) {
   );
 }
 
-export default function LeaderboardRow({ entry, valueLabel, subLabel, index }: Props) {
-  const name = entry.isCurrentUser
-    ? entry.displayName
-    : entry.displayName;
+function TrendBadge({ delta }: { delta: number }) {
+  if (delta > 0) return (
+    <span className="text-[9px] font-bold leading-none text-emerald-400">↑{delta}</span>
+  );
+  if (delta < 0) return (
+    <span className="text-[9px] font-bold leading-none text-red-400">↓{Math.abs(delta)}</span>
+  );
+  return <span className="text-[9px] font-bold leading-none text-muted-foreground/30">—</span>;
+}
 
+export default function LeaderboardRow({ entry, valueLabel, subLabel, index, rankDelta, isPerDB }: Props) {
   return (
     <motion.div
       initial={{ opacity: 0, x: -8 }}
@@ -45,10 +53,15 @@ export default function LeaderboardRow({ entry, valueLabel, subLabel, index }: P
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-primary" />
       )}
 
-      {/* Rank number — large, muted, tabular */}
-      <span className="font-display text-2xl font-black leading-none w-9 text-right flex-shrink-0 tabular-nums text-muted-foreground/25 select-none">
-        {String(entry.rank).padStart(2, "0")}
-      </span>
+      {/* Rank + trend indicator */}
+      <div className="flex flex-col items-end w-9 flex-shrink-0 gap-0.5">
+        <span className="font-display text-2xl font-black leading-none tabular-nums text-muted-foreground/25 select-none">
+          {String(entry.rank).padStart(2, "0")}
+        </span>
+        {rankDelta !== null && rankDelta !== undefined && (
+          <TrendBadge delta={rankDelta} />
+        )}
+      </div>
 
       <Avatar entry={entry} />
 
@@ -56,7 +69,7 @@ export default function LeaderboardRow({ entry, valueLabel, subLabel, index }: P
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p className={`text-sm font-semibold truncate ${entry.isCurrentUser ? "text-foreground" : "text-foreground/80"}`}>
-            {name}
+            {entry.displayName}
           </p>
           {entry.isCurrentUser && (
             <span className="text-[9px] font-bold tracking-wider text-primary bg-primary/12 rounded px-1.5 py-0.5 flex-shrink-0 uppercase">
@@ -64,8 +77,22 @@ export default function LeaderboardRow({ entry, valueLabel, subLabel, index }: P
             </span>
           )}
         </div>
-        {subLabel && (
-          <p className="text-[10px] text-muted-foreground/60 mt-0.5 truncate">{subLabel}</p>
+        {(subLabel || entry.isTested || isPerDB) && (
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            {subLabel && (
+              <p className="text-[10px] text-muted-foreground/60 truncate">{subLabel}</p>
+            )}
+            {entry.isTested && (
+              <span className="text-[9px] font-bold tracking-wider bg-emerald-500/15 text-emerald-400 rounded px-1.5 py-0.5 flex-shrink-0 uppercase">
+                Tested
+              </span>
+            )}
+            {isPerDB && (
+              <span className="text-[9px] font-bold tracking-wider bg-primary/12 text-primary/60 rounded px-1.5 py-0.5 flex-shrink-0">
+                per DB
+              </span>
+            )}
+          </div>
         )}
       </div>
 

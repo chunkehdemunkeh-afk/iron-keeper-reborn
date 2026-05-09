@@ -48,17 +48,34 @@ function GoldAvatar({ entry }: { entry: LeaderboardEntry }) {
   );
 }
 
+function TrendPill({ delta, small }: { delta: number; small?: boolean }) {
+  const base = small ? "text-[9px] px-1 py-0.5" : "text-[10px] px-2 py-0.5";
+  if (delta > 0) return (
+    <span className={`${base} font-bold rounded-full bg-emerald-500/20 text-emerald-400`}>↑{delta}</span>
+  );
+  if (delta < 0) return (
+    <span className={`${base} font-bold rounded-full bg-red-500/20 text-red-400`}>↓{Math.abs(delta)}</span>
+  );
+  return (
+    <span className={`${base} font-bold rounded-full bg-muted/30 text-muted-foreground/40`}>—</span>
+  );
+}
+
 interface Props {
   entries: LeaderboardEntry[];
   valueLabel: (e: LeaderboardEntry) => string;
+  getRankDelta?: (e: LeaderboardEntry) => number | null;
+  isPerDB?: boolean;
 }
 
-export default function LeaderboardPodium({ entries, valueLabel }: Props) {
+export default function LeaderboardPodium({ entries, valueLabel, getRankDelta, isPerDB }: Props) {
   const [first, second, third] = entries;
   if (!first) return null;
 
   const displayName = (e: LeaderboardEntry) =>
     e.isCurrentUser ? "You" : e.displayName;
+
+  const firstDelta = getRankDelta ? getRankDelta(first) : null;
 
   return (
     <div className="space-y-3">
@@ -77,6 +94,13 @@ export default function LeaderboardPodium({ entries, valueLabel }: Props) {
           className="absolute inset-0 pointer-events-none"
           style={{ background: `radial-gradient(ellipse at 30% 50%, ${GOLD}25 0%, transparent 65%)` }}
         />
+
+        {/* Trend pill — top right */}
+        {firstDelta !== null && firstDelta !== undefined && (
+          <div className="absolute top-3 right-3">
+            <TrendPill delta={firstDelta} />
+          </div>
+        )}
 
         <div className="relative flex items-center gap-4">
           {/* Avatar */}
@@ -109,6 +133,21 @@ export default function LeaderboardPodium({ entries, valueLabel }: Props) {
             >
               {valueLabel(first)}
             </motion.p>
+            {/* Badges below value */}
+            {(first.isTested || isPerDB) && (
+              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                {first.isTested && (
+                  <span className="text-[9px] font-bold tracking-wider bg-emerald-500/15 text-emerald-400 rounded px-1.5 py-0.5 uppercase">
+                    Tested
+                  </span>
+                )}
+                {isPerDB && (
+                  <span className="text-[9px] font-bold tracking-wider bg-primary/12 text-primary/60 rounded px-1.5 py-0.5">
+                    per DB
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Ghost rank number */}
@@ -126,8 +165,10 @@ export default function LeaderboardPodium({ entries, valueLabel }: Props) {
         {[
           { entry: second, color: SILVER, rank: 2, label: "2nd Place" },
           { entry: third,  color: BRONZE, rank: 3, label: "3rd Place" },
-        ].map(({ entry, color, rank, label }) =>
-          entry ? (
+        ].map(({ entry, color, rank, label }) => {
+          if (!entry) return <div key={rank} />;
+          const delta = getRankDelta ? getRankDelta(entry) : null;
+          return (
             <motion.div
               key={entry.userId}
               initial={{ opacity: 0, y: 12 }}
@@ -143,6 +184,9 @@ export default function LeaderboardPodium({ entries, valueLabel }: Props) {
                 >
                   {rank}
                 </span>
+                {delta !== null && delta !== undefined && (
+                  <TrendPill delta={delta} small />
+                )}
                 <Avatar entry={entry} size={36} />
               </div>
               <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color }}>
@@ -154,11 +198,23 @@ export default function LeaderboardPodium({ entries, valueLabel }: Props) {
               <p className="font-display text-xl font-black leading-none mt-1" style={{ color }}>
                 {valueLabel(entry)}
               </p>
+              {(entry.isTested || isPerDB) && (
+                <div className="flex items-center gap-1 mt-1 flex-wrap">
+                  {entry.isTested && (
+                    <span className="text-[8px] font-bold tracking-wider bg-emerald-500/15 text-emerald-400 rounded px-1 py-0.5 uppercase">
+                      Tested
+                    </span>
+                  )}
+                  {isPerDB && (
+                    <span className="text-[8px] font-bold tracking-wider bg-primary/12 text-primary/60 rounded px-1 py-0.5">
+                      per DB
+                    </span>
+                  )}
+                </div>
+              )}
             </motion.div>
-          ) : (
-            <div key={rank} />
-          )
-        )}
+          );
+        })}
       </div>
     </div>
   );

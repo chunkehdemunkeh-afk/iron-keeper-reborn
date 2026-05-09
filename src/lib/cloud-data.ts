@@ -1554,7 +1554,7 @@ export function mondayOfWeek(date: Date): string {
 
 // ── Leaderboard ───────────────────────────────────────────────────────────────
 
-export type TimeFilter = 'all' | 'monthly' | 'weekly';
+export type TimeFilter = 'all' | 'monthly' | 'weekly' | 'prev_weekly' | 'prev_monthly';
 
 export interface LeaderboardEntry {
   userId: string;
@@ -1564,13 +1564,13 @@ export interface LeaderboardEntry {
   value: number;
   weight?: number;
   reps?: number;
+  isTested?: boolean;
   loggedAt?: string;
   isCurrentUser: boolean;
 }
 
 export interface VolumeLeaderboardEntry extends LeaderboardEntry {
-  workoutName: string;
-  sessionDate: string;
+  sessionCount: number;
 }
 
 export interface TopExercise {
@@ -1607,6 +1607,7 @@ export async function fetchLeaderboard1RM(exerciseId: string, timeFilter: TimeFi
     value: Number(r.best_1rm),
     weight: Number(r.weight),
     reps: Number(r.reps),
+    isTested: Boolean(r.is_tested),
     loggedAt: r.logged_at,
     isCurrentUser: r.user_id === user?.id,
   }));
@@ -1663,8 +1664,7 @@ export async function fetchLeaderboardSessionVolume(sessionType: string, timeFil
     avatarUrl: r.avatar_url ?? null,
     rank: Number(r.rank),
     value: Number(r.total_volume),
-    workoutName: r.workout_name,
-    sessionDate: r.session_date,
+    sessionCount: Number(r.session_count),
     isCurrentUser: r.user_id === user?.id,
   }));
 }
