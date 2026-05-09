@@ -165,7 +165,7 @@ function subReps(e: LeaderboardEntry) {
   return e.weight ? `at ${e.weight} kg` : undefined;
 }
 
-function YourRankBanner({ entry, valueFn }: { entry?: LeaderboardEntry; valueFn: (e: LeaderboardEntry) => string }) {
+function YourRankBanner({ entry, total, valueFn }: { entry?: LeaderboardEntry; total: number; valueFn: (e: LeaderboardEntry) => string }) {
   if (!entry) return null;
   return (
     <motion.div
@@ -179,7 +179,7 @@ function YourRankBanner({ entry, valueFn }: { entry?: LeaderboardEntry; valueFn:
       </div>
       <div className="text-right">
         <p className="font-display text-xl font-bold text-foreground">{valueFn(entry)}</p>
-        <p className="text-[10px] text-muted-foreground">of {entry.rank} ranked athletes</p>
+        <p className="text-[10px] text-muted-foreground">of {total} ranked athlete{total !== 1 ? "s" : ""}</p>
       </div>
     </motion.div>
   );
@@ -410,7 +410,7 @@ export default function Leaderboard() {
       {/* Sticky your-rank banner */}
       {!isLoading && myEntry && (
         <div className="fixed bottom-0 left-0 right-0 px-4 pb-[calc(64px+env(safe-area-inset-bottom))]">
-          <YourRankBanner entry={myEntry} valueFn={valueFn} />
+          <YourRankBanner entry={myEntry} total={activeEntries.length} valueFn={valueFn} />
         </div>
       )}
     </div>
