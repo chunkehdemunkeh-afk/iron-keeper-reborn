@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.89",
+    version: "1.6.90",
     date: "2026-05-09",
     title: "Updates & Fixes",
     changes: [
-      "Fix leaderboard: use LEFT JOIN so users without a profiles row are included",
+      "Fix your-rank banner showing rank position instead of total athletes",
     ],
   },
   {
