@@ -14,61 +14,65 @@ function Avatar({ entry }: { entry: LeaderboardEntry }) {
       <img
         src={entry.avatarUrl}
         alt={entry.displayName}
-        className="h-9 w-9 rounded-full object-cover flex-shrink-0"
+        className="h-8 w-8 rounded-full object-cover flex-shrink-0"
       />
     );
   }
-  const initials = entry.displayName
-    .split(" ")
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = entry.displayName.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-display font-bold text-muted-foreground flex-shrink-0">
+    <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center text-[10px] font-display font-bold text-muted-foreground flex-shrink-0">
       {initials}
     </div>
   );
 }
 
 export default function LeaderboardRow({ entry, valueLabel, subLabel, index }: Props) {
+  const name = entry.isCurrentUser
+    ? entry.displayName
+    : entry.displayName;
+
   return (
     <motion.div
-      initial={{ opacity: 0, x: -12 }}
+      initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.05 + index * 0.04 }}
-      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${
-        entry.isCurrentUser
-          ? "border border-primary/40 bg-primary/5"
-          : "bg-card/40"
+      transition={{ delay: 0.04 + index * 0.035, duration: 0.25, ease: "easeOut" }}
+      className={`flex items-center gap-3 py-3 border-b border-border/20 ${
+        entry.isCurrentUser ? "relative" : ""
       }`}
     >
-      {/* Rank */}
-      <span className="font-display text-lg font-bold text-muted-foreground w-7 text-center flex-shrink-0">
-        {entry.rank}
+      {/* Current user side accent */}
+      {entry.isCurrentUser && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-primary" />
+      )}
+
+      {/* Rank number — large, muted, tabular */}
+      <span className="font-display text-2xl font-black leading-none w-9 text-right flex-shrink-0 tabular-nums text-muted-foreground/25 select-none">
+        {String(entry.rank).padStart(2, "0")}
       </span>
 
       <Avatar entry={entry} />
 
-      {/* Name + sub info */}
+      {/* Name + sub */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-foreground truncate">
-          {entry.isCurrentUser ? (
-            <span>
-              {entry.displayName.split(" ")[0]}{" "}
-              <span className="text-[10px] font-bold text-primary bg-primary/15 rounded-full px-1.5 py-0.5 ml-1">YOU</span>
+        <div className="flex items-center gap-1.5">
+          <p className={`text-sm font-semibold truncate ${entry.isCurrentUser ? "text-foreground" : "text-foreground/80"}`}>
+            {name}
+          </p>
+          {entry.isCurrentUser && (
+            <span className="text-[9px] font-bold tracking-wider text-primary bg-primary/12 rounded px-1.5 py-0.5 flex-shrink-0 uppercase">
+              You
             </span>
-          ) : (
-            entry.displayName
           )}
-        </p>
+        </div>
         {subLabel && (
-          <p className="text-[10px] text-muted-foreground mt-0.5">{subLabel}</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5 truncate">{subLabel}</p>
         )}
       </div>
 
       {/* Value */}
-      <span className="font-display text-base font-bold text-foreground flex-shrink-0">
+      <span className={`font-display text-base font-bold flex-shrink-0 tabular-nums ${
+        entry.isCurrentUser ? "text-primary" : "text-foreground/90"
+      }`}>
         {valueLabel}
       </span>
     </motion.div>

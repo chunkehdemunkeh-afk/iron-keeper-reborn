@@ -1,40 +1,25 @@
 import { motion } from "framer-motion";
 import { LeaderboardEntry } from "@/lib/cloud-data";
 
-const MEDAL_COLORS = [
-  { ring: "#FFD700", bg: "bg-[#FFD700]/15", label: "text-[#FFD700]", border: "border-[#FFD700]/50" },
-  { ring: "#C0C0C0", bg: "bg-[#C0C0C0]/10", label: "text-[#C0C0C0]", border: "border-[#C0C0C0]/40" },
-  { ring: "#CD7F32", bg: "bg-[#CD7F32]/10", label: "text-[#CD7F32]", border: "border-[#CD7F32]/40" },
-];
+const GOLD   = "#F0C040";
+const SILVER = "#9AACBA";
+const BRONZE = "#B8825A";
 
-const PODIUM_HEIGHTS = ["h-24", "h-16", "h-12"];
-const PODIUM_ORDER = [1, 0, 2]; // 2nd | 1st | 3rd visual order
-
-interface Props {
-  entries: LeaderboardEntry[];
-  valueLabel: (e: LeaderboardEntry) => string;
-}
-
-function Avatar({ entry, size = 48 }: { entry: LeaderboardEntry; size?: number }) {
+function Avatar({ entry, size }: { entry: LeaderboardEntry; size: number }) {
   if (entry.avatarUrl) {
     return (
       <img
         src={entry.avatarUrl}
         alt={entry.displayName}
-        className="rounded-full object-cover"
+        className="rounded-full object-cover flex-shrink-0"
         style={{ width: size, height: size }}
       />
     );
   }
-  const initials = entry.displayName
-    .split(" ")
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = entry.displayName.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
   return (
     <div
-      className="rounded-full flex items-center justify-center bg-muted text-muted-foreground font-display font-bold"
+      className="rounded-full flex items-center justify-center bg-muted/60 font-display font-bold text-muted-foreground flex-shrink-0"
       style={{ width: size, height: size, fontSize: size * 0.36 }}
     >
       {initials}
@@ -42,73 +27,139 @@ function Avatar({ entry, size = 48 }: { entry: LeaderboardEntry; size?: number }
   );
 }
 
+function GoldAvatar({ entry }: { entry: LeaderboardEntry }) {
+  return (
+    <div className="relative flex-shrink-0">
+      <motion.div
+        animate={{ opacity: [0.6, 1, 0.6] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute inset-0 rounded-full"
+        style={{ boxShadow: `0 0 20px 6px ${GOLD}50`, borderRadius: "50%" }}
+      />
+      <div
+        className="rounded-full p-[2px]"
+        style={{ background: `conic-gradient(${GOLD} 0%, ${GOLD}80 60%, transparent 100%)` }}
+      >
+        <div className="rounded-full p-[2px] bg-background">
+          <Avatar entry={entry} size={64} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface Props {
+  entries: LeaderboardEntry[];
+  valueLabel: (e: LeaderboardEntry) => string;
+}
+
 export default function LeaderboardPodium({ entries, valueLabel }: Props) {
-  const top3 = entries.slice(0, 3);
-  if (top3.length === 0) return null;
+  const [first, second, third] = entries;
+  if (!first) return null;
+
+  const displayName = (e: LeaderboardEntry) =>
+    e.isCurrentUser ? "You" : e.displayName;
 
   return (
-    <div className="flex items-end justify-center gap-3 pt-2 pb-1">
-      {PODIUM_ORDER.map((idx) => {
-        const entry = top3[idx];
-        if (!entry) return <div key={idx} className="w-24" />;
-        const medal = MEDAL_COLORS[idx];
-        const isFirst = idx === 0;
+    <div className="space-y-3">
+      {/* Champion hero card */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="relative overflow-hidden rounded-2xl border p-5"
+        style={{ borderColor: `${GOLD}35`, background: `linear-gradient(135deg, ${GOLD}0A 0%, transparent 60%)` }}
+      >
+        {/* Ambient glow */}
+        <motion.div
+          animate={{ opacity: [0.2, 0.5, 0.2] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: `radial-gradient(ellipse at 30% 50%, ${GOLD}25 0%, transparent 65%)` }}
+        />
 
-        return (
-          <motion.div
-            key={entry.userId}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + idx * 0.08, type: "spring", stiffness: 300, damping: 24 }}
-            className="flex flex-col items-center gap-1.5 flex-1 max-w-[90px]"
+        <div className="relative flex items-center gap-4">
+          {/* Avatar */}
+          <div className="relative">
+            <GoldAvatar entry={first} />
+            <motion.span
+              initial={{ scale: 0, y: 4 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ delay: 0.5, type: "spring", stiffness: 400, damping: 15 }}
+              className="absolute -top-5 left-1/2 -translate-x-1/2 text-xl select-none"
+            >
+              👑
+            </motion.span>
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold tracking-[0.15em] uppercase mb-1" style={{ color: GOLD }}>
+              Champion
+            </p>
+            <p className="text-base font-semibold text-foreground truncate leading-tight">
+              {displayName(first)}
+            </p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="font-display text-4xl font-black leading-none mt-1"
+              style={{ color: GOLD }}
+            >
+              {valueLabel(first)}
+            </motion.p>
+          </div>
+
+          {/* Ghost rank number */}
+          <span
+            className="font-display font-black leading-none select-none flex-shrink-0"
+            style={{ fontSize: 80, color: `${GOLD}12`, lineHeight: 1 }}
           >
-            {/* Crown for 1st */}
-            {isFirst && (
-              <motion.div
-                initial={{ scale: 0, rotate: -20 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.35, type: "spring", stiffness: 400 }}
-                className="text-[18px] leading-none"
-              >
-                👑
-              </motion.div>
-            )}
+            1
+          </span>
+        </div>
+      </motion.div>
 
-            {/* Avatar with medal ring */}
-            <div
-              className="rounded-full p-0.5"
-              style={{ background: `conic-gradient(${medal.ring} 0%, transparent 80%)`, boxShadow: `0 0 12px ${medal.ring}40` }}
-            >
-              <div className="rounded-full bg-background p-0.5">
-                <Avatar entry={entry} size={isFirst ? 52 : 42} />
-              </div>
-            </div>
-
-            {/* Name */}
-            <p className="text-[10px] font-semibold text-center leading-tight max-w-full truncate px-1">
-              {entry.isCurrentUser ? "You" : entry.displayName.split(" ")[0]}
-            </p>
-
-            {/* Value */}
-            <p className={`font-display text-sm font-bold leading-none ${medal.label}`}>
-              {valueLabel(entry)}
-            </p>
-
-            {/* Podium block */}
+      {/* Silver + Bronze */}
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          { entry: second, color: SILVER, rank: 2, label: "2nd Place" },
+          { entry: third,  color: BRONZE, rank: 3, label: "3rd Place" },
+        ].map(({ entry, color, rank, label }) =>
+          entry ? (
             <motion.div
-              initial={{ scaleY: 0 }}
-              animate={{ scaleY: 1 }}
-              transition={{ delay: 0.2 + idx * 0.06, type: "spring", stiffness: 260, damping: 20 }}
-              style={{ transformOrigin: "bottom" }}
-              className={`w-full ${PODIUM_HEIGHTS[idx]} rounded-t-lg ${medal.bg} border ${medal.border} flex items-center justify-center`}
+              key={entry.userId}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: rank * 0.08, duration: 0.35, ease: "easeOut" }}
+              className="relative rounded-xl border p-3 overflow-hidden"
+              style={{ borderColor: `${color}28`, background: `linear-gradient(135deg, ${color}08 0%, transparent 70%)` }}
             >
-              <span className={`font-display text-2xl font-black leading-none ${medal.label}`}>
-                {entry.rank}
-              </span>
+              <div className="flex items-center gap-2 mb-3">
+                <span
+                  className="font-display text-4xl font-black leading-none select-none"
+                  style={{ color: `${color}25` }}
+                >
+                  {rank}
+                </span>
+                <Avatar entry={entry} size={36} />
+              </div>
+              <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color }}>
+                {label}
+              </p>
+              <p className="text-xs font-semibold text-foreground truncate">
+                {displayName(entry)}
+              </p>
+              <p className="font-display text-xl font-black leading-none mt-1" style={{ color }}>
+                {valueLabel(entry)}
+              </p>
             </motion.div>
-          </motion.div>
-        );
-      })}
+          ) : (
+            <div key={rank} />
+          )
+        )}
+      </div>
     </div>
   );
 }
