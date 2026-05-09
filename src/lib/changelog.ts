@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.93",
+    version: "1.6.94",
     date: "2026-05-09",
     title: "Updates & Fixes",
     changes: [
-      "Redesign leaderboard: premium editorial aesthetic",
+      "Refine leaderboard: cumulative volume, true max reps, 1RM improvements, trend arrows",
     ],
   },
   {
