@@ -1,7 +1,7 @@
 import { WORKOUTS } from "@/lib/workout-data";
 import { getAllCustomWorkouts } from "@/pages/WorkoutBuilder";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, ChevronDown, Plus, Dumbbell, Zap, Wind, Shield, Crosshair, ArrowUp, ArrowDown, Footprints, Layers, Flame, Trophy, Activity, Target } from "lucide-react";
+import { ChevronRight, ChevronDown, Plus, Dumbbell, Zap, Wind, Shield, Crosshair, ArrowUp, ArrowDown, Footprints, Layers, Flame, Trophy, Activity, Target, History } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -211,6 +211,13 @@ export default function Sessions() {
           </motion.h1>
           <div className="flex items-center gap-1">
             <HelpButton />
+            <button
+              onClick={() => navigate("/history")}
+              className="flex items-center gap-1.5 text-xs font-semibold text-foreground bg-muted/60 rounded-full px-3 py-1.5 hover:bg-muted transition-colors active:scale-95"
+              title="View past sessions"
+            >
+              <History className="h-3.5 w-3.5" /> History
+            </button>
             <button
               onClick={() => navigate("/builder")}
               className="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 rounded-full px-3 py-1.5 hover:bg-primary/20 transition-colors active:scale-95"
