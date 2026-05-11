@@ -381,6 +381,41 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
   return (sets || []).map(s => ({ reps: s.reps, weight: Number(s.weight) }));
 }
 
+// Find the most recent working sets for an exercise whose stored ID starts with `baseId`.
+// Used as a fallback when an exercise was substituted last session — we still want the
+// previous weights/reps from whenever it was actually performed (including any cable
+// attachment variant such as "up1-handles" or "up1-rope"). Returns the matched
+// exercise_id and its sets (in order).
+export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerciseId: string; sets: { reps: number; weight: number }[] } | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: latestSet } = await supabase
+    .from("workout_sets")
+    .select("workout_history_id, exercise_id")
+    .eq("user_id", user.id)
+    .or(`exercise_id.eq.${baseId},exercise_id.like.${baseId}-%`)
+    .neq("set_type", "warmup")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!latestSet) return null;
+
+  const { data: sets } = await supabase
+    .from("workout_sets")
+    .select("reps, weight, set_type")
+    .eq("workout_history_id", latestSet.workout_history_id)
+    .eq("exercise_id", latestSet.exercise_id)
+    .neq("set_type", "warmup")
+    .order("created_at", { ascending: true });
+
+  return {
+    exerciseId: latestSet.exercise_id as string,
+    sets: (sets || []).map(s => ({ reps: s.reps, weight: Number(s.weight) })),
+  };
+}
+
 // Body measurements
 export async function saveBodyMeasurement(data: { bodyWeight?: number; bodyFatPct?: number; notes?: string }): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
