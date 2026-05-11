@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.96",
+    version: "1.6.97",
     date: "2026-05-11",
     title: "Updates & Fixes",
     changes: [
-      "Update CLAUDE.md: biometric scoring system + Galaxy Watch gotchas",
+      "Track biometric deployment steps in PLAN.md",
     ],
   },
   {
