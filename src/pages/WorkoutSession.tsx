@@ -1586,6 +1586,7 @@ export default function WorkoutSession() {
 
               const maxSets = Math.max(...groupExIds.map(id => setLogs[id]?.length || 0));
               const allGroupDone = groupExIds.every(id => setLogs[id]?.every(s => s.completed));
+              const groupLastDataById = Object.fromEntries(groupExIds.map(id => [id, getLastDataForExercise(id)]));
               const isSSExpanded = expandedExercise === `ss-${ex.id}`;
 
               return (
