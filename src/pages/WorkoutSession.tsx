@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { WORKOUTS, type CompletedWorkout, type Exercise } from "@/lib/workout-data";
 import { getAllCustomWorkouts } from "@/pages/WorkoutBuilder";
-import { saveWorkoutToCloud, fetchLastSessionData, fetchExerciseLastData } from "@/lib/cloud-data";
+import { saveWorkoutToCloud, fetchLastSessionData, fetchExerciseLastData, fetchExerciseLastDataLike } from "@/lib/cloud-data";
 import { ArrowLeft, Check, Timer, ChevronDown, ChevronUp, Trophy, Play, RotateCcw, TrendingUp, TrendingDown, GripVertical, Shuffle, Star, MessageSquare, Plus, Trash2, Flame, Grip, History, Search, Hand, Zap, Dumbbell, Target, HelpCircle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { motion, animate, AnimatePresence, Reorder, useDragControls, useMotionValue, useTransform, PanInfo } from "framer-motion";
