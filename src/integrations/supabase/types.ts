@@ -357,6 +357,7 @@ export type Database = {
           display_name: string | null
           id: string
           last_seen_at: string | null
+          leaderboard_visible: boolean
           updated_at: string
           user_id: string
         }
@@ -366,6 +367,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           last_seen_at?: string | null
+          leaderboard_visible?: boolean
           updated_at?: string
           user_id: string
         }
@@ -375,6 +377,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           last_seen_at?: string | null
+          leaderboard_visible?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -667,6 +670,63 @@ export type Database = {
           _workout_history_id: string
         }
         Returns: number
+      }
+      get_1rm_leaderboard: {
+        Args: { p_exercise_id: string; p_time_filter?: string }
+        Returns: {
+          avatar_url: string
+          best_1rm: number
+          display_name: string
+          is_tested: boolean
+          logged_at: string
+          rank: number
+          reps: number
+          user_id: string
+          weight: number
+        }[]
+      }
+      get_max_reps_leaderboard: {
+        Args: { p_exercise_id: string; p_time_filter?: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          heaviest_weight: number
+          logged_at: string
+          max_reps: number
+          rank: number
+          user_id: string
+        }[]
+      }
+      get_max_weight_leaderboard: {
+        Args: { p_exercise_id: string; p_time_filter?: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          logged_at: string
+          max_weight: number
+          rank: number
+          reps: number
+          user_id: string
+        }[]
+      }
+      get_session_volume_leaderboard: {
+        Args: { p_session_type?: string; p_time_filter?: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          rank: number
+          session_count: number
+          total_volume: number
+          user_id: string
+        }[]
+      }
+      get_top_exercises: {
+        Args: { p_limit?: number; p_time_filter?: string }
+        Returns: {
+          exercise_id: string
+          exercise_name: string
+          log_count: number
+        }[]
       }
       has_role: {
         Args: {
