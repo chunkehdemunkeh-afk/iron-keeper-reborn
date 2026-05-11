@@ -105,6 +105,7 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
           workout_history_id: historyRow.id,
           user_id: user.id,
           exercise_id: s.exerciseId,
+          original_exercise_id: s.originalExerciseId ?? null,
           exercise_name: resolveName(s.exerciseId, s.exerciseName),
           reps: s.reps,
           weight: s.weight,
