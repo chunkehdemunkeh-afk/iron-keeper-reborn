@@ -929,8 +929,20 @@ export default function WorkoutSession() {
         const ex = allExercises.find(e => e.id === exId);
         const override = exerciseOverrides[exId];
         const liveName = override?.name ?? ex?.name;
+        const effectiveId = getEffectiveExId(exId);
+        // When a substitution is active, capture the slot's identity (with its
+        // non-substitution suffixes like attachment / heavy / 2h) so the next
+        // session of this workout can restore the right "Last:" values for the
+        // original exercise rather than the substitute.
+        let slotId = exId;
+        if (twoHandedExercises.has(exId)) slotId += "-2h";
+        if (heavyStackExercises.has(exId)) slotId += "-heavy";
+        const att = cableAttachments[exId];
+        if (att) slotId += `-${attachmentKey(att)}`;
+        const originalExerciseId = override?.substituteId && slotId !== effectiveId ? slotId : undefined;
         return sets.filter((s) => s.completed).map((s) => ({
-          exerciseId: getEffectiveExId(exId),
+          exerciseId: effectiveId,
+          originalExerciseId,
           exerciseName: liveName,
           reps: s.reps,
           weight: s.weight,
