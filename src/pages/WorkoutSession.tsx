@@ -444,8 +444,7 @@ export default function WorkoutSession() {
   // Load last session data, notes, and weight-up suggestions
   useEffect(() => {
     if (!workout) return;
-    fetchLastSessionData(workout.id).then(data => {
-      setLastSessionData(data);
+    fetchLastSessionData(workout.id).then(async data => {
       // Pre-select attachment used last session for each cable exercise
       const preSelected: Record<string, string> = {};
       (workout.exercises || []).forEach(ex => {
@@ -459,6 +458,33 @@ export default function WorkoutSession() {
           }
         }
       });
+
+      // Gap-fill: any exercise in this workout that wasn't performed last session
+      // (e.g. it was substituted) should still show its previous weights from
+      // whenever it was last actually done. Look it up across all sessions.
+      const missing = (workout.exercises || []).filter(ex => {
+        // If we already have data for the base id or any suffixed variant, skip.
+        return !Object.keys(data).some(key => key === ex.id || key.startsWith(`${ex.id}-`));
+      });
+      if (missing.length > 0) {
+        const results = await Promise.all(
+          missing.map(ex => fetchExerciseLastDataLike(ex.id).then(r => ({ ex, r })))
+        );
+        for (const { ex, r } of results) {
+          if (!r || r.sets.length === 0) continue;
+          data[r.exerciseId] = r.sets;
+          // If this is a cable exercise, infer the attachment from the suffix so
+          // the placeholder lookup via getEffectiveExId() resolves correctly.
+          if (isCableAttachmentExercise(ex.name) && !preSelected[ex.id]) {
+            for (const att of CABLE_ATTACHMENTS) {
+              const suffix = `-${attachmentKey(att)}`;
+              if (r.exerciseId.endsWith(suffix)) { preSelected[ex.id] = att; break; }
+            }
+          }
+        }
+      }
+
+      setLastSessionData(data);
       if (Object.keys(preSelected).length > 0) {
         // Spread order: preSelected first so existing (resumed) values win
         setCableAttachments(prev => ({ ...preSelected, ...prev }));
