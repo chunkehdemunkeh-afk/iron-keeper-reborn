@@ -680,7 +680,7 @@ export default function WorkoutSession() {
         if (newSets[i].setType === "warmup") wuPos++;
       }
       const firstWorking = newSets.find((s) => s.setType !== "warmup");
-      const lastFirstWeight = lastSessionData[getEffectiveExId(exerciseId)]?.[0]?.weight ?? 0;
+      const lastFirstWeight = getLastDataForExercise(exerciseId)?.[0]?.weight ?? 0;
       const workingWeight = firstWorking?.weight && firstWorking.weight > 0
         ? firstWorking.weight
         : lastFirstWeight;
@@ -801,7 +801,7 @@ export default function WorkoutSession() {
         }
       }
     }
-  }, [setLogs, exerciseOrder, allExercises, exerciseOverrides, getEffectiveExId, cableAttachments]);
+  }, [setLogs, exerciseOrder, allExercises, exerciseOverrides, getEffectiveExId, getLastDataForExercise, cableAttachments]);
 
   const updateSetField = useCallback(
     (exerciseId: string, setIdx: number, field: "reps" | "weight", value: number) => {
