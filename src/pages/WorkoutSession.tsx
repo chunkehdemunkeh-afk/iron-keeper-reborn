@@ -1155,9 +1155,9 @@ export default function WorkoutSession() {
                     {ex.sets} × {ex.reps}
                     {ex.notes && ` · ${ex.notes}`}
                   </p>
-                  {lastSessionData[getEffectiveExId(ex.id)] && (
+                  {getLastDataForExercise(ex.id) && (
                     <p className="text-[10px] text-success/80 mt-0.5">
-                      Last: {lastSessionData[getEffectiveExId(ex.id)].map(s => `${s.weight}kg×${s.reps}`).join(", ")}
+                      Last: {getLastDataForExercise(ex.id)!.map(s => `${s.weight}kg×${s.reps}`).join(", ")}
                     </p>
                   )}
                 </div>
