@@ -26,6 +26,7 @@ import { useState } from "react";
 import PhotosTab from "@/components/progress/PhotosTab";
 import StrengthLevelCard from "@/components/progress/StrengthLevelCard";
 import WeeklyEnergyCard from "@/components/WeeklyEnergyCard";
+import HRVTrendCard from "@/components/biometrics/HRVTrendCard";
 import { fetchStrengthProfile } from "@/lib/cloud-data";
 import {
   RATED_LIFTS,
@@ -501,6 +502,9 @@ export default function Progress() {
 
             {/* Weekly Energy (kcal burned) */}
             <WeeklyEnergyCard />
+
+            {/* Biometric trends — 14-day recovery, stress, RHR, sleep */}
+            <HRVTrendCard />
 
             {/* Volume over time chart */}
             {volumeData.length > 0 && (

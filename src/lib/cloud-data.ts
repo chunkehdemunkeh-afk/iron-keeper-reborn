@@ -748,11 +748,16 @@ export async function fetchDailyLogs(): Promise<DailyLog[]> {
 
 export interface SleepLogRecord {
   id: string;
-  date: string;     // YYYY-MM-DD
+  date: string;       // YYYY-MM-DD
   hours: number;
-  quality: number;  // 1..5
+  quality: number;    // 1..5
   notes: string | null;
   source: string;
+  deepSleepMin: number | null;
+  remSleepMin: number | null;
+  lightSleepMin: number | null;
+  awakeMin: number | null;
+  sleepEfficiency: number | null;
 }
 
 export async function fetchSleepLogs(daysBack: number = 14): Promise<SleepLogRecord[]> {
@@ -779,6 +784,11 @@ export async function fetchSleepLogs(daysBack: number = 14): Promise<SleepLogRec
     quality: r.quality,
     notes: r.notes,
     source: r.source,
+    deepSleepMin: r.deep_sleep_min ?? null,
+    remSleepMin: r.rem_sleep_min ?? null,
+    lightSleepMin: r.light_sleep_min ?? null,
+    awakeMin: r.awake_min ?? null,
+    sleepEfficiency: r.sleep_efficiency != null ? Number(r.sleep_efficiency) : null,
   }));
 }
 
@@ -787,6 +797,11 @@ export async function upsertSleepLog(data: {
   hours: number;
   quality: number;
   notes?: string;
+  deepSleepMin?: number | null;
+  remSleepMin?: number | null;
+  lightSleepMin?: number | null;
+  awakeMin?: number | null;
+  sleepEfficiency?: number | null;
 }): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
@@ -801,6 +816,11 @@ export async function upsertSleepLog(data: {
         quality: data.quality,
         notes: data.notes ?? null,
         source: "manual",
+        deep_sleep_min: data.deepSleepMin ?? null,
+        rem_sleep_min: data.remSleepMin ?? null,
+        light_sleep_min: data.lightSleepMin ?? null,
+        awake_min: data.awakeMin ?? null,
+        sleep_efficiency: data.sleepEfficiency ?? null,
       },
       { onConflict: "user_id,date" },
     );
@@ -1723,6 +1743,189 @@ export async function fetchLeaderboardVisibility(): Promise<boolean> {
     .eq('user_id', user.id)
     .maybeSingle();
   return data?.leaderboard_visible ?? true;
+}
+
+// ── Daily biometrics ──────────────────────────────────────────────────────────
+
+export interface DailyBiometricRecord {
+  id: string;
+  date: string;
+  samsungStressScore: number | null;
+  restingHr: number | null;
+  spo2Pct: number | null;
+  hrvMs: number | null;
+  respiratoryRate: number | null;
+  source: string;
+}
+
+export async function upsertDailyBiometrics(data: {
+  date: string;
+  samsungStressScore?: number | null;
+  restingHr?: number | null;
+  spo2Pct?: number | null;
+  hrvMs?: number | null;
+  respiratoryRate?: number | null;
+}): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from("daily_biometrics")
+    .upsert(
+      {
+        user_id: user.id,
+        date: data.date,
+        samsung_stress_score: data.samsungStressScore ?? null,
+        resting_hr: data.restingHr ?? null,
+        spo2_pct: data.spo2Pct ?? null,
+        hrv_ms: data.hrvMs ?? null,
+        respiratory_rate: data.respiratoryRate ?? null,
+        source: "manual",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,date" },
+    );
+
+  if (error) console.error("Failed to save biometrics:", error);
+  return !error;
+}
+
+export async function fetchDailyBiometrics(daysBack = 28): Promise<DailyBiometricRecord[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - daysBack);
+  const cutoffStr = cutoff.toISOString().split("T")[0];
+
+  const { data, error } = await supabase
+    .from("daily_biometrics")
+    .select("*")
+    .eq("user_id", user.id)
+    .gte("date", cutoffStr)
+    .order("date", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map((r: any) => ({
+    id: r.id,
+    date: r.date,
+    samsungStressScore: r.samsung_stress_score ?? null,
+    restingHr: r.resting_hr ?? null,
+    spo2Pct: r.spo2_pct != null ? Number(r.spo2_pct) : null,
+    hrvMs: r.hrv_ms != null ? Number(r.hrv_ms) : null,
+    respiratoryRate: r.respiratory_rate != null ? Number(r.respiratory_rate) : null,
+    source: r.source,
+  }));
+}
+
+// ── Daily scores ──────────────────────────────────────────────────────────────
+
+export interface AIInsight {
+  headline: string;
+  recovery_summary: string;
+  training_recommendation: string;
+  sleep_analysis: string;
+  week_ahead: string;
+}
+
+export interface DailyScoreRecord {
+  id: string;
+  date: string;
+  recoveryScore: number | null;
+  strainScore: number | null;
+  stressLevel: number | null;
+  sleepPerformance: number | null;
+  aiInsight: AIInsight | null;
+  aiGeneratedAt: string | null;
+}
+
+export async function upsertDailyScore(data: {
+  date: string;
+  recoveryScore?: number | null;
+  strainScore?: number | null;
+  stressLevel?: number | null;
+  sleepPerformance?: number | null;
+  aiInsight?: AIInsight | null;
+  aiGeneratedAt?: string | null;
+}): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from("daily_scores")
+    .upsert(
+      {
+        user_id: user.id,
+        date: data.date,
+        recovery_score: data.recoveryScore ?? null,
+        strain_score: data.strainScore ?? null,
+        stress_level: data.stressLevel ?? null,
+        sleep_performance: data.sleepPerformance ?? null,
+        ai_insight: data.aiInsight ?? null,
+        ai_generated_at: data.aiGeneratedAt ?? null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,date" },
+    );
+
+  if (error) console.error("Failed to save daily score:", error);
+  return !error;
+}
+
+export async function fetchDailyScores(daysBack = 14): Promise<DailyScoreRecord[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - daysBack);
+  const cutoffStr = cutoff.toISOString().split("T")[0];
+
+  const { data, error } = await supabase
+    .from("daily_scores")
+    .select("*")
+    .eq("user_id", user.id)
+    .gte("date", cutoffStr)
+    .order("date", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map((r: any) => ({
+    id: r.id,
+    date: r.date,
+    recoveryScore: r.recovery_score != null ? Number(r.recovery_score) : null,
+    strainScore: r.strain_score != null ? Number(r.strain_score) : null,
+    stressLevel: r.stress_level != null ? Number(r.stress_level) : null,
+    sleepPerformance: r.sleep_performance != null ? Number(r.sleep_performance) : null,
+    aiInsight: r.ai_insight ?? null,
+    aiGeneratedAt: r.ai_generated_at ?? null,
+  }));
+}
+
+export async function fetchTodayScore(): Promise<DailyScoreRecord | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const today = new Date().toISOString().split("T")[0];
+  const { data, error } = await supabase
+    .from("daily_scores")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("date", today)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    date: data.date,
+    recoveryScore: data.recovery_score != null ? Number(data.recovery_score) : null,
+    strainScore: data.strain_score != null ? Number(data.strain_score) : null,
+    stressLevel: data.stress_level != null ? Number(data.stress_level) : null,
+    sleepPerformance: data.sleep_performance != null ? Number(data.sleep_performance) : null,
+    aiInsight: data.ai_insight ?? null,
+    aiGeneratedAt: data.ai_generated_at ?? null,
+  };
 }
 
 /** Last N ISO Mondays including the current week, oldest → newest. */
