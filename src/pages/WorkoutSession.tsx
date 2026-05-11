@@ -357,7 +357,7 @@ export default function WorkoutSession() {
     } catch (e) {
       console.warn("Failed to auto-save workout:", e);
     }
-  }, [autoSaveKey, started, finished, showFeedback, setLogs, exerciseNotes, exerciseOrder, exerciseOverrides, addedAccessories, addedExercises, bodyweightExercises, twoHandedExercises, heavyStackExercises, elapsed, expandedExercise, weightUpSuggestions, weightDownSuggestions]);
+  }, [autoSaveKey, started, finished, showFeedback, setLogs, exerciseNotes, exerciseOrder, exerciseOverrides, addedAccessories, addedExercises, bodyweightExercises, twoHandedExercises, heavyStackExercises, cableAttachments, elapsed, expandedExercise, weightUpSuggestions, weightDownSuggestions]);
 
   // Save on visibility change (user switching apps / leaving)
   useEffect(() => {
@@ -441,6 +441,19 @@ export default function WorkoutSession() {
     setShowResumePrompt(false);
   }, [clearAutoSave]);
 
+  const getLastDataForExercise = useCallback((originalId: string) => {
+    const effectiveId = getEffectiveExId(originalId);
+    const exact = lastSessionData[effectiveId];
+    if (exact?.length) return exact;
+
+    const substituteId = exerciseOverrides[originalId]?.substituteId;
+    const lookupIds = Array.from(new Set([substituteId, originalId].filter(Boolean) as string[]));
+    const fallback = Object.entries(lastSessionData).find(([key, sets]) =>
+      sets.length > 0 && lookupIds.some(id => key === id || key.startsWith(`${id}-`))
+    );
+    return fallback?.[1];
+  }, [exerciseOverrides, getEffectiveExId, lastSessionData]);
+
   // Load last session data, notes, and weight-up suggestions
   useEffect(() => {
     if (!workout) return;
@@ -486,8 +499,12 @@ export default function WorkoutSession() {
 
       setLastSessionData(data);
       if (Object.keys(preSelected).length > 0) {
-        // Spread order: preSelected first so existing (resumed) values win
-        setCableAttachments(prev => ({ ...preSelected, ...prev }));
+        // Keep real user/resumed choices, but don't let blank autosave values
+        // hide known historical attachment variants such as pu5-no-attachment.
+        setCableAttachments(prev => {
+          const nonBlankPrev = Object.fromEntries(Object.entries(prev).filter(([, value]) => Boolean(value)));
+          return { ...preSelected, ...nonBlankPrev };
+        });
       }
     });
     try {
