@@ -357,7 +357,7 @@ export default function WorkoutSession() {
     } catch (e) {
       console.warn("Failed to auto-save workout:", e);
     }
-  }, [autoSaveKey, started, finished, showFeedback, setLogs, exerciseNotes, exerciseOrder, exerciseOverrides, addedAccessories, addedExercises, bodyweightExercises, twoHandedExercises, heavyStackExercises, elapsed, expandedExercise, weightUpSuggestions, weightDownSuggestions]);
+  }, [autoSaveKey, started, finished, showFeedback, setLogs, exerciseNotes, exerciseOrder, exerciseOverrides, addedAccessories, addedExercises, bodyweightExercises, twoHandedExercises, heavyStackExercises, cableAttachments, elapsed, expandedExercise, weightUpSuggestions, weightDownSuggestions]);
 
   // Save on visibility change (user switching apps / leaving)
   useEffect(() => {
@@ -441,6 +441,19 @@ export default function WorkoutSession() {
     setShowResumePrompt(false);
   }, [clearAutoSave]);
 
+  const getLastDataForExercise = useCallback((originalId: string) => {
+    const effectiveId = getEffectiveExId(originalId);
+    const exact = lastSessionData[effectiveId];
+    if (exact?.length) return exact;
+
+    const substituteId = exerciseOverrides[originalId]?.substituteId;
+    const lookupIds = Array.from(new Set([substituteId, originalId].filter(Boolean) as string[]));
+    const fallback = Object.entries(lastSessionData).find(([key, sets]) =>
+      sets.length > 0 && lookupIds.some(id => key === id || key.startsWith(`${id}-`))
+    );
+    return fallback?.[1];
+  }, [exerciseOverrides, getEffectiveExId, lastSessionData]);
+
   // Load last session data, notes, and weight-up suggestions
   useEffect(() => {
     if (!workout) return;
@@ -486,8 +499,12 @@ export default function WorkoutSession() {
 
       setLastSessionData(data);
       if (Object.keys(preSelected).length > 0) {
-        // Spread order: preSelected first so existing (resumed) values win
-        setCableAttachments(prev => ({ ...preSelected, ...prev }));
+        // Keep real user/resumed choices, but don't let blank autosave values
+        // hide known historical attachment variants such as pu5-no-attachment.
+        setCableAttachments(prev => {
+          const nonBlankPrev = Object.fromEntries(Object.entries(prev).filter(([, value]) => Boolean(value)));
+          return { ...preSelected, ...nonBlankPrev };
+        });
       }
     });
     try {
@@ -663,7 +680,7 @@ export default function WorkoutSession() {
         if (newSets[i].setType === "warmup") wuPos++;
       }
       const firstWorking = newSets.find((s) => s.setType !== "warmup");
-      const lastFirstWeight = lastSessionData[getEffectiveExId(exerciseId)]?.[0]?.weight ?? 0;
+      const lastFirstWeight = getLastDataForExercise(exerciseId)?.[0]?.weight ?? 0;
       const workingWeight = firstWorking?.weight && firstWorking.weight > 0
         ? firstWorking.weight
         : lastFirstWeight;
@@ -784,7 +801,7 @@ export default function WorkoutSession() {
         }
       }
     }
-  }, [setLogs, exerciseOrder, allExercises, exerciseOverrides, getEffectiveExId, cableAttachments]);
+  }, [setLogs, exerciseOrder, allExercises, exerciseOverrides, getEffectiveExId, getLastDataForExercise, cableAttachments]);
 
   const updateSetField = useCallback(
     (exerciseId: string, setIdx: number, field: "reps" | "weight", value: number) => {
@@ -1138,9 +1155,9 @@ export default function WorkoutSession() {
                     {ex.sets} × {ex.reps}
                     {ex.notes && ` · ${ex.notes}`}
                   </p>
-                  {lastSessionData[getEffectiveExId(ex.id)] && (
+                  {getLastDataForExercise(ex.id) && (
                     <p className="text-[10px] text-success/80 mt-0.5">
-                      Last: {lastSessionData[getEffectiveExId(ex.id)].map(s => `${s.weight}kg×${s.reps}`).join(", ")}
+                      Last: {getLastDataForExercise(ex.id)!.map(s => `${s.weight}kg×${s.reps}`).join(", ")}
                     </p>
                   )}
                 </div>
@@ -1454,7 +1471,8 @@ export default function WorkoutSession() {
                                 const warmupCount = setsArr.filter((s) => s.setType === "warmup").length;
                                 // Working weight = first working set's entered weight, else last session's first set
                                 const firstWorking = setsArr.find((s) => s.setType !== "warmup");
-                                const lastFirstWeight = lastSessionData[getEffectiveExId(ex.id)]?.[0]?.weight ?? 0;
+                                const lastExerciseData = getLastDataForExercise(ex.id);
+                                const lastFirstWeight = lastExerciseData?.[0]?.weight ?? 0;
                                 const workingWeight = firstWorking?.weight && firstWorking.weight > 0
                                   ? firstWorking.weight
                                   : lastFirstWeight;
@@ -1497,14 +1515,14 @@ export default function WorkoutSession() {
                                     ) : (
                                       <>
                                         {showWeight && (
-                                          <input type="number" inputMode="decimal" placeholder={is1RM ? "1RM" : (lastSessionData[getEffectiveExId(ex.id)]?.[si]?.weight?.toString() || "0")} value={set.weight || ""} onChange={(e) => updateSetField(ex.id, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : is1RM ? "bg-amber-400/10 border border-amber-400/40 text-amber-400 font-semibold placeholder:text-amber-400/50" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                          <input type="number" inputMode="decimal" placeholder={is1RM ? "1RM" : (lastExerciseData?.[si]?.weight?.toString() || "0")} value={set.weight || ""} onChange={(e) => updateSetField(ex.id, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : is1RM ? "bg-amber-400/10 border border-amber-400/40 text-amber-400 font-semibold placeholder:text-amber-400/50" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
                                         )}
                                         {is1RM ? (
                                           <div className={`h-9 w-full rounded-lg px-2 text-sm text-center font-bold flex items-center justify-center ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-amber-400/10 border border-amber-400/40 text-amber-400"}`}>
                                             1
                                           </div>
                                         ) : (
-                                          <input type="number" inputMode="numeric" placeholder={lastSessionData[getEffectiveExId(ex.id)]?.[si]?.reps?.toString() || "0"} value={set.reps || ""} onChange={(e) => updateSetField(ex.id, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                          <input type="number" inputMode="numeric" placeholder={lastExerciseData?.[si]?.reps?.toString() || "0"} value={set.reps || ""} onChange={(e) => updateSetField(ex.id, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
                                         )}
                                       </>
                                     )}
@@ -1568,6 +1586,7 @@ export default function WorkoutSession() {
 
               const maxSets = Math.max(...groupExIds.map(id => setLogs[id]?.length || 0));
               const allGroupDone = groupExIds.every(id => setLogs[id]?.every(s => s.completed));
+              const groupLastDataById = Object.fromEntries(groupExIds.map(id => [id, getLastDataForExercise(id)]));
               const isSSExpanded = expandedExercise === `ss-${ex.id}`;
 
               return (
@@ -1763,9 +1782,9 @@ export default function WorkoutSession() {
                                           ) : (
                                             <>
                                               {showWeight && (
-                                                <input type="number" inputMode="decimal" placeholder={lastSessionData[getEffectiveExId(gExId)]?.[si]?.weight?.toString() || weightLabel} value={set.weight || ""} onChange={(e) => updateSetField(gExId, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                                <input type="number" inputMode="decimal" placeholder={groupLastDataById[gExId]?.[si]?.weight?.toString() || weightLabel} value={set.weight || ""} onChange={(e) => updateSetField(gExId, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
                                               )}
-                                              <input type="number" inputMode="numeric" placeholder={lastSessionData[getEffectiveExId(gExId)]?.[si]?.reps?.toString() || repLabel} value={set.reps || ""} onChange={(e) => updateSetField(gExId, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                              <input type="number" inputMode="numeric" placeholder={groupLastDataById[gExId]?.[si]?.reps?.toString() || repLabel} value={set.reps || ""} onChange={(e) => updateSetField(gExId, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
                                             </>
                                           )}
                                           <button onClick={() => toggleSet(gExId, si)} className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${set.completed ? "bg-success text-success-foreground glow-success" : "bg-muted/50 text-muted-foreground border border-border/50"}`}>
