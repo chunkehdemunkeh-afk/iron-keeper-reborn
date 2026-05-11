@@ -12,6 +12,14 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.6.95",
+    date: "2026-05-11",
+    title: "Updates & Fixes",
+    changes: [
+      "Add Whoop-style biometric tracking: recovery score, strain, body stress, AI coaching",
+    ],
+  },
+  {
     version: "1.6.94",
     date: "2026-05-09",
     title: "Updates & Fixes",
