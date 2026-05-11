@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.95",
+    version: "1.6.96",
     date: "2026-05-11",
     title: "Updates & Fixes",
     changes: [
-      "Add Whoop-style biometric tracking: recovery score, strain, body stress, AI coaching",
+      "Update CLAUDE.md: biometric scoring system + Galaxy Watch gotchas",
     ],
   },
   {
