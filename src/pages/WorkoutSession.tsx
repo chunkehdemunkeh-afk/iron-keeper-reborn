@@ -460,10 +460,14 @@ export default function WorkoutSession() {
     const exact = lastSessionData[effectiveId];
     if (exact?.length) return exact;
 
+    // Only fall back across keys when the user has substituted this exercise.
+    // Without a substitution we must NOT cross-match sibling variants (e.g.
+    // `pl1` ↔ `pl1-heavy`, or different cable attachments) — each variant has
+    // independent history and showing another variant's weights is misleading.
     const substituteId = exerciseOverrides[originalId]?.substituteId;
-    const lookupIds = Array.from(new Set([substituteId, originalId].filter(Boolean) as string[]));
+    if (!substituteId) return undefined;
     const fallback = Object.entries(lastSessionData).find(([key, sets]) =>
-      sets.length > 0 && lookupIds.some(id => key === id || key.startsWith(`${id}-`))
+      sets.length > 0 && (key === substituteId || key.startsWith(`${substituteId}-`))
     );
     return fallback?.[1];
   }, [exerciseOverrides, getEffectiveExId, lastSessionData]);
