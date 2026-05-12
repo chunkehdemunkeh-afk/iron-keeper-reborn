@@ -324,7 +324,7 @@ export default function Leaderboard() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground/50 mb-0.5">
-                Iron Keeper
+                Iron Warrior
               </p>
               <h1 className="font-display text-5xl font-black tracking-tight leading-none text-foreground">
                 RANKINGS
