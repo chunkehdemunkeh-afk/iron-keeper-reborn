@@ -17,6 +17,7 @@ import CompleteDaySummary from "@/components/food/CompleteDaySummary";
 import WeeklyNutritionChart from "@/components/food/WeeklyNutritionChart";
 import CopyMeal from "@/components/food/CopyMeal";
 import HelpButton from "@/components/demo/HelpButton";
+import { SkeletonList } from "@/components/ui/loading-state";
 import { toast } from "sonner";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
@@ -393,8 +394,8 @@ export default function FoodTracker() {
 
       {/* Meals */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="animate-pulse text-muted-foreground text-sm">Loading...</div>
+        <div className="px-4">
+          <SkeletonList rows={4} variant="card" />
         </div>
       ) : (
         <div className="px-4 space-y-3">

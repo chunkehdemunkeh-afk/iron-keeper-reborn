@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import HelpButton from "@/components/demo/HelpButton";
+import { LoadingState } from "@/components/ui/loading-state";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function BodyMeasurements() {
   const [measurements, setMeasurements] = useState<any[]>([]);
@@ -59,7 +61,7 @@ export default function BodyMeasurements() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground text-sm">Loading...</div>
+        <LoadingState label="Loading measurements" />
       </div>
     );
   }
@@ -190,11 +192,12 @@ export default function BodyMeasurements() {
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-3">Measurement Log</h3>
           {measurements.length === 0 ? (
-            <div className="glass-card rounded-xl p-8 text-center">
-              <Scale className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No measurements yet</p>
-              <p className="text-xs text-muted-foreground mt-1">Tap "Log" to add your first entry</p>
-            </div>
+            <EmptyState
+              icon={Scale}
+              title="No measurements yet"
+              description='Tap "Log" to add your first entry.'
+              className="glass-card rounded-xl"
+            />
           ) : (
             <div className="space-y-2">
               {[...measurements].reverse().slice(0, 20).map((m, i) => (

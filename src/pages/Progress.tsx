@@ -28,6 +28,8 @@ import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
 import { getUserPreferences } from "@/lib/user-preferences";
 import { useRecoverySettings } from "@/hooks/useRecoverySettings";
 import AnimatedNumber from "@/components/AnimatedNumber";
+import { LoadingState } from "@/components/ui/loading-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useState } from "react";
 import PhotosTab from "@/components/progress/PhotosTab";
 import StrengthLevelCard from "@/components/progress/StrengthLevelCard";
@@ -420,7 +422,7 @@ export default function Progress() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background safe-bottom flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground text-sm">Loading progress...</div>
+        <LoadingState label="Loading progress" />
       </div>
     );
   }
@@ -588,11 +590,12 @@ export default function Progress() {
 
             {/* Empty state */}
             {history.length === 0 && (
-              <div className="glass-card rounded-xl p-8 text-center">
-                <BarChart3 className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No workout data yet</p>
-                <p className="text-xs text-muted-foreground mt-1">Complete sessions to see your progress charts</p>
-              </div>
+              <EmptyState
+                icon={BarChart3}
+                title="No workout data yet"
+                description="Complete sessions to see your progress charts."
+                className="glass-card rounded-xl"
+              />
             )}
           </TabsContent>
 

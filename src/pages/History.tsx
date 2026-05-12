@@ -13,6 +13,7 @@ import HelpButton from "@/components/demo/HelpButton";
 import WeeklyReviewCard from "@/components/weekly/WeeklyReviewCard";
 import WeeklyReviewSheet from "@/components/weekly/WeeklyReviewSheet";
 import { getCurrentWeekStart, getPreviousWeekStart } from "@/lib/weekly-review";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const ACTIVITY_ICONS: Record<string, LucideIcon> = {
   rest: Bed,
@@ -492,11 +493,12 @@ export default function History() {
             )}
           </div>
           {reviews.length === 0 ? (
-            <div className="glass-card rounded-xl p-5 text-center">
-              <Star className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No weekly reviews yet</p>
-              <p className="text-xs text-muted-foreground mt-1">Reflect on your week every Sunday</p>
-            </div>
+            <EmptyState
+              icon={Star}
+              title="No weekly reviews yet"
+              description="Reflect on your week every Sunday."
+              className="glass-card rounded-xl"
+            />
           ) : (
             <>
               <div className="space-y-2">
@@ -523,11 +525,12 @@ export default function History() {
         </div>
 
         {history.length === 0 && (
-          <div className="glass-card rounded-xl p-8 text-center">
-            <Dumbbell className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No workouts yet</p>
-            <p className="text-xs text-muted-foreground mt-1">Complete a session to see your history</p>
-          </div>
+          <EmptyState
+            icon={Dumbbell}
+            title="No workouts yet"
+            description="Complete a session to see your history."
+            className="glass-card rounded-xl"
+          />
         )}
       </div>
 
