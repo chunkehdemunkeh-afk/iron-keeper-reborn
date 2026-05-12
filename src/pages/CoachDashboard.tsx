@@ -5,8 +5,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronDown, ChevronUp, Dumbbell, Clock, Calendar, User, LogOut,
-  CheckCircle2, XCircle, Activity, Trophy, Bell, X, Star, MessageSquare,
+  CheckCircle2, XCircle, Activity, Trophy, Bell, X, Star, MessageSquare, Users,
 } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-state";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type WorkoutRow = {
   id: string;
@@ -163,7 +165,7 @@ export default function CoachDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground text-sm">Loading workouts…</div>
+        <LoadingState label="Loading workouts" />
       </div>
     );
   }
@@ -222,8 +224,8 @@ export default function CoachDashboard() {
                       Mark all read
                     </button>
                   )}
-                  <button onClick={() => setShowNotifications(false)}>
-                    <X className="h-3.5 w-3.5 text-muted-foreground" />
+                  <button onClick={() => setShowNotifications(false)} aria-label="Close notifications">
+                    <X className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
                   </button>
                 </div>
               </div>
@@ -301,9 +303,11 @@ export default function CoachDashboard() {
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recent Workouts</h2>
 
         {workouts.length === 0 && (
-          <div className="text-center py-20 text-muted-foreground text-sm">
-            No workouts completed yet by any athlete.
-          </div>
+          <EmptyState
+            icon={Users}
+            title="No workouts yet"
+            description="Once your athletes complete sessions, they'll show up here."
+          />
         )}
 
         {workouts.map((w, i) => {
