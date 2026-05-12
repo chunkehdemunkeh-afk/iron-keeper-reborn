@@ -404,6 +404,7 @@ export default function CoachDashboard() {
             </motion.div>
           );
         })}
+        </div>
       </div>
     </div>
   );
