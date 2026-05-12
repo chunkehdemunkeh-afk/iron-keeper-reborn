@@ -13,7 +13,7 @@ npm run lint         # ESLint
 npm run test         # Run Vitest (single run)
 npm run test:watch   # Vitest in watch mode
 npx supabase db push                    # Apply DB migrations to Supabase
-npx supabase functions deploy <name>   # Deploy a single edge function (fatsecret-search, food-search)
+npx supabase functions deploy <name>   # Deploy a single edge function (fatsecret-search, food-search, biometric-insight)
 ```
 
 ## Architecture
@@ -136,3 +136,5 @@ git stash && git pull --rebase origin main && git stash pop && git push origin m
 - **`AnimatedNumber` has no `style` prop** — wrap in `<span style={...}>` for inline colour overrides.
 - **`biometric-insight` edge function needs `ANTHROPIC_API_KEY`** — set via Supabase dashboard → Edge Functions → Secrets.
 - **`WorkoutSession` warm-up sets:** Seeds 2 sets (50%×5, 75%×5), capped at 3 total (40/60/80%); excluded from PR checks and rep-range toasts; 60s rest timer; weights round to nearest 2.5 kg via `roundToPlate`.
+- **`HomeCombinedRecoveryCard`:** Homepage uses a single unified recovery card (`src/components/HomeCombinedRecoveryCard.tsx`) — do not re-split into separate `RecoveryDashboard` + `RecoveryCard`. Top half (biometric scores + AI headline) only renders when the user has checked in that day; bottom half (muscle diagram) always shows.
+- **`generateAIInsight` in `BiometricCheckIn.tsx`:** `next_workout` in the AI payload is always `null` — not yet wired to the user's training split. SpO2 is now passed correctly.
