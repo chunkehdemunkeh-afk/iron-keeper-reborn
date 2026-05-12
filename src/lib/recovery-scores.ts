@@ -38,6 +38,28 @@ export interface DailyScores {
   sleepPerformance: number;   // 0–100
 }
 
+export type FactorKey = "sleep" | "hrv" | "rhr" | "stress" | "resp";
+
+export interface RecoveryFactor {
+  key: FactorKey;
+  label: string;
+  /** 0–1 sub-score that fed the composite. */
+  score: number;
+  /** Pre-weight contribution to the final 0–100 (= score × weight × 100). */
+  contribution: number;
+  /** Final weight used (0–1). */
+  weight: number;
+  /** Human-readable delta vs baseline, e.g. "+4 bpm" or "-12 min". null if no baseline yet. */
+  deltaPretty: string | null;
+  /** Direction relative to recovery: positive = helping, negative = hurting. */
+  direction: "positive" | "negative" | "neutral";
+}
+
+export interface RecoveryBreakdown {
+  score: number;              // 0–100, same as computeRecoveryScore
+  factors: RecoveryFactor[];  // ordered by absolute contribution change vs neutral (0.5)
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function clamp(v: number, min: number, max: number): number {
