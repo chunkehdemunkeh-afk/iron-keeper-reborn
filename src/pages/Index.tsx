@@ -35,6 +35,11 @@ const Index = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [slideDir, setSlideDir] = useState(0); // -1 left, 1 right
 
+  const queryClient = useQueryClient();
+  const ptr = usePullToRefresh({
+    onRefresh: () => queryClient.invalidateQueries(),
+  });
+
   const dateStr = format(selectedDate, "yyyy-MM-dd");
   const isCurrentDay = isToday(selectedDate);
   const minDate = subDays(new Date(), 6);
