@@ -122,21 +122,24 @@ export default function StatsBar() {
   const items = [
     {
       icon: Flame,
-      value: streak > 0 ? `${streak} day${streak !== 1 ? "s" : ""}` : "—",
-      label: "Streak",
-      color: streak > 0 ? "text-primary" : "text-muted-foreground",
+      value: streak > 0 ? `${streak}` : "—",
+      unit: streak > 0 ? (streak === 1 ? "day" : "days") : null,
+      label: streak > 0 ? "Streak" : "Start your streak",
+      active: streak > 0,
     },
     {
       icon: Target,
-      value: `${thisWeek}/${weekGoal}`,
-      label: "This Week",
-      color: thisWeek >= weekGoal ? "text-primary" : "text-foreground",
+      value: `${thisWeek}`,
+      unit: `/${weekGoal}`,
+      label: thisWeek === 0 ? "Log a session" : "This Week",
+      active: thisWeek > 0,
     },
     {
       icon: Dumbbell,
-      value: formatWeight(totalKg),
-      label: "Total Lifted",
-      color: "text-foreground",
+      value: totalKg > 0 ? formatWeight(totalKg) : "—",
+      unit: null as string | null,
+      label: totalKg > 0 ? "Total Lifted" : "Lift to begin",
+      active: totalKg > 0,
     },
   ];
 
@@ -147,11 +150,17 @@ export default function StatsBar() {
       transition={{ delay: 0.15 }}
       className="grid grid-cols-3 gap-2"
     >
-      {items.map(({ icon: Icon, value, label, color }) => (
-        <div key={label} className="glass-card rounded-xl px-3 py-3 text-center">
-          <Icon className={`h-4 w-4 mx-auto mb-1 ${color}`} />
-          <p className={`font-display text-lg font-bold ${color}`}>{value}</p>
-          <p className="text-[10px] text-muted-foreground font-medium">{label}</p>
+      {items.map(({ icon: Icon, value, unit, label, active }) => (
+        <div
+          key={label}
+          className={`glass-card rounded-xl px-3 py-3 text-center ${active ? "" : "opacity-70"}`}
+        >
+          <Icon className={`h-4 w-4 mx-auto mb-1 ${active ? "text-primary" : "text-muted-foreground/60"}`} />
+          <p className={`font-display text-lg font-bold tabular-nums leading-tight ${active ? "text-foreground" : "text-muted-foreground"}`}>
+            {value}
+            {unit && <span className="text-[11px] text-muted-foreground font-normal ml-0.5">{unit}</span>}
+          </p>
+          <p className="text-[10px] text-muted-foreground font-medium mt-0.5">{label}</p>
         </div>
       ))}
     </motion.div>
