@@ -128,6 +128,16 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
       console.error("Failed to save sets:", setsError);
     }
   }
+
+  // Refresh today's strain score so the home/recovery cards reflect this workout.
+  if (workout.date === new Date().toISOString().split("T")[0]) {
+    try {
+      const { recomputeTodayStrain } = await import("./biometric-queries");
+      await recomputeTodayStrain();
+    } catch (e) {
+      console.error("Strain recompute failed:", e);
+    }
+  }
 }
 
 export async function fetchWorkoutHistory(): Promise<CompletedWorkout[]> {
