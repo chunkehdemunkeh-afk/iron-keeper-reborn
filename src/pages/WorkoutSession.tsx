@@ -76,6 +76,9 @@ function accessoryIcon(id: string) {
 
 function isCableAttachmentExercise(name: string): boolean {
   const dn = name.toLowerCase();
+  // "Seated Row Machine" is a plate-loaded/selectorized machine with a fixed
+  // handle (Low Row vs Machine Row variant pill), not a cable attachment exercise.
+  if (dn.includes("seated row machine")) return false;
   return [
     "cable", "pushdown", "push down", "face pull", "facepull", "pallof",
     "crossover", "straight-arm", "lat pull", "pulldown", "pull down",
