@@ -22,6 +22,9 @@ import { toast } from "sonner";
 import HelpButton from "@/components/demo/HelpButton";
 import WeeklyReviewPrompt from "@/components/weekly/WeeklyReviewPrompt";
 import MondayBanner from "@/components/weekly/MondayBanner";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 const Index = () => {
   const { profile, user } = useAuth();
