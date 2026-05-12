@@ -194,3 +194,58 @@ export async function fetchTodayScore(): Promise<DailyScoreRecord | null> {
     aiGeneratedAt: data.ai_generated_at ?? null,
   };
 }
+
+/**
+ * Recompute today's strain by summing all workouts + activities logged today,
+ * then patch the existing daily_scores row (or insert a minimal one if missing).
+ * Preserves recovery/stress/sleep/AI fields already saved by the morning check-in.
+ */
+export async function recomputeTodayStrain(): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const [workoutsRes, activitiesRes, existingRes] = await Promise.all([
+    supabase
+      .from("workout_history")
+      .select("calories_burned, effort_rating")
+      .eq("user_id", user.id)
+      .eq("date", today),
+    supabase
+      .from("activity_logs")
+      .select("calories_burned")
+      .eq("user_id", user.id)
+      .eq("date", today),
+    supabase
+      .from("daily_scores")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("date", today)
+      .maybeSingle(),
+  ]);
+
+  const workouts = workoutsRes.data ?? [];
+  const activities = activitiesRes.data ?? [];
+
+  const workoutCalories = workouts.reduce((s: number, w: any) => s + (w.calories_burned ?? 0), 0);
+  const activityCalories = activities.reduce((s: number, a: any) => s + (a.calories_burned ?? 0), 0);
+  const efforts = workouts.map((w: any) => w.effort_rating).filter((e: any): e is number => typeof e === "number");
+  const avgEffort = efforts.length ? efforts.reduce((s, e) => s + e, 0) / efforts.length : null;
+
+  const { computeStrainScore } = await import("../recovery-scores");
+  const strain = computeStrainScore(workoutCalories, avgEffort, activityCalories);
+
+  if (existingRes.data) {
+    await supabase
+      .from("daily_scores")
+      .update({ strain_score: strain, updated_at: new Date().toISOString() })
+      .eq("id", existingRes.data.id);
+  } else {
+    await supabase.from("daily_scores").insert({
+      user_id: user.id,
+      date: today,
+      strain_score: strain,
+    });
+  }
+}
