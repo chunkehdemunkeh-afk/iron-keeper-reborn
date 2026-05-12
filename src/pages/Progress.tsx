@@ -441,37 +441,29 @@ export default function Progress() {
           <HelpButton />
         </div>
 
-        <Tabs
+        <SegmentedTabs
           value={tab}
-          onValueChange={(v) => {
+          onChange={(v) => {
             const next = new URLSearchParams(searchParams);
             if (v === "stats") next.delete("tab");
             else next.set("tab", v);
             setSearchParams(next, { replace: true });
           }}
-        >
-          <TabsList asChild>
-            <SegmentedTabs
-              value={tab}
-              onChange={(v) => {
-                const next = new URLSearchParams(searchParams);
-                if (v === "stats") next.delete("tab");
-                else next.set("tab", v);
-                setSearchParams(next, { replace: true });
-              }}
-              options={[
-                { value: "stats", label: "Stats" },
-                { value: "photos", label: "Photos" },
-              ]}
-              layoutId="progress-tab-pill"
-            />
-          </TabsList>
+          options={[
+            { value: "stats", label: "Stats" },
+            { value: "photos", label: "Photos" },
+          ]}
+          layoutId="progress-tab-pill"
+        />
 
-          <TabsContent value="photos" className="mt-4">
+        {tab === "photos" && (
+          <div className="mt-4">
             <PhotosTab />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="stats" className="space-y-5 mt-4">
+        {tab === "stats" && (
+          <div className="space-y-5 mt-4">
             {/* Summary cards */}
             <div className="grid grid-cols-3 gap-2">
               {[
