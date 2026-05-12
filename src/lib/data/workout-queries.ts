@@ -368,15 +368,33 @@ export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerc
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: latestSet } = await supabase
-    .from("workout_sets")
-    .select("workout_history_id, exercise_id")
-    .eq("user_id", user.id)
-    .or(`exercise_id.eq.${baseId},exercise_id.like.${baseId}-%`)
-    .neq("set_type", "warmup")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+  // Run two filtered queries (exact match + LIKE prefix) and pick the most recent.
+  // Avoids a fragile .or() chain that broke at runtime in some supabase-js builds.
+  const [{ data: exactRows }, { data: likeRows }] = await Promise.all([
+    supabase
+      .from("workout_sets")
+      .select("workout_history_id, exercise_id, created_at")
+      .eq("user_id", user.id)
+      .eq("exercise_id", baseId)
+      .neq("set_type", "warmup")
+      .order("created_at", { ascending: false })
+      .limit(1),
+    supabase
+      .from("workout_sets")
+      .select("workout_history_id, exercise_id, created_at")
+      .eq("user_id", user.id)
+      .like("exercise_id", `${baseId}-%`)
+      .neq("set_type", "warmup")
+      .order("created_at", { ascending: false })
+      .limit(1),
+  ]);
+
+  const candidates = [...(exactRows ?? []), ...(likeRows ?? [])];
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) =>
+    new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime()
+  );
+  const latestSet = candidates[0];
 
   if (!latestSet) return null;
 
