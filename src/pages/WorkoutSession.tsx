@@ -944,6 +944,42 @@ export default function WorkoutSession() {
           <p className="text-[10px] text-muted-foreground text-right">{sessionNotes.length}/500</p>
         </div>
 
+        {/* Heart Rate (from watch) */}
+        <div className="mt-6 w-full max-w-sm space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-left">
+            Heart Rate <span className="text-muted-foreground/60 normal-case font-normal">(optional, from your watch)</span>
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] text-muted-foreground">Avg BPM</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={30}
+                max={240}
+                value={avgHrInput}
+                onChange={(e) => setAvgHrInput(e.target.value)}
+                placeholder="—"
+                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 tabular-nums"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground">Max BPM</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={30}
+                max={240}
+                value={maxHrInput}
+                onChange={(e) => setMaxHrInput(e.target.value)}
+                placeholder="—"
+                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 tabular-nums"
+              />
+            </div>
+          </div>
+          <p className="text-[10px] text-muted-foreground">Improves strain accuracy — Whoop-style scoring.</p>
+        </div>
+
         <div className="flex gap-3 mt-8">
           <button
             onClick={handleSubmitFeedback}
