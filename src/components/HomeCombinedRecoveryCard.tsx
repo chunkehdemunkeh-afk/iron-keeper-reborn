@@ -160,11 +160,18 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25 }}
-        className="glass-card rounded-xl p-4 w-full"
+        className="hero-card p-5 w-full"
+        style={
+          hasData
+            ? {
+                background: `radial-gradient(120% 80% at 100% 0%, ${ringColor}22, transparent 60%), hsl(var(--surface-2))`,
+              }
+            : undefined
+        }
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5">
             <Activity className="h-3 w-3" /> Recovery
           </p>
           <div className="flex items-center gap-2">
@@ -179,14 +186,11 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
             ) : (
               <button
                 onClick={() => setCheckInOpen(true)}
-                className="flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 rounded-full px-2.5 py-1"
+                className="flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 hairline border rounded-full px-2.5 py-1"
               >
                 <Plus className="h-3 w-3" /> Check in
               </button>
             )}
-            <button onClick={() => navigate("/recovery")} aria-label="View full recovery">
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </button>
           </div>
         </div>
 
