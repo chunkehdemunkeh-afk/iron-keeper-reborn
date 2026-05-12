@@ -9,8 +9,7 @@ import HomeDailySummary from "@/components/HomeDailySummary";
 import HomeWeightTracker from "@/components/HomeWeightTracker";
 import HomeCompleteDay from "@/components/HomeCompleteDay";
 import SleepCard from "@/components/recovery/SleepCard";
-import RecoveryCard from "@/components/recovery/RecoveryCard";
-import RecoveryDashboard from "@/components/biometrics/RecoveryDashboard";
+import HomeCombinedRecoveryCard from "@/components/HomeCombinedRecoveryCard";
 import MorningCheckInPrompt from "@/components/biometrics/MorningCheckInPrompt";
 import { isGKSplit, isNoWorkoutMode } from "@/lib/user-preferences";
 import PostOnboardingTip from "@/components/PostOnboardingTip";
@@ -159,11 +158,8 @@ const Index = () => {
             {/* Sleep tracker */}
             <SleepCard date={dateStr} />
 
-            {/* Biometric recovery dashboard (Whoop-style scores) */}
-            {isCurrentDay && <RecoveryDashboard date={dateStr} />}
-
-            {/* Muscle recovery snapshot — only on today */}
-            {isCurrentDay && <RecoveryCard />}
+            {/* Combined recovery card: biometric scores + muscle diagram */}
+            {isCurrentDay && <HomeCombinedRecoveryCard date={dateStr} />}
 
             {/* Complete Day */}
             <HomeCompleteDay date={dateStr} />

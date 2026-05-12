@@ -27,6 +27,7 @@ import PhotosTab from "@/components/progress/PhotosTab";
 import StrengthLevelCard from "@/components/progress/StrengthLevelCard";
 import WeeklyEnergyCard from "@/components/WeeklyEnergyCard";
 import HRVTrendCard from "@/components/biometrics/HRVTrendCard";
+import RecoveryDashboard from "@/components/biometrics/RecoveryDashboard";
 import { fetchStrengthProfile } from "@/lib/cloud-data";
 import {
   RATED_LIFTS,
@@ -87,6 +88,7 @@ function PRSwipeRow({ exId, pr, onDelete }: { exId: string; pr: any; onDelete: (
 
 function RecoveryTabContent() {
   const { user } = useAuth();
+  const today = new Date().toISOString().split("T")[0];
   const [view, setView] = useState<"front" | "back">("front");
   const [highlighted, setHighlighted] = useState<typeof MUSCLE_REGIONS[number] | null>(null);
   const diagramRef = useRef<HTMLDivElement>(null);
@@ -186,6 +188,9 @@ function RecoveryTabContent() {
 
   return (
     <div className="space-y-5">
+      {/* Biometric scores + AI insight */}
+      <RecoveryDashboard date={today} />
+
       {/* Settings row */}
       <div className="flex items-center justify-between">
         <p className="text-[11px] text-muted-foreground">
