@@ -1882,6 +1882,22 @@ export async function upsertDailyScore(data: {
   return !error;
 }
 
+export async function updateDailyScoreAIInsight(
+  date: string,
+  aiInsight: AIInsight,
+  aiGeneratedAt: string,
+): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { error } = await supabase
+    .from("daily_scores")
+    .update({ ai_insight: aiInsight as never, ai_generated_at: aiGeneratedAt, updated_at: new Date().toISOString() })
+    .eq("user_id", user.id)
+    .eq("date", date);
+  if (error) console.error("Failed to save AI insight:", error);
+  return !error;
+}
+
 export async function fetchDailyScores(daysBack = 14): Promise<DailyScoreRecord[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];

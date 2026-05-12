@@ -5,10 +5,11 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Activity, Wind, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import {
   upsertDailyBiometrics,
   upsertDailyScore,
+  updateDailyScoreAIInsight,
   upsertSleepLog,
   fetchDailyBiometrics,
   fetchDailyScores,
@@ -175,7 +176,7 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
       });
 
       // 5. Fire edge function async for AI insight (don't wait — scores show immediately)
-      generateAIInsight(date, computed, biometricHistory, sleepFull, prevStrain, spo2);
+      generateAIInsight(date, computed, biometricHistory, sleepFull, prevStrain, spo2, queryClient);
 
       hapticSuccess();
       toast.success("Morning check-in saved");
@@ -355,10 +356,11 @@ async function generateAIInsight(
   sleepFull: SleepLogFull | null,
   prevStrain: number,
   spo2Pct: number,
+  queryClient: QueryClient,
 ) {
   try {
-    const stress7d  = biometricHistory.slice(0, 7).map(b => b.samsungStressScore).reverse();
-    const rhr7d     = biometricHistory.slice(0, 7).map(b => b.restingHr).reverse();
+    const stress7d = biometricHistory.slice(0, 7).map(b => b.samsungStressScore).reverse();
+    const rhr7d    = biometricHistory.slice(0, 7).map(b => b.restingHr).reverse();
 
     const payload = {
       scores: {
@@ -399,14 +401,19 @@ async function generateAIInsight(
       },
     );
 
-    if (!res.ok) return;
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`biometric-insight edge function error ${res.status}:`, errText);
+      return;
+    }
 
     const insight: AIInsight = await res.json();
-    await upsertDailyScore({
-      date,
-      aiInsight: insight,
-      aiGeneratedAt: new Date().toISOString(),
-    });
+
+    // Use UPDATE (not upsert) so only ai_insight + ai_generated_at are touched —
+    // a full upsert with undefined score fields would overwrite them with null.
+    await updateDailyScoreAIInsight(date, insight, new Date().toISOString());
+
+    queryClient.invalidateQueries({ queryKey: ["daily-scores"] });
   } catch (err) {
     console.error("AI insight generation failed:", err);
   }
