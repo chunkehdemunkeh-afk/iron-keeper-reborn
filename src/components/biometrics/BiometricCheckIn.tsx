@@ -16,6 +16,7 @@ import {
   fetchDailyScores,
   fetchSleepLogs,
 } from "@/lib/cloud-data";
+import { supabase } from "@/integrations/supabase/client";
 import {
   computeAllScores,
   computeUserBaseline,
