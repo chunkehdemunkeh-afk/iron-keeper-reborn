@@ -1,6 +1,7 @@
 import { Home, Heart, BarChart3, UtensilsCrossed, User, Trophy } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { hapticLight } from "@/lib/haptics";
 
 const NAV_ITEMS = [
   { icon: Home, label: "Home", path: "/" },
@@ -30,7 +31,10 @@ export default function BottomNav() {
           return (
             <button
               key={path}
-              onClick={() => navigate(path)}
+              onClick={() => {
+                if (location.pathname !== path) hapticLight();
+                navigate(path);
+              }}
               aria-label={label}
               aria-current={isActive ? "page" : undefined}
               className="relative flex flex-col items-center justify-center gap-1 flex-1 min-h-[56px] py-1.5 focus-visible:outline-none rounded-xl transition-transform active:scale-95"

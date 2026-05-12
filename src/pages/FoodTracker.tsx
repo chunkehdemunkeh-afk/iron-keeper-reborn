@@ -18,6 +18,8 @@ import WeeklyNutritionChart from "@/components/food/WeeklyNutritionChart";
 import CopyMeal from "@/components/food/CopyMeal";
 import HelpButton from "@/components/demo/HelpButton";
 import { SkeletonList } from "@/components/ui/loading-state";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { toast } from "sonner";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
@@ -210,8 +212,11 @@ export default function FoodTracker() {
 
   const pct = (val: number, target: number) => Math.min(100, Math.round((val / target) * 100));
 
+  const ptr = usePullToRefresh({ onRefresh: fetchData });
+
   return (
     <div className="min-h-screen bg-background pb-24">
+      <PullToRefreshIndicator {...ptr} />
       {/* Header */}
       <div className="px-4 pt-4 pb-2 flex items-center justify-between">
         <h1 className="text-xl font-bold font-display">Nutrition</h1>

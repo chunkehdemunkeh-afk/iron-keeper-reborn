@@ -22,6 +22,9 @@ import { toast } from "sonner";
 import HelpButton from "@/components/demo/HelpButton";
 import WeeklyReviewPrompt from "@/components/weekly/WeeklyReviewPrompt";
 import MondayBanner from "@/components/weekly/MondayBanner";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 const Index = () => {
   const { profile, user } = useAuth();
@@ -31,6 +34,11 @@ const Index = () => {
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [slideDir, setSlideDir] = useState(0); // -1 left, 1 right
+
+  const queryClient = useQueryClient();
+  const ptr = usePullToRefresh({
+    onRefresh: () => queryClient.invalidateQueries(),
+  });
 
   const dateStr = format(selectedDate, "yyyy-MM-dd");
   const isCurrentDay = isToday(selectedDate);
@@ -87,6 +95,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background safe-bottom">
+      <PullToRefreshIndicator {...ptr} />
       <div className="mx-auto max-w-lg md:max-w-2xl px-4 pt-6 pb-24 space-y-5">
         {/* Header */}
         <motion.div

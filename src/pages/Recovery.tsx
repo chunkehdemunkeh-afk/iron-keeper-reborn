@@ -1,16 +1,22 @@
 import { motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 import RecoveryPanel from "@/components/recovery/RecoveryPanel";
 import RecoveryTips from "@/components/RecoveryTips";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserPreferences } from "@/lib/user-preferences";
 import HelpButton from "@/components/demo/HelpButton";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 export default function Recovery() {
   const { user } = useAuth();
   const prefs = user ? getUserPreferences(user.id) : null;
+  const queryClient = useQueryClient();
+  const ptr = usePullToRefresh({ onRefresh: () => queryClient.invalidateQueries() });
 
   return (
     <div className="min-h-screen bg-background safe-bottom">
+      <PullToRefreshIndicator {...ptr} />
       <div className="mx-auto max-w-lg md:max-w-2xl px-4 pt-6 pb-24 space-y-5">
         <div className="flex items-start justify-between">
           <div>
