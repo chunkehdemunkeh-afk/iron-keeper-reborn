@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { type DailyScoreRecord } from "@/lib/cloud-data";
 import { useDailyScores } from "@/hooks/queries/useDailyScores";
 import { useDailyBiometrics } from "@/hooks/queries/useDailyBiometrics";
+import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
 import {
   recoveryColor,
   recoveryLabel,
@@ -12,10 +13,13 @@ import {
   strainLabel,
   strainColor,
   sleepPerformanceLabel,
+  computeUserBaseline,
+  computeRecoveryBreakdown,
+  type RecoveryFactor,
 } from "@/lib/recovery-scores";
 import { motion } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { Edit2, Wind, ChevronDown, ChevronUp } from "lucide-react";
+import { Edit2, Wind, ChevronDown, ChevronUp, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import ExerciseTimer from "@/components/ExerciseTimer";
 
 interface Props {
@@ -54,12 +58,57 @@ function ScoreCard({ label, value, subLabel, color, explanation }: ScoreCardProp
   );
 }
 
+function FactorRow({ factor }: { factor: RecoveryFactor }) {
+  const dirIcon =
+    factor.direction === "positive" ? <ArrowUp className="h-3 w-3" /> :
+    factor.direction === "negative" ? <ArrowDown className="h-3 w-3" /> :
+    <Minus className="h-3 w-3" />;
+  const dirColor =
+    factor.direction === "positive" ? "hsl(152 70% 50%)" :
+    factor.direction === "negative" ? "hsl(351 85% 60%)" :
+    "hsl(var(--muted-foreground))";
+  const widthPct = Math.round(factor.weight * 100);
+  return (
+    <div className="px-3.5 py-3 flex items-center gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <p className="text-xs font-semibold text-foreground">{factor.label}</p>
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold tabular-nums" style={{ color: dirColor }}>
+            {dirIcon}
+            <span>{factor.deltaPretty ?? "—"}</span>
+          </div>
+        </div>
+        <div className="relative h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div
+            className="absolute left-0 top-0 h-full rounded-full transition-[width] duration-500"
+            style={{ width: `${Math.round(factor.score * 100)}%`, background: dirColor }}
+          />
+        </div>
+        <p className="text-[9px] text-muted-foreground mt-1">{widthPct}% weight</p>
+      </div>
+    </div>
+  );
+}
+
 export default function RecoveryDetailSheet({ open, score, onClose, onEdit }: Props) {
   const { user } = useAuth();
   const [breathworkActive, setBreathworkActive] = useState(false);
 
   const { data: scores14d = [] } = useDailyScores(14, { enabled: open });
   const { data: biometrics14d = [] } = useDailyBiometrics(14, { range: "14d", enabled: open });
+  const { data: sleepLogs = [] } = useSleepLogs(14);
+
+  // Compute Whoop-style factor breakdown for today.
+  const breakdown = useMemo(() => {
+    if (!open) return null;
+    const today = new Date().toISOString().split("T")[0];
+    const todayBio = biometrics14d.find((b) => b.date === today) ?? null;
+    const todaySleep = sleepLogs.find((s) => s.date === today) ?? null;
+    const baseline = computeUserBaseline(biometrics14d);
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().split("T")[0];
+    const prevStrain = scores14d.find((s) => s.date === yesterday)?.strainScore ?? 0;
+    return computeRecoveryBreakdown(todayBio, baseline, todaySleep, prevStrain);
+  }, [open, biometrics14d, sleepLogs, scores14d]);
 
   if (!score) return null;
 
@@ -131,6 +180,23 @@ export default function RecoveryDetailSheet({ open, score, onClose, onEdit }: Pr
               explanation="Composite of sleep duration vs your body's need (scales with yesterday's training load), sleep quality rating, and stage breakdown if recorded. Your sleep need increases on high-strain days."
             />
           </div>
+
+          {/* What moved your score — Whoop-style factor breakdown */}
+          {breakdown && breakdown.factors.length > 0 && (
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+                What moved your recovery
+              </p>
+              <div className="rounded-xl bg-muted/30 border border-border/30 divide-y divide-border/30">
+                {breakdown.factors.map((f) => (
+                  <FactorRow key={f.key} factor={f} />
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-2 leading-relaxed">
+                Weighted like Whoop: sleep leads, then HRV (when available), resting HR, stress, and respiratory rate.
+              </p>
+            </div>
+          )}
 
           {/* AI coaching insight */}
           {aiInsight && (
