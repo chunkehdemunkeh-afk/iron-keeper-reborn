@@ -364,7 +364,7 @@ export default function Progress() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const tab = tabParam === "recovery" || tabParam === "photos" ? tabParam : "stats";
+  const tab = tabParam === "photos" ? tabParam : "stats";
 
   const { data: history = [], isLoading: historyLoading } = useWorkoutHistory();
 
@@ -450,10 +450,9 @@ export default function Progress() {
             setSearchParams(next, { replace: true });
           }}
         >
-          <TabsList className="grid grid-cols-3 w-full">
+          <TabsList className="grid grid-cols-2 w-full">
             <TabsTrigger value="stats">Stats</TabsTrigger>
             <TabsTrigger value="photos">Photos</TabsTrigger>
-            <TabsTrigger value="recovery">Recovery</TabsTrigger>
           </TabsList>
 
           <TabsContent value="photos" className="mt-4">
@@ -597,10 +596,6 @@ export default function Progress() {
                 className="glass-card rounded-xl"
               />
             )}
-          </TabsContent>
-
-          <TabsContent value="recovery" className="mt-4">
-            <RecoveryTabContent />
           </TabsContent>
         </Tabs>
       </div>
