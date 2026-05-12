@@ -518,10 +518,23 @@ export default function WorkoutSession() {
     toast.success(`Added ${entry.name}`);
   }, [allExercises, applyHistoricalVariantSelections]);
 
+  // Wall-clock derived elapsed — survives backgrounding, throttling, and route nav.
+  // Counts the FULL gym session (working sets + rests + screen-off time).
   useEffect(() => {
     if (!started || finished) return;
-    const interval = setInterval(() => setElapsed((e) => e + 1), 1000);
-    return () => clearInterval(interval);
+    if (!startedAtRef.current) startedAtRef.current = new Date().toISOString();
+    const tick = () => {
+      const startMs = new Date(startedAtRef.current!).getTime();
+      setElapsed(Math.max(0, Math.floor((Date.now() - startMs) / 1000)));
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    const onVisibility = () => { if (document.visibilityState === "visible") tick(); };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [started, finished]);
 
   const toggleSet = useCallback((exerciseId: string, setIdx: number) => {
