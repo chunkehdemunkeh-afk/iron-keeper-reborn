@@ -175,7 +175,7 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
       });
 
       // 5. Fire edge function async for AI insight (don't wait — scores show immediately)
-      generateAIInsight(date, computed, biometricHistory, sleepFull, prevStrain);
+      generateAIInsight(date, computed, biometricHistory, sleepFull, prevStrain, spo2);
 
       hapticSuccess();
       toast.success("Morning check-in saved");
@@ -354,6 +354,7 @@ async function generateAIInsight(
   biometricHistory: DailyBiometric[],
   sleepFull: SleepLogFull | null,
   prevStrain: number,
+  spo2Pct: number,
 ) {
   try {
     const stress7d  = biometricHistory.slice(0, 7).map(b => b.samsungStressScore).reverse();
@@ -381,7 +382,7 @@ async function generateAIInsight(
           awake: sleepFull.awakeMin      ?? null,
         } : null,
         yesterday_strain: prevStrain,
-        spo2: null,
+        spo2: spo2Pct,
       },
     };
 
