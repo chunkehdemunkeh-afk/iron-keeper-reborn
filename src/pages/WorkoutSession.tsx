@@ -532,11 +532,15 @@ export default function WorkoutSession() {
         ...addedAccessories.flatMap(accId => ACCESSORY_ROUTINES.find(r => r.id === accId)?.exercises || []),
         ...addedExercises,
       ];
+      const historicalSelections: { ex: Exercise; historicalId: string }[] = sessionExercises.flatMap(ex => {
+        if (!ex.id.startsWith("acc-")) return [];
+        const historicalId = Object.keys(data).find(key => key === ex.id || key.startsWith(`${ex.id}-`));
+        return historicalId ? [{ ex, historicalId }] : [];
+      });
       const missing = sessionExercises.filter(ex => {
         // If we already have data for the base id or any suffixed variant, skip.
         return !Object.keys(data).some(key => key === ex.id || key.startsWith(`${ex.id}-`));
       });
-      const historicalSelections: { ex: Exercise; historicalId: string }[] = [];
       if (missing.length > 0) {
         const results = await Promise.all(
           missing.map(ex => fetchExerciseLastDataLike(ex.id).then(r => ({ ex, r })))
