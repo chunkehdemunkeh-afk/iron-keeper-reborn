@@ -249,3 +249,80 @@ export async function recomputeTodayStrain(): Promise<void> {
     });
   }
 }
+
+/**
+ * Recompute strain_score for the past `daysBack` days by summing each day's
+ * workouts + activities. Updates existing daily_scores rows in-place;
+ * inserts a minimal row when a day has training but no score record yet.
+ * Returns number of days touched.
+ */
+export async function backfillStrainScores(daysBack = 30): Promise<number> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  const today = new Date();
+  const cutoff = new Date(today);
+  cutoff.setDate(cutoff.getDate() - daysBack);
+  const cutoffStr = cutoff.toISOString().split("T")[0];
+
+  const [workoutsRes, activitiesRes, scoresRes] = await Promise.all([
+    supabase
+      .from("workout_history")
+      .select("date, calories_burned, effort_rating")
+      .eq("user_id", user.id)
+      .gte("date", cutoffStr),
+    supabase
+      .from("activity_logs")
+      .select("date, calories_burned")
+      .eq("user_id", user.id)
+      .gte("date", cutoffStr),
+    supabase
+      .from("daily_scores")
+      .select("id, date")
+      .eq("user_id", user.id)
+      .gte("date", cutoffStr),
+  ]);
+
+  const dayMap = new Map<string, { workoutCal: number; activityCal: number; efforts: number[] }>();
+  const ensure = (d: string) => {
+    if (!dayMap.has(d)) dayMap.set(d, { workoutCal: 0, activityCal: 0, efforts: [] });
+    return dayMap.get(d)!;
+  };
+  for (const w of workoutsRes.data ?? []) {
+    const d = String((w as any).date).split("T")[0];
+    const bucket = ensure(d);
+    bucket.workoutCal += (w as any).calories_burned ?? 0;
+    if (typeof (w as any).effort_rating === "number") bucket.efforts.push((w as any).effort_rating);
+  }
+  for (const a of activitiesRes.data ?? []) {
+    const d = String((a as any).date).split("T")[0];
+    ensure(d).activityCal += (a as any).calories_burned ?? 0;
+  }
+
+  const scoreIdByDate = new Map<string, string>();
+  for (const s of scoresRes.data ?? []) scoreIdByDate.set((s as any).date, (s as any).id);
+
+  const { computeStrainScore } = await import("../recovery-scores");
+  let touched = 0;
+
+  for (const [date, b] of dayMap) {
+    const avgEffort = b.efforts.length ? b.efforts.reduce((s, e) => s + e, 0) / b.efforts.length : null;
+    const strain = computeStrainScore(b.workoutCal, avgEffort, b.activityCal);
+    const existingId = scoreIdByDate.get(date);
+    if (existingId) {
+      await supabase
+        .from("daily_scores")
+        .update({ strain_score: strain, updated_at: new Date().toISOString() })
+        .eq("id", existingId);
+    } else {
+      await supabase.from("daily_scores").insert({
+        user_id: user.id,
+        date,
+        strain_score: strain,
+      });
+    }
+    touched++;
+  }
+
+  return touched;
+}
