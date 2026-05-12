@@ -1871,7 +1871,7 @@ export async function upsertDailyScore(data: {
         strain_score: data.strainScore ?? null,
         stress_level: data.stressLevel ?? null,
         sleep_performance: data.sleepPerformance ?? null,
-        ai_insight: data.aiInsight ?? null,
+        ai_insight: (data.aiInsight ?? null) as never,
         ai_generated_at: data.aiGeneratedAt ?? null,
         updated_at: new Date().toISOString(),
       },
