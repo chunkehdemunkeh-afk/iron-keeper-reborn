@@ -64,6 +64,19 @@ export default function RecoveryDetailSheet({ open, score, onClose, onEdit }: Pr
 
   const { data: scores14d = [] } = useDailyScores(14, { enabled: open });
   const { data: biometrics14d = [] } = useDailyBiometrics(14, { range: "14d", enabled: open });
+  const { data: sleepLogs = [] } = useSleepLogs(14);
+
+  // Compute Whoop-style factor breakdown for today.
+  const breakdown = useMemo(() => {
+    if (!open) return null;
+    const today = new Date().toISOString().split("T")[0];
+    const todayBio = biometrics14d.find((b) => b.date === today) ?? null;
+    const todaySleep = sleepLogs.find((s) => s.date === today) ?? null;
+    const baseline = computeUserBaseline(biometrics14d);
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().split("T")[0];
+    const prevStrain = scores14d.find((s) => s.date === yesterday)?.strainScore ?? 0;
+    return computeRecoveryBreakdown(todayBio, baseline, todaySleep, prevStrain);
+  }, [open, biometrics14d, sleepLogs, scores14d]);
 
   if (!score) return null;
 
