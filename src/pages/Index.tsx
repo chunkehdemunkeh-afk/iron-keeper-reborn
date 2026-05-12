@@ -149,6 +149,9 @@ const Index = () => {
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className="space-y-5"
           >
+            {/* Combined recovery card: biometric scores + muscle diagram */}
+            {isCurrentDay && <HomeCombinedRecoveryCard date={dateStr} />}
+
             {/* Daily nutrition & water summary */}
             <HomeDailySummary date={dateStr} />
 
@@ -157,9 +160,6 @@ const Index = () => {
 
             {/* Sleep tracker */}
             <SleepCard date={dateStr} />
-
-            {/* Combined recovery card: biometric scores + muscle diagram */}
-            {isCurrentDay && <HomeCombinedRecoveryCard date={dateStr} />}
 
             {/* Complete Day */}
             <HomeCompleteDay date={dateStr} />

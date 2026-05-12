@@ -42,6 +42,68 @@ function StressDotsIndicator({ level }: { level: number }) {
   );
 }
 
+function DialRing({
+  label,
+  value,
+  suffix,
+  pct,
+  color,
+  sub,
+  primary,
+}: {
+  label: string;
+  value: number;
+  suffix: string;
+  pct: number;
+  color: string;
+  sub?: string;
+  primary?: boolean;
+}) {
+  const size = primary ? 92 : 78;
+  const r = primary ? 38 : 32;
+  const stroke = primary ? 7 : 6;
+  const c = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(100, pct));
+  return (
+    <div className="flex flex-col items-center">
+      <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+        {label}
+      </p>
+      <div className="relative">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth={stroke} />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke={color}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={`${c}`}
+            strokeDashoffset={`${c * (1 - clamped / 100)}`}
+            style={{ transition: "stroke-dashoffset 0.8s ease" }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span style={{ color }}>
+            <AnimatedNumber
+              value={value}
+              className={`font-display font-bold leading-none ${primary ? "text-2xl" : "text-xl"}`}
+            />
+          </span>
+          {suffix && <span className="text-[9px] text-muted-foreground leading-none mt-0.5">{suffix}</span>}
+        </div>
+      </div>
+      {sub && (
+        <p className="text-[9px] mt-1 font-semibold" style={{ color }}>
+          {sub}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function HomeCombinedRecoveryCard({ date }: Props) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -128,7 +190,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
           </div>
         </div>
 
-        {/* Biometric scores — only when checked in */}
+        {/* Three-dial Whoop-style overview — only when checked in */}
         <AnimatePresence initial={false}>
           {hasData && (
             <motion.div
@@ -141,54 +203,39 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                 onClick={() => setDetailOpen(true)}
                 className="w-full text-left active:opacity-80 transition-opacity"
               >
-                <div className="flex items-center gap-5">
-                  {/* Recovery ring */}
-                  <div className="relative flex-shrink-0">
-                    <svg width="72" height="72" viewBox="0 0 72 72" className="-rotate-90">
-                      <circle cx="36" cy="36" r="30" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
-                      <circle
-                        cx="36" cy="36" r="30"
-                        fill="none"
-                        stroke={ringColor}
-                        strokeWidth="6"
-                        strokeLinecap="round"
-                        strokeDasharray={`${2 * Math.PI * 30}`}
-                        strokeDashoffset={`${2 * Math.PI * 30 * (1 - recovery / 100)}`}
-                        style={{ transition: "stroke-dashoffset 0.8s ease" }}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span style={{ color: ringColor }}>
-                        <AnimatedNumber
-                          value={Math.round(recovery)}
-                          className="font-display text-lg font-bold leading-none"
-                        />
-                      </span>
-                      <span className="text-[9px] text-muted-foreground">%</span>
-                    </div>
-                  </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <DialRing
+                    label="Recovery"
+                    value={Math.round(recovery)}
+                    suffix="%"
+                    pct={recovery}
+                    color={ringColor}
+                    sub={recoveryLabel(recovery)}
+                    primary
+                  />
+                  <DialRing
+                    label="Sleep"
+                    value={Math.round(sleep)}
+                    suffix="%"
+                    pct={sleep}
+                    color="hsl(217 91% 60%)"
+                    sub={sleep >= 85 ? "Optimal" : sleep >= 70 ? "Sufficient" : "Low"}
+                  />
+                  <DialRing
+                    label="Strain"
+                    value={Number(strain.toFixed(1))}
+                    suffix=""
+                    pct={(strain / 21) * 100}
+                    color="hsl(38 92% 55%)"
+                    sub={strainLabel(strain)}
+                  />
+                </div>
 
-                  {/* Strain / Stress / Sleep */}
-                  <div className="flex-1 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground">Strain</p>
-                      <p className="text-xs font-semibold text-foreground">
-                        {strain.toFixed(1)}{" "}
-                        <span className="text-muted-foreground font-normal text-[10px]">{strainLabel(strain)}</span>
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground">Stress</p>
-                      <div className="flex items-center gap-1.5">
-                        <StressDotsIndicator level={stress} />
-                        <p className="text-[10px] text-muted-foreground">{stressLevelLabel(stress)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground">Sleep</p>
-                      <p className="text-xs font-semibold text-foreground">{Math.round(sleep)}%</p>
-                    </div>
-                  </div>
+                {/* Stress chip */}
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Stress</span>
+                  <StressDotsIndicator level={stress} />
+                  <span className="text-[10px] text-muted-foreground">{stressLevelLabel(stress)}</span>
                 </div>
 
                 {/* AI headline */}
@@ -200,15 +247,6 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     <p className="text-[10px] text-primary mt-1">Full analysis →</p>
                   </div>
                 )}
-
-                <div className="mt-2.5">
-                  <span
-                    className="text-[10px] font-bold px-2.5 py-1 rounded-full"
-                    style={{ color: ringColor, background: `${ringColor}20` }}
-                  >
-                    {recoveryLabel(recovery)}
-                  </span>
-                </div>
               </button>
 
               <div className="border-t border-border/40 my-3" />
