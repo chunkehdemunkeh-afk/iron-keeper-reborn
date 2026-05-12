@@ -299,8 +299,8 @@ export default function CoachDashboard() {
       </div>
 
       {/* Workout list */}
-      <div className="px-4 py-2 space-y-3 pb-8">
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recent Workouts</h2>
+      <div className="px-4 py-2 pb-8 mx-auto md:max-w-5xl">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Recent Workouts</h2>
 
         {workouts.length === 0 && (
           <EmptyState
@@ -309,6 +309,8 @@ export default function CoachDashboard() {
             description="Once your athletes complete sessions, they'll show up here."
           />
         )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
         {workouts.map((w, i) => {
           const expanded = expandedId === w.id;

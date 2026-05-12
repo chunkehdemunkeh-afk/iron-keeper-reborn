@@ -251,7 +251,7 @@ export default function Sessions() {
                     transition={{ duration: 0.2, ease: "easeInOut" }}
                     className="overflow-hidden"
                   >
-                    <div className="space-y-2.5 pt-2.5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-2.5">
                       {group.workouts.map((workout) => renderCard(workout, cardIndex++))}
                     </div>
                   </motion.div>
@@ -270,7 +270,9 @@ export default function Sessions() {
               <div className="flex-1 h-px bg-border/40" />
               <span className="text-[10px] text-muted-foreground/60">{ungroupedWorkouts.length}</span>
             </div>
-            {ungroupedWorkouts.map((workout) => renderCard(workout, cardIndex++))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              {ungroupedWorkouts.map((workout) => renderCard(workout, cardIndex++))}
+            </div>
           </div>
         )}
 
