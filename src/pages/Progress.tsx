@@ -599,8 +599,8 @@ export default function Progress() {
                 className="glass-card rounded-xl"
               />
             )}
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </div>
     </div>
   );
