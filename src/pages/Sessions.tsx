@@ -200,7 +200,7 @@ export default function Sessions() {
 
   return (
     <div className="min-h-screen bg-background safe-bottom">
-      <div className="mx-auto max-w-lg px-4 pt-6 pb-8 space-y-6">
+      <div className="mx-auto max-w-lg md:max-w-3xl px-4 pt-6 pb-8 space-y-6">
         <div className="flex items-center justify-between">
           <motion.h1
             initial={{ opacity: 0 }}

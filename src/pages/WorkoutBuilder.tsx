@@ -375,7 +375,7 @@ export default function WorkoutBuilder() {
 
   return (
     <div className="min-h-screen bg-background safe-bottom">
-      <div className="mx-auto max-w-lg px-4 pt-6 pb-24 space-y-5">
+      <div className="mx-auto max-w-lg md:max-w-2xl px-4 pt-6 pb-24 space-y-5">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="text-muted-foreground">
             <ArrowLeft className="h-5 w-5" />

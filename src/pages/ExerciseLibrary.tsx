@@ -17,7 +17,7 @@ export default function ExerciseLibrary() {
 
   return (
     <div className="min-h-screen bg-background safe-bottom">
-      <div className="mx-auto max-w-lg px-4 pt-6 pb-24 space-y-4">
+      <div className="mx-auto max-w-lg md:max-w-4xl px-4 pt-6 pb-24 space-y-4">
         <motion.h1
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

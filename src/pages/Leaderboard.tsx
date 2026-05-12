@@ -312,7 +312,7 @@ export default function Leaderboard() {
 
   return (
     <div className="min-h-screen bg-background safe-bottom">
-      <div className="mx-auto max-w-lg px-4 pt-6 pb-36">
+      <div className="mx-auto max-w-lg md:max-w-2xl px-4 pt-6 pb-36">
 
         {/* ── Header ─────────────────────────────────────────────── */}
         <motion.div
