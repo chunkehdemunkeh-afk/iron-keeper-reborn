@@ -123,6 +123,7 @@ export default function HomeCompleteDay({ date }: Props) {
   if (!status.waterLogged) missingItems.push({ icon: Droplet, label: "Water intake" });
 
   const handleComplete = async () => {
+    hapticMedium();
     // Refetch right before deciding so we don't show stale "missing" warnings
     // when the user has just logged water/food/weight elsewhere on the page.
     const fresh = await fetchStatus();
