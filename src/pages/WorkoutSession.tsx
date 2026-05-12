@@ -848,7 +848,9 @@ export default function WorkoutSession() {
       }
     }
     
-    saveWorkoutToCloud(completed);
+    saveWorkoutToCloud(completed).then(() => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.dailyScores(user!.id) });
+    });
     
     // Invalidate all related queries to force a refresh on other screens
     queryClient.invalidateQueries({ queryKey: queryKeys.workoutHistory(user!.id) });
