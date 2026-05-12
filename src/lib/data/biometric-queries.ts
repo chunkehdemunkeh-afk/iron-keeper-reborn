@@ -230,8 +230,8 @@ export async function recomputeTodayStrain(): Promise<void> {
       .eq("date", today)
       .maybeSingle(),
     supabase
-      .from("profiles")
-      .select("age")
+      .from("nutrition_goals")
+      .select("tdee_age")
       .eq("user_id", user.id)
       .maybeSingle(),
   ]);
