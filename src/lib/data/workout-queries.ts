@@ -84,7 +84,9 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
       effort_rating: workout.effortRating ?? null,
       session_notes: workout.sessionNotes ?? null,
       calories_burned: caloriesBurned,
-    })
+      avg_hr: workout.avgHr ?? null,
+      max_hr: workout.maxHr ?? null,
+    } as never)
     .select("id")
     .single();
 
