@@ -120,23 +120,38 @@ const Index = () => {
         {/* Next session — only show on today and when user has a workout plan */}
         {isCurrentDay && !noWorkoutMode && <NextSessionCard />}
 
-        {/* Date navigation for daily cards */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={goBack}
-            disabled={!canGoBack}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <p className="text-sm font-semibold text-foreground">{shortDateLabel}</p>
-          <button
-            onClick={goForward}
-            disabled={!canGoForward}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+        {/* Date navigation pill */}
+        <div className="flex items-center justify-center">
+          <div className="inline-flex items-center gap-1 rounded-full bg-card/60 hairline border p-1">
+            <button
+              onClick={goBack}
+              disabled={!canGoBack}
+              className="h-8 w-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/40 disabled:opacity-20 transition-colors"
+              aria-label="Previous day"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={dateStr}
+                initial={{ opacity: 0, x: slideDir * 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: slideDir * -8 }}
+                transition={{ duration: 0.18 }}
+                className="text-xs font-semibold text-foreground tracking-wide px-3 min-w-[110px] text-center tabular-nums"
+              >
+                {shortDateLabel}
+              </motion.span>
+            </AnimatePresence>
+            <button
+              onClick={goForward}
+              disabled={!canGoForward}
+              className="h-8 w-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/40 disabled:opacity-20 transition-colors"
+              aria-label="Next day"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {/* Date-aware cards with slide animation */}
