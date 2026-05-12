@@ -1,102 +1,74 @@
-## Goal
 
-Make Iron Keeper's Whoop-style biometric stack genuinely competitive: tighten the calculations against Whoop's published methodology, then redesign the recovery / strain / sleep surface so it reads like Whoop — clean, dial-driven, factor-breakdown-on-tap. Keep AI feedback you've already wired in.
+# Premium UI Polish + Iron Warrior Rebrand (Final)
 
-## Research summary — how Whoop does it
+Locked decisions from your last reply:
+- **Bottom nav** stays at 6 items: `Home · Recovery · Nutrition · Progress · Ranks · Profile`. **Sessions moves into Profile** as a "Training Programme / Sessions" entry. Sessions also remains reachable from the Home `NextSessionCard` and the Week strip, so daily access is unchanged.
+- **Logo**: I'll generate **3 concepts** for Iron Warrior first and let you pick before any swap happens.
+- Everything else proceeds as written.
 
-**Recovery score (0–100, green/yellow/red at 67 / 34)** — composite of:
-- **Sleep performance ~40–50%** (largest single driver; not just hours — efficiency, deep + REM proportions, consistency)
-- **HRV ~25–30%** (Whoop's most heavily weighted *single* metric when present; deviation from 14-day baseline)
-- **Resting HR ~15–20%** (deviation from baseline; rises 24–48h before illness)
-- **Respiratory rate ~5–10%** (illness signal — deviations matter more than absolute)
-- **Body / skin temperature ~10%** (deviation from baseline)
+---
 
-Bands: Green ≥67 (primed), Yellow 34–66 (maintain), Red ≤33 (rest).
+## Build order
 
-**Strain (0–21, logarithmic)** — Whoop derives this from time in HR zones, not calories. Logarithmic so the top of the scale is genuinely hard to reach.
+### Step 1 — Logo concepts (do first, blocks rebrand)
+Generate 3 PNG concepts into `src/assets/`, all on a clean dark background, transparent variants for in-app use:
+1. **Forged W** — angular "W" sculpted from two crossed dumbbells, amber-on-charcoal, sharp bevels.
+2. **Warrior Shield** — minimalist shield with an embedded barbell silhouette, single-stroke, premium-mark feel.
+3. **Monogram IW** — tight ligature wordmark in a custom-cut Barlow Condensed Black, with a single accent slash in amber.
 
-**Stress Monitor (0–3)** — real-time, motion-aware: distinguishes workout HR from stress HR.
+You pick one; I then build out the maskable + monochrome Android icon variants and the new splash gradient from it.
 
-**UI conventions**
-- Home "Overview" dominated by three big rings: Recovery (top, % + colour), Sleep (bottom-left, %), Strain (bottom-right, 0–21 with day-target).
-- Tapping any metric opens a detail screen with a single hero number, a coloured arc, and a factor breakdown ("HRV +5% vs baseline", "Sleep −12 min", "RHR +4 bpm" etc.).
-- Trend views: 7-day / 30-day sparkline per metric, baseline band shaded behind.
-- Strain Target dial: animated bar from 0 → today's target derived from this morning's recovery.
+### Step 2 — Iron Warrior rebrand swap
+- Name + meta across `index.html`, `public/manifest.json`, `SplashScreen.tsx`, `Login.tsx`, `Profile.tsx`, README, toasts, demo tour copy.
+- Tagline candidates (pick on approval): *"Train. Track. Conquer."* / *"Strength built rep by rep."* / *"Forge your strongest self."*
+- New login feature pills (weight-training first):
+  - *Smart Programming* — PPL, Upper/Lower, 5/3/1 and more
+  - *Recovery Intelligence* — strain, sleep & readiness scoring
+  - *Track Every Lift* — PRs, volume, tier-based strength standards
+- Goalkeeper split stays available inside the app (selectable from Profile → Training Programme), just out of the headline.
 
-## Audit of your current calculations
+### Step 3 — Visual System Refresh (foundation for every screen)
+- New surface tokens in `src/index.css`: `--surface-1/2/3` + `--surface-hero` (subtle radial-to-amber). Convert `glass-card` → `surface-2`; add `hero-card` utility for top-of-page anchors.
+- Hairline borders (`border-white/[0.04]`) + soft inner highlight (`box-shadow: inset 0 1px 0 rgba(255,255,255,0.04)`) for the "lit" Apple/Whoop card look.
+- Tighter Barlow numbers (`tracking-tight`, `tabular-nums`); single shared `<SectionEyebrow>` component for "THIS WEEK", "RECOVERY", etc.
+- Spacing scale 4/8/12/16/24; `p-5` standard cards, `p-6` hero cards.
+- `framer-motion` `staggerChildren: 0.04` on route mount so screens land instead of pop in.
 
-`src/lib/recovery-scores.ts` is solid for a phone-only stack with no continuous HR. Specific deltas vs Whoop:
+### Step 4 — New `/recovery` top-level destination
+- Hero band: gradient tinted by today's recovery score, large primary recovery dial, AI insight in a `Sparkles` chip, "How are you feeling?" check-in CTA.
+- Three-up dial row: Recovery · Sleep Performance · Strain (shared `MetricDial` component).
+- Stress chip + HRV / RHR / SpO₂ inline metric strip.
+- 14-day trend chart with metric switcher (Recovery / Stress / RHR / Sleep) — moved out of Progress.
+- Full-width muscle-recovery diagram with tap-to-detail per region.
+- Recovery tips + "What helps your recovery" learnings.
+- Home `HomeCombinedRecoveryCard` becomes a compact summary that deep-links into `/recovery`.
+- Progress page loses the Recovery tab → Stats / Photos only.
 
-| Component | Today | Whoop guideline | Verdict |
-|---|---|---|---|
-| Recovery weights | stress 40% / sleep 35% / RHR 20% / resp 5% | Sleep 40–50, HRV 25–30, RHR 15–20, resp 5–10 | **Sleep should lead, not stress.** |
-| HRV usage | only used inside baseline; not in the score | "Most heavily weighted single factor" when present | **Promote HRV to primary signal when `hrvMs !== null`.** |
-| RHR weight | 20% | 15–20% | OK |
-| Respiratory band | linear (0–8 br/min) | deviation-from-baseline | Switch to z-score vs personal baseline once 14 days exist. |
-| Strain | log(cal/60 + cal/80) × effort | log of HR-zone time | Calorie proxy is reasonable without continuous HR. Add an avg-HR fallback (we already store `effortRating` + duration). |
-| Stress level | z-score blend of stress + RHR | real-time HR-derived | Acceptable as a daily snapshot. |
-| Bands | 67 / 34 | 67 / 34 | Matches. |
-| Sleep need | `7 + (strain/21) × 1.5` (7–8.5h) | scales with previous-day strain | Matches. |
-| Sleep performance | sufficiency 40 / quality 15 / efficiency 25 / restorative 20 | similar four-factor split | Matches well. |
+### Step 5 — Bottom nav rework
+- 6 items reordered: `Home · Recovery · Nutrition · Progress · Ranks · Profile`.
+- Bigger tap targets (56px h), 22px icons, 10px labels.
+- Soft amber pill behind active icon (Whoop-style), keeping the `layoutId` transition.
+- Sessions accessible from Profile + Home cards as before.
 
-## Plan
+### Step 6 — Home hero polish
+- Promote `HomeCombinedRecoveryCard` to a true hero with recovery-tinted gradient background, larger primary dial, "Open Recovery →" tap target.
+- `StatsBar`: real empty states (flame ghost + "Start your streak"), micro-trend arrows.
+- Date pager replaces text with a horizontally sliding pill.
+- Demote loud orange `Complete Day` to a secondary outlined CTA.
+- `SleepCard` empty: ghosted moon ring + duration placeholder.
 
-### 1. Tighten the calculations (`src/lib/recovery-scores.ts`)
+### Step 7 — Nutrition / Progress / Ranks / Profile
+- Nutrition: thicker calorie ring, "Eaten / Goal" centred, over/under chip, gradient macro bars + target tick, meal-time sub-labels.
+- Progress + Ranks: shared `<SegmentedTabs>` (filled active pill); custom empty-state illustrations; `WeeklyEnergyCard` gradient fill + dotted target line.
+- Profile: avatar hero card with inline metric chips; 2×2 quick links **+ a new "Training Programme & Sessions" tile** (relocated from bottom nav); Training summary uses a coloured chip instead of inline red text.
 
-- **Reweight `computeRecoveryScore` when HRV is present**:
-  - HRV available: HRV 30 / Sleep 40 / RHR 15 / Stress 10 / Resp 5
-  - HRV missing (current Galaxy Watch path): Sleep 40 / Stress 30 / RHR 20 / Resp 10
-- **Personalise respFactor** once `baseline.sampleSize ≥ 14`: switch from fixed `respBaseline = 15` to a rolling personal mean.
-- **Add `factorBreakdown` return** alongside the score: `{ sleep, hrv, rhr, stress, resp }` each `{ contribution, deltaVsBaseline, label }`. The detail sheet uses it directly.
-- Cover with Vitest unit tests for the new weighting + breakdown.
+### Step 8 — Native-readiness pass
+- New splash gradient + maskable / monochrome Android icons matching the chosen mark.
+- `theme-color` matched to the top-of-screen surface so the Android status bar blends in.
+- Pull-to-refresh on Home / Recovery / Nutrition.
+- Shimmer skeletons.
+- Audit `hapticMedium()` coverage on every primary CTA.
 
-### 2. New "Whoop-style" home overview (`src/components/recovery/`)
+---
 
-Replace the bottom half of `HomeCombinedRecoveryCard` (kept top half for AI insight + check-in CTA per project rules) with a three-dial cluster:
-
-- **Primary dial**: Recovery — large semicircle, hero %, label (Green/Yellow/Red), 7-day sparkline below
-- **Secondary tile**: Sleep performance — circular ring + hours/need
-- **Secondary tile**: Strain — bar from 0 to 21 with today's target marker (derived from recovery)
-
-All using existing `recoveryColor` / `strainColor` tokens — no new colors.
-
-### 3. Detail sheet upgrade (`RecoveryDetailSheet.tsx`)
-
-Replace the current flat list with the Whoop-style breakdown:
-- Hero: big number + arc + label
-- "What moved your score" — ranked list of factors with their delta vs 14-day baseline (sourced from new `factorBreakdown`)
-- 7-day mini sparkline with baseline band
-- Keep your AI insight section pinned at the bottom
-
-### 4. Trend tab (Progress → Recovery)
-
-Add 7d / 30d toggles + sparkline per metric (Recovery, Strain, Sleep, Stress) using existing `daily_scores` rows. Recharts already in the bundle.
-
-### 5. Side fix — runtime error
-
-`fetchExerciseLastDataLike` in `src/lib/data/workout-queries.ts` throws `.eq(...).or is not a function` at runtime. The chain is syntactically valid for supabase-js v2, but the error is reproducible — likely a builder-type quirk after `.eq()` then `.or()`. Fix by splitting the OR into two queries (`exercise_id eq baseId` + `exercise_id like 'baseId-%'`), unioning client-side, then taking the first by `created_at`. Restores previous-set fallback for substituted exercises.
-
-## Out of scope
-
-- No new sensors (no Health Connect / HealthKit — that's queued for the Capacitor phase per PLAN.md).
-- No body temperature / skin temp — Galaxy Watch doesn't expose it via PWA.
-- No real-time stress (no continuous HR via web).
-- No copy rewrites of the AI insight system itself — already wired.
-
-## Technical notes
-
-- All score functions stay pure — no React, no Supabase. Keeps Vitest coverage trivial.
-- Breakdown shape: `interface FactorBreakdown { key: 'sleep'|'hrv'|'rhr'|'resp'|'stress'; contributionPct: number; deltaPretty: string; direction: 'positive'|'negative'|'neutral' }`.
-- Rings/dials: pure SVG, no new dependency. Animated via framer-motion (`<motion.circle strokeDashoffset />`).
-- Sparkline: Recharts `<AreaChart>` with hidden axes, baseline band as a `<ReferenceArea>`.
-
-## Rollout
-
-1. Calc rewrite + tests.
-2. Quick fix for `fetchExerciseLastDataLike`.
-3. New `RecoveryDials` + `MetricRing` primitives in `src/components/recovery/`.
-4. Wire into `HomeCombinedRecoveryCard` (replace bottom half only).
-5. Upgrade `RecoveryDetailSheet` with factor breakdown.
-6. Trend tab on `Progress → Recovery`.
-
-~6 files added, ~4 edited.
+Approve and I'll start with Step 1 (the 3 logo concepts) so you have something concrete to pick from before any rebrand goes live.
