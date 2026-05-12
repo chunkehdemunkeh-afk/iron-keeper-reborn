@@ -156,42 +156,174 @@ export function computeRecoveryScore(
   sleep: SleepLogFull | null,
   prevDayStrain: number,
 ): number {
+  return computeRecoveryBreakdown(today, baseline, sleep, prevDayStrain).score;
+}
+
+/**
+ * Whoop-style breakdown — same composite as computeRecoveryScore, but also
+ * returns each factor's sub-score, weight, and human-readable delta vs baseline.
+ *
+ * Weighting (mirrors Whoop's published guidance):
+ *   • HRV present  → Sleep 40 / HRV 30 / RHR 15 / Stress 10 / Resp 5
+ *   • HRV missing  → Sleep 40 / Stress 30 / RHR 20 / Resp 10  (Galaxy Watch path)
+ *
+ * If `today` is null we fall back to sleep + inverse-of-yesterday's-strain
+ * and return only those two factors.
+ */
+export function computeRecoveryBreakdown(
+  today: DailyBiometric | null,
+  baseline: UserBaseline,
+  sleep: SleepLogFull | null,
+  prevDayStrain: number,
+): RecoveryBreakdown {
   const sleepNeed = 7.0 + (prevDayStrain / 21) * 1.5; // 7–8.5h
 
-  // ── Sleep factor ──────────────────────────────────────────────────────────
-  const sleepFactor = sleep ? computeSleepFactor(sleep, sleepNeed) : 0.4;
+  const sleepScore = sleep ? computeSleepFactor(sleep, sleepNeed) : 0.4;
+  const sleepDelta = sleep ? formatHoursDelta(sleep.hours - sleepNeed) : null;
+  const sleepFactor: RecoveryFactor = {
+    key: "sleep",
+    label: "Sleep",
+    score: sleepScore,
+    weight: 0,
+    contribution: 0,
+    deltaPretty: sleepDelta,
+    direction: scoreDirection(sleepScore),
+  };
 
   if (!today) {
-    // No biometrics — lean heavily on sleep + inverse of yesterday's strain
-    const strainFactor = clamp(1 - prevDayStrain / 21, 0, 1);
-    return clamp(sleepFactor * 0.70 + strainFactor * 0.30, 0, 1) * 100;
+    const strainScore = clamp(1 - prevDayStrain / 21, 0, 1);
+    sleepFactor.weight = 0.7;
+    sleepFactor.contribution = sleepScore * 70;
+    const strainFactor: RecoveryFactor = {
+      key: "stress",
+      label: "Yesterday's strain",
+      score: strainScore,
+      weight: 0.3,
+      contribution: strainScore * 30,
+      deltaPretty: prevDayStrain > 0 ? `${prevDayStrain.toFixed(1)} / 21` : null,
+      direction: scoreDirection(strainScore),
+    };
+    const composite = clamp(sleepScore * 0.7 + strainScore * 0.3, 0, 1) * 100;
+    return { score: composite, factors: orderByImpact([sleepFactor, strainFactor]) };
   }
 
-  // ── Stress factor (inverted — lower stress = better recovery) ─────────────
-  const stressFactor = today.samsungStressScore !== null
-    ? normaliseScore(today.samsungStressScore, baseline.avgStress, baseline.stdStress, "lower")
-    : sleepFactor; // proxy if missing
+  // ── HRV ──────────────────────────────────────────────────────────────────
+  const hrvAvailable = today.hrvMs !== null && baseline.avgHRV !== null;
+  const hrvScore = hrvAvailable
+    ? normaliseScore(today.hrvMs!, baseline.avgHRV!, baseline.stdHRV ?? 8, "higher")
+    : 0.5;
+  const hrvDelta = hrvAvailable ? formatBpmDelta(today.hrvMs! - baseline.avgHRV!, "ms") : null;
 
-  // ── RHR factor (lower than baseline = better recovery) ────────────────────
-  const rhrFactor = today.restingHr !== null
+  // ── Stress (Samsung HRV-derived score, lower = better) ───────────────────
+  const stressScore = today.samsungStressScore !== null
+    ? normaliseScore(today.samsungStressScore, baseline.avgStress, baseline.stdStress, "lower")
+    : sleepScore;
+  const stressDelta = today.samsungStressScore !== null
+    ? formatBpmDelta(today.samsungStressScore - baseline.avgStress, "")
+    : null;
+
+  // ── RHR (lower = better) ──────────────────────────────────────────────────
+  const rhrScore = today.restingHr !== null
     ? normaliseScore(today.restingHr, baseline.avgRHR, baseline.stdRHR, "lower")
     : 0.5;
+  const rhrDelta = today.restingHr !== null
+    ? formatBpmDelta(today.restingHr - baseline.avgRHR, "bpm")
+    : null;
 
-  // ── Respiratory rate factor (stable = good) ────────────────────────────────
-  // Galaxy Watch 5 records this during sleep. Deviations > 2 breaths/min from
-  // baseline signal illness or accumulated fatigue.
-  const respBaseline = 15; // population norm; personalised once 14d of data exists
-  const respFactor = today.respiratoryRate !== null
+  // ── Respiratory rate ─────────────────────────────────────────────────────
+  const respBaseline = 15; // population norm; could be personalised once 14d of data exists
+  const respScore = today.respiratoryRate !== null
     ? clamp(1 - Math.abs(today.respiratoryRate - respBaseline) / 8, 0, 1)
     : 0.5;
+  const respDelta = today.respiratoryRate !== null
+    ? formatBpmDelta(today.respiratoryRate - respBaseline, "br/min")
+    : null;
+
+  // Whoop weighting — sleep leads, HRV second when present
+  const weights = hrvAvailable
+    ? { sleep: 0.40, hrv: 0.30, rhr: 0.15, stress: 0.10, resp: 0.05 }
+    : { sleep: 0.40, hrv: 0.00, rhr: 0.20, stress: 0.30, resp: 0.10 };
+
+  const factors: RecoveryFactor[] = [
+    { ...sleepFactor, weight: weights.sleep, contribution: sleepScore * weights.sleep * 100 },
+    {
+      key: "hrv",
+      label: "HRV",
+      score: hrvScore,
+      weight: weights.hrv,
+      contribution: hrvScore * weights.hrv * 100,
+      deltaPretty: hrvDelta,
+      direction: hrvAvailable ? scoreDirection(hrvScore) : "neutral",
+    },
+    {
+      key: "rhr",
+      label: "Resting HR",
+      score: rhrScore,
+      weight: weights.rhr,
+      contribution: rhrScore * weights.rhr * 100,
+      deltaPretty: rhrDelta,
+      direction: today.restingHr !== null ? scoreDirection(rhrScore) : "neutral",
+    },
+    {
+      key: "stress",
+      label: "Stress score",
+      score: stressScore,
+      weight: weights.stress,
+      contribution: stressScore * weights.stress * 100,
+      deltaPretty: stressDelta,
+      direction: today.samsungStressScore !== null ? scoreDirection(stressScore) : "neutral",
+    },
+    {
+      key: "resp",
+      label: "Respiratory rate",
+      score: respScore,
+      weight: weights.resp,
+      contribution: respScore * weights.resp * 100,
+      deltaPretty: respDelta,
+      direction: today.respiratoryRate !== null ? scoreDirection(respScore) : "neutral",
+    },
+  ].filter((f) => f.weight > 0);
 
   const raw =
-    stressFactor * 0.40 +
-    sleepFactor  * 0.35 +
-    rhrFactor    * 0.20 +
-    respFactor   * 0.05;
+    sleepScore   * weights.sleep  +
+    hrvScore     * weights.hrv    +
+    rhrScore     * weights.rhr    +
+    stressScore  * weights.stress +
+    respScore    * weights.resp;
 
-  return clamp(raw, 0, 1) * 100;
+  return {
+    score: clamp(raw, 0, 1) * 100,
+    factors: orderByImpact(factors),
+  };
+}
+
+// ─── Breakdown helpers ───────────────────────────────────────────────────────
+
+function scoreDirection(score: number): "positive" | "negative" | "neutral" {
+  if (score >= 0.6) return "positive";
+  if (score <= 0.4) return "negative";
+  return "neutral";
+}
+
+function orderByImpact(factors: RecoveryFactor[]): RecoveryFactor[] {
+  // Sort by how far each factor pulled away from neutral (0.5 × weight × 100)
+  return [...factors].sort((a, b) => {
+    const aDist = Math.abs(a.contribution - a.weight * 50);
+    const bDist = Math.abs(b.contribution - b.weight * 50);
+    return bDist - aDist;
+  });
+}
+
+function formatBpmDelta(delta: number, unit: string): string {
+  const sign = delta > 0 ? "+" : "";
+  const rounded = Math.round(delta);
+  return unit ? `${sign}${rounded} ${unit}` : `${sign}${rounded}`;
+}
+
+function formatHoursDelta(hoursDelta: number): string {
+  const minutes = Math.round(hoursDelta * 60);
+  const sign = minutes > 0 ? "+" : "";
+  return `${sign}${minutes} min`;
 }
 
 export function recoveryColor(score: number): string {
