@@ -460,7 +460,7 @@ const UNILATERAL_INDICATORS = [
   "curl",
 ];
 
-const DB_INDICATORS = ["dumbbell", " db ", "db bench", "db press", "db fly", "db row", "db squat", "db shoulder", "db ohp"];
+const DB_INDICATORS = ["dumbbell", " db ", "db bench", "db press", "db fly", "db row", "db squat", "db shoulder", "db ohp", "bulgarian split squat"];
 
 /**
  * Returns true when an exercise uses two dumbbells simultaneously (bilateral),

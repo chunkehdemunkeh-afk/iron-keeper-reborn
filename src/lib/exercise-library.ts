@@ -20,6 +20,7 @@ export const EXERCISE_LIBRARY: LibraryExercise[] = [
   { id: "lib-3", name: "Push-Ups", muscleGroup: "Chest", equipment: "Bodyweight", description: "Classic push-up, chest to floor." },
   { id: "lib-4", name: "Cable Flies", muscleGroup: "Chest", equipment: "Cables", description: "Squeeze chest together with cable handles." },
   { id: "lib-5", name: "Dips", muscleGroup: "Chest", equipment: "Bodyweight", description: "Lean forward to target chest on parallel bars." },
+  { id: "lib-60", name: "Pec Dec", muscleGroup: "Chest", equipment: "Machine", description: "Machine chest fly — elbows at 90°, bring arms forward and squeeze pecs hard at the peak." },
 
   // Back
   { id: "lib-6", name: "Pull-Ups", muscleGroup: "Back", equipment: "Bodyweight", description: "Overhand grip, pull chin over bar." },
@@ -44,6 +45,7 @@ export const EXERCISE_LIBRARY: LibraryExercise[] = [
   { id: "lib-19", name: "Tricep Pushdown", muscleGroup: "Triceps", equipment: "Cable", description: "Push cable attachment down, lock out elbows." },
   { id: "lib-20", name: "Overhead Tricep Extension", muscleGroup: "Triceps", equipment: "Dumbbell", description: "Extend dumbbell overhead behind head." },
   { id: "lib-21", name: "Close Grip Bench Press", muscleGroup: "Triceps", equipment: "Barbell", description: "Bench press with narrow grip for triceps." },
+  { id: "lib-59", name: "JM Press", muscleGroup: "Triceps", equipment: "Barbell", description: "Hybrid press-and-skull-crusher — lower bar toward chin with elbows tucked, press back up, stop short of lockout." },
 
   // Quads
   { id: "lib-22", name: "Back Squat", muscleGroup: "Quads", equipment: "Barbell", description: "Bar on traps, squat to parallel or below." },

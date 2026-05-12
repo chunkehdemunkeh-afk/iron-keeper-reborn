@@ -4,13 +4,7 @@
 
 ## Current Status
 
-**NEXT: Deploy biometric tracking feature** — Code is complete and pushed. Three manual steps required to go live:
-
-1. **Apply migration** — paste `supabase/migrations/20260511120000_biometric_tracking.sql` into [Supabase dashboard SQL editor](https://supabase.com/dashboard/project/kzwkdhwselqchhcqkyzs/sql). Creates `daily_biometrics`, `daily_scores` tables + adds sleep stage columns to `sleep_logs`.
-2. **Set Supabase secret** — Supabase dashboard → Edge Functions → Secrets → add `ANTHROPIC_API_KEY` (your Anthropic API key). Required by the `biometric-insight` edge function.
-3. **Deploy edge function** — run `npx supabase functions deploy biometric-insight` (requires `SUPABASE_ACCESS_TOKEN` env var, or use the dashboard → Edge Functions → Deploy).
-
-Once done, update this to: **NEXT: TBD**.
+**NEXT: TBD** — Biometric tracking feature is fully live (2026-05-12). Migration applied, `ANTHROPIC_API_KEY` secret set, `biometric-insight` edge function deployed.
 
 **Calorie burn tracking complete** (2026-04-23):
 - Migration `20260423...`: `calories_burned` on `workout_history` + `activity_logs`; `distance_km`, `incline_pct` on `activity_logs`; `adjust_for_activity` on `nutrition_goals`

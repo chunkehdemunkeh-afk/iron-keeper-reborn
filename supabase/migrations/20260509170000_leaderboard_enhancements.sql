@@ -4,6 +4,10 @@
 -- 3. 1RM: add is_tested boolean to distinguish actual 1RM tests from Epley estimates
 -- 4. All RPCs: add prev_weekly / prev_monthly time filter values for trend comparisons
 
+-- Drop functions whose return type changes (CREATE OR REPLACE can't change return types)
+DROP FUNCTION IF EXISTS get_1rm_leaderboard(text, text);
+DROP FUNCTION IF EXISTS get_session_volume_leaderboard(text, text);
+
 CREATE OR REPLACE FUNCTION get_top_exercises(
   p_time_filter text DEFAULT 'all',
   p_limit       integer DEFAULT 20
