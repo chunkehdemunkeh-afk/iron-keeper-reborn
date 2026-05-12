@@ -29,6 +29,7 @@ import {
   CommandItem,
   CommandEmpty,
 } from "@/components/ui/command";
+import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 
 type Category = "1rm" | "maxweight" | "maxreps" | "volume";
 
