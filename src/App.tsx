@@ -31,6 +31,9 @@ import ResetPassword from "./pages/ResetPassword";
 import Leaderboard from "./pages/Leaderboard";
 import { isOnboardingComplete } from "@/lib/user-preferences";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ErrorBoundary } from "@/components/ui/async-boundary";
+import { ErrorState } from "@/components/ui/error-state";
 
 const queryClient = new QueryClient();
 
@@ -39,7 +42,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground text-sm">Loading...</div>
+        <LoadingState label="Loading session" />
       </div>
     );
   }
@@ -106,7 +109,7 @@ function RoleBasedHome() {
   if (roleLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground text-sm">Loading...</div>
+        <LoadingState label="Loading" />
       </div>
     );
   }
@@ -127,7 +130,7 @@ const AppRoutes = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground text-sm">Loading...</div>
+        <LoadingState label="Starting Iron Keeper" />
       </div>
     );
   }
@@ -135,7 +138,19 @@ const AppRoutes = () => {
   return (
     <>
       <DemoBanner />
-      <AnimatedRoutes />
+      <ErrorBoundary
+        fallback={({ reset }) => (
+          <div className="min-h-screen bg-background flex items-center justify-center p-4">
+            <ErrorState
+              title="Something broke"
+              description="The app hit an unexpected error. Try reloading this section."
+              onRetry={reset}
+            />
+          </div>
+        )}
+      >
+        <AnimatedRoutes />
+      </ErrorBoundary>
       {user && <BottomNav />}
     </>
   );
