@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.102",
+    version: "1.6.103",
     date: "2026-05-12",
     title: "Updates & Fixes",
     changes: [
-      "Fix AI insight never saving: use UPDATE not upsert, invalidate query on completion",
+      "Refactor: centralize query keys, split cloud-data, add custom hooks, extract utils",
     ],
   },
   {
