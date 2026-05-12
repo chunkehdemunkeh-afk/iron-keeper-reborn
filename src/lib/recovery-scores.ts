@@ -342,13 +342,29 @@ export function recoveryLabel(score: number): "Green" | "Yellow" | "Red" {
 
 /**
  * Daily strain score (0–21, logarithmic scale mirrors Whoop).
- * Computed from workout calories burned × effort multiplier + activity calories.
- * Logarithmic so each additional unit gets progressively harder to accumulate.
+ *
+ * Default: calorie + effort proxy.
+ * If HR data is provided, blends in a TRIMP-style score derived from
+ * average HR vs heart-rate reserve over the workout duration.
  */
+export interface StrainHRContext {
+  /** workout durationMin used for TRIMP. Falls back to 0 if missing. */
+  durationMin?: number | null;
+  /** average BPM during workouts (weighted average if multiple). */
+  avgHr?: number | null;
+  /** peak BPM during workouts. */
+  maxHr?: number | null;
+  /** resting HR baseline (bpm). */
+  restingHr?: number | null;
+  /** user age — for max HR estimate (220 - age). */
+  age?: number | null;
+}
+
 export function computeStrainScore(
   workoutCalories: number,
   effortRating: number | null,   // 1–10 (from workout session RPE field)
   activityCalories: number,
+  hr?: StrainHRContext,
 ): number {
   // effort_rating 1→0.6, 5→1.0, 10→1.8 — linearly interpolated
   const effortMult = effortRating !== null
@@ -360,7 +376,27 @@ export function computeStrainScore(
   // Activity contribution: cardio at moderate intensity
   const activityBase = activityCalories / 80;
 
-  const total = workoutBase + activityBase;
+  let total = workoutBase + activityBase;
+
+  // ── HR-based TRIMP boost (Whoop-style) ──────────────────────────────────
+  // TRIMP = duration × HR-reserve fraction × intensity weight (Banister).
+  // Only applied when avgHr + duration are present.
+  if (hr?.avgHr && hr.avgHr > 40 && hr.durationMin && hr.durationMin > 0) {
+    const restingHr = hr.restingHr && hr.restingHr > 30 ? hr.restingHr : 60;
+    const maxHr = hr.maxHr && hr.maxHr > hr.avgHr
+      ? hr.maxHr
+      : (hr.age ? 220 - hr.age : 190);
+    const reserve = Math.max(1, maxHr - restingHr);
+    const hrr = clamp((hr.avgHr - restingHr) / reserve, 0, 1);
+    // Banister exponential weighting (men): y = 0.64 * e^(1.92 * hrr)
+    const intensity = 0.64 * Math.exp(1.92 * hrr);
+    const trimp = hr.durationMin * hrr * intensity;
+    // Scale TRIMP into the same units as workoutBase (~0–60 typical session)
+    // and blend 60/40 in favour of the HR signal when present.
+    const trimpScaled = trimp / 4;
+    total = workoutBase * 0.4 + trimpScaled * 0.6 + activityBase;
+  }
+
   // Logarithmic squash onto 0–21 scale
   const strain = Math.min(21, Math.log(1 + total) * 3.2);
   return Math.round(strain * 100) / 100;
