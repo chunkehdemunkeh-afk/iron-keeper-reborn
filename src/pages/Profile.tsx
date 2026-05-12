@@ -44,6 +44,22 @@ export default function Profile() {
   const [removingAvatar, setRemovingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const [backfilling, setBackfilling] = useState(false);
+
+  const handleBackfill = async () => {
+    setBackfilling(true);
+    try {
+      const days = await backfillStrainScores(30);
+      queryClient.invalidateQueries({ queryKey: queryKeys.dailyScores(user!.id) });
+      hapticSuccess();
+      toast.success(`Recomputed strain for ${days} day${days === 1 ? "" : "s"}`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Backfill failed");
+    } finally {
+      setBackfilling(false);
+    }
+  };
 
   const startEditName = () => {
     setNameInput(profile?.display_name || "");
