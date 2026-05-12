@@ -149,6 +149,23 @@ export default function RecoveryDetailSheet({ open, score, onClose, onEdit }: Pr
             />
           </div>
 
+          {/* What moved your score — Whoop-style factor breakdown */}
+          {breakdown && breakdown.factors.length > 0 && (
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+                What moved your recovery
+              </p>
+              <div className="rounded-xl bg-muted/30 border border-border/30 divide-y divide-border/30">
+                {breakdown.factors.map((f) => (
+                  <FactorRow key={f.key} factor={f} />
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-2 leading-relaxed">
+                Weighted like Whoop: sleep leads, then HRV (when available), resting HR, stress, and respiratory rate.
+              </p>
+            </div>
+          )}
+
           {/* AI coaching insight */}
           {aiInsight && (
             <div className="rounded-xl bg-primary/8 border border-primary/20 p-4 space-y-4">
