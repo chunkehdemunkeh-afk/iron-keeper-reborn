@@ -678,9 +678,21 @@ export default function WorkoutSession() {
     // Only the first exercise represents the group in exerciseOrder; the rest are
     // tracked via setLogs and rendered inside the superset card.
     setExerciseOrder(prev => [...prev, routine.exercises[0].id]);
+    Promise.all(
+      routine.exercises.map(ex => fetchExerciseLastDataLike(ex.id).then(r => ({ ex, r })))
+    ).then(results => {
+      const found = results.filter(({ r }) => r?.sets.length) as { ex: Exercise; r: NonNullable<Awaited<ReturnType<typeof fetchExerciseLastDataLike>>> }[];
+      if (found.length === 0) return;
+      setLastSessionData(prev => {
+        const next = { ...prev };
+        found.forEach(({ r }) => { next[r.exerciseId] = r.sets; });
+        return next;
+      });
+      applyHistoricalVariantSelections(found.map(({ ex, r }) => ({ ex, historicalId: r.exerciseId })));
+    });
     hapticMedium();
     toast.success(`Added ${routine.name} accessory`);
-  }, [addedAccessories]);
+  }, [addedAccessories, applyHistoricalVariantSelections]);
 
   const addSingleExercise = useCallback((entry: { id: string; name: string; muscleGroup: string }) => {
     const alreadyExists = allExercises.some(e => e.id === entry.id);
@@ -689,11 +701,16 @@ export default function WorkoutSession() {
     setAddedExercises(prev => [...prev, ex]);
     setSetLogs(prev => ({ ...prev, [newId]: Array.from({ length: 3 }, () => ({ reps: 0, weight: 0, completed: false })) }));
     setExerciseOrder(prev => [...prev, newId]);
+    fetchExerciseLastDataLike(entry.id).then(r => {
+      if (!r || r.sets.length === 0) return;
+      setLastSessionData(prev => ({ ...prev, [r.exerciseId]: r.sets }));
+      applyHistoricalVariantSelections([{ ex, historicalId: r.exerciseId }]);
+    });
     setAddExerciseOpen(false);
     setAddExerciseSearch("");
     hapticMedium();
     toast.success(`Added ${entry.name}`);
-  }, [allExercises]);
+  }, [allExercises, applyHistoricalVariantSelections]);
 
   useEffect(() => {
     if (!started || finished) return;
