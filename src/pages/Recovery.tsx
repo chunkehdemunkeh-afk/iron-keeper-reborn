@@ -1,13 +1,18 @@
 import { motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 import RecoveryPanel from "@/components/recovery/RecoveryPanel";
 import RecoveryTips from "@/components/RecoveryTips";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserPreferences } from "@/lib/user-preferences";
 import HelpButton from "@/components/demo/HelpButton";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 export default function Recovery() {
   const { user } = useAuth();
   const prefs = user ? getUserPreferences(user.id) : null;
+  const queryClient = useQueryClient();
+  const ptr = usePullToRefresh({ onRefresh: () => queryClient.invalidateQueries() });
 
   return (
     <div className="min-h-screen bg-background safe-bottom">
