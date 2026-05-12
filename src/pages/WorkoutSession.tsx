@@ -855,6 +855,8 @@ export default function WorkoutSession() {
       effortRating: effortRating > 0 ? effortRating : undefined,
       sessionNotes: sessionNotes.trim() || undefined,
       startedAt: startedAtRef.current ?? undefined,
+      avgHr: avgHrInput ? Math.round(Number(avgHrInput)) || null : null,
+      maxHr: maxHrInput ? Math.round(Number(maxHrInput)) || null : null,
     };
     
     if (!hasCompletedAny) {
