@@ -12,6 +12,14 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.6.98",
+    date: "2026-05-12",
+    title: "Updates & Fixes",
+    changes: [
+      "Track actual gym duration via started_at timestamp",
+    ],
+  },
+  {
     version: "1.6.97",
     date: "2026-05-11",
     title: "Updates & Fixes",
