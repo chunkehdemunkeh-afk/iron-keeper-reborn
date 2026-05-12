@@ -206,10 +206,10 @@ export async function recomputeTodayStrain(): Promise<void> {
 
   const today = new Date().toISOString().split("T")[0];
 
-  const [workoutsRes, activitiesRes, existingRes] = await Promise.all([
+  const [workoutsRes, activitiesRes, existingRes, biometricRes, profileRes] = await Promise.all([
     supabase
       .from("workout_history")
-      .select("calories_burned, effort_rating")
+      .select("calories_burned, effort_rating, duration, avg_hr, max_hr")
       .eq("user_id", user.id)
       .eq("date", today),
     supabase
@@ -223,6 +223,17 @@ export async function recomputeTodayStrain(): Promise<void> {
       .eq("user_id", user.id)
       .eq("date", today)
       .maybeSingle(),
+    supabase
+      .from("daily_biometrics")
+      .select("resting_hr")
+      .eq("user_id", user.id)
+      .eq("date", today)
+      .maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("age")
+      .eq("user_id", user.id)
+      .maybeSingle(),
   ]);
 
   const workouts = workoutsRes.data ?? [];
@@ -233,8 +244,29 @@ export async function recomputeTodayStrain(): Promise<void> {
   const efforts = workouts.map((w: any) => w.effort_rating).filter((e: any): e is number => typeof e === "number");
   const avgEffort = efforts.length ? efforts.reduce((s, e) => s + e, 0) / efforts.length : null;
 
+  // Aggregate HR weighted by duration
+  const totalDur = workouts.reduce((s: number, w: any) => s + (w.duration ?? 0), 0);
+  const hrWeightedSum = workouts.reduce(
+    (s: number, w: any) => s + ((w.avg_hr ?? 0) * (w.duration ?? 0)),
+    0,
+  );
+  const avgHr = totalDur > 0 && hrWeightedSum > 0 ? hrWeightedSum / totalDur : null;
+  const maxHr = workouts.reduce(
+    (m: number | null, w: any) => (w.max_hr && (m === null || w.max_hr > m) ? w.max_hr : m),
+    null as number | null,
+  );
+
+  const restingHr = (biometricRes.data as any)?.resting_hr ?? null;
+  const age = (profileRes.data as any)?.age ?? null;
+
   const { computeStrainScore } = await import("../recovery-scores");
-  const strain = computeStrainScore(workoutCalories, avgEffort, activityCalories);
+  const strain = computeStrainScore(workoutCalories, avgEffort, activityCalories, {
+    durationMin: totalDur,
+    avgHr,
+    maxHr,
+    restingHr,
+    age,
+  });
 
   if (existingRes.data) {
     await supabase
