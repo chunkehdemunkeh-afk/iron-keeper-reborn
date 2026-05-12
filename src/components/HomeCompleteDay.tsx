@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import CompleteDaySummary from "@/components/food/CompleteDaySummary";
 import { saveDailyLog, hasDayBeenCompleted } from "@/lib/cloud-data";
+import { hapticMedium } from "@/lib/haptics";
 
 interface DayStatus {
   weightLogged: boolean;
