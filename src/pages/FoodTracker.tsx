@@ -18,6 +18,8 @@ import WeeklyNutritionChart from "@/components/food/WeeklyNutritionChart";
 import CopyMeal from "@/components/food/CopyMeal";
 import HelpButton from "@/components/demo/HelpButton";
 import { SkeletonList } from "@/components/ui/loading-state";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { toast } from "sonner";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
