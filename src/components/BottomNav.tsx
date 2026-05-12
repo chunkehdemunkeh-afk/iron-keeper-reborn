@@ -1,6 +1,7 @@
 import { Home, Heart, BarChart3, UtensilsCrossed, User, Trophy } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { hapticLight } from "@/lib/haptics";
 
 const NAV_ITEMS = [
   { icon: Home, label: "Home", path: "/" },
