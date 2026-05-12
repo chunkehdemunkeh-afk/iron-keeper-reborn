@@ -1871,7 +1871,7 @@ export async function upsertDailyScore(data: {
         strain_score: data.strainScore ?? null,
         stress_level: data.stressLevel ?? null,
         sleep_performance: data.sleepPerformance ?? null,
-        ai_insight: data.aiInsight ?? null,
+        ai_insight: (data.aiInsight ?? null) as never,
         ai_generated_at: data.aiGeneratedAt ?? null,
         updated_at: new Date().toISOString(),
       },
@@ -1932,7 +1932,7 @@ export async function fetchTodayScore(): Promise<DailyScoreRecord | null> {
     strainScore: data.strain_score != null ? Number(data.strain_score) : null,
     stressLevel: data.stress_level != null ? Number(data.stress_level) : null,
     sleepPerformance: data.sleep_performance != null ? Number(data.sleep_performance) : null,
-    aiInsight: data.ai_insight ?? null,
+    aiInsight: (data.ai_insight as unknown as AIInsight | null) ?? null,
     aiGeneratedAt: data.ai_generated_at ?? null,
   };
 }
