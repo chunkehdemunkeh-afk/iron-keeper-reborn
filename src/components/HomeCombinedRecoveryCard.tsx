@@ -184,7 +184,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                 <Plus className="h-3 w-3" /> Check in
               </button>
             )}
-            <button onClick={() => navigate("/progress?tab=recovery")} aria-label="View full recovery">
+            <button onClick={() => navigate("/recovery")} aria-label="View full recovery">
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
           </div>
@@ -257,7 +257,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
         {/* Muscle recovery — always shown */}
         <button
           type="button"
-          onClick={() => navigate("/progress?tab=recovery")}
+          onClick={() => navigate("/recovery")}
           className="w-full text-left active:scale-[0.99] transition-transform"
         >
           <div className="flex items-center gap-4">

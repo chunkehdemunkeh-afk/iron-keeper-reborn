@@ -90,16 +90,51 @@
   }
 }
 
+@layer base {
+  :root {
+    --surface-1: 220 18% 9%;
+    --surface-2: 220 18% 12%;
+    --surface-3: 220 16% 15%;
+    --hairline: 0 0% 100% / 0.05;
+    --inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+}
+
 @layer utilities {
   .glass-card {
-    @apply bg-card border border-border/50 backdrop-blur-sm;
-    box-shadow: 0 4px 24px -4px hsl(0 0% 0% / 0.3);
+    background: hsl(var(--surface-2));
+    border: 1px solid hsl(var(--hairline));
+    box-shadow:
+      0 4px 24px -6px hsl(0 0% 0% / 0.35),
+      var(--inner-highlight);
+    backdrop-filter: blur(8px);
   }
 
   .glass-card-elevated {
-    background: hsl(var(--card-elevated));
-    @apply border border-border/50 backdrop-blur-sm;
-    box-shadow: 0 8px 32px -8px hsl(0 0% 0% / 0.4);
+    background: hsl(var(--surface-3));
+    border: 1px solid hsl(var(--hairline));
+    box-shadow:
+      0 8px 32px -8px hsl(0 0% 0% / 0.45),
+      var(--inner-highlight);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Hero card — top-of-page anchor with subtle amber wash */
+  .hero-card {
+    position: relative;
+    background:
+      radial-gradient(120% 80% at 100% 0%, hsl(36 95% 55% / 0.10), transparent 60%),
+      hsl(var(--surface-2));
+    border: 1px solid hsl(var(--hairline));
+    box-shadow:
+      0 12px 40px -12px hsl(0 0% 0% / 0.5),
+      var(--inner-highlight);
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  .hairline {
+    border-color: hsl(var(--hairline));
   }
 
   .glow-primary {
@@ -121,5 +156,9 @@
 
   .safe-bottom {
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }

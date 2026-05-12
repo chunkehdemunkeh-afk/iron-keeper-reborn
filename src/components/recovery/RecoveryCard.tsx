@@ -50,7 +50,7 @@ export default function RecoveryCard() {
   return (
     <motion.button
       type="button"
-      onClick={() => navigate("/progress?tab=recovery")}
+      onClick={() => navigate("/recovery")}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}

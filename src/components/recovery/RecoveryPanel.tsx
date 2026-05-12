@@ -14,7 +14,8 @@ import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
 import { getUserPreferences } from "@/lib/user-preferences";
 import { useRecoverySettings } from "@/hooks/useRecoverySettings";
 import AnimatedNumber from "@/components/AnimatedNumber";
-import RecoveryDashboard from "@/components/biometrics/RecoveryDashboard";
+import RecoveryHero from "@/components/recovery/RecoveryHero";
+import HRVTrendCard from "@/components/biometrics/HRVTrendCard";
 import {
   RATED_LIFTS,
   TIER_COLORS,
@@ -102,7 +103,9 @@ export default function RecoveryPanel() {
 
   return (
     <div className="space-y-5">
-      <RecoveryDashboard date={today} />
+      <RecoveryHero date={today} />
+
+      <HRVTrendCard />
 
       <div className="flex items-center justify-between">
         <p className="text-[11px] text-muted-foreground">
