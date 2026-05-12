@@ -42,6 +42,68 @@ function StressDotsIndicator({ level }: { level: number }) {
   );
 }
 
+function DialRing({
+  label,
+  value,
+  suffix,
+  pct,
+  color,
+  sub,
+  primary,
+}: {
+  label: string;
+  value: number;
+  suffix: string;
+  pct: number;
+  color: string;
+  sub?: string;
+  primary?: boolean;
+}) {
+  const size = primary ? 92 : 78;
+  const r = primary ? 38 : 32;
+  const stroke = primary ? 7 : 6;
+  const c = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(100, pct));
+  return (
+    <div className="flex flex-col items-center">
+      <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+        {label}
+      </p>
+      <div className="relative">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth={stroke} />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke={color}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={`${c}`}
+            strokeDashoffset={`${c * (1 - clamped / 100)}`}
+            style={{ transition: "stroke-dashoffset 0.8s ease" }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span style={{ color }}>
+            <AnimatedNumber
+              value={value}
+              className={`font-display font-bold leading-none ${primary ? "text-2xl" : "text-xl"}`}
+            />
+          </span>
+          {suffix && <span className="text-[9px] text-muted-foreground leading-none mt-0.5">{suffix}</span>}
+        </div>
+      </div>
+      {sub && (
+        <p className="text-[9px] mt-1 font-semibold" style={{ color }}>
+          {sub}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function HomeCombinedRecoveryCard({ date }: Props) {
   const navigate = useNavigate();
   const { user } = useAuth();
