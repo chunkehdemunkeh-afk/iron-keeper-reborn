@@ -2,6 +2,7 @@ import { useState } from "react";
 import { EXERCISE_LIBRARY, MUSCLE_GROUPS_ALL } from "@/lib/exercise-library";
 import { Search, Dumbbell, Filter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function ExerciseLibrary() {
   const [search, setSearch] = useState("");
@@ -92,10 +93,11 @@ export default function ExerciseLibrary() {
           </AnimatePresence>
 
           {filtered.length === 0 && (
-            <div className="text-center py-12">
-              <Filter className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No exercises match your search</p>
-            </div>
+            <EmptyState
+              icon={Filter}
+              title="No exercises match"
+              description="Try a different muscle group or search term."
+            />
           )}
         </div>
       </div>
