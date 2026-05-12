@@ -1932,7 +1932,7 @@ export async function fetchTodayScore(): Promise<DailyScoreRecord | null> {
     strainScore: data.strain_score != null ? Number(data.strain_score) : null,
     stressLevel: data.stress_level != null ? Number(data.stress_level) : null,
     sleepPerformance: data.sleep_performance != null ? Number(data.sleep_performance) : null,
-    aiInsight: data.ai_insight ?? null,
+    aiInsight: (data.ai_insight as AIInsight | null) ?? null,
     aiGeneratedAt: data.ai_generated_at ?? null,
   };
 }
