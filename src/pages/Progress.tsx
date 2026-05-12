@@ -20,7 +20,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, CartesianGrid,
 } from "recharts";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import BodyDiagram, { viewForMuscle } from "@/components/recovery/BodyDiagram";
 import RecoverySettings from "@/components/recovery/RecoverySettings";
 import { computeMuscleRecovery, statusColor, statusLabel } from "@/lib/recovery";
@@ -441,25 +441,29 @@ export default function Progress() {
           <HelpButton />
         </div>
 
-        <Tabs
+        <SegmentedTabs
           value={tab}
-          onValueChange={(v) => {
+          onChange={(v) => {
             const next = new URLSearchParams(searchParams);
             if (v === "stats") next.delete("tab");
             else next.set("tab", v);
             setSearchParams(next, { replace: true });
           }}
-        >
-          <TabsList className="grid grid-cols-2 w-full">
-            <TabsTrigger value="stats">Stats</TabsTrigger>
-            <TabsTrigger value="photos">Photos</TabsTrigger>
-          </TabsList>
+          options={[
+            { value: "stats", label: "Stats" },
+            { value: "photos", label: "Photos" },
+          ]}
+          layoutId="progress-tab-pill"
+        />
 
-          <TabsContent value="photos" className="mt-4">
+        {tab === "photos" && (
+          <div className="mt-4">
             <PhotosTab />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="stats" className="space-y-5 mt-4">
+        {tab === "stats" && (
+          <div className="space-y-5 mt-4">
             {/* Summary cards */}
             <div className="grid grid-cols-3 gap-2">
               {[
@@ -595,8 +599,8 @@ export default function Progress() {
                 className="glass-card rounded-xl"
               />
             )}
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </div>
     </div>
   );

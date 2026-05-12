@@ -83,28 +83,46 @@ export default function WeeklyEnergyCard() {
       </div>
 
       {/* 4-week sparkline */}
-      {trend.length > 0 && (
-        <div>
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1.5">
-            Last 4 weeks
-          </p>
-          <div className="flex items-end gap-1.5 h-12">
-            {trend.map((kcal, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div className="flex-1 w-full flex items-end">
-                  <div
-                    className={`w-full rounded-sm transition-all ${i === trend.length - 1 ? "bg-primary" : "bg-muted-foreground/30"}`}
-                    style={{ height: `${(kcal / maxTrend) * 100}%`, minHeight: kcal > 0 ? "3px" : "0" }}
-                  />
+      {trend.length > 0 && (() => {
+        const avg = trend.reduce((s, k) => s + k, 0) / trend.length;
+        const targetPct = avg > 0 ? (avg / maxTrend) * 100 : 0;
+        return (
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                Last 4 weeks
+              </p>
+              <p className="text-[10px] text-muted-foreground/60 tabular-nums">
+                avg {Math.round(avg).toLocaleString()}
+              </p>
+            </div>
+            <div className="relative flex items-end gap-1.5 h-14">
+              {/* Dotted target line */}
+              <div
+                className="absolute left-0 right-0 border-t border-dashed border-primary/40 pointer-events-none"
+                style={{ bottom: `${targetPct}%` }}
+              />
+              {trend.map((kcal, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1 relative">
+                  <div className="flex-1 w-full flex items-end">
+                    <div
+                      className={`w-full rounded-md transition-all ${
+                        i === trend.length - 1
+                          ? "bg-gradient-to-t from-primary to-amber-300"
+                          : "bg-gradient-to-t from-muted-foreground/40 to-muted-foreground/10"
+                      }`}
+                      style={{ height: `${(kcal / maxTrend) * 100}%`, minHeight: kcal > 0 ? "3px" : "0" }}
+                    />
+                  </div>
+                  <span className={`text-[9px] tabular-nums ${i === trend.length - 1 ? "text-primary font-semibold" : "text-muted-foreground/60"}`}>
+                    {i === trend.length - 1 ? "Now" : `${trend.length - 1 - i}w`}
+                  </span>
                 </div>
-                <span className="text-[9px] text-muted-foreground/60">
-                  {i === trend.length - 1 ? "Now" : `${trend.length - 1 - i}w`}
-                </span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </motion.div>
   );
 }

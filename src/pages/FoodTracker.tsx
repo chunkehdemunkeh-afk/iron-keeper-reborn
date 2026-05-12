@@ -272,48 +272,58 @@ export default function FoodTracker() {
             className="p-4 cursor-pointer active:opacity-80 transition-opacity"
             onClick={() => setShowNutritionSheet(true)}
           >
-            {/* Calorie ring — Eaten · Ring · Remaining (always consistent) */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-center w-16">
-                <p className="text-xl font-display font-bold leading-none">{Math.round(totals.calories)}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">Eaten</p>
-              </div>
-
-              <div className="relative h-28 w-28">
+            {/* Calorie ring — thick ring, Eaten / Goal centred */}
+            <div className="flex flex-col items-center mb-4">
+              <div className="relative h-40 w-40">
                 <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
+                  <defs>
+                    <linearGradient id="cal-ring" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" />
+                      <stop offset="100%" stopColor={over ? "hsl(0 84% 60%)" : "hsl(38 92% 55%)"} />
+                    </linearGradient>
+                  </defs>
                   <path
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
-                    stroke="hsl(var(--secondary))"
-                    strokeWidth="3.5"
+                    stroke="hsl(var(--muted))"
+                    strokeWidth="5.5"
                   />
                   <path
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth="3.5"
+                    stroke="url(#cal-ring)"
+                    strokeWidth="5.5"
                     strokeDasharray={`${pct(totals.calories, effectiveGoal)}, 100`}
                     strokeLinecap="round"
                     className="transition-all duration-500"
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className={`text-2xl font-display font-bold leading-none ${over ? "text-rose-400" : ""}`}>
-                    {over ? `-${Math.abs(diff)}` : diff}
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Eaten</p>
+                  <p className="font-display text-3xl font-bold leading-none tabular-nums">
+                    {Math.round(totals.calories)}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{over ? "over" : "remaining"}</p>
+                  <div className="my-1 h-px w-8 bg-border/60" />
+                  <p className="text-xs text-muted-foreground tabular-nums">
+                    of <span className="font-semibold text-foreground">{effectiveGoal}</span>
+                  </p>
                 </div>
               </div>
-
-              <div className="text-center w-16">
-                <p className="text-xl font-display font-bold leading-none">{effectiveGoal}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">Goal</p>
+              {/* Over / under chip */}
+              <div
+                className={`mt-3 inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold ${
+                  over
+                    ? "bg-rose-500/15 text-rose-400 hairline border border-rose-500/30"
+                    : "bg-primary/15 text-primary hairline border border-primary/30"
+                }`}
+              >
+                {over ? `${Math.abs(diff)} kcal over` : `${diff} kcal remaining`}
               </div>
             </div>
 
             {/* Goal breakdown — only shown when there are burned calories */}
             {burnedKcal > 0 && (
-              <div className="flex items-center justify-center gap-1.5 text-[11px] mb-4 -mt-1">
+              <div className="flex items-center justify-center gap-1.5 text-[11px] mb-4">
                 <span className="text-muted-foreground">{goals.calories} base</span>
                 <span className="text-muted-foreground/50">+</span>
                 <span className="text-amber-400 flex items-center gap-0.5">
@@ -328,26 +338,35 @@ export default function FoodTracker() {
               </div>
             )}
 
-            {/* Macros */}
+            {/* Macros — gradient bars with target tick */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: "Carbs",   value: totals.carbs,   target: goals.carbs_g,   color: "bg-amber-400" },
-                { label: "Protein", value: totals.protein, target: goals.protein_g, color: "bg-primary" },
-                { label: "Fat",     value: totals.fat,     target: goals.fat_g,     color: "bg-rose-400" },
-              ].map((m) => (
-                <div key={m.label}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] text-muted-foreground">{m.label}</span>
-                    <span className="text-[10px] font-medium">{Math.round(m.value)} / {m.target}g</span>
+                { label: "Carbs",   value: totals.carbs,   target: goals.carbs_g,   from: "from-amber-500", to: "to-amber-300" },
+                { label: "Protein", value: totals.protein, target: goals.protein_g, from: "from-primary",   to: "to-primary/70" },
+                { label: "Fat",     value: totals.fat,     target: goals.fat_g,     from: "from-rose-500",  to: "to-rose-300" },
+              ].map((m) => {
+                const reached = m.value >= m.target;
+                return (
+                  <div key={m.label}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{m.label}</span>
+                      <span className="text-[10px] font-medium tabular-nums">
+                        {Math.round(m.value)} / {m.target}g
+                      </span>
+                    </div>
+                    <div className="relative h-1.5 bg-secondary rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full bg-gradient-to-r ${m.from} ${m.to} transition-all duration-500`}
+                        style={{ width: `${pct(m.value, m.target)}%` }}
+                      />
+                      {/* Target tick */}
+                      {reached && (
+                        <span className="absolute right-0 top-1/2 -translate-y-1/2 h-2.5 w-0.5 bg-foreground/60" />
+                      )}
+                    </div>
                   </div>
-                  <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${m.color} transition-all duration-500`}
-                      style={{ width: `${pct(m.value, m.target)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex items-center justify-center gap-1 mt-3 pt-2 border-t border-border/50">

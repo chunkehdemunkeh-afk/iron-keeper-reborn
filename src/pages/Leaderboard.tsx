@@ -29,6 +29,7 @@ import {
   CommandItem,
   CommandEmpty,
 } from "@/components/ui/command";
+import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 
 type Category = "1rm" | "maxweight" | "maxreps" | "volume";
 
@@ -349,47 +350,34 @@ export default function Leaderboard() {
           <div className="mt-4 h-px bg-border/40" />
         </motion.div>
 
-        {/* ── Category tabs — underline style ────────────────────── */}
+        {/* ── Category tabs — segmented pill ────────────────────── */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="flex gap-6 mb-5 overflow-x-auto"
-          style={{ scrollbarWidth: "none" }}
+          className="mb-5 flex items-center gap-2"
         >
-          {CATEGORIES.map(({ id, label }) => (
-            <button
-              key={id}
-              onClick={() => setCategory(id)}
-              className={`relative flex-shrink-0 pb-2.5 text-sm font-semibold transition-colors flex items-center gap-1 ${
-                category === id ? "text-foreground" : "text-muted-foreground/40 hover:text-muted-foreground/70"
-              }`}
-            >
-              {label}
-              {id === "1rm" && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <span
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center cursor-help"
-                    >
-                      <Info className="w-3 h-3 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors" />
-                    </span>
-                  </PopoverTrigger>
-                  <PopoverContent side="bottom" align="start" className="text-xs max-w-[220px] p-3 leading-relaxed">
-                    Estimated via the Epley formula: 1RM = weight × (1 + reps ÷ 30). Actual 1RM test sets use the recorded weight directly.
-                  </PopoverContent>
-                </Popover>
-              )}
-              {category === id && (
-                <motion.div
-                  layoutId="cat-underline"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary"
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                />
-              )}
-            </button>
-          ))}
+          <SegmentedTabs
+            value={category}
+            onChange={(v) => setCategory(v as Category)}
+            options={CATEGORIES.map((c) => ({ value: c.id, label: c.label }))}
+            layoutId="ranks-cat-pill"
+          />
+          {category === "1rm" && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className="h-8 w-8 flex items-center justify-center rounded-full hairline border bg-card/60 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                  aria-label="About 1RM"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="bottom" align="end" className="text-xs max-w-[220px] p-3 leading-relaxed">
+                Estimated via the Epley formula: 1RM = weight × (1 + reps ÷ 30). Actual 1RM test sets use the recorded weight directly.
+              </PopoverContent>
+            </Popover>
+          )}
         </motion.div>
 
         {/* ── Exercise / Session picker ───────────────────────────── */}
