@@ -472,6 +472,40 @@ export default function WorkoutSession() {
     return fallback?.[1];
   }, [exerciseOverrides, getEffectiveExId, lastSessionData]);
 
+  const applyHistoricalVariantSelections = useCallback((entries: { ex: Exercise; historicalId: string }[]) => {
+    const heavyIds: string[] = [];
+    const twoHandedIds: string[] = [];
+    const attachments: Record<string, string> = {};
+
+    entries.forEach(({ ex, historicalId }) => {
+      if (!(historicalId === ex.id || historicalId.startsWith(`${ex.id}-`))) return;
+      if (historicalId.includes("-heavy")) heavyIds.push(ex.id);
+      if (historicalId.includes("-2h")) twoHandedIds.push(ex.id);
+      if (isCableAttachmentExercise(ex.name)) {
+        for (const att of CABLE_ATTACHMENTS) {
+          const suffix = `-${attachmentKey(att)}`;
+          if (historicalId.endsWith(suffix)) {
+            attachments[ex.id] = att;
+            break;
+          }
+        }
+      }
+    });
+
+    if (heavyIds.length) {
+      setHeavyStackExercises(prev => new Set([...prev, ...heavyIds]));
+    }
+    if (twoHandedIds.length) {
+      setTwoHandedExercises(prev => new Set([...prev, ...twoHandedIds]));
+    }
+    if (Object.keys(attachments).length > 0) {
+      setCableAttachments(prev => {
+        const nonBlankPrev = Object.fromEntries(Object.entries(prev).filter(([, value]) => Boolean(value)));
+        return { ...attachments, ...nonBlankPrev };
+      });
+    }
+  }, []);
+
   // Load last session data, notes, and weight-up suggestions
   useEffect(() => {
     if (!workout) return;
@@ -493,7 +527,17 @@ export default function WorkoutSession() {
       // Gap-fill: any exercise in this workout that wasn't performed last session
       // (e.g. it was substituted) should still show its previous weights from
       // whenever it was last actually done. Look it up across all sessions.
-      const missing = (workout.exercises || []).filter(ex => {
+      const sessionExercises = [
+        ...(workout.exercises || []),
+        ...addedAccessories.flatMap(accId => ACCESSORY_ROUTINES.find(r => r.id === accId)?.exercises || []),
+        ...addedExercises,
+      ];
+      const historicalSelections: { ex: Exercise; historicalId: string }[] = sessionExercises.flatMap(ex => {
+        if (!ex.id.startsWith("acc-")) return [];
+        const historicalId = Object.keys(data).find(key => key === ex.id || key.startsWith(`${ex.id}-`));
+        return historicalId ? [{ ex, historicalId }] : [];
+      });
+      const missing = sessionExercises.filter(ex => {
         // If we already have data for the base id or any suffixed variant, skip.
         return !Object.keys(data).some(key => key === ex.id || key.startsWith(`${ex.id}-`));
       });
@@ -504,14 +548,7 @@ export default function WorkoutSession() {
         for (const { ex, r } of results) {
           if (!r || r.sets.length === 0) continue;
           data[r.exerciseId] = r.sets;
-          // If this is a cable exercise, infer the attachment from the suffix so
-          // the placeholder lookup via getEffectiveExId() resolves correctly.
-          if (isCableAttachmentExercise(ex.name) && !preSelected[ex.id]) {
-            for (const att of CABLE_ATTACHMENTS) {
-              const suffix = `-${attachmentKey(att)}`;
-              if (r.exerciseId.endsWith(suffix)) { preSelected[ex.id] = att; break; }
-            }
-          }
+          historicalSelections.push({ ex, historicalId: r.exerciseId });
         }
       }
 
@@ -524,6 +561,7 @@ export default function WorkoutSession() {
           return { ...preSelected, ...nonBlankPrev };
         });
       }
+      applyHistoricalVariantSelections(historicalSelections);
     });
     try {
       const saved = localStorage.getItem(`exercise-notes-${workout.id}`);
@@ -541,7 +579,7 @@ export default function WorkoutSession() {
       const downSuggestions = localStorage.getItem(`weight-down-${workout.id}`);
       if (downSuggestions) setWeightDownSuggestions(JSON.parse(downSuggestions));
     } catch {}
-  }, [workout]);
+  }, [workout, addedAccessories, addedExercises, applyHistoricalVariantSelections]);
 
   // Compute all exercises including accessories
   const accessoryExercises = addedAccessories.flatMap(accId => {
@@ -644,9 +682,21 @@ export default function WorkoutSession() {
     // Only the first exercise represents the group in exerciseOrder; the rest are
     // tracked via setLogs and rendered inside the superset card.
     setExerciseOrder(prev => [...prev, routine.exercises[0].id]);
+    Promise.all(
+      routine.exercises.map(ex => fetchExerciseLastDataLike(ex.id).then(r => ({ ex, r })))
+    ).then(results => {
+      const found = results.filter(({ r }) => r?.sets.length) as { ex: Exercise; r: NonNullable<Awaited<ReturnType<typeof fetchExerciseLastDataLike>>> }[];
+      if (found.length === 0) return;
+      setLastSessionData(prev => {
+        const next = { ...prev };
+        found.forEach(({ r }) => { next[r.exerciseId] = r.sets; });
+        return next;
+      });
+      applyHistoricalVariantSelections(found.map(({ ex, r }) => ({ ex, historicalId: r.exerciseId })));
+    });
     hapticMedium();
     toast.success(`Added ${routine.name} accessory`);
-  }, [addedAccessories]);
+  }, [addedAccessories, applyHistoricalVariantSelections]);
 
   const addSingleExercise = useCallback((entry: { id: string; name: string; muscleGroup: string }) => {
     const alreadyExists = allExercises.some(e => e.id === entry.id);
@@ -655,11 +705,16 @@ export default function WorkoutSession() {
     setAddedExercises(prev => [...prev, ex]);
     setSetLogs(prev => ({ ...prev, [newId]: Array.from({ length: 3 }, () => ({ reps: 0, weight: 0, completed: false })) }));
     setExerciseOrder(prev => [...prev, newId]);
+    fetchExerciseLastDataLike(entry.id).then(r => {
+      if (!r || r.sets.length === 0) return;
+      setLastSessionData(prev => ({ ...prev, [r.exerciseId]: r.sets }));
+      applyHistoricalVariantSelections([{ ex, historicalId: r.exerciseId }]);
+    });
     setAddExerciseOpen(false);
     setAddExerciseSearch("");
     hapticMedium();
     toast.success(`Added ${entry.name}`);
-  }, [allExercises]);
+  }, [allExercises, applyHistoricalVariantSelections]);
 
   useEffect(() => {
     if (!started || finished) return;
