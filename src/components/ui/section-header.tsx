@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  * @example
  * <SectionHeader title="History" subtitle="Last 30 days" action={<Button>Export</Button>} />
  */
-export interface SectionHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface SectionHeaderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   action?: React.ReactNode;
