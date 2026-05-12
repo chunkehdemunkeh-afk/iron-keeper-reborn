@@ -244,7 +244,7 @@ export function computeRecoveryBreakdown(
     ? { sleep: 0.40, hrv: 0.30, rhr: 0.15, stress: 0.10, resp: 0.05 }
     : { sleep: 0.40, hrv: 0.00, rhr: 0.20, stress: 0.30, resp: 0.10 };
 
-  const factors: RecoveryFactor[] = [
+  const factors: RecoveryFactor[] = ([
     { ...sleepFactor, weight: weights.sleep, contribution: sleepScore * weights.sleep * 100 },
     {
       key: "hrv",
