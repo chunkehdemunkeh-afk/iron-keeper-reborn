@@ -397,11 +397,10 @@ export default function Profile() {
             </div>
           ) : prefs && splitMeta ? (
             <div className="space-y-2">
-              {/* Programme, Days/Week, Intensity, Focus rows */}
+              {/* Programme, Days/Week, Focus rows */}
               {[
                 { label: "Programme", value: prefs.splitName,              color: "text-foreground font-medium" },
                 { label: "Days/Week", value: `${prefs.daysPerWeek} days`,  color: "text-foreground" },
-                { label: "Intensity", value: splitMeta.intensity,          color: splitMeta.intensityColor },
                 { label: "Focus",     value: splitMeta.focus,              color: "text-foreground font-semibold" },
               ].map(({ label, value, color }) => (
                 <div key={label} className="flex justify-between text-sm">
@@ -409,6 +408,13 @@ export default function Profile() {
                   <span className={color}>{value}</span>
                 </div>
               ))}
+              {/* Intensity as coloured chip */}
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Intensity</span>
+                <span className={`inline-flex items-center rounded-full bg-card/60 hairline border px-2.5 py-1 text-[11px] font-semibold ${splitMeta.intensityColor}`}>
+                  {splitMeta.intensity}
+                </span>
+              </div>
 
               <div className="h-px bg-border/50" />
 
