@@ -13,6 +13,7 @@ import {
   type LeaderboardEntry,
   type VolumeLeaderboardEntry,
 } from "@/lib/cloud-data";
+import { queryKeys } from "@/lib/query-keys";
 import { isBilateralDumbbell } from "@/lib/strength-standards";
 import LeaderboardPodium from "@/components/leaderboard/LeaderboardPodium";
 import LeaderboardRow from "@/components/leaderboard/LeaderboardRow";
@@ -193,7 +194,7 @@ export default function Leaderboard() {
   // ── Main queries ─────────────────────────────────────────────────────────────
 
   const { data: topExercises = [], isLoading: exercisesLoading } = useQuery({
-    queryKey: ["leaderboard-top-exercises", timeFilter],
+    queryKey: queryKeys.leaderboardTopExercises(timeFilter),
     queryFn: () => fetchTopExercises(timeFilter),
     staleTime: 5 * 60_000,
     enabled: !!user && isExerciseCategory,
@@ -204,28 +205,28 @@ export default function Leaderboard() {
   const isPerDB = category === "1rm" && isBilateralDumbbell(exerciseId, exerciseName);
 
   const { data: entries1rm = [], isLoading: loading1rm } = useQuery({
-    queryKey: ["leaderboard-1rm", exerciseId, timeFilter],
+    queryKey: queryKeys.leaderboard1rm(exerciseId, timeFilter),
     queryFn: () => fetchLeaderboard1RM(exerciseId, timeFilter),
     staleTime: 5 * 60_000,
     enabled: !!user && category === "1rm" && !!exerciseId,
   });
 
   const { data: entriesMaxWeight = [], isLoading: loadingMaxWeight } = useQuery({
-    queryKey: ["leaderboard-max-weight", exerciseId, timeFilter],
+    queryKey: queryKeys.leaderboardMaxWeight(exerciseId, timeFilter),
     queryFn: () => fetchLeaderboardMaxWeight(exerciseId, timeFilter),
     staleTime: 5 * 60_000,
     enabled: !!user && category === "maxweight" && !!exerciseId,
   });
 
   const { data: entriesMaxReps = [], isLoading: loadingMaxReps } = useQuery({
-    queryKey: ["leaderboard-max-reps", exerciseId, timeFilter],
+    queryKey: queryKeys.leaderboardMaxReps(exerciseId, timeFilter),
     queryFn: () => fetchLeaderboardMaxReps(exerciseId, timeFilter),
     staleTime: 5 * 60_000,
     enabled: !!user && category === "maxreps" && !!exerciseId,
   });
 
   const { data: entriesVolume = [], isLoading: loadingVolume } = useQuery({
-    queryKey: ["leaderboard-session-volume", sessionType, timeFilter],
+    queryKey: queryKeys.leaderboardSessionVolume(sessionType, timeFilter),
     queryFn: () => fetchLeaderboardSessionVolume(sessionType, timeFilter),
     staleTime: 5 * 60_000,
     enabled: !!user && category === "volume",
@@ -234,28 +235,28 @@ export default function Leaderboard() {
   // ── Comparison queries (prev period) for trend arrows ────────────────────────
 
   const { data: comp1rm = [] } = useQuery({
-    queryKey: ["leaderboard-1rm", exerciseId, compTimeFilter],
+    queryKey: queryKeys.leaderboard1rm(exerciseId, compTimeFilter ?? ""),
     queryFn: () => fetchLeaderboard1RM(exerciseId, compTimeFilter!),
     staleTime: 5 * 60_000,
     enabled: !!user && category === "1rm" && !!exerciseId && !!compTimeFilter,
   });
 
   const { data: compMaxWeight = [] } = useQuery({
-    queryKey: ["leaderboard-max-weight", exerciseId, compTimeFilter],
+    queryKey: queryKeys.leaderboardMaxWeight(exerciseId, compTimeFilter ?? ""),
     queryFn: () => fetchLeaderboardMaxWeight(exerciseId, compTimeFilter!),
     staleTime: 5 * 60_000,
     enabled: !!user && category === "maxweight" && !!exerciseId && !!compTimeFilter,
   });
 
   const { data: compMaxReps = [] } = useQuery({
-    queryKey: ["leaderboard-max-reps", exerciseId, compTimeFilter],
+    queryKey: queryKeys.leaderboardMaxReps(exerciseId, compTimeFilter ?? ""),
     queryFn: () => fetchLeaderboardMaxReps(exerciseId, compTimeFilter!),
     staleTime: 5 * 60_000,
     enabled: !!user && category === "maxreps" && !!exerciseId && !!compTimeFilter,
   });
 
   const { data: compVolume = [] } = useQuery({
-    queryKey: ["leaderboard-session-volume", sessionType, compTimeFilter],
+    queryKey: queryKeys.leaderboardSessionVolume(sessionType, compTimeFilter ?? ""),
     queryFn: () => fetchLeaderboardSessionVolume(sessionType, compTimeFilter!),
     staleTime: 5 * 60_000,
     enabled: !!user && category === "volume" && !!compTimeFilter,

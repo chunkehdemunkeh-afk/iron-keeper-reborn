@@ -1,255 +1,29 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { WORKOUTS, type CompletedWorkout, type Exercise } from "@/lib/workout-data";
 import { getAllCustomWorkouts } from "@/pages/WorkoutBuilder";
 import { saveWorkoutToCloud, fetchLastSessionData, fetchExerciseLastData, fetchExerciseLastDataLike } from "@/lib/cloud-data";
-import { ArrowLeft, Check, Timer, ChevronDown, ChevronUp, Trophy, Play, RotateCcw, TrendingUp, TrendingDown, GripVertical, Shuffle, Star, MessageSquare, Plus, Trash2, Flame, Grip, History, Search, Hand, Zap, Dumbbell, Target, HelpCircle } from "lucide-react";
+import { ArrowLeft, Check, Timer, ChevronDown, ChevronUp, Trophy, Play, RotateCcw, TrendingUp, TrendingDown, Shuffle, Star, MessageSquare, Plus, Flame, History, Search, Hand, Zap, Dumbbell, Target, HelpCircle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { motion, animate, AnimatePresence, Reorder, useDragControls, useMotionValue, useTransform, PanInfo } from "framer-motion";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { toast } from "sonner";
 import RestTimer from "@/components/RestTimer";
 import ExerciseTimer from "@/components/ExerciseTimer";
 import ExerciseVideoSheet from "@/components/ExerciseVideoSheet";
+import PRCelebration from "@/components/PRCelebration";
 import { hapticMedium, hapticSuccess } from "@/lib/haptics";
-import { EXERCISE_SUBSTITUTIONS, type SubstituteExercise } from "@/lib/exercise-substitutions";
+import { EXERCISE_SUBSTITUTIONS } from "@/lib/exercise-substitutions";
 import { EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "@/lib/accessory-routines";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Switch } from "@/components/ui/switch";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-
-type SetType = "working" | "warmup" | "1rm_test";
-type SetLog = { reps: number; weight: number; completed: boolean; setType?: SetType };
-
-// Combined search pool for swap sheet — includes all workout exercises + library
-const _swapSeen = new Set<string>();
-const ALL_SWAP_EXERCISES: { id: string; name: string; muscleGroup: string; equipment: string; description: string }[] = [];
-for (const w of WORKOUTS) {
-  for (const ex of w.exercises) {
-    const key = ex.name.toLowerCase();
-    if (!_swapSeen.has(key)) {
-      _swapSeen.add(key);
-      ALL_SWAP_EXERCISES.push({ id: ex.id, name: ex.name, muscleGroup: ex.targetMuscle, equipment: "", description: ex.notes || "" });
-    }
-  }
-}
-for (const r of ACCESSORY_ROUTINES) {
-  for (const ex of r.exercises) {
-    const key = ex.name.toLowerCase();
-    if (!_swapSeen.has(key)) {
-      _swapSeen.add(key);
-      ALL_SWAP_EXERCISES.push({ id: ex.id, name: ex.name, muscleGroup: ex.targetMuscle, equipment: "", description: ex.notes || "" });
-    }
-  }
-}
-for (const ex of EXERCISE_LIBRARY) {
-  const key = ex.name.toLowerCase();
-  if (!_swapSeen.has(key)) {
-    _swapSeen.add(key);
-    ALL_SWAP_EXERCISES.push({ id: ex.id, name: ex.name, muscleGroup: ex.muscleGroup, equipment: ex.equipment, description: ex.description || "" });
-  }
-}
-
-const CABLE_ATTACHMENTS = ["No Attachment", "Handles", "V-Bar", "MAG Grip", "Straight Bar", "Rope", "Cuff", "Lat Bar"] as const;
-type CableAttachment = typeof CABLE_ATTACHMENTS[number];
-
-function attachmentKey(att: string) {
-  return att.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-}
-
-/** Returns true for any cable-stack or lat machine exercise that benefits from attachment tracking */
-function accessoryIcon(id: string) {
-  if (id === "acc-abs") return Flame;
-  if (id === "acc-grip") return Hand;
-  return Zap;
-}
-
-function isCableAttachmentExercise(name: string): boolean {
-  const dn = name.toLowerCase();
-  // "Seated Row Machine" is a plate-loaded/selectorized machine with a fixed
-  // handle (Low Row vs Machine Row variant pill), not a cable attachment exercise.
-  if (dn.includes("seated row machine")) return false;
-  return [
-    "cable", "pushdown", "push down", "face pull", "facepull", "pallof",
-    "crossover", "straight-arm", "lat pull", "pulldown", "pull down",
-    "seated row", "lat row", "cable row",
-  ].some((kw) => dn.includes(kw));
-}
-
-/** Warm-up ramp anchored to the working weight `W`. Returns absolute kg + reps,
- *  snapped to the nearest 2.5 kg plate. Reps descend as weight rises so the lifter
- *  primes the nervous system without burning out before the working sets.
- *
- *    1 warm-up  → ~50% × 5
- *    2 warm-ups → ~40% × 8, halfway × 5
- *    3 warm-ups → ~40% × 8, halfway × 5, ~10kg-below × 3
- *
- *  Floor: 20 kg for barbell-style lifts, 2.5 kg for dumbbells (per-dumbbell weight). */
-function warmupRamp(W: number, idx: number, total: number, isDumbbell: boolean): { weight: number; reps: number } {
-  const floor = isDumbbell ? 2.5 : 20;
-  if (!W || W <= floor) return { weight: 0, reps: total <= 1 ? 5 : (idx === 0 ? 8 : idx === 1 ? 5 : 3) };
-  const wu1 = Math.max(floor, roundToPlate(W * 0.4));
-  const wu2 = roundToPlate((W + wu1) / 2);
-  const wu3 = roundToPlate(Math.max(W - 10, W * 0.9));
-  if (total <= 1) return { weight: roundToPlate(W * 0.5), reps: 5 };
-  if (total === 2) return idx === 0 ? { weight: wu1, reps: 8 } : { weight: wu2, reps: 5 };
-  if (idx === 0) return { weight: wu1, reps: 8 };
-  if (idx === 1) return { weight: wu2, reps: 5 };
-  return { weight: wu3, reps: 3 };
-}
-
-/** Round to nearest 2.5 kg (typical smallest plate increment). */
-function roundToPlate(weight: number): number {
-  return Math.round(weight / 2.5) * 2.5;
-}
-
-function SwipeableSetRow({ children, onDelete }: { children: React.ReactNode; onDelete: () => void }) {
-  const x = useMotionValue(0);
-  const deleteOpacity = useTransform(x, [-100, -60], [1, 0]);
-  const deleteBgOpacity = useTransform(x, [-100, -30], [1, 0]);
-
-  function handleDragEnd(_: any, info: PanInfo) {
-    if (info.offset.x < -80) {
-      onDelete();
-    }
-  }
-
-  return (
-    <div className="relative overflow-hidden rounded-lg">
-      {/* Delete background */}
-      <motion.div
-        style={{ opacity: deleteBgOpacity }}
-        className="absolute inset-0 flex items-center justify-end pr-3 bg-destructive/20 rounded-lg"
-      >
-        <motion.div style={{ opacity: deleteOpacity }}>
-          <Trash2 className="h-4 w-4 text-destructive" />
-        </motion.div>
-      </motion.div>
-      {/* Foreground content */}
-      <motion.div
-        drag="x"
-        dragConstraints={{ left: -100, right: 0 }}
-        dragElastic={0.1}
-        style={{ x }}
-        onDragEnd={handleDragEnd}
-        className="relative z-10"
-      >
-        {children}
-      </motion.div>
-    </div>
-  );
-}
-
-function ExerciseDragItem({
-  exId, isExpanded, allDone, index, name, sets, reps, onToggleExpand, onPlayVideo, onSwap, hasSubs, lastSub, onDelete, children
-}: {
-  exId: string; isExpanded: boolean; allDone: boolean; index: number; name: string; sets: number; reps: string;
-  onToggleExpand: () => void; onPlayVideo: () => void; onSwap: () => void; hasSubs: boolean;
-  lastSub?: { subName: string; subId: string };
-  onDelete?: () => void;
-  children: React.ReactNode;
-}) {
-  const dragControls = useDragControls();
-  const swipeX = useMotionValue(0);
-  const deleteBgOpacity = useTransform(swipeX, [-100, -30], [1, 0]);
-
-  function handleSwipeDragEnd(_: any, info: PanInfo) {
-    if (onDelete && info.offset.x < -80) {
-      onDelete();
-    } else {
-      animate(swipeX, 0, { type: "spring", stiffness: 400, damping: 30 });
-    }
-  }
-
-  return (
-    <Reorder.Item
-      value={exId}
-      dragListener={false}
-      dragControls={dragControls}
-      className={`glass-card rounded-xl overflow-hidden transition-all ${allDone ? "ring-1 ring-success/40 opacity-70" : ""}`}
-      style={{ position: "relative" }}
-    >
-      {/* Swipe-to-delete: header row only */}
-      <div className="relative overflow-hidden">
-        {onDelete && (
-          <motion.div
-            style={{ opacity: deleteBgOpacity }}
-            className="absolute inset-0 flex items-center justify-end pr-4 bg-destructive"
-          >
-            <Trash2 className="h-4 w-4 text-white" />
-          </motion.div>
-        )}
-        <motion.div
-          style={{ x: swipeX, touchAction: "pan-y" }}
-          drag={onDelete ? "x" : false}
-          dragConstraints={{ left: -100, right: 0 }}
-          dragElastic={{ left: 0.1, right: 0 }}
-          onDragEnd={handleSwipeDragEnd}
-          className="relative w-full flex items-center gap-2 p-3"
-        >
-          <div
-            onPointerDown={(e) => dragControls.start(e)}
-            className="flex h-8 w-6 items-center justify-center cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <GripVertical className="h-4 w-4" />
-          </div>
-          <button
-            onClick={onToggleExpand}
-            className="flex-1 flex items-center gap-3 text-left"
-          >
-            <span className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${allDone ? "bg-success/20 text-success" : "bg-primary/10 text-primary"}`}>
-              {allDone ? <Check className="h-3.5 w-3.5" /> : index + 1}
-            </span>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-foreground">{name}</p>
-              <p className="text-xs text-muted-foreground">{sets} × {reps}</p>
-              {lastSub && (
-                <div className="flex items-center gap-1 mt-0.5">
-                  <Shuffle className="h-2.5 w-2.5 text-amber-400" />
-                  <span className="text-[10px] text-amber-400 font-medium">
-                    Last session: {lastSub.subName}
-                  </span>
-                </div>
-              )}
-            </div>
-          </button>
-          <button
-            onClick={onPlayVideo}
-            className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary mr-1"
-          >
-            <Play className="h-3 w-3" />
-          </button>
-          {hasSubs && (
-            <button
-              onClick={onSwap}
-              className="flex h-6 w-6 items-center justify-center rounded-md bg-accent/50 text-accent-foreground mr-1 hover:bg-accent transition-colors"
-            >
-              <Shuffle className="h-3 w-3" />
-            </button>
-          )}
-          <button onClick={onToggleExpand}>
-            {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-          </button>
-        </motion.div>
-      </div>
-      {children}
-    </Reorder.Item>
-  );
-}
-
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchPersonalRecords, fetchStrengthProfile } from "@/lib/cloud-data";
-import PRCelebration from "@/components/PRCelebration";
+import SwipeableSetRow from "@/components/workout/SwipeableSetRow";
+import ExerciseDragItem from "@/components/workout/ExerciseDragItem";
+import { warmupRamp, roundToPlate, formatWorkoutTime, attachmentKey, isCableAttachmentExercise } from "@/lib/workout-session-utils";
+import { queryKeys } from "@/lib/query-keys";
+import { usePersonalRecords } from "@/hooks/queries/usePersonalRecords";
+import { useStrengthProfile } from "@/hooks/queries/useStrengthProfile";
+import { useAuth } from "@/hooks/useAuth";
 import {
   epley1RM,
   getStrengthRating,
@@ -257,7 +31,44 @@ import {
   isBilateralDumbbell,
   type Tier,
 } from "@/lib/strength-standards";
-import { useAuth } from "@/hooks/useAuth";
+
+type SetType = "working" | "warmup" | "1rm_test";
+type SetLog = { reps: number; weight: number; completed: boolean; setType?: SetType };
+
+// Lazily built on first use — iterating 3 data sources at import time is expensive.
+type SwapExercise = { id: string; name: string; muscleGroup: string; equipment: string; description: string };
+let _swapExercises: SwapExercise[] | null = null;
+function getAllSwapExercises(): SwapExercise[] {
+  if (_swapExercises) return _swapExercises;
+  const seen = new Set<string>();
+  const out: SwapExercise[] = [];
+  for (const w of WORKOUTS) {
+    for (const ex of w.exercises) {
+      const key = ex.name.toLowerCase();
+      if (!seen.has(key)) { seen.add(key); out.push({ id: ex.id, name: ex.name, muscleGroup: ex.targetMuscle, equipment: "", description: ex.notes || "" }); }
+    }
+  }
+  for (const r of ACCESSORY_ROUTINES) {
+    for (const ex of r.exercises) {
+      const key = ex.name.toLowerCase();
+      if (!seen.has(key)) { seen.add(key); out.push({ id: ex.id, name: ex.name, muscleGroup: ex.targetMuscle, equipment: "", description: ex.notes || "" }); }
+    }
+  }
+  for (const ex of EXERCISE_LIBRARY) {
+    const key = ex.name.toLowerCase();
+    if (!seen.has(key)) { seen.add(key); out.push({ id: ex.id, name: ex.name, muscleGroup: ex.muscleGroup, equipment: ex.equipment, description: ex.description || "" }); }
+  }
+  return (_swapExercises = out);
+}
+
+const CABLE_ATTACHMENTS = ["No Attachment", "Handles", "V-Bar", "MAG Grip", "Straight Bar", "Rope", "Cuff", "Lat Bar"] as const;
+type CableAttachment = typeof CABLE_ATTACHMENTS[number];
+
+function accessoryIcon(id: string) {
+  if (id === "acc-abs") return Flame;
+  if (id === "acc-grip") return Hand;
+  return Zap;
+}
 
 export default function WorkoutSession() {
   const { id } = useParams<{ id: string }>();
@@ -314,23 +125,14 @@ export default function WorkoutSession() {
   const [celebrationPR, setCelebrationPR] = useState<{ name: string; weight: number; reps: number; tierUp?: { tier: Tier; liftName: string } | null; isTrue1RM?: boolean } | null>(null);
 
   // Fetch historical PRs at session start for in-session comparison
-  const { data: historicalPRs = {} } = useQuery({
-    queryKey: ["personal-records", user?.id],
-    queryFn: fetchPersonalRecords,
-    enabled: !!user,
-    staleTime: Infinity,
+  const { data: historicalPRs = {} } = usePersonalRecords({ staleTime: Infinity
   });
   const historicalPRsRef = useRef<Record<string, { weight: number; bestReps: number }>>({});
   useEffect(() => { historicalPRsRef.current = historicalPRs as any; }, [historicalPRs]);
   const sessionBestRef = useRef<Record<string, { weight: number; reps: number }>>({}); // best hit this session
 
   // Strength profile (for tier-crossing celebration)
-  const { data: strengthProfile } = useQuery({
-    queryKey: ["strength-profile", user?.id],
-    queryFn: fetchStrengthProfile,
-    enabled: !!user,
-    staleTime: 5 * 60_000,
-  });
+  const { data: strengthProfile } = useStrengthProfile();
   const strengthProfileRef = useRef(strengthProfile);
   useEffect(() => { strengthProfileRef.current = strengthProfile; }, [strengthProfile]);
 
@@ -722,12 +524,6 @@ export default function WorkoutSession() {
     return () => clearInterval(interval);
   }, [started, finished]);
 
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${sec.toString().padStart(2, "0")}`;
-  };
-
   const toggleSet = useCallback((exerciseId: string, setIdx: number) => {
     const currentSets = setLogs[exerciseId] || [];
     if (!currentSets[setIdx]) return;
@@ -1055,9 +851,9 @@ export default function WorkoutSession() {
     saveWorkoutToCloud(completed);
     
     // Invalidate all related queries to force a refresh on other screens
-    queryClient.invalidateQueries({ queryKey: ["workout-history"] });
-    queryClient.invalidateQueries({ queryKey: ["volume-data"] });
-    queryClient.invalidateQueries({ queryKey: ["personal-records"] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.workoutHistory(user!.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.workoutVolume(user!.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.personalRecords(user!.id) });
     
     clearAutoSave();
     setFinished(true);
@@ -1149,7 +945,7 @@ export default function WorkoutSession() {
         </motion.div>
         <h1 className="font-display text-3xl font-bold text-foreground">Session Complete!</h1>
         <p className="text-muted-foreground mt-2">
-          {completedExercises}/{totalExercises} exercises · {formatTime(elapsed)}
+          {completedExercises}/{totalExercises} exercises · {formatWorkoutTime(elapsed)}
         </p>
         <button onClick={() => navigate("/")} className="mt-8 rounded-xl gradient-primary px-8 py-3 text-sm font-semibold text-primary-foreground glow-primary">
           Back to Home
@@ -1313,7 +1109,7 @@ export default function WorkoutSession() {
           </button>
           <div className="flex items-center gap-2 rounded-full bg-card px-3 py-1.5 border border-border/50">
             <Timer className="h-3.5 w-3.5 text-primary" />
-            <span className="font-display text-sm font-bold tabular-nums">{formatTime(elapsed)}</span>
+            <span className="font-display text-sm font-bold tabular-nums">{formatWorkoutTime(elapsed)}</span>
           </div>
           <span className="text-xs font-medium text-muted-foreground">
             {completedExercises}/{totalExercises}
@@ -2057,7 +1853,7 @@ export default function WorkoutSession() {
                     />
                   </div>
                   {swapSearch.length > 1 && (() => {
-                    const libResults = ALL_SWAP_EXERCISES
+                    const libResults = getAllSwapExercises()
                       .filter(ex => ex.name.toLowerCase().includes(swapSearch.toLowerCase()))
                       .slice(0, 10);
                     return libResults.length > 0 ? (
@@ -2156,7 +1952,7 @@ export default function WorkoutSession() {
                 if (!hasSearch && !hasMuscle) {
                   return <p className="text-xs text-muted-foreground text-center py-4">Search or pick a muscle group above</p>;
                 }
-                const results = ALL_SWAP_EXERCISES
+                const results = getAllSwapExercises()
                   .filter(ex => {
                     const matchesSearch = !hasSearch || ex.name.toLowerCase().includes(addExerciseSearch.toLowerCase());
                     const matchesMuscle = !hasMuscle || ex.muscleGroup.toLowerCase().includes(addExerciseMuscle!.toLowerCase());

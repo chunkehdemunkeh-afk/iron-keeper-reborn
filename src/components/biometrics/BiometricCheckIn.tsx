@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Activity, Wind, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import {
   upsertDailyBiometrics,
   upsertDailyScore,
@@ -180,9 +181,9 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
 
       hapticSuccess();
       toast.success("Morning check-in saved");
-      queryClient.invalidateQueries({ queryKey: ["daily-biometrics"] });
-      queryClient.invalidateQueries({ queryKey: ["daily-scores"] });
-      queryClient.invalidateQueries({ queryKey: ["sleep-logs"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dailyBiometrics(user!.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dailyScores(user!.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sleepLogs(user!.id) });
       onSaved?.();
       onClose();
     } catch (err) {

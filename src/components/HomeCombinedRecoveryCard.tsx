@@ -1,15 +1,8 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
 import { Activity, ChevronRight, Edit2, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  fetchTodayScore,
-  fetchDailyBiometrics,
-  fetchRecentSets,
-  fetchSleepLogs,
-} from "@/lib/cloud-data";
 import {
   recoveryColor,
   recoveryLabel,
@@ -21,6 +14,10 @@ import { computeMuscleRecovery, statusColor } from "@/lib/recovery";
 import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
 import { getUserPreferences } from "@/lib/user-preferences";
 import { useRecoverySettings } from "@/hooks/useRecoverySettings";
+import { useTodayScore } from "@/hooks/queries/useDailyScores";
+import { useDailyBiometrics } from "@/hooks/queries/useDailyBiometrics";
+import { useRecentSets } from "@/hooks/queries/useRecentSets";
+import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
 import BodyDiagram from "@/components/recovery/BodyDiagram";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import BiometricCheckIn from "@/components/biometrics/BiometricCheckIn";
@@ -51,33 +48,10 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  const { data: score } = useQuery({
-    queryKey: ["daily-scores", user?.id, date],
-    queryFn: fetchTodayScore,
-    enabled: !!user,
-    staleTime: 60_000,
-  });
-
-  const { data: biometrics = [] } = useQuery({
-    queryKey: ["daily-biometrics", user?.id],
-    queryFn: () => fetchDailyBiometrics(2),
-    enabled: !!user,
-    staleTime: 60_000,
-  });
-
-  const { data: sets = [] } = useQuery({
-    queryKey: ["recent-sets", user?.id],
-    queryFn: () => fetchRecentSets(7),
-    enabled: !!user,
-    staleTime: 60_000,
-  });
-
-  const { data: sleepLogs = [] } = useQuery({
-    queryKey: ["sleep-logs", user?.id],
-    queryFn: () => fetchSleepLogs(14),
-    enabled: !!user,
-    staleTime: 60_000,
-  });
+  const { data: score } = useTodayScore();
+  const { data: biometrics = [] } = useDailyBiometrics(2);
+  const { data: sets = [] } = useRecentSets();
+  const { data: sleepLogs = [] } = useSleepLogs();
 
   const splitId = user ? getUserPreferences(user.id)?.splitId : null;
   const settings = useRecoverySettings(user?.id);

@@ -1,4 +1,5 @@
 import { fetchWorkoutHistory, fetchActivityLogs } from "@/lib/cloud-data";
+import { queryKeys } from "@/lib/query-keys";
 import { Flame, Target, Dumbbell } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -12,20 +13,20 @@ export default function StatsBar() {
   const weekGoal = prefs?.daysPerWeek ?? 4;
 
   const { data: history = [] } = useQuery({
-    queryKey: ["workout-history", user?.id],
+    queryKey: queryKeys.workoutHistory(user?.id ?? ""),
     queryFn: fetchWorkoutHistory,
     enabled: !!user,
   });
 
   const { data: activities = [] } = useQuery({
-    queryKey: ["activity-logs", user?.id],
+    queryKey: queryKeys.activityLogs(user?.id ?? ""),
     queryFn: fetchActivityLogs,
     enabled: !!user,
   });
 
   // Fetch food log dates & water intake dates for streak
   const { data: foodDates = new Set<string>() } = useQuery({
-    queryKey: ["food-log-dates", user?.id],
+    queryKey: queryKeys.foodLogDates(user?.id ?? ""),
     queryFn: async () => {
       const { data } = await supabase
         .from("food_logs")
@@ -37,7 +38,7 @@ export default function StatsBar() {
   });
 
   const { data: waterDates = new Set<string>() } = useQuery({
-    queryKey: ["water-intake-dates", user?.id],
+    queryKey: queryKeys.waterIntakeDates(user?.id ?? ""),
     queryFn: async () => {
       const { data } = await supabase
         .from("water_intake")
@@ -100,7 +101,7 @@ export default function StatsBar() {
 
   // ── Total weight lifted ──────────────────────────────────────────────────
   const { data: totalWeightData } = useQuery({
-    queryKey: ["total-weight-lifted", user?.id],
+    queryKey: queryKeys.totalWeightLifted(user?.id ?? ""),
     queryFn: async () => {
       const { data } = await supabase
         .from("workout_sets")

@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Moon, Plus } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchSleepLogs, upsertSleepLog } from "@/lib/cloud-data";
+import { upsertSleepLog } from "@/lib/cloud-data";
+import { queryKeys } from "@/lib/query-keys";
+import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
 import { hapticSuccess } from "@/lib/haptics";
 
 interface Props {
@@ -22,12 +24,7 @@ export default function SleepCard({ date }: Props) {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const { data: logs = [] } = useQuery({
-    queryKey: ["sleep-logs", user?.id],
-    queryFn: () => fetchSleepLogs(14),
-    enabled: !!user,
-    staleTime: 60_000,
-  });
+  const { data: logs = [] } = useSleepLogs();
 
   const todayLog = logs.find((l) => l.date === date);
 
@@ -49,7 +46,7 @@ export default function SleepCard({ date }: Props) {
     if (ok) {
       hapticSuccess();
       toast.success("Sleep logged");
-      queryClient.invalidateQueries({ queryKey: ["sleep-logs"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sleepLogs(user.id) });
       setOpen(false);
     } else {
       toast.error("Failed to save sleep");

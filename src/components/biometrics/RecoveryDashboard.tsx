@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
 import { Activity, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchTodayScore, fetchDailyBiometrics } from "@/lib/cloud-data";
 import {
   recoveryColor,
   recoveryLabel,
@@ -11,6 +9,8 @@ import {
   stressLevelColor,
   strainLabel,
 } from "@/lib/recovery-scores";
+import { useTodayScore } from "@/hooks/queries/useDailyScores";
+import { useDailyBiometrics } from "@/hooks/queries/useDailyBiometrics";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import BiometricCheckIn from "./BiometricCheckIn";
 import RecoveryDetailSheet from "./RecoveryDetailSheet";
@@ -39,19 +39,8 @@ export default function RecoveryDashboard({ date }: Props) {
   const [checkInOpen, setCheckInOpen]     = useState(false);
   const [detailOpen, setDetailOpen]       = useState(false);
 
-  const { data: score } = useQuery({
-    queryKey: ["daily-scores", user?.id, date],
-    queryFn: fetchTodayScore,
-    enabled: !!user,
-    staleTime: 60_000,
-  });
-
-  const { data: biometrics = [] } = useQuery({
-    queryKey: ["daily-biometrics", user?.id],
-    queryFn: () => fetchDailyBiometrics(2),
-    enabled: !!user,
-    staleTime: 60_000,
-  });
+  const { data: score } = useTodayScore();
+  const { data: biometrics = [] } = useDailyBiometrics(2);
 
   const todayBiometric = biometrics.find(b => b.date === date);
 

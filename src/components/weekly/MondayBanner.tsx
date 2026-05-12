@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchWeeklyReview, type WeeklyReview } from "@/lib/cloud-data";
+import { queryKeys } from "@/lib/query-keys";
 import {
   getPreviousWeekStart,
   shouldShowMondayBanner,
@@ -19,7 +20,7 @@ export default function MondayBanner() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const { data: review } = useQuery<WeeklyReview | null>({
-    queryKey: ["weekly-review", weekStart],
+    queryKey: queryKeys.weeklyReview(weekStart),
     queryFn: () => fetchWeeklyReview(weekStart),
     enabled: !!user,
   });

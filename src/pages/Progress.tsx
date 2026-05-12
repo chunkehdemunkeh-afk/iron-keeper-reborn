@@ -1,12 +1,18 @@
 import { useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchWorkoutHistory, fetchVolumeData, fetchPersonalRecords, deletePersonalRecord, fetchRecentSets, fetchSleepLogs, bestOneRmForLift } from "@/lib/cloud-data";
+import { fetchVolumeData, deletePersonalRecord, bestOneRmForLift } from "@/lib/cloud-data";
+import { queryKeys } from "@/lib/query-keys";
 import { WORKOUTS } from "@/lib/workout-data";
 import { BarChart3, Trophy, Calendar, TrendingUp, Dumbbell, Clock, Trash2, Activity, Moon } from "lucide-react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import type { PanInfo } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
+import { useWorkoutHistory } from "@/hooks/queries/useWorkoutHistory";
+import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
+import { useRecentSets } from "@/hooks/queries/useRecentSets";
+import { usePersonalRecords } from "@/hooks/queries/usePersonalRecords";
+import { useStrengthProfile } from "@/hooks/queries/useStrengthProfile";
 import DailyReviewChart from "@/components/DailyReviewChart";
 import PRTrendChart from "@/components/PRTrendChart";
 import HelpButton from "@/components/demo/HelpButton";
@@ -28,7 +34,6 @@ import StrengthLevelCard from "@/components/progress/StrengthLevelCard";
 import WeeklyEnergyCard from "@/components/WeeklyEnergyCard";
 import HRVTrendCard from "@/components/biometrics/HRVTrendCard";
 import RecoveryDashboard from "@/components/biometrics/RecoveryDashboard";
-import { fetchStrengthProfile } from "@/lib/cloud-data";
 import {
   RATED_LIFTS,
   TIER_COLORS,
@@ -93,32 +98,10 @@ function RecoveryTabContent() {
   const [highlighted, setHighlighted] = useState<typeof MUSCLE_REGIONS[number] | null>(null);
   const diagramRef = useRef<HTMLDivElement>(null);
 
-  const { data: sets = [] } = useQuery({
-    queryKey: ["recent-sets", user?.id],
-    queryFn: () => fetchRecentSets(7),
-    enabled: !!user,
-    staleTime: 60_000,
-  });
-
-  const { data: sleepLogs = [] } = useQuery({
-    queryKey: ["sleep-logs", user?.id],
-    queryFn: () => fetchSleepLogs(14),
-    enabled: !!user,
-    staleTime: 60_000,
-  });
-
-  const { data: prs = {} } = useQuery({
-    queryKey: ["personal-records", user?.id],
-    queryFn: () => import("@/lib/cloud-data").then((m) => m.fetchPersonalRecords()),
-    enabled: !!user,
-  });
-
-  const { data: profile } = useQuery({
-    queryKey: ["strength-profile", user?.id],
-    queryFn: fetchStrengthProfile,
-    enabled: !!user,
-    staleTime: 5 * 60_000,
-  });
+  const { data: sets = [] } = useRecentSets();
+  const { data: sleepLogs = [] } = useSleepLogs();
+  const { data: prs = {} } = usePersonalRecords();
+  const { data: profile } = useStrengthProfile();
 
   const splitId = user ? getUserPreferences(user.id)?.splitId : null;
   const settings = useRecoverySettings(user?.id);
@@ -381,23 +364,15 @@ export default function Progress() {
   const tabParam = searchParams.get("tab");
   const tab = tabParam === "recovery" || tabParam === "photos" ? tabParam : "stats";
 
-  const { data: history = [], isLoading: historyLoading } = useQuery({
-    queryKey: ["workout-history", user?.id],
-    queryFn: fetchWorkoutHistory,
-    enabled: !!user,
-  });
+  const { data: history = [], isLoading: historyLoading } = useWorkoutHistory();
 
   const { data: volumeData = [], isLoading: volumeLoading } = useQuery({
-    queryKey: ["volume-data", user?.id],
+    queryKey: queryKeys.workoutVolume(user?.id ?? ""),
     queryFn: fetchVolumeData,
     enabled: !!user,
   });
 
-  const { data: prs = {}, isLoading: prsLoading } = useQuery({
-    queryKey: ["personal-records", user?.id],
-    queryFn: fetchPersonalRecords,
-    enabled: !!user,
-  });
+  const { data: prs = {}, isLoading: prsLoading } = usePersonalRecords();
 
   const loading = historyLoading || volumeLoading || prsLoading;
 
@@ -425,7 +400,7 @@ export default function Progress() {
 
   async function handleDeletePR(setId: string) {
     await deletePersonalRecord(setId);
-    queryClient.invalidateQueries({ queryKey: ["personal-records"] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.personalRecords(user?.id ?? "") });
   }
 
   const exerciseMap: Record<string, string> = {};

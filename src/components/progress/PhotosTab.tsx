@@ -3,14 +3,15 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, Loader2, GitCompareArrows } from "lucide-react";
 import { motion } from "framer-motion";
 import {
-  fetchProgressPhotos,
   uploadProgressPhoto,
   fetchBodyMeasurements,
   type ProgressPhoto,
 } from "@/lib/cloud-data";
+import { queryKeys } from "@/lib/query-keys";
 import { toDateStr } from "@/lib/weekly-review";
 import { hapticSuccess } from "@/lib/haptics";
 import { toast } from "sonner";
+import { useProgressPhotos } from "@/hooks/queries/useProgressPhotos";
 import ProgressPhotoGrid from "./ProgressPhotoGrid";
 import PhotoCompareSheet from "./PhotoCompareSheet";
 
@@ -20,13 +21,10 @@ export default function PhotosTab() {
   const [compareOpen, setCompareOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: photos = [], isLoading } = useQuery<ProgressPhoto[]>({
-    queryKey: ["progress-photos"],
-    queryFn: fetchProgressPhotos,
-  });
+  const { data: photos = [], isLoading } = useProgressPhotos();
 
   const { data: bodyMeasurements = [] } = useQuery({
-    queryKey: ["body-measurements"],
+    queryKey: queryKeys.bodyMeasurements(),
     queryFn: fetchBodyMeasurements,
   });
 
@@ -63,7 +61,7 @@ export default function PhotosTab() {
     if (photo) {
       hapticSuccess();
       toast.success("Photo added");
-      queryClient.invalidateQueries({ queryKey: ["progress-photos"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.progressPhotos() });
     }
   }
 

@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Dumbbell, Sparkles, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchPersonalRecords, fetchStrengthProfile, bestOneRmForLift } from "@/lib/cloud-data";
+import { bestOneRmForLift } from "@/lib/cloud-data";
+import { usePersonalRecords } from "@/hooks/queries/usePersonalRecords";
+import { useStrengthProfile } from "@/hooks/queries/useStrengthProfile";
 import {
   RATED_LIFTS,
   TIERS,
@@ -30,18 +31,8 @@ export default function StrengthLevelCard() {
   const [openLift, setOpenLift] = useState<LiftId | null>(null);
   const [testLift, setTestLift] = useState<LiftDef | null>(null);
 
-  const { data: profile } = useQuery({
-    queryKey: ["strength-profile", user?.id],
-    queryFn: fetchStrengthProfile,
-    enabled: !!user,
-    staleTime: 5 * 60_000,
-  });
-
-  const { data: prs = {} } = useQuery({
-    queryKey: ["personal-records", user?.id],
-    queryFn: fetchPersonalRecords,
-    enabled: !!user,
-  });
+  const { data: profile } = useStrengthProfile();
+  const { data: prs = {} } = usePersonalRecords();
 
   const ratings = useMemo(() => {
     if (!profile?.bodyweight || !profile?.sex) return [];

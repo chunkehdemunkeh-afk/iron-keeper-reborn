@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { Settings2 } from "lucide-react";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 export default function PostOnboardingTip() {
   const { user } = useAuth();
@@ -9,7 +10,7 @@ export default function PostOnboardingTip() {
 
   useEffect(() => {
     if (!user) return;
-    const flag = localStorage.getItem(`ik-onboarding-tip-${user.id}`);
+    const flag = localStorage.getItem(STORAGE_KEYS.onboardingTip(user.id));
     if (flag === "pending") {
       const t = setTimeout(() => setOpen(true), 600);
       return () => clearTimeout(t);
@@ -18,7 +19,7 @@ export default function PostOnboardingTip() {
 
   const handleDismiss = () => {
     setOpen(false);
-    if (user) localStorage.removeItem(`ik-onboarding-tip-${user.id}`);
+    if (user) localStorage.removeItem(STORAGE_KEYS.onboardingTip(user.id));
   };
 
   return (

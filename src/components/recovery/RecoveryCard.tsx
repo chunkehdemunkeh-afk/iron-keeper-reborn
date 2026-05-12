@@ -2,13 +2,13 @@ import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Activity, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchRecentSets, fetchSleepLogs } from "@/lib/cloud-data";
 import { computeMuscleRecovery, statusColor } from "@/lib/recovery";
 import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
 import { getUserPreferences } from "@/lib/user-preferences";
 import { useRecoverySettings } from "@/hooks/useRecoverySettings";
+import { useRecentSets } from "@/hooks/queries/useRecentSets";
+import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
 import BodyDiagram from "./BodyDiagram";
 import AnimatedNumber from "@/components/AnimatedNumber";
 
@@ -16,19 +16,8 @@ export default function RecoveryCard() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { data: sets = [] } = useQuery({
-    queryKey: ["recent-sets", user?.id],
-    queryFn: () => fetchRecentSets(7),
-    enabled: !!user,
-    staleTime: 60_000,
-  });
-
-  const { data: sleepLogs = [] } = useQuery({
-    queryKey: ["sleep-logs", user?.id],
-    queryFn: () => fetchSleepLogs(14),
-    enabled: !!user,
-    staleTime: 60_000,
-  });
+  const { data: sets = [] } = useRecentSets();
+  const { data: sleepLogs = [] } = useSleepLogs();
 
   const splitId = user ? getUserPreferences(user.id)?.splitId : null;
   const settings = useRecoverySettings(user?.id);

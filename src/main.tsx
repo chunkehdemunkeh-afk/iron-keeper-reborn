@@ -3,6 +3,7 @@ import App from "./App.tsx";
 import "./index.css";
 // Install demo-mode interceptor on supabase.from() — must run before any data fetches.
 import "./lib/demo-supabase";
+import { STORAGE_KEYS } from "./lib/storage-keys";
 
 const isInIframe = (() => {
   try { return window.self !== window.top; } catch { return true; }
@@ -44,9 +45,9 @@ function applyUpdate() {
 
   // Tell App.tsx to open the "What's New" sheet after the reload
   try {
-    localStorage.setItem("ik-just-updated", "1");
+    localStorage.setItem(STORAGE_KEYS.justUpdated, "1");
     // Clear the stored hash so the new version is established as the baseline on reboot
-    localStorage.removeItem("ik-html-hash");
+    localStorage.removeItem(STORAGE_KEYS.htmlHash);
   } catch {}
 
   // Short delay — user sees the banner before the page disappears
@@ -105,7 +106,7 @@ if (!isInIframe && !isPreviewHost) {
 
   let baselineHash: number | null = null;
   try {
-    const stored = localStorage.getItem("ik-html-hash");
+    const stored = localStorage.getItem(STORAGE_KEYS.htmlHash);
     if (stored) baselineHash = parseInt(stored, 10);
   } catch {}
 
@@ -117,7 +118,7 @@ if (!isInIframe && !isPreviewHost) {
       const hash = djb2(await res.text());
       if (baselineHash === null) {
         baselineHash = hash;          // record the version we started with
-        try { localStorage.setItem("ik-html-hash", hash.toString()); } catch {}
+        try { localStorage.setItem(STORAGE_KEYS.htmlHash, hash.toString()); } catch {}
       } else if (hash !== baselineHash) {
         applyUpdate();                // new version on the server → update
       }
@@ -144,7 +145,7 @@ if (!isInIframe && !isPreviewHost) {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!data?.version) return;
-        const stored = localStorage.getItem("ik-live-version");
+        const stored = localStorage.getItem(STORAGE_KEYS.liveVersion);
         if (stored && stored !== data.version) {
           // Allow the pre-React guard to handle the actual reload on next boot
           sessionStorage.removeItem("ik-version-checked");

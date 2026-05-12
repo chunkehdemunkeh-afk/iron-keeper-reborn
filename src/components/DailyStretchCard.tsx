@@ -6,8 +6,7 @@ import { ChevronDown, ChevronUp, Play, ExternalLink, Timer, Check, StretchHorizo
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserPreferences, getNextSplitDay, isGKSplit } from "@/lib/user-preferences";
-import { fetchWorkoutHistory } from "@/lib/cloud-data";
-import { useQuery } from "@tanstack/react-query";
+import { useWorkoutHistory } from "@/hooks/queries/useWorkoutHistory";
 import { toast } from "sonner";
 import { hapticSuccess } from "@/lib/haptics";
 
@@ -24,11 +23,7 @@ export default function DailyStretchCard() {
   const prefs = user ? getUserPreferences(user.id) : null;
   const gkMode = user ? isGKSplit(user.id) : false;
   const isDailyStretchUser = user?.id === "7dac1761-76f7-4b4a-a4f0-e88297247037";
-  const { data: history = [] } = useQuery({
-    queryKey: ["workout-history", user?.id],
-    queryFn: fetchWorkoutHistory,
-    enabled: !!user,
-  });
+  const { data: history = [] } = useWorkoutHistory();
 
   // Special daily routine for specific users or GK users; others get workout-specific stretches
   const nextWorkoutId = useMemo(() => {

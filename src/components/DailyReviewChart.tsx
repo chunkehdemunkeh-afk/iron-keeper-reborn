@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchDailyLogs, fetchWorkoutHistory, type DailyLog } from "@/lib/cloud-data";
+import { queryKeys } from "@/lib/query-keys";
 import { motion } from "framer-motion";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -45,13 +46,13 @@ export default function DailyReviewChart() {
   const [compare, setCompare] = useState(false);
 
   const { data: logs = [], isLoading } = useQuery({
-    queryKey: ["daily-logs", user?.id],
+    queryKey: queryKeys.dailyLogs(user?.id ?? ""),
     queryFn: fetchDailyLogs,
     enabled: !!user,
   });
 
   const { data: volumeByDate = {} } = useQuery({
-    queryKey: ["daily-volume", user?.id],
+    queryKey: queryKeys.dailyVolume(user?.id ?? ""),
     queryFn: async () => {
       if (!user) return {};
       const { data: hData } = await supabase.from("workout_history").select("id, date").eq("user_id", user.id);

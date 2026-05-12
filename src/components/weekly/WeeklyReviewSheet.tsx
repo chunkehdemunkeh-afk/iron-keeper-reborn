@@ -12,6 +12,7 @@ import {
   type WeeklyReview,
   type ProgressPhoto,
 } from "@/lib/cloud-data";
+import { queryKeys } from "@/lib/query-keys";
 import { formatWeekRange, toDateStr } from "@/lib/weekly-review";
 import {
   Star, Dumbbell, Activity, Apple, Droplets, Scale, Moon, Trophy, Camera, Loader2, Pencil, Check,
@@ -40,19 +41,19 @@ export default function WeeklyReviewSheet({ open, weekStart, mode = "create", on
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: summary, isLoading: summaryLoading } = useQuery<WeekSummary>({
-    queryKey: ["week-summary", weekStart],
+    queryKey: queryKeys.weekSummary(weekStart),
     queryFn: () => computeWeekStats(weekStart),
     enabled: open,
   });
 
   const { data: existing } = useQuery<WeeklyReview | null>({
-    queryKey: ["weekly-review", weekStart],
+    queryKey: queryKeys.weeklyReview(weekStart),
     queryFn: () => fetchWeeklyReview(weekStart),
     enabled: open,
   });
 
   const { data: photos = [] } = useQuery<ProgressPhoto[]>({
-    queryKey: ["progress-photos"],
+    queryKey: queryKeys.progressPhotos(),
     queryFn: fetchProgressPhotos,
     enabled: open,
   });
@@ -99,7 +100,7 @@ export default function WeeklyReviewSheet({ open, weekStart, mode = "create", on
       setPhotoUrl(photo.signedUrl);
       hapticSuccess();
       toast.success("Photo added");
-      queryClient.invalidateQueries({ queryKey: ["progress-photos"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.progressPhotos() });
     }
   }
 
@@ -124,8 +125,8 @@ export default function WeeklyReviewSheet({ open, weekStart, mode = "create", on
     }
     hapticSuccess();
     toast.success("Week saved");
-    queryClient.invalidateQueries({ queryKey: ["weekly-review", weekStart] });
-    queryClient.invalidateQueries({ queryKey: ["weekly-reviews"] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.weeklyReview(weekStart) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.weeklyReviews() });
     onClose();
   }
 

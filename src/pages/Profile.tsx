@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchActivityLogs, fetchWeeklyBurn, mondayOfWeek, fetchLeaderboardVisibility, updateLeaderboardVisibility } from "@/lib/cloud-data";
+import { queryKeys } from "@/lib/query-keys";
 import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -90,13 +91,13 @@ export default function Profile() {
   };
 
   const { data: history = [] } = useQuery({
-    queryKey: ["workout-history", user?.id],
+    queryKey: queryKeys.workoutHistory(user?.id ?? ""),
     queryFn: fetchWorkoutHistory,
     enabled: !!user,
   });
 
   const { data: activities = [] } = useQuery({
-    queryKey: ["activity-logs", user?.id],
+    queryKey: queryKeys.activityLogs(user?.id ?? ""),
     queryFn: fetchActivityLogs,
     enabled: !!user,
   });
@@ -105,14 +106,14 @@ export default function Profile() {
 
   const thisWeekStart = mondayOfWeek(new Date());
   const { data: weekBurn } = useQuery({
-    queryKey: ["weekly-burn-profile", user?.id, thisWeekStart],
+    queryKey: queryKeys.weeklyBurn(user?.id ?? "", thisWeekStart),
     queryFn: () => fetchWeeklyBurn(thisWeekStart),
     enabled: !!user,
   });
   const weekKcal = weekBurn?.totalKcal ?? 0;
 
   const { data: leaderboardVisible = true } = useQuery({
-    queryKey: ["leaderboard-visibility", user?.id],
+    queryKey: queryKeys.leaderboardVisibility(user?.id ?? ""),
     queryFn: fetchLeaderboardVisibility,
     enabled: !!user,
     staleTime: 5 * 60_000,
@@ -120,7 +121,7 @@ export default function Profile() {
 
   const handleLeaderboardToggle = async (visible: boolean) => {
     await updateLeaderboardVisibility(visible);
-    queryClient.setQueryData(["leaderboard-visibility", user?.id], visible);
+    queryClient.setQueryData(queryKeys.leaderboardVisibility(user?.id ?? ""), visible);
     queryClient.invalidateQueries({ queryKey: ["leaderboard-1rm"] });
     queryClient.invalidateQueries({ queryKey: ["leaderboard-max-weight"] });
     queryClient.invalidateQueries({ queryKey: ["leaderboard-max-reps"] });

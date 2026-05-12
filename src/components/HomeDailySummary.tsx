@@ -6,13 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { fetchDailyBurn } from "@/lib/cloud-data";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 interface Props {
   date?: string;
 }
 
 type ViewMode = "macros" | "burn";
-const VIEW_KEY = "ik-home-summary-view";
+const VIEW_KEY = STORAGE_KEYS.homeSummaryView;
 
 export default function HomeDailySummary({ date }: Props) {
   const { user } = useAuth();

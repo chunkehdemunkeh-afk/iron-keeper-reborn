@@ -5,6 +5,7 @@ import { Apple, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import TDEESetup from "@/components/food/TDEESetup";
 import { toast } from "sonner";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 export default function NutritionOnboarding() {
   const { user } = useAuth();
@@ -13,8 +14,8 @@ export default function NutritionOnboarding() {
 
   const finish = () => {
     if (user) {
-      localStorage.setItem(`ik-nutrition-onboarding-${user.id}`, "complete");
-      localStorage.setItem(`ik-onboarding-tip-${user.id}`, "pending");
+      localStorage.setItem(STORAGE_KEYS.nutritionOnboarding(user.id), "complete");
+      localStorage.setItem(STORAGE_KEYS.onboardingTip(user.id), "pending");
     }
     navigate("/", { replace: true });
   };

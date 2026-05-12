@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchDailyScores, fetchDailyBiometrics, type DailyScoreRecord } from "@/lib/cloud-data";
+import { type DailyScoreRecord } from "@/lib/cloud-data";
+import { useDailyScores } from "@/hooks/queries/useDailyScores";
+import { useDailyBiometrics } from "@/hooks/queries/useDailyBiometrics";
 import {
   recoveryColor,
   recoveryLabel,
@@ -57,17 +58,8 @@ export default function RecoveryDetailSheet({ open, score, onClose, onEdit }: Pr
   const { user } = useAuth();
   const [breathworkActive, setBreathworkActive] = useState(false);
 
-  const { data: scores14d = [] } = useQuery({
-    queryKey: ["daily-scores", user?.id, "14d"],
-    queryFn: () => fetchDailyScores(14),
-    enabled: !!user && open,
-  });
-
-  const { data: biometrics14d = [] } = useQuery({
-    queryKey: ["daily-biometrics", user?.id, "14d"],
-    queryFn: () => fetchDailyBiometrics(14),
-    enabled: !!user && open,
-  });
+  const { data: scores14d = [] } = useDailyScores(14, { enabled: open });
+  const { data: biometrics14d = [] } = useDailyBiometrics(14, { range: "14d", enabled: open });
 
   if (!score) return null;
 

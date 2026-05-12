@@ -7,6 +7,7 @@ import { getSplitsForDays, type TrainingSplit, type SplitDay } from "@/lib/train
 import { saveUserPreferences } from "@/lib/user-preferences";
 import { WORKOUTS } from "@/lib/workout-data";
 import { toast } from "sonner";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 const DAYS_OPTIONS = [2, 3, 4, 5, 6];
 
@@ -63,7 +64,7 @@ export default function Onboarding() {
     if (fromProfile) {
       navigate("/profile", { replace: true });
     } else {
-      localStorage.setItem(`ik-onboarding-tip-${user.id}`, "pending");
+      localStorage.setItem(STORAGE_KEYS.onboardingTip(user.id), "pending");
       navigate("/onboarding/nutrition", { replace: true });
     }
   };

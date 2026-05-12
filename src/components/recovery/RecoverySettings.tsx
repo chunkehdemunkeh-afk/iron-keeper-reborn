@@ -12,6 +12,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import { hapticSuccess } from "@/lib/haptics";
 import { toast } from "sonner";
 import {
@@ -68,8 +69,8 @@ export default function RecoverySettings() {
     toast.success("Recovery settings saved");
     // Invalidate any query that depends on settings (recompute happens client-side
     // but invalidating ensures all subscribers re-render).
-    queryClient.invalidateQueries({ queryKey: ["recent-sets"] });
-    queryClient.invalidateQueries({ queryKey: ["sleep-logs"] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.recentSets(user.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.sleepLogs(user.id) });
     setOpen(false);
   }
 

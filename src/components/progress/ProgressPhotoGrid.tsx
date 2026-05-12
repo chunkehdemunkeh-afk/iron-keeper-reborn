@@ -8,6 +8,7 @@ import {
   updateProgressPhotoNotes,
   type ProgressPhoto,
 } from "@/lib/cloud-data";
+import { queryKeys } from "@/lib/query-keys";
 import { hapticMedium, hapticSuccess } from "@/lib/haptics";
 import { toast } from "sonner";
 
@@ -36,7 +37,7 @@ export default function ProgressPhotoGrid({ photos, weights }: Props) {
     if (ok) {
       hapticSuccess();
       toast.success("Photo deleted");
-      queryClient.invalidateQueries({ queryKey: ["progress-photos"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.progressPhotos() });
       setActive(null);
     } else {
       toast.error("Could not delete");
@@ -51,7 +52,7 @@ export default function ProgressPhotoGrid({ photos, weights }: Props) {
     if (ok) {
       hapticSuccess();
       toast.success("Notes saved");
-      queryClient.invalidateQueries({ queryKey: ["progress-photos"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.progressPhotos() });
       setActive(null);
     } else {
       toast.error("Could not save notes");
@@ -84,7 +85,7 @@ export default function ProgressPhotoGrid({ photos, weights }: Props) {
               if (ok) {
                 hapticSuccess();
                 toast.success("Photo deleted");
-                queryClient.invalidateQueries({ queryKey: ["progress-photos"] });
+                queryClient.invalidateQueries({ queryKey: queryKeys.progressPhotos() });
               } else {
                 toast.error("Could not delete");
               }

@@ -4,6 +4,7 @@ import { TrendingUp, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchExercisePRHistory, type ExercisePRTrend } from "@/lib/cloud-data";
+import { queryKeys } from "@/lib/query-keys";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceDot,
 } from "recharts";
@@ -25,7 +26,7 @@ export default function PRTrendChart() {
   const { user } = useAuth();
 
   const { data: trends = [], isLoading } = useQuery({
-    queryKey: ["pr-trends", user?.id],
+    queryKey: queryKeys.prTrends(user?.id ?? ""),
     queryFn: fetchExercisePRHistory,
     enabled: !!user,
     staleTime: 60_000,

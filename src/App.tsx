@@ -30,6 +30,7 @@ import NutritionOnboarding from "./pages/NutritionOnboarding";
 import ResetPassword from "./pages/ResetPassword";
 import Leaderboard from "./pages/Leaderboard";
 import { isOnboardingComplete } from "@/lib/user-preferences";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 const queryClient = new QueryClient();
 
@@ -161,7 +162,7 @@ const App = () => {
   useEffect(() => {
     if (!splashDone) return;
     // Always clear the flag so it can't accumulate across reloads
-    localStorage.removeItem("ik-just-updated");
+    localStorage.removeItem(STORAGE_KEYS.justUpdated);
     const latest = getLatestChangelog();
     if (!latest) return;
     if (hasSeenVersion(latest.version)) return;

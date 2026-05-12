@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchDailyBiometrics } from "@/lib/cloud-data";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { useDailyBiometrics } from "@/hooks/queries/useDailyBiometrics";
 import { motion, AnimatePresence } from "framer-motion";
 import { Activity, X } from "lucide-react";
 import BiometricCheckIn from "./BiometricCheckIn";
 
 function isDismissed(date: string): boolean {
-  return !!localStorage.getItem(`ik-checkin-dismissed-${date}`);
+  return !!localStorage.getItem(STORAGE_KEYS.checkInDismissed(date));
 }
 
 function dismiss(date: string) {
-  localStorage.setItem(`ik-checkin-dismissed-${date}`, "1");
+  localStorage.setItem(STORAGE_KEYS.checkInDismissed(date), "1");
 }
 
 function isMorning(): boolean {
@@ -25,12 +25,7 @@ export default function MorningCheckInPrompt() {
   const [show, setShow] = useState(false);
   const [checkInOpen, setCheckInOpen] = useState(false);
 
-  const { data: biometrics = [] } = useQuery({
-    queryKey: ["daily-biometrics", user?.id],
-    queryFn: () => fetchDailyBiometrics(1),
-    enabled: !!user,
-    staleTime: 60_000,
-  });
+  const { data: biometrics = [] } = useDailyBiometrics(1);
 
   const hasTodayData = biometrics.some(b => b.date === today);
 

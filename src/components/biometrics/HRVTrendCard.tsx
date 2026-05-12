@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchDailyScores, fetchDailyBiometrics } from "@/lib/cloud-data";
 import { recoveryColor } from "@/lib/recovery-scores";
+import { useDailyScores } from "@/hooks/queries/useDailyScores";
+import { useDailyBiometrics } from "@/hooks/queries/useDailyBiometrics";
 import { format, parseISO } from "date-fns";
 
 type Metric = "recovery" | "stress" | "rhr" | "sleep";
@@ -20,19 +20,8 @@ export default function HRVTrendCard() {
   const { user } = useAuth();
   const [active, setActive] = useState<Metric>("recovery");
 
-  const { data: scores14d = [] } = useQuery({
-    queryKey: ["daily-scores", user?.id, "14d"],
-    queryFn: () => fetchDailyScores(14),
-    enabled: !!user,
-    staleTime: 120_000,
-  });
-
-  const { data: biometrics14d = [] } = useQuery({
-    queryKey: ["daily-biometrics", user?.id, "14d"],
-    queryFn: () => fetchDailyBiometrics(14),
-    enabled: !!user,
-    staleTime: 120_000,
-  });
+  const { data: scores14d = [] } = useDailyScores(14, { staleTime: 120_000 });
+  const { data: biometrics14d = [] } = useDailyBiometrics(14, { range: "14d", staleTime: 120_000 });
 
   const { color, unit } = METRICS.find(m => m.key === active)!;
 

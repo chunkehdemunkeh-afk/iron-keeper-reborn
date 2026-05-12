@@ -5,6 +5,7 @@ import {
   fetchWeeklyReview,
   type WeeklyReview,
 } from "@/lib/cloud-data";
+import { queryKeys } from "@/lib/query-keys";
 import {
   getCurrentWeekStart,
   shouldShowSundayPrompt,
@@ -21,7 +22,7 @@ export default function WeeklyReviewPrompt() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const { data: review } = useQuery<WeeklyReview | null>({
-    queryKey: ["weekly-review", weekStart],
+    queryKey: queryKeys.weeklyReview(weekStart),
     queryFn: () => fetchWeeklyReview(weekStart),
     enabled: !!user,
   });

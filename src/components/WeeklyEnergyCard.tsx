@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Flame, Dumbbell, Activity } from "lucide-react";
 import { fetchWeeklyBurn, mondayOfWeek, recentMondays } from "@/lib/cloud-data";
+import { queryKeys } from "@/lib/query-keys";
 import { useAuth } from "@/hooks/useAuth";
 
 /**
@@ -14,14 +15,14 @@ export default function WeeklyEnergyCard() {
   const thisWeekStart = mondayOfWeek(new Date());
 
   const { data: thisWeek } = useQuery({
-    queryKey: ["weekly-burn", user?.id, thisWeekStart],
+    queryKey: queryKeys.weeklyBurn(user?.id ?? "", thisWeekStart),
     queryFn: () => fetchWeeklyBurn(thisWeekStart),
     enabled: !!user,
   });
 
   const mondays = recentMondays(4);
   const { data: trend = [] } = useQuery({
-    queryKey: ["weekly-burn-trend", user?.id, mondays.join(",")],
+    queryKey: queryKeys.weeklyBurnTrend(user?.id ?? "", mondays.join(",")),
     queryFn: async () => {
       const results = await Promise.all(mondays.map((m) => fetchWeeklyBurn(m)));
       return results.map((r) => r.totalKcal);

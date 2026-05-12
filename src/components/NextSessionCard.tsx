@@ -6,8 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserPreferences, getNextSplitDay, isNoWorkoutMode } from "@/lib/user-preferences";
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { fetchWorkoutHistory } from "@/lib/cloud-data";
+import { useWorkoutHistory } from "@/hooks/queries/useWorkoutHistory";
 
 export default function NextSessionCard() {
   const navigate = useNavigate();
@@ -18,11 +17,7 @@ export default function NextSessionCard() {
   const prefs = user ? getUserPreferences(user.id) : null;
   const noWorkout = user ? isNoWorkoutMode(user.id) : false;
 
-  const { data: history = [] } = useQuery({
-    queryKey: ["workout-history", user?.id],
-    queryFn: fetchWorkoutHistory,
-    enabled: !!user && !!prefs,
-  });
+  const { data: history = [] } = useWorkoutHistory();
 
   const allWorkouts = [...WORKOUTS, ...getAllCustomWorkouts()];
 

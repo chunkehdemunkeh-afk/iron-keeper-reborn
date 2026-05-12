@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
@@ -83,7 +84,7 @@ export default function FoodSearch({ open, onClose, mealType, date, onLogged, ed
   // Load recent searches from localStorage
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("recent-food-searches");
+      const stored = localStorage.getItem(STORAGE_KEYS.recentFoodSearches);
       if (stored) setRecentSearches(JSON.parse(stored).slice(0, 5));
     } catch {}
   }, []);
@@ -93,7 +94,7 @@ export default function FoodSearch({ open, onClose, mealType, date, onLogged, ed
     if (!trimmed) return;
     const updated = [trimmed, ...recentSearches.filter((s) => s !== trimmed)].slice(0, 5);
     setRecentSearches(updated);
-    localStorage.setItem("recent-food-searches", JSON.stringify(updated));
+    localStorage.setItem(STORAGE_KEYS.recentFoodSearches, JSON.stringify(updated));
   };
 
   // Fetch recents + favourites on open
