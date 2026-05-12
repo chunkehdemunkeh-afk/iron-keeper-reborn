@@ -390,6 +390,12 @@ async function generateAIInsight(
       },
     };
 
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) {
+      console.warn("biometric-insight: no session token, skipping AI insight");
+      return;
+    }
     const res = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/biometric-insight`,
       {
@@ -397,7 +403,7 @@ async function generateAIInsight(
         headers: {
           "Content-Type": "application/json",
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(payload),
       },
