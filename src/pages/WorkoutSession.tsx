@@ -472,6 +472,40 @@ export default function WorkoutSession() {
     return fallback?.[1];
   }, [exerciseOverrides, getEffectiveExId, lastSessionData]);
 
+  const applyHistoricalVariantSelections = useCallback((entries: { ex: Exercise; historicalId: string }[]) => {
+    const heavyIds: string[] = [];
+    const twoHandedIds: string[] = [];
+    const attachments: Record<string, string> = {};
+
+    entries.forEach(({ ex, historicalId }) => {
+      if (!(historicalId === ex.id || historicalId.startsWith(`${ex.id}-`))) return;
+      if (historicalId.includes("-heavy")) heavyIds.push(ex.id);
+      if (historicalId.includes("-2h")) twoHandedIds.push(ex.id);
+      if (isCableAttachmentExercise(ex.name)) {
+        for (const att of CABLE_ATTACHMENTS) {
+          const suffix = `-${attachmentKey(att)}`;
+          if (historicalId.endsWith(suffix)) {
+            attachments[ex.id] = att;
+            break;
+          }
+        }
+      }
+    });
+
+    if (heavyIds.length) {
+      setHeavyStackExercises(prev => new Set([...prev, ...heavyIds]));
+    }
+    if (twoHandedIds.length) {
+      setTwoHandedExercises(prev => new Set([...prev, ...twoHandedIds]));
+    }
+    if (Object.keys(attachments).length > 0) {
+      setCableAttachments(prev => {
+        const nonBlankPrev = Object.fromEntries(Object.entries(prev).filter(([, value]) => Boolean(value)));
+        return { ...attachments, ...nonBlankPrev };
+      });
+    }
+  }, []);
+
   // Load last session data, notes, and weight-up suggestions
   useEffect(() => {
     if (!workout) return;
