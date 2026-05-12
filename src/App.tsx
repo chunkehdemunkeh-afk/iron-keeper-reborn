@@ -130,7 +130,7 @@ const AppRoutes = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingState label="Starting Iron Keeper" />
+        <LoadingState label="Starting Iron Warrior" />
       </div>
     );
   }

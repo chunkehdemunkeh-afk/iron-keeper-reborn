@@ -17,7 +17,7 @@ export default function UpdateBanner({ visible }: Props) {
           className="fixed top-0 left-0 right-0 z-[9999] flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 px-4 text-sm font-medium shadow-lg"
         >
           <Loader2 className="h-4 w-4 animate-spin" />
-          Updating Iron Keeper…
+          Updating Iron Warrior…
         </motion.div>
       )}
     </AnimatePresence>
