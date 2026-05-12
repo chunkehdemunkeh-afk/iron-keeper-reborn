@@ -14,7 +14,7 @@ export const TOURS: Record<string, Tour> = {
   "/": {
     id: "home",
     steps: [
-      { title: "Welcome to Iron Keeper 👋", body: "This is your home base. We've pre-loaded 3 weeks of training, nutrition and weight data so you can explore everything." },
+      { title: "Welcome to Iron Warrior 👋", body: "This is your home base. We've pre-loaded 3 weeks of training, nutrition and weight data so you can explore everything." },
       { title: "Your week at a glance", body: "Tap any day in the week strip to view past sessions. Streak, weekly goal and total kg lifted are tracked at the top." },
       { title: "Next session, ready to go", body: "We auto-rotate your split (currently Push / Pull / Legs). Tap a pill to swap, or pick something different from outside your split." },
       { title: "Log your day", body: "Scroll to log nutrition, water and body weight in one tap each. Hit Complete Day to lock in a snapshot." },

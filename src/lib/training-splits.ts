@@ -26,7 +26,7 @@ export const TRAINING_SPLITS: TrainingSplit[] = [
     id: "gk",
     name: "Goalkeeper Programme",
     recommendedDays: [3, 4],
-    description: "The original IronKeeper programme. Explosive Power, Agility, GK Strength and Reflexes — built specifically for goalkeepers.",
+    description: "The original goalkeeper programme. Explosive Power, Agility, GK Strength and Reflexes — built specifically for goalkeepers.",
     tag: "GK Specific 🧤",
     schedule: [
       { label: "Explosive Power", workoutId: "power",    color: "from-amber-500/20 to-orange-500/10",   icon: Zap },

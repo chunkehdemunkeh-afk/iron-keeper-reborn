@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { Zap, BarChart3, Shield, ChevronRight, Sparkles } from "lucide-react";
+import { Dumbbell, Activity, TrendingUp, ChevronRight, Sparkles } from "lucide-react";
+import logo from "@/assets/iron-warrior-logo.png";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import EmailAuthForm from "@/components/auth/EmailAuthForm";
@@ -24,9 +25,9 @@ export default function Login() {
   };
 
   const features = [
-    { icon: Zap, title: "Explosive Training", desc: "Track power & agility sessions" },
-    { icon: BarChart3, title: "Visual Progress", desc: "Charts that show your growth" },
-    { icon: Shield, title: "Keeper-Focused", desc: "Exercises built for goalkeepers" },
+    { icon: Dumbbell, title: "Smart Programming", desc: "PPL, Upper/Lower, 5/3/1 and more" },
+    { icon: Activity, title: "Recovery Intelligence", desc: "Strain, sleep & readiness scoring" },
+    { icon: TrendingUp, title: "Track Every Lift", desc: "PRs, volume & strength standards" },
   ];
 
   return (
@@ -43,21 +44,23 @@ export default function Login() {
         className="w-full max-w-sm space-y-10 text-center flex flex-col items-center"
       >
         {/* Logo & Branding */}
-        <div className="space-y-4">
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
+        <div className="space-y-4 flex flex-col items-center">
+          <motion.img
+            src={logo}
+            alt="Iron Warrior"
+            width={96}
+            height={96}
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 180, damping: 14, delay: 0.15 }}
-            className="inline-flex h-20 w-20 rounded-3xl gradient-primary items-center justify-center glow-primary"
-          >
-            <Shield className="h-10 w-10 text-primary-foreground" />
-          </motion.div>
+            className="h-24 w-24 drop-shadow-[0_0_30px_hsl(36_95%_55%/0.35)]"
+          />
           <div>
             <h1 className="font-display text-4xl font-bold text-foreground tracking-tight">
-              Iron Keeper
+              IRON WARRIOR
             </h1>
-            <p className="text-muted-foreground text-sm mt-1.5 tracking-wide uppercase">
-              Goalkeeper Training Tracker
+            <p className="text-muted-foreground text-[11px] mt-1.5 tracking-[0.25em] uppercase">
+              Train · Track · Conquer
             </p>
           </div>
         </div>
