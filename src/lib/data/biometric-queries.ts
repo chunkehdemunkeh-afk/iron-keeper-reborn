@@ -257,7 +257,7 @@ export async function recomputeTodayStrain(): Promise<void> {
   );
 
   const restingHr = (biometricRes.data as any)?.resting_hr ?? null;
-  const age = (profileRes.data as any)?.age ?? null;
+  const age = (profileRes.data as any)?.tdee_age ?? null;
 
   const { computeStrainScore } = await import("../recovery-scores");
   const strain = computeStrainScore(workoutCalories, avgEffort, activityCalories, {
