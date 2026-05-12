@@ -1,8 +1,9 @@
 import { useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchActivityLogs, fetchWeeklyBurn, mondayOfWeek, fetchLeaderboardVisibility, updateLeaderboardVisibility } from "@/lib/cloud-data";
+import { backfillStrainScores } from "@/lib/data/biometric-queries";
 import { queryKeys } from "@/lib/query-keys";
-import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy } from "lucide-react";
+import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import RecoveryTips from "@/components/RecoveryTips";
@@ -43,6 +44,22 @@ export default function Profile() {
   const [removingAvatar, setRemovingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const [backfilling, setBackfilling] = useState(false);
+
+  const handleBackfill = async () => {
+    setBackfilling(true);
+    try {
+      const days = await backfillStrainScores(30);
+      queryClient.invalidateQueries({ queryKey: queryKeys.dailyScores(user!.id) });
+      hapticSuccess();
+      toast.success(`Recomputed strain for ${days} day${days === 1 ? "" : "s"}`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Backfill failed");
+    } finally {
+      setBackfilling(false);
+    }
+  };
 
   const startEditName = () => {
     setNameInput(profile?.display_name || "");
@@ -412,6 +429,24 @@ export default function Profile() {
 
         {/* Recovery / training tips specific to the user's split — hidden in no-workout mode */}
         {prefs?.splitId !== "none" && <RecoveryTips splitId={prefs?.splitId} />}
+
+        {/* Recompute historical strain — useful after scoring algorithm updates */}
+        <button
+          onClick={handleBackfill}
+          disabled={backfilling}
+          className="glass-card rounded-xl p-4 flex items-center justify-between gap-3 w-full text-left hover:bg-card/60 transition-colors disabled:opacity-60"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 flex-shrink-0">
+              {backfilling ? <Loader2 className="h-4 w-4 text-primary animate-spin" /> : <RefreshCw className="h-4 w-4 text-primary" />}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Recalculate recovery scores</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Refresh strain for the last 30 days</p>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-primary flex-shrink-0" />
+        </button>
 
         {/* Leaderboard privacy */}
         <div className="glass-card rounded-xl p-4 flex items-center justify-between gap-3">
