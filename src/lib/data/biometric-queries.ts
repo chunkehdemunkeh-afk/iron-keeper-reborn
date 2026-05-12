@@ -297,10 +297,10 @@ export async function backfillStrainScores(daysBack = 30): Promise<number> {
   cutoff.setDate(cutoff.getDate() - daysBack);
   const cutoffStr = cutoff.toISOString().split("T")[0];
 
-  const [workoutsRes, activitiesRes, scoresRes] = await Promise.all([
+  const [workoutsRes, activitiesRes, scoresRes, biometricsRes, profileRes] = await Promise.all([
     supabase
       .from("workout_history")
-      .select("date, calories_burned, effort_rating")
+      .select("date, calories_burned, effort_rating, duration, avg_hr, max_hr")
       .eq("user_id", user.id)
       .gte("date", cutoffStr),
     supabase
@@ -313,23 +313,53 @@ export async function backfillStrainScores(daysBack = 30): Promise<number> {
       .select("id, date")
       .eq("user_id", user.id)
       .gte("date", cutoffStr),
+    supabase
+      .from("daily_biometrics")
+      .select("date, resting_hr")
+      .eq("user_id", user.id)
+      .gte("date", cutoffStr),
+    supabase
+      .from("nutrition_goals")
+      .select("tdee_age")
+      .eq("user_id", user.id)
+      .maybeSingle(),
   ]);
 
-  const dayMap = new Map<string, { workoutCal: number; activityCal: number; efforts: number[] }>();
-  const ensure = (d: string) => {
-    if (!dayMap.has(d)) dayMap.set(d, { workoutCal: 0, activityCal: 0, efforts: [] });
+  type Bucket = {
+    workoutCal: number;
+    activityCal: number;
+    efforts: number[];
+    durationMin: number;
+    hrWeightedSum: number;
+    maxHr: number | null;
+  };
+  const dayMap = new Map<string, Bucket>();
+  const ensure = (d: string): Bucket => {
+    if (!dayMap.has(d)) dayMap.set(d, { workoutCal: 0, activityCal: 0, efforts: [], durationMin: 0, hrWeightedSum: 0, maxHr: null });
     return dayMap.get(d)!;
   };
   for (const w of workoutsRes.data ?? []) {
     const d = String((w as any).date).split("T")[0];
     const bucket = ensure(d);
     bucket.workoutCal += (w as any).calories_burned ?? 0;
+    bucket.durationMin += (w as any).duration ?? 0;
     if (typeof (w as any).effort_rating === "number") bucket.efforts.push((w as any).effort_rating);
+    const dur = (w as any).duration ?? 0;
+    if ((w as any).avg_hr && dur > 0) bucket.hrWeightedSum += (w as any).avg_hr * dur;
+    if ((w as any).max_hr && (bucket.maxHr === null || (w as any).max_hr > bucket.maxHr)) {
+      bucket.maxHr = (w as any).max_hr;
+    }
   }
   for (const a of activitiesRes.data ?? []) {
     const d = String((a as any).date).split("T")[0];
     ensure(d).activityCal += (a as any).calories_burned ?? 0;
   }
+
+  const restingByDate = new Map<string, number>();
+  for (const b of biometricsRes.data ?? []) {
+    if ((b as any).resting_hr) restingByDate.set((b as any).date, (b as any).resting_hr);
+  }
+  const age = (profileRes.data as any)?.tdee_age ?? null;
 
   const scoreIdByDate = new Map<string, string>();
   for (const s of scoresRes.data ?? []) scoreIdByDate.set((s as any).date, (s as any).id);
@@ -339,7 +369,14 @@ export async function backfillStrainScores(daysBack = 30): Promise<number> {
 
   for (const [date, b] of dayMap) {
     const avgEffort = b.efforts.length ? b.efforts.reduce((s, e) => s + e, 0) / b.efforts.length : null;
-    const strain = computeStrainScore(b.workoutCal, avgEffort, b.activityCal);
+    const avgHr = b.durationMin > 0 && b.hrWeightedSum > 0 ? b.hrWeightedSum / b.durationMin : null;
+    const strain = computeStrainScore(b.workoutCal, avgEffort, b.activityCal, {
+      durationMin: b.durationMin,
+      avgHr,
+      maxHr: b.maxHr,
+      restingHr: restingByDate.get(date) ?? null,
+      age,
+    });
     const existingId = scoreIdByDate.get(date);
     if (existingId) {
       await supabase
