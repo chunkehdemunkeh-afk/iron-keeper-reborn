@@ -92,6 +92,8 @@ export default function WorkoutSession() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [effortRating, setEffortRating] = useState(0);
   const [sessionNotes, setSessionNotes] = useState("");
+  const [avgHrInput, setAvgHrInput] = useState("");
+  const [maxHrInput, setMaxHrInput] = useState("");
   const [restTimerActive, setRestTimerActive] = useState(false);
   const [swapExerciseId, setSwapExerciseId] = useState<string | null>(null);
   const [swapSearch, setSwapSearch] = useState("");
