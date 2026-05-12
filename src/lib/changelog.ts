@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.99",
+    version: "1.6.100",
     date: "2026-05-12",
     title: "Updates & Fixes",
     changes: [
-      "Pass SpO2 to AI insight payload instead of hardcoded null",
+      "Merge recovery cards into one unified home card; add biometric scores to Recovery tab",
     ],
   },
   {
