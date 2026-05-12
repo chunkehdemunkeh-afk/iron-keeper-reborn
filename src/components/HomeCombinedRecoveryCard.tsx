@@ -308,6 +308,15 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
             </p>
           )}
         </button>
+
+        {/* Open Recovery deep-link */}
+        <button
+          onClick={() => navigate("/recovery")}
+          className="mt-4 w-full flex items-center justify-center gap-1.5 rounded-xl bg-primary/10 hairline border py-2.5 text-xs font-semibold text-primary active:scale-[0.98] transition-transform"
+        >
+          Open Recovery
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
       </motion.div>
 
       <BiometricCheckIn
