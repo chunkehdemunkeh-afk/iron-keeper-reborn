@@ -92,6 +92,8 @@ export default function WorkoutSession() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [effortRating, setEffortRating] = useState(0);
   const [sessionNotes, setSessionNotes] = useState("");
+  const [avgHrInput, setAvgHrInput] = useState("");
+  const [maxHrInput, setMaxHrInput] = useState("");
   const [restTimerActive, setRestTimerActive] = useState(false);
   const [swapExerciseId, setSwapExerciseId] = useState<string | null>(null);
   const [swapSearch, setSwapSearch] = useState("");
@@ -518,10 +520,23 @@ export default function WorkoutSession() {
     toast.success(`Added ${entry.name}`);
   }, [allExercises, applyHistoricalVariantSelections]);
 
+  // Wall-clock derived elapsed — survives backgrounding, throttling, and route nav.
+  // Counts the FULL gym session (working sets + rests + screen-off time).
   useEffect(() => {
     if (!started || finished) return;
-    const interval = setInterval(() => setElapsed((e) => e + 1), 1000);
-    return () => clearInterval(interval);
+    if (!startedAtRef.current) startedAtRef.current = new Date().toISOString();
+    const tick = () => {
+      const startMs = new Date(startedAtRef.current!).getTime();
+      setElapsed(Math.max(0, Math.floor((Date.now() - startMs) / 1000)));
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    const onVisibility = () => { if (document.visibilityState === "visible") tick(); };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [started, finished]);
 
   const toggleSet = useCallback((exerciseId: string, setIdx: number) => {
@@ -840,6 +855,8 @@ export default function WorkoutSession() {
       effortRating: effortRating > 0 ? effortRating : undefined,
       sessionNotes: sessionNotes.trim() || undefined,
       startedAt: startedAtRef.current ?? undefined,
+      avgHr: avgHrInput ? Math.round(Number(avgHrInput)) || null : null,
+      maxHr: maxHrInput ? Math.round(Number(maxHrInput)) || null : null,
     };
     
     if (!hasCompletedAny) {
@@ -925,6 +942,42 @@ export default function WorkoutSession() {
             maxLength={500}
           />
           <p className="text-[10px] text-muted-foreground text-right">{sessionNotes.length}/500</p>
+        </div>
+
+        {/* Heart Rate (from watch) */}
+        <div className="mt-6 w-full max-w-sm space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-left">
+            Heart Rate <span className="text-muted-foreground/60 normal-case font-normal">(optional, from your watch)</span>
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] text-muted-foreground">Avg BPM</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={30}
+                max={240}
+                value={avgHrInput}
+                onChange={(e) => setAvgHrInput(e.target.value)}
+                placeholder="—"
+                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 tabular-nums"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground">Max BPM</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={30}
+                max={240}
+                value={maxHrInput}
+                onChange={(e) => setMaxHrInput(e.target.value)}
+                placeholder="—"
+                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 tabular-nums"
+              />
+            </div>
+          </div>
+          <p className="text-[10px] text-muted-foreground">Improves strain accuracy — Whoop-style scoring.</p>
         </div>
 
         <div className="flex gap-3 mt-8">

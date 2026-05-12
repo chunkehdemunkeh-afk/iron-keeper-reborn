@@ -660,6 +660,7 @@ export type Database = {
       }
       workout_history: {
         Row: {
+          avg_hr: number | null
           calories_burned: number | null
           created_at: string
           date: string
@@ -667,6 +668,7 @@ export type Database = {
           effort_rating: number | null
           exercises_completed: number
           id: string
+          max_hr: number | null
           session_notes: string | null
           started_at: string | null
           total_exercises: number
@@ -675,6 +677,7 @@ export type Database = {
           workout_name: string
         }
         Insert: {
+          avg_hr?: number | null
           calories_burned?: number | null
           created_at?: string
           date?: string
@@ -682,6 +685,7 @@ export type Database = {
           effort_rating?: number | null
           exercises_completed?: number
           id?: string
+          max_hr?: number | null
           session_notes?: string | null
           started_at?: string | null
           total_exercises?: number
@@ -690,6 +694,7 @@ export type Database = {
           workout_name: string
         }
         Update: {
+          avg_hr?: number | null
           calories_burned?: number | null
           created_at?: string
           date?: string
@@ -697,6 +702,7 @@ export type Database = {
           effort_rating?: number | null
           exercises_completed?: number
           id?: string
+          max_hr?: number | null
           session_notes?: string | null
           started_at?: string | null
           total_exercises?: number
@@ -705,6 +711,44 @@ export type Database = {
           workout_name?: string
         }
         Relationships: []
+      }
+      workout_hr_samples: {
+        Row: {
+          bpm: number
+          created_at: string
+          id: string
+          recorded_at: string
+          source: string
+          user_id: string
+          workout_history_id: string
+        }
+        Insert: {
+          bpm: number
+          created_at?: string
+          id?: string
+          recorded_at: string
+          source?: string
+          user_id: string
+          workout_history_id: string
+        }
+        Update: {
+          bpm?: number
+          created_at?: string
+          id?: string
+          recorded_at?: string
+          source?: string
+          user_id?: string
+          workout_history_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_hr_samples_workout_history_id_fkey"
+            columns: ["workout_history_id"]
+            isOneToOne: false
+            referencedRelation: "workout_history"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workout_sets: {
         Row: {
