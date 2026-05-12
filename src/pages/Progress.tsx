@@ -450,9 +450,21 @@ export default function Progress() {
             setSearchParams(next, { replace: true });
           }}
         >
-          <TabsList className="grid grid-cols-2 w-full">
-            <TabsTrigger value="stats">Stats</TabsTrigger>
-            <TabsTrigger value="photos">Photos</TabsTrigger>
+          <TabsList asChild>
+            <SegmentedTabs
+              value={tab}
+              onChange={(v) => {
+                const next = new URLSearchParams(searchParams);
+                if (v === "stats") next.delete("tab");
+                else next.set("tab", v);
+                setSearchParams(next, { replace: true });
+              }}
+              options={[
+                { value: "stats", label: "Stats" },
+                { value: "photos", label: "Photos" },
+              ]}
+              layoutId="progress-tab-pill"
+            />
           </TabsList>
 
           <TabsContent value="photos" className="mt-4">
