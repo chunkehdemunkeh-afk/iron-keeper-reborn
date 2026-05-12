@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.100",
+    version: "1.6.101",
     date: "2026-05-12",
     title: "Updates & Fixes",
     changes: [
-      "Merge recovery cards into one unified home card; add biometric scores to Recovery tab",
+      "Update CLAUDE.md: biometric-insight edge function + HomeCombinedRecoveryCard gotchas",
     ],
   },
   {
