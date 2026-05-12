@@ -35,6 +35,7 @@ export type CompletedWorkout = {
   effortRating?: number;    // 1-5 star rating
   sessionNotes?: string;    // notes for coach
   caloriesBurned?: number | null;
+  startedAt?: string;       // ISO timestamp when session began (wall-clock gym start)
 };
 
 export type WeekScheduleItem = {

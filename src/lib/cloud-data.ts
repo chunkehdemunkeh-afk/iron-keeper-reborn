@@ -48,14 +48,22 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
   let caloriesBurned: number | null = null;
   try {
     const bodyweight = await lookupUserBodyweight(user.id);
+    const burnDuration = workout.startedAt
+      ? Math.max(1, Math.ceil((Date.now() - new Date(workout.startedAt).getTime()) / 60000))
+      : workout.duration;
     caloriesBurned = estimateStrengthBurn({
       sets: workout.sets,
-      durationMin: workout.duration,
+      durationMin: burnDuration,
       weightKg: bodyweight,
     });
   } catch (e) {
     console.error("Burn estimate failed:", e);
   }
+
+  // Use wall-clock gym duration (startedAt → now) when available; fall back to elapsed counter.
+  const actualDuration = workout.startedAt
+    ? Math.max(1, Math.ceil((Date.now() - new Date(workout.startedAt).getTime()) / 60000))
+    : workout.duration;
 
   const { data: historyRow, error: historyError } = await supabase
     .from("workout_history")
@@ -64,7 +72,8 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
       workout_id: workout.workoutId,
       workout_name: workout.workoutName,
       date: workout.date,
-      duration: workout.duration,
+      duration: actualDuration,
+      started_at: workout.startedAt ?? null,
       exercises_completed: workout.exercisesCompleted,
       total_exercises: workout.totalExercises,
       effort_rating: workout.effortRating ?? null,

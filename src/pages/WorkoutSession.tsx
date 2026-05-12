@@ -266,6 +266,7 @@ export default function WorkoutSession() {
 
   const [started, setStarted] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const startedAtRef = useRef<string | null>(null);
   const [twoHandedExercises, setTwoHandedExercises] = useState<Set<string>>(new Set());
   const [heavyStackExercises, setHeavyStackExercises] = useState<Set<string>>(new Set());
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
@@ -347,6 +348,7 @@ export default function WorkoutSession() {
       heavyStackExercises: Array.from(heavyStackExercises),
       cableAttachments,
       elapsed,
+      startedAt: startedAtRef.current,
       expandedExercise,
       weightUpSuggestions,
       weightDownSuggestions,
@@ -415,15 +417,24 @@ export default function WorkoutSession() {
         const parsed = JSON.parse(saved);
         setSetLogs(parsed.setLogs || {});
         setExerciseNotes(parsed.exerciseNotes || {});
-        setExerciseOrder(parsed.exerciseOrder || []);
+        // Strip non-first superset exercise IDs that old auto-saves may have stored.
+        const restoredAccessories: string[] = parsed.addedAccessories || [];
+        const nonFirstSuperset = new Set(
+          restoredAccessories.flatMap((accId: string) => {
+            const r = ACCESSORY_ROUTINES.find(ar => ar.id === accId);
+            return r ? r.exercises.slice(1).map(e => e.id) : [];
+          })
+        );
+        setExerciseOrder((parsed.exerciseOrder || []).filter((id: string) => !nonFirstSuperset.has(id)));
         setExerciseOverrides(parsed.exerciseOverrides || {});
-        setAddedAccessories(parsed.addedAccessories || []);
+        setAddedAccessories(restoredAccessories);
         setAddedExercises(parsed.addedExercises || []);
         setBodyweightExercises(new Set(parsed.bodyweightExercises || []));
         setTwoHandedExercises(new Set(parsed.twoHandedExercises || []));
         setHeavyStackExercises(new Set(parsed.heavyStackExercises || []));
         setCableAttachments(parsed.cableAttachments || {});
         setElapsed(parsed.elapsed || 0);
+        startedAtRef.current = parsed.startedAt || new Date().toISOString();
         setExpandedExercise(parsed.expandedExercise || null);
         setWeightUpSuggestions(parsed.weightUpSuggestions || {});
         setWeightDownSuggestions(parsed.weightDownSuggestions || {});
@@ -623,7 +634,9 @@ export default function WorkoutSession() {
       newLogs[ex.id] = Array.from({ length: ex.sets }, () => ({ reps: 0, weight: 0, completed: false }));
     });
     setSetLogs(prev => ({ ...prev, ...newLogs }));
-    setExerciseOrder(prev => [...prev, ...routine.exercises.map(ex => ex.id)]);
+    // Only the first exercise represents the group in exerciseOrder; the rest are
+    // tracked via setLogs and rendered inside the superset card.
+    setExerciseOrder(prev => [...prev, routine.exercises[0].id]);
     hapticMedium();
     toast.success(`Added ${routine.name} accessory`);
   }, [addedAccessories]);
@@ -968,6 +981,7 @@ export default function WorkoutSession() {
       }),
       effortRating: effortRating > 0 ? effortRating : undefined,
       sessionNotes: sessionNotes.trim() || undefined,
+      startedAt: startedAtRef.current ?? undefined,
     };
     
     if (!hasCompletedAny) {
@@ -1201,7 +1215,7 @@ export default function WorkoutSession() {
           )}
 
           <button
-            onClick={() => { discardSavedSession(); setStarted(true); }}
+            onClick={() => { discardSavedSession(); startedAtRef.current = new Date().toISOString(); setStarted(true); }}
             className="w-full rounded-xl gradient-primary py-4 text-base font-bold text-primary-foreground glow-primary active:scale-[0.98] transition-transform"
           >
             {showResumePrompt ? "Start Fresh" : "Start Workout"}
@@ -1371,6 +1385,27 @@ export default function WorkoutSession() {
                                         <div className={`h-2 w-2 rounded-full transition-colors ${twoHandedExercises.has(ex.id) ? "bg-primary" : "bg-muted-foreground/30"}`} />
                                         2 Handed
                                       </button>
+                                    )}
+                                    {/* Machine Row variant pill — "Machine Row" (standard) vs "Low Row", tracked separately */}
+                                    {ex.id === "pl1" && !exerciseOverrides[ex.id] && (
+                                      <div className="flex items-center rounded-full bg-muted/50 p-0.5 select-none">
+                                        <button
+                                          onClick={() => heavyStackExercises.has(ex.id) && setHeavyStackExercises(prev => {
+                                            const next = new Set(prev); next.delete(ex.id); return next;
+                                          })}
+                                          className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${!heavyStackExercises.has(ex.id) ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+                                        >
+                                          Machine Row
+                                        </button>
+                                        <button
+                                          onClick={() => !heavyStackExercises.has(ex.id) && setHeavyStackExercises(prev => {
+                                            const next = new Set(prev); next.add(ex.id); return next;
+                                          })}
+                                          className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${heavyStackExercises.has(ex.id) ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+                                        >
+                                          Low Row
+                                        </button>
+                                      </div>
                                     )}
                                     {/* Light/Heavy toggle — standalone cable exercises only (no benches, lat pulldowns, seated rows, machines) */}
                                     {(() => {
@@ -1590,7 +1625,7 @@ export default function WorkoutSession() {
               const isSSExpanded = expandedExercise === `ss-${ex.id}`;
 
               return (
-                <div key={`ss-${ex.id}`} className="relative">
+                <Reorder.Item key={`ss-${ex.id}`} value={ex.id} dragListener={false} className="relative">
                   <div className="flex items-center gap-2 mb-1.5">
                     <div className="flex items-center gap-1.5 rounded-full bg-accent/60 px-2.5 py-0.5">
                       <span className="text-[10px]">🔄</span>
@@ -1811,7 +1846,7 @@ export default function WorkoutSession() {
                       )}
                     </AnimatePresence>
                   </div>
-                </div>
+                </Reorder.Item>
               );
             }
 
