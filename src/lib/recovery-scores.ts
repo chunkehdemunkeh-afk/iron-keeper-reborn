@@ -282,7 +282,7 @@ export function computeRecoveryBreakdown(
       deltaPretty: respDelta,
       direction: today.respiratoryRate !== null ? scoreDirection(respScore) : "neutral",
     },
-  ].filter((f) => f.weight > 0);
+  ] as RecoveryFactor[]).filter((f) => f.weight > 0);
 
   const raw =
     sleepScore   * weights.sleep  +
