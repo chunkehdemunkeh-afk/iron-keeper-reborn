@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { type DailyScoreRecord } from "@/lib/cloud-data";
 import { useDailyScores } from "@/hooks/queries/useDailyScores";
 import { useDailyBiometrics } from "@/hooks/queries/useDailyBiometrics";
+import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
 import {
   recoveryColor,
   recoveryLabel,
@@ -12,10 +13,13 @@ import {
   strainLabel,
   strainColor,
   sleepPerformanceLabel,
+  computeUserBaseline,
+  computeRecoveryBreakdown,
+  type RecoveryFactor,
 } from "@/lib/recovery-scores";
 import { motion } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { Edit2, Wind, ChevronDown, ChevronUp } from "lucide-react";
+import { Edit2, Wind, ChevronDown, ChevronUp, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import ExerciseTimer from "@/components/ExerciseTimer";
 
 interface Props {
