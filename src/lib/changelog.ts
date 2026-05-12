@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.101",
+    version: "1.6.102",
     date: "2026-05-12",
     title: "Updates & Fixes",
     changes: [
-      "Update CLAUDE.md: biometric-insight edge function + HomeCombinedRecoveryCard gotchas",
+      "Fix AI insight never saving: use UPDATE not upsert, invalidate query on completion",
     ],
   },
   {
