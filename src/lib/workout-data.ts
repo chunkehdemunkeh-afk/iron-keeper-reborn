@@ -36,6 +36,8 @@ export type CompletedWorkout = {
   sessionNotes?: string;    // notes for coach
   caloriesBurned?: number | null;
   startedAt?: string;       // ISO timestamp when session began (wall-clock gym start)
+  avgHr?: number | null;    // bpm — manual entry now, Health Connect later
+  maxHr?: number | null;    // bpm
 };
 
 export type WeekScheduleItem = {
