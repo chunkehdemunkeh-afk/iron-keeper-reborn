@@ -150,7 +150,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background safe-bottom">
-      <div className="mx-auto max-w-lg px-4 pt-6 pb-24 space-y-5">
+      <div className="mx-auto max-w-lg md:max-w-2xl px-4 pt-6 pb-24 space-y-5">
         <div className="flex justify-end -mb-4"><HelpButton /></div>
         {/* Avatar */}
         <motion.div

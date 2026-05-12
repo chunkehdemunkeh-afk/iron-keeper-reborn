@@ -957,7 +957,7 @@ export default function WorkoutSession() {
   if (!started) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="mx-auto max-w-lg px-4 pt-6 pb-8 space-y-6">
+        <div className="mx-auto max-w-lg md:max-w-2xl px-4 pt-6 pb-8 space-y-6">
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground">
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
@@ -1093,7 +1093,7 @@ export default function WorkoutSession() {
   // Active workout
   return (
     <div className="min-h-screen bg-background pb-40">
-      <div className="mx-auto max-w-lg px-4 pt-4 space-y-4">
+      <div className="mx-auto max-w-lg md:max-w-2xl px-4 pt-4 space-y-4">
         {/* Top bar */}
         <div className="flex items-center justify-between">
           <button onClick={() => { saveSessionToStorage(); navigate("/sessions"); }} className="text-muted-foreground p-2 -m-2 active:bg-muted/50 rounded-lg transition-colors">
@@ -1979,7 +1979,7 @@ export default function WorkoutSession() {
       </Sheet>
 
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent">
-        <div className="mx-auto max-w-lg">
+        <div className="mx-auto max-w-lg md:max-w-2xl">
           <button onClick={handleFinish} className="w-full rounded-xl gradient-primary py-4 text-base font-bold text-primary-foreground glow-primary active:scale-[0.98] transition-transform">
             Finish Workout ({completedExercises}/{totalExercises})
           </button>

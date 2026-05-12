@@ -23,7 +23,7 @@ export default function BottomNav() {
       aria-label="Primary"
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-card/95 backdrop-blur-xl"
     >
-      <div className="mx-auto flex max-w-lg items-center justify-around pb-[env(safe-area-inset-bottom)] px-2 pt-1">
+      <div className="mx-auto flex max-w-lg md:max-w-2xl items-center justify-around pb-[env(safe-area-inset-bottom)] px-2 pt-1">
         {NAV_ITEMS.map(({ icon: Icon, label, path }) => {
           const isActive = location.pathname === path;
           return (

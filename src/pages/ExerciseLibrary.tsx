@@ -17,7 +17,7 @@ export default function ExerciseLibrary() {
 
   return (
     <div className="min-h-screen bg-background safe-bottom">
-      <div className="mx-auto max-w-lg px-4 pt-6 pb-24 space-y-4">
+      <div className="mx-auto max-w-lg md:max-w-4xl px-4 pt-6 pb-24 space-y-4">
         <motion.h1
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -60,7 +60,7 @@ export default function ExerciseLibrary() {
         </p>
 
         {/* Exercise list */}
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           <AnimatePresence>
             {filtered.map((ex, i) => (
               <motion.div
