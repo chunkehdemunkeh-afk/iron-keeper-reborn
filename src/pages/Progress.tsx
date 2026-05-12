@@ -20,7 +20,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, CartesianGrid,
 } from "recharts";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import BodyDiagram, { viewForMuscle } from "@/components/recovery/BodyDiagram";
 import RecoverySettings from "@/components/recovery/RecoverySettings";
 import { computeMuscleRecovery, statusColor, statusLabel } from "@/lib/recovery";
