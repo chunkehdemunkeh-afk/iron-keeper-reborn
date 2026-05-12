@@ -77,7 +77,7 @@ export default function SleepCard({ date }: Props) {
         {todayLog ? (
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-display text-2xl font-bold text-foreground leading-none">
+              <p className="font-display text-2xl font-bold text-foreground leading-none tabular-nums">
                 {todayLog.hours}<span className="text-base text-muted-foreground font-normal">h</span>
               </p>
               <p className="text-[10px] text-muted-foreground mt-1">Last night</p>
@@ -94,7 +94,17 @@ export default function SleepCard({ date }: Props) {
             </div>
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground">Tap to log last night's sleep</p>
+          <div className="flex items-center gap-3">
+            <div className="relative h-12 w-12 rounded-full border-2 border-dashed border-muted/60 flex items-center justify-center flex-shrink-0">
+              <Moon className="h-5 w-5 text-muted-foreground/60" />
+            </div>
+            <div>
+              <p className="font-display text-2xl font-bold text-muted-foreground/40 leading-none tabular-nums">
+                —<span className="text-base font-normal">h</span>
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-1">Tap to log last night</p>
+            </div>
+          </div>
         )}
       </motion.button>
 

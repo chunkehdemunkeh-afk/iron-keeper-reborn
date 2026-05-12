@@ -205,7 +205,8 @@ export default function HomeCompleteDay({ date }: Props) {
         >
           <Button
             onClick={handleComplete}
-            className="w-full rounded-xl gradient-primary py-6 text-sm font-bold text-primary-foreground glow-primary"
+            variant="outline"
+            className="w-full rounded-xl border-primary/30 bg-primary/5 hover:bg-primary/10 py-5 text-sm font-semibold text-primary"
           >
             <CheckCircle2 className="h-4 w-4 mr-2" />
             Complete Day
