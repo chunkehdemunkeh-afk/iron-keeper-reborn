@@ -119,6 +119,48 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_biometrics: {
+        Row: {
+          created_at: string | null
+          date: string
+          hrv_ms: number | null
+          id: string
+          respiratory_rate: number | null
+          resting_hr: number | null
+          samsung_stress_score: number | null
+          source: string | null
+          spo2_pct: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          hrv_ms?: number | null
+          id?: string
+          respiratory_rate?: number | null
+          resting_hr?: number | null
+          samsung_stress_score?: number | null
+          source?: string | null
+          spo2_pct?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          hrv_ms?: number | null
+          id?: string
+          respiratory_rate?: number | null
+          resting_hr?: number | null
+          samsung_stress_score?: number | null
+          source?: string | null
+          spo2_pct?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_logs: {
         Row: {
           calorie_goal: number
@@ -170,6 +212,48 @@ export type Database = {
           water_goal_ml?: number
           water_ml?: number
           weight_kg?: number | null
+        }
+        Relationships: []
+      }
+      daily_scores: {
+        Row: {
+          ai_generated_at: string | null
+          ai_insight: Json | null
+          created_at: string | null
+          date: string
+          id: string
+          recovery_score: number | null
+          sleep_performance: number | null
+          strain_score: number | null
+          stress_level: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_generated_at?: string | null
+          ai_insight?: Json | null
+          created_at?: string | null
+          date: string
+          id?: string
+          recovery_score?: number | null
+          sleep_performance?: number | null
+          strain_score?: number | null
+          stress_level?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_generated_at?: string | null
+          ai_insight?: Json | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          recovery_score?: number | null
+          sleep_performance?: number | null
+          strain_score?: number | null
+          stress_level?: number | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -415,34 +499,49 @@ export type Database = {
       }
       sleep_logs: {
         Row: {
+          awake_min: number | null
           created_at: string
           date: string
+          deep_sleep_min: number | null
           hours: number
           id: string
+          light_sleep_min: number | null
           notes: string | null
           quality: number
+          rem_sleep_min: number | null
+          sleep_efficiency: number | null
           source: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          awake_min?: number | null
           created_at?: string
           date: string
+          deep_sleep_min?: number | null
           hours: number
           id?: string
+          light_sleep_min?: number | null
           notes?: string | null
           quality: number
+          rem_sleep_min?: number | null
+          sleep_efficiency?: number | null
           source?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          awake_min?: number | null
           created_at?: string
           date?: string
+          deep_sleep_min?: number | null
           hours?: number
           id?: string
+          light_sleep_min?: number | null
           notes?: string | null
           quality?: number
+          rem_sleep_min?: number | null
+          sleep_efficiency?: number | null
           source?: string
           updated_at?: string
           user_id?: string
@@ -569,6 +668,7 @@ export type Database = {
           exercises_completed: number
           id: string
           session_notes: string | null
+          started_at: string | null
           total_exercises: number
           user_id: string
           workout_id: string
@@ -583,6 +683,7 @@ export type Database = {
           exercises_completed?: number
           id?: string
           session_notes?: string | null
+          started_at?: string | null
           total_exercises?: number
           user_id: string
           workout_id: string
@@ -597,6 +698,7 @@ export type Database = {
           exercises_completed?: number
           id?: string
           session_notes?: string | null
+          started_at?: string | null
           total_exercises?: number
           user_id?: string
           workout_id?: string
