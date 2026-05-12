@@ -29,6 +29,7 @@ import Onboarding from "./pages/Onboarding";
 import NutritionOnboarding from "./pages/NutritionOnboarding";
 import ResetPassword from "./pages/ResetPassword";
 import Leaderboard from "./pages/Leaderboard";
+import Recovery from "./pages/Recovery";
 import { isOnboardingComplete } from "@/lib/user-preferences";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -96,6 +97,7 @@ const AnimatedRoutes = () => {
         <Route path="/exercises" element={<PageWrapper><ProtectedRoute><ExerciseLibrary /></ProtectedRoute></PageWrapper>} />
         <Route path="/body" element={<PageWrapper><ProtectedRoute><BodyMeasurements /></ProtectedRoute></PageWrapper>} />
         <Route path="/leaderboard" element={<PageWrapper><ProtectedRoute><Leaderboard /></ProtectedRoute></PageWrapper>} />
+        <Route path="/recovery" element={<PageWrapper><ProtectedRoute><Recovery /></ProtectedRoute></PageWrapper>} />
         <Route path="/reset-password" element={<PageWrapper><ResetPassword /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>

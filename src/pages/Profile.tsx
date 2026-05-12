@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchActivityLogs, fetchWeeklyBurn, mondayOfWeek, fetchLeaderboardVisibility, updateLeaderboardVisibility } from "@/lib/cloud-data";
 import { backfillStrainScores } from "@/lib/data/biometric-queries";
 import { queryKeys } from "@/lib/query-keys";
-import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy, RefreshCw } from "lucide-react";
+import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy, RefreshCw, Dumbbell } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import RecoveryTips from "@/components/RecoveryTips";
