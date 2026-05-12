@@ -169,119 +169,124 @@ export default function Profile() {
     <div className="min-h-screen bg-background safe-bottom">
       <div className="mx-auto max-w-lg md:max-w-2xl px-4 pt-6 pb-24 space-y-5">
         <div className="flex justify-end -mb-4"><HelpButton /></div>
-        {/* Avatar */}
+
+        {/* Avatar hero card */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center text-center"
+          className="hero-card p-5"
         >
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploadingAvatar}
-            aria-label="Change profile photo"
-            className="relative group active:scale-95 transition-transform disabled:opacity-70"
-          >
-            {profile?.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt="Profile"
-                className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/30"
-              />
-            ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-full gradient-primary glow-primary">
-                <User className="h-10 w-10 text-primary-foreground" />
-              </div>
-            )}
-            <span className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center ring-2 ring-background shadow-md">
-              {uploadingAvatar ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Camera className="h-3.5 w-3.5" />
-              )}
-            </span>
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleAvatarFile}
-          />
-          {profile?.avatar_url && (
+          <div className="flex flex-col items-center text-center">
             <button
               type="button"
-              onClick={handleRemoveAvatar}
-              disabled={removingAvatar || uploadingAvatar}
-              className="mt-2 text-[11px] text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingAvatar}
+              aria-label="Change profile photo"
+              className="relative group active:scale-95 transition-transform disabled:opacity-70"
             >
-              {removingAvatar ? "Removing…" : "Remove photo"}
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="Profile"
+                  className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/30"
+                />
+              ) : (
+                <div className="flex h-20 w-20 items-center justify-center rounded-full gradient-primary glow-primary">
+                  <User className="h-10 w-10 text-primary-foreground" />
+                </div>
+              )}
+              <span className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center ring-2 ring-background shadow-md">
+                {uploadingAvatar ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Camera className="h-3.5 w-3.5" />
+                )}
+              </span>
             </button>
-          )}
-          {editingName ? (
-            <div className="mt-3 flex items-center gap-2">
-              <input
-                autoFocus
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveName();
-                  if (e.key === "Escape") setEditingName(false);
-                }}
-                placeholder="Your name"
-                className="bg-card/60 border border-border/30 rounded-xl px-3 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 text-center"
-              />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarFile}
+            />
+            {profile?.avatar_url && (
               <button
-                onClick={saveName}
-                disabled={savingName}
-                className="h-9 w-9 flex items-center justify-center rounded-xl bg-primary text-primary-foreground active:scale-95 transition-transform disabled:opacity-50"
-                aria-label="Save name"
+                type="button"
+                onClick={handleRemoveAvatar}
+                disabled={removingAvatar || uploadingAvatar}
+                className="mt-2 text-[11px] text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
               >
-                <Check className="h-4 w-4" />
+                {removingAvatar ? "Removing…" : "Remove photo"}
               </button>
+            )}
+            {editingName ? (
+              <div className="mt-3 flex items-center gap-2">
+                <input
+                  autoFocus
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveName();
+                    if (e.key === "Escape") setEditingName(false);
+                  }}
+                  placeholder="Your name"
+                  className="bg-card/60 border border-border/30 rounded-xl px-3 py-2 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 text-center"
+                />
+                <button
+                  onClick={saveName}
+                  disabled={savingName}
+                  className="h-9 w-9 flex items-center justify-center rounded-xl bg-primary text-primary-foreground active:scale-95 transition-transform disabled:opacity-50"
+                  aria-label="Save name"
+                >
+                  <Check className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setEditingName(false)}
+                  className="h-9 w-9 flex items-center justify-center rounded-xl bg-muted text-muted-foreground active:scale-95 transition-transform"
+                  aria-label="Cancel"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
               <button
-                onClick={() => setEditingName(false)}
-                className="h-9 w-9 flex items-center justify-center rounded-xl bg-muted text-muted-foreground active:scale-95 transition-transform"
-                aria-label="Cancel"
+                onClick={startEditName}
+                className="mt-3 inline-flex items-center gap-1.5 group"
+                aria-label="Edit name"
               >
-                <X className="h-4 w-4" />
+                <h1 className="font-display text-2xl font-bold">
+                  {profile?.display_name || "Athlete"}
+                </h1>
+                <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
               </button>
-            </div>
-          ) : (
-            <button
-              onClick={startEditName}
-              className="mt-3 inline-flex items-center gap-1.5 group"
-              aria-label="Edit name"
-            >
-              <h1 className="font-display text-2xl font-bold">
-                {profile?.display_name || "Athlete"}
-              </h1>
-              <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </button>
-          )}
-          <p className="text-sm text-muted-foreground">
-            {user?.email}
-          </p>
-        </motion.div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {user?.email}
+            </p>
+          </div>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { icon: Flame,  label: "Streak",   value: streak > 0 ? `${streak} week` : "—", color: streak > 0 ? "text-primary" : "text-muted-foreground", onClick: undefined },
-            { icon: Target, label: "Workouts", value: totalWorkouts, color: "text-success", onClick: () => navigate("/history") },
-            { icon: Activity, label: "Week Burn", value: weekKcal > 0 ? `${weekKcal >= 1000 ? (weekKcal/1000).toFixed(1)+"k" : weekKcal}` : "—", color: weekKcal > 0 ? "text-amber-400" : "text-muted-foreground", onClick: () => navigate("/progress") },
-          ].map(({ icon: Icon, label, value, color, onClick }) => (
-            <div
-              key={label}
-              className={`glass-card rounded-xl p-3 text-center ${onClick ? "cursor-pointer active:scale-[0.97] transition-transform" : ""}`}
-              onClick={onClick}
-            >
-              <Icon className={`h-4 w-4 mx-auto mb-1 ${color}`} />
-              <p className={`font-display text-xl font-bold ${color}`}>{value}</p>
-              <p className="text-[10px] text-muted-foreground font-medium">{label}</p>
-            </div>
-          ))}
-        </div>
+          {/* Inline metric chips */}
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            {[
+              { icon: Flame,    label: "Streak",    value: streak > 0 ? `${streak}w` : "—",                                                                               color: streak > 0 ? "text-primary" : "text-muted-foreground", onClick: undefined },
+              { icon: Target,   label: "Workouts",  value: totalWorkouts,                                                                                                  color: "text-success",                                       onClick: () => navigate("/history") },
+              { icon: Activity, label: "Week Burn", value: weekKcal > 0 ? `${weekKcal >= 1000 ? (weekKcal/1000).toFixed(1)+"k" : weekKcal}` : "—",                          color: weekKcal > 0 ? "text-amber-400" : "text-muted-foreground", onClick: () => navigate("/progress") },
+            ].map(({ icon: Icon, label, value, color, onClick }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={onClick}
+                disabled={!onClick}
+                className={`rounded-xl bg-card/40 hairline border p-3 text-center ${onClick ? "active:scale-[0.97] transition-transform" : ""}`}
+              >
+                <Icon className={`h-4 w-4 mx-auto mb-1 ${color}`} />
+                <p className={`font-display text-xl font-bold tabular-nums ${color}`}>{value}</p>
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{label}</p>
+              </button>
+            ))}
+          </div>
+        </motion.div>
 
         {/* Quick links */}
         <div className="grid grid-cols-2 gap-2">
