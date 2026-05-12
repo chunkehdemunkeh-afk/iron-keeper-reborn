@@ -58,6 +58,38 @@ function ScoreCard({ label, value, subLabel, color, explanation }: ScoreCardProp
   );
 }
 
+function FactorRow({ factor }: { factor: RecoveryFactor }) {
+  const dirIcon =
+    factor.direction === "positive" ? <ArrowUp className="h-3 w-3" /> :
+    factor.direction === "negative" ? <ArrowDown className="h-3 w-3" /> :
+    <Minus className="h-3 w-3" />;
+  const dirColor =
+    factor.direction === "positive" ? "hsl(152 70% 50%)" :
+    factor.direction === "negative" ? "hsl(351 85% 60%)" :
+    "hsl(var(--muted-foreground))";
+  const widthPct = Math.round(factor.weight * 100);
+  return (
+    <div className="px-3.5 py-3 flex items-center gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <p className="text-xs font-semibold text-foreground">{factor.label}</p>
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold tabular-nums" style={{ color: dirColor }}>
+            {dirIcon}
+            <span>{factor.deltaPretty ?? "—"}</span>
+          </div>
+        </div>
+        <div className="relative h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div
+            className="absolute left-0 top-0 h-full rounded-full transition-[width] duration-500"
+            style={{ width: `${Math.round(factor.score * 100)}%`, background: dirColor }}
+          />
+        </div>
+        <p className="text-[9px] text-muted-foreground mt-1">{widthPct}% weight</p>
+      </div>
+    </div>
+  );
+}
+
 export default function RecoveryDetailSheet({ open, score, onClose, onEdit }: Props) {
   const { user } = useAuth();
   const [breathworkActive, setBreathworkActive] = useState(false);
