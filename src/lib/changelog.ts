@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.98",
+    version: "1.6.99",
     date: "2026-05-12",
     title: "Updates & Fixes",
     changes: [
-      "Track actual gym duration via started_at timestamp",
+      "Pass SpO2 to AI insight payload instead of hardcoded null",
     ],
   },
   {
