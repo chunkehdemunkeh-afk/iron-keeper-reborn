@@ -16,6 +16,7 @@ export default function Recovery() {
 
   return (
     <div className="min-h-screen bg-background safe-bottom">
+      <PullToRefreshIndicator {...ptr} />
       <div className="mx-auto max-w-lg md:max-w-2xl px-4 pt-6 pb-24 space-y-5">
         <div className="flex items-start justify-between">
           <div>
