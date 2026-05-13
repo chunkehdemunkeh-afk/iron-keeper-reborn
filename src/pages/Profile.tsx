@@ -312,12 +312,16 @@ export default function Profile() {
               const memberSub = createdAt
                 ? `Joined ${createdAt.toLocaleDateString("en-GB", { month: "short", year: "numeric" })}`
                 : "";
-              const volFmt = (kg: number) =>
-                kg >= 1_000_000 ? `${(kg / 1_000_000).toFixed(1)}M` : kg >= 1_000 ? `${(kg / 1_000).toFixed(1)}K` : `${Math.round(kg)}`;
+              const volFmt = (kg: number) => {
+                if (kg >= 1_000_000) return `${(kg / 1_000_000).toFixed(1)}kt`;
+                if (kg >= 1_000) return `${(kg / 1_000).toFixed(1)}t`;
+                return `${Math.round(kg)}kg`;
+              };
+              const volSub = lifetimeKg >= 1_000 ? "all-time (tonnes)" : "all-time (kg)";
               return [
                 { icon: Star,     label: "Member",   value: memberValue,                                sub: memberSub,           color: "text-primary",                                              onClick: undefined as undefined | (() => void),         tooltip: "How long you've been on Iron Keeper." },
                 { icon: Target,   label: "Workouts", value: `${totalWorkouts}`,                         sub: "all-time sessions", color: "text-success",                                              onClick: () => navigate("/history"),                    tooltip: "Total workouts you've ever logged." },
-                { icon: Dumbbell, label: "Volume",   value: lifetimeKg > 0 ? volFmt(lifetimeKg) : "—",  sub: "all-time (kg)",     color: lifetimeKg > 0 ? "text-amber-400" : "text-muted-foreground", onClick: () => navigate("/progress"),                   tooltip: "Cumulative weight × reps from every working set you've ever logged." },
+                { icon: Dumbbell, label: "Volume",   value: lifetimeKg > 0 ? volFmt(lifetimeKg) : "—",  sub: volSub,              color: lifetimeKg > 0 ? "text-amber-400" : "text-muted-foreground", onClick: () => navigate("/progress"),                   tooltip: "Cumulative weight × reps from every working set you've ever logged (excludes warm-ups). Shown in tonnes once over 1,000 kg." },
               ];
             })().map(({ icon: Icon, label, value, sub, color, onClick, tooltip }) => (
               <button
