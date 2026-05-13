@@ -306,6 +306,7 @@ export default function FoodSearch({ open, onClose, mealType, date, onLogged, ed
       return;
     }
     toast.success(editingLog ? `${selected.name} updated` : `${selected.name} logged to ${mealType}`);
+    if (!editingLog) void awardXpAndNotify({ source: "food_log_any" });
     setSelected(null);
     onLogged();
     if (editingLog) {
