@@ -18,7 +18,8 @@ export const queryKeys = {
   prTrends: (userId: string) => ["pr-trends", userId] as const,
 
   // ── Sleep ─────────────────────────────────────────────────────────────────
-  sleepLogs: (userId: string) => ["sleep-logs", userId] as const,
+  sleepLogs: (userId: string, range?: string) =>
+    range ? (["sleep-logs", userId, range] as const) : (["sleep-logs", userId] as const),
 
   // ── Recent sets ───────────────────────────────────────────────────────────
   recentSets: (userId: string) => ["recent-sets", userId] as const,
