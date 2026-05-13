@@ -57,6 +57,20 @@ function parseStageMinutes(value: string): number | null {
   return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : null;
 }
 
+/** Resolve a stage minute input: blank preserves existing saved value (fallback). */
+function resolveStageMinutes(value: string, fallback?: number | null): number | null {
+  if (!value.trim()) return fallback ?? null;
+  return parseStageMinutes(value);
+}
+
+/** Strip leading minus signs / clamp negatives from a numeric input string. */
+function sanitizeMinutesInput(value: string): string {
+  if (!value) return value;
+  // Remove minus signs entirely (stage minutes can't be negative)
+  const cleaned = value.replace(/-/g, "");
+  return cleaned;
+}
+
 function hasStageBreakdown(values: Array<number | null | undefined>): boolean {
   return values.some((value) => value != null);
 }
