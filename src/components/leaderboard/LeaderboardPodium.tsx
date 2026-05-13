@@ -1,29 +1,31 @@
 import { motion } from "framer-motion";
 import { LeaderboardEntry } from "@/lib/cloud-data";
+import AvatarFrame from "@/components/gamification/AvatarFrame";
 
 const GOLD   = "#F0C040";
 const SILVER = "#9AACBA";
 const BRONZE = "#B8825A";
 
 function Avatar({ entry, size }: { entry: LeaderboardEntry; size: number }) {
-  if (entry.avatarUrl) {
-    return (
-      <img
-        src={entry.avatarUrl}
-        alt={entry.displayName}
-        className="rounded-full object-cover flex-shrink-0"
-        style={{ width: size, height: size }}
-      />
-    );
-  }
   const initials = entry.displayName.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div
-      className="rounded-full flex items-center justify-center bg-muted/60 font-display font-bold text-muted-foreground flex-shrink-0"
-      style={{ width: size, height: size, fontSize: size * 0.36 }}
-    >
-      {initials}
-    </div>
+    <AvatarFrame userId={entry.userId} size={size} className="flex-shrink-0">
+      {entry.avatarUrl ? (
+        <img
+          src={entry.avatarUrl}
+          alt={entry.displayName}
+          className="rounded-full object-cover"
+          style={{ width: size, height: size }}
+        />
+      ) : (
+        <div
+          className="rounded-full flex items-center justify-center bg-muted/60 font-display font-bold text-muted-foreground"
+          style={{ width: size, height: size, fontSize: size * 0.36 }}
+        >
+          {initials}
+        </div>
+      )}
+    </AvatarFrame>
   );
 }
 
