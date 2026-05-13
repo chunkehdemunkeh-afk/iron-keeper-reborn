@@ -299,6 +299,92 @@ export type Database = {
         }
         Relationships: []
       }
+      duel_progress: {
+        Row: {
+          baseline: number | null
+          duel_id: string
+          id: string
+          updated_at: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          baseline?: number | null
+          duel_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          value?: number
+        }
+        Update: {
+          baseline?: number | null
+          duel_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "duel_progress_duel_id_fkey"
+            columns: ["duel_id"]
+            isOneToOne: false
+            referencedRelation: "duels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      duels: {
+        Row: {
+          challenger_id: string
+          created_at: string
+          duration_days: number
+          ends_at: string | null
+          exercise_id: string | null
+          id: string
+          opponent_id: string
+          rp_stake: number
+          starts_at: string | null
+          status: string
+          target: number | null
+          type: string
+          updated_at: string
+          winner_id: string | null
+        }
+        Insert: {
+          challenger_id: string
+          created_at?: string
+          duration_days?: number
+          ends_at?: string | null
+          exercise_id?: string | null
+          id?: string
+          opponent_id: string
+          rp_stake?: number
+          starts_at?: string | null
+          status?: string
+          target?: number | null
+          type: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Update: {
+          challenger_id?: string
+          created_at?: string
+          duration_days?: number
+          ends_at?: string | null
+          exercise_id?: string | null
+          id?: string
+          opponent_id?: string
+          rp_stake?: number
+          starts_at?: string | null
+          status?: string
+          target?: number | null
+          type?: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
       favourite_foods: {
         Row: {
           barcode: string | null
@@ -535,6 +621,36 @@ export type Database = {
           notes?: string | null
           pose?: string | null
           storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
@@ -1178,10 +1294,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      list_challengeable_users: {
+        Args: { p_limit?: number }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          level: number
+          season_rp: number
+          season_tier: string
+          user_id: string
+        }[]
+      }
       lookup_user_bodyweight: {
         Args: { _on_date: string; _user_id: string }
         Returns: number
       }
+      settle_duel: { Args: { p_duel_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "coach" | "user"
