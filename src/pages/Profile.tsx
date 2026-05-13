@@ -13,6 +13,7 @@ import { WORKOUTS } from "@/lib/workout-data";
 import { toast } from "sonner";
 import { hapticSuccess } from "@/lib/haptics";
 import HelpButton from "@/components/demo/HelpButton";
+import { supabase } from "@/integrations/supabase/client";
 
 /** Per-split intensity label and training focus for the Training Programme card. */
 const SPLIT_META: Record<string, { intensity: string; intensityColor: string; focus: string }> = {
