@@ -581,6 +581,71 @@ export type Database = {
         }
         Relationships: []
       }
+      season_results: {
+        Row: {
+          created_at: string
+          final_rank: number | null
+          final_rp: number
+          final_tier: string
+          id: string
+          season_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          final_rank?: number | null
+          final_rp?: number
+          final_tier?: string
+          id?: string
+          season_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          final_rank?: number | null
+          final_rp?: number
+          final_tier?: string
+          id?: string
+          season_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "season_results_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seasons: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          number: number
+          starts_at: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          number: number
+          starts_at: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          number?: number
+          starts_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       sleep_logs: {
         Row: {
           awake_min: number | null
