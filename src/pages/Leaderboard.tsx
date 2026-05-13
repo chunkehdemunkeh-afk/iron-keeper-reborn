@@ -350,6 +350,10 @@ export default function Leaderboard() {
           <div className="mt-4 h-px bg-border/40" />
         </motion.div>
 
+        {/* Tier banner — current season standing */}
+        <YourTierBanner />
+
+
         {/* ── Category tabs — segmented pill ────────────────────── */}
         <motion.div
           initial={{ opacity: 0 }}
