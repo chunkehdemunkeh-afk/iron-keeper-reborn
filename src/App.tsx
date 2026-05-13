@@ -170,6 +170,7 @@ const AppRoutes = () => {
       {user && <BottomNav />}
       {user && <LevelUpSheet />}
       {user && <BadgeUnlockSheet />}
+      {user && <SeasonFinaleSheet />}
     </>
   );
 };
