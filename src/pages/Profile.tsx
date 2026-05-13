@@ -121,6 +121,18 @@ export default function Profile() {
 
   const totalWorkouts = history.length;
 
+  const { data: lifetimeKg = 0 } = useQuery({
+    queryKey: queryKeys.totalWeightLifted(user?.id ?? ""),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("workout_sets")
+        .select("weight, reps, workout_history!inner(user_id)")
+        .eq("workout_history.user_id", user!.id);
+      return (data || []).reduce((sum: number, s: any) => sum + (s.weight || 0) * (s.reps || 0), 0);
+    },
+    enabled: !!user,
+  });
+
   const thisWeekStart = mondayOfWeek(new Date());
   const { data: weekBurn } = useQuery({
     queryKey: queryKeys.weeklyBurn(user?.id ?? "", thisWeekStart),
