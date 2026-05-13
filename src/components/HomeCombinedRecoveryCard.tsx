@@ -49,7 +49,7 @@ function DialRing({
   pct,
   color,
   sub,
-  primary,
+  subMuted,
 }: {
   label: string;
   value: number;
@@ -57,11 +57,11 @@ function DialRing({
   pct: number;
   color: string;
   sub?: string;
-  primary?: boolean;
+  subMuted?: boolean;
 }) {
-  const size = primary ? 92 : 78;
-  const r = primary ? 38 : 32;
-  const stroke = primary ? 7 : 6;
+  const size = 84;
+  const r = 34;
+  const stroke = 6;
   const c = 2 * Math.PI * r;
   const clamped = Math.max(0, Math.min(100, pct));
   return (
@@ -89,14 +89,14 @@ function DialRing({
           <span style={{ color }}>
             <AnimatedNumber
               value={value}
-              className={`font-display font-bold leading-none ${primary ? "text-2xl" : "text-xl"}`}
+              className="font-display font-bold leading-none text-xl"
             />
           </span>
           {suffix && <span className="text-[9px] text-muted-foreground leading-none mt-0.5">{suffix}</span>}
         </div>
       </div>
       {sub && (
-        <p className="text-[9px] mt-1 font-semibold" style={{ color }}>
+        <p className="text-[9px] mt-1 font-semibold" style={{ color: subMuted ? "hsl(var(--muted-foreground))" : color }}>
           {sub}
         </p>
       )}
@@ -223,7 +223,6 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     pct={recovery}
                     color={ringColor}
                     sub={recoveryLabel(recovery)}
-                    primary
                   />
                   <DialRing
                     label="Sleep"
@@ -238,8 +237,9 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     value={Number(strain.toFixed(1))}
                     suffix=""
                     pct={(strain / 21) * 100}
-                    color="hsl(38 92% 55%)"
-                    sub={strainLabel(strain)}
+                    color={strain > 0 ? "hsl(38 92% 55%)" : "hsl(var(--muted-foreground))"}
+                    sub={strain > 0 ? strainLabel(strain) : "No training yet"}
+                    subMuted={strain === 0}
                   />
                 </div>
 
