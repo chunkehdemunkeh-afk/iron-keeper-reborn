@@ -100,6 +100,7 @@ export async function upsertWeeklyReview(input: {
     console.error("Failed to save weekly review:", error);
     return null;
   }
+  void awardXpAndNotify({ source: "weekly_review", metadata: { weekStart: input.weekStart } });
   return mapReview(data);
 }
 
