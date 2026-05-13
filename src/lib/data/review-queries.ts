@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { stripExerciseSuffixes } from "../muscle-mapping";
+import { awardXpAndNotify } from "@/lib/gamification/notify";
 
 export interface WeeklyReview {
   id: string;
