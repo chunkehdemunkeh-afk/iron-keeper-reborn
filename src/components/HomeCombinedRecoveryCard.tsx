@@ -50,6 +50,7 @@ function DialRing({
   color,
   sub,
   subMuted,
+  tooltip,
 }: {
   label: string;
   value: number;
@@ -58,6 +59,7 @@ function DialRing({
   color: string;
   sub?: string;
   subMuted?: boolean;
+  tooltip?: string;
 }) {
   const size = 84;
   const r = 34;
