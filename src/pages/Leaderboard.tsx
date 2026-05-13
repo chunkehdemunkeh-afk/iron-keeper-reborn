@@ -30,6 +30,10 @@ import {
   CommandEmpty,
 } from "@/components/ui/command";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
+import { useUserProgress } from "@/hooks/queries/useUserProgress";
+import { useCurrentSeason, daysRemaining } from "@/hooks/queries/useCurrentSeason";
+import { tierFromRp, nextTier, tierProgress } from "@/lib/gamification/tiers";
+import { TierBadge } from "@/components/gamification/TierBadge";
 
 type Category = "1rm" | "maxweight" | "maxreps" | "volume";
 
