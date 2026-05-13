@@ -14,6 +14,11 @@ import { toast } from "sonner";
 import { hapticSuccess } from "@/lib/haptics";
 import HelpButton from "@/components/demo/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
+import BadgeShelf from "@/components/gamification/BadgeShelf";
+import { TierBadge } from "@/components/gamification/TierBadge";
+import { useUserProgress } from "@/hooks/queries/useUserProgress";
+import { useCurrentSeason, daysRemaining } from "@/hooks/queries/useCurrentSeason";
+import { tierFromRp, nextTier, tierProgress } from "@/lib/gamification/tiers";
 
 /** Per-split intensity label and training focus for the Training Programme card. */
 const SPLIT_META: Record<string, { intensity: string; intensityColor: string; focus: string }> = {
@@ -341,6 +346,14 @@ export default function Profile() {
           </div>
         </motion.div>
 
+        {/* Level + Tier hero */}
+        <ProfileLevelTier />
+
+        {/* Badge shelf */}
+        <div className="glass-card rounded-xl p-4">
+          <BadgeShelf variant="compact" />
+        </div>
+
         {/* Quick links */}
         <div className="grid grid-cols-2 gap-2">
           <motion.button
@@ -567,5 +580,69 @@ export default function Profile() {
         </p>
       </div>
     </div>
+  );
+}
+
+function ProfileLevelTier() {
+  const { data: progress } = useUserProgress();
+  const { data: season } = useCurrentSeason();
+  if (!progress) return null;
+  const rp = progress.seasonRp;
+  const tier = tierFromRp(rp);
+  const next = nextTier(rp);
+  const pct = tierProgress(rp) * 100;
+  const days = daysRemaining(season);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`rounded-2xl bg-gradient-to-br ${tier.gradient} ring-1 ring-border/40 p-4 space-y-4`}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-primary font-semibold">Level</p>
+          <p className="font-display text-4xl font-bold leading-none mt-1">{progress.level}</p>
+        </div>
+        <TierBadge rp={rp} />
+      </div>
+
+      <div>
+        <div className="flex justify-between text-[11px] text-muted-foreground tabular-nums mb-1.5">
+          <span>{progress.levelProgress.current.toLocaleString()} / {progress.levelProgress.needed.toLocaleString()} XP</span>
+          <span>L{progress.level + 1}</span>
+        </div>
+        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${progress.levelProgress.pct}%` }}
+            transition={{ duration: 0.6 }}
+            className="h-full bg-gradient-to-r from-primary to-primary/70"
+          />
+        </div>
+      </div>
+
+      <div className="pt-3 border-t border-border/40">
+        <div className="flex items-baseline justify-between mb-1.5">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            Season {season?.number ?? 1} · {rp.toLocaleString()} RP
+          </p>
+          <p className="text-[10px] text-muted-foreground">{days}d left</p>
+        </div>
+        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.6 }}
+            className="h-full bg-gradient-to-r from-primary/70 to-primary/40"
+          />
+        </div>
+        {next && (
+          <p className="text-[10px] text-muted-foreground mt-1.5">
+            {(next.minRp - rp).toLocaleString()} RP to {next.label}
+          </p>
+        )}
+      </div>
+    </motion.div>
   );
 }

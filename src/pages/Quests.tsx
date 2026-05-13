@@ -1,9 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Trophy, Coins, Flame, Lock } from "lucide-react";
+import { ArrowLeft, Coins, Flame } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserProgress } from "@/hooks/queries/useUserProgress";
-import { useBadges, useRecentXpEvents } from "@/hooks/queries/useBadges";
+import { useRecentXpEvents } from "@/hooks/queries/useBadges";
 import { formatDistanceToNow } from "date-fns";
+import SeasonCard from "@/components/gamification/SeasonCard";
+import BadgeShelf from "@/components/gamification/BadgeShelf";
+import { TierBadge } from "@/components/gamification/TierBadge";
 
 const SOURCE_LABEL: Record<string, string> = {
   daily_open: "Daily check-in",
@@ -22,20 +25,11 @@ const SOURCE_LABEL: Record<string, string> = {
   first_time_feature: "New feature",
 };
 
-const tierColor: Record<string, string> = {
-  bronze: "from-orange-700/30 to-orange-800/10 text-orange-300",
-  silver: "from-slate-300/20 to-slate-400/10 text-slate-200",
-  gold: "from-amber-400/30 to-amber-500/10 text-amber-300",
-};
 
 export default function Quests() {
   const navigate = useNavigate();
   const { data: progress } = useUserProgress();
-  const { data: badges = [] } = useBadges();
   const { data: events = [] } = useRecentXpEvents(20);
-
-  const unlocked = badges.filter((b) => b.unlockedAt);
-  const visible = badges.filter((b) => !b.hidden || b.unlockedAt);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -62,13 +56,14 @@ export default function Quests() {
                 <p className="text-xs uppercase tracking-widest text-primary font-semibold">Level</p>
                 <p className="font-display text-5xl font-bold leading-none mt-1">{progress.level}</p>
               </div>
-              <div className="text-right">
+              <div className="text-right space-y-1">
+                <TierBadge rp={progress.seasonRp} />
                 <div className="flex items-center justify-end gap-2 text-sm">
                   <Coins className="h-4 w-4 text-amber-400" />
                   <span className="font-bold tabular-nums">{progress.coins}</span>
                 </div>
                 {progress.currentStreak > 0 && (
-                  <div className="flex items-center justify-end gap-1 text-sm mt-1">
+                  <div className="flex items-center justify-end gap-1 text-sm">
                     <Flame className="h-4 w-4 text-orange-400" />
                     <span className="font-bold">{progress.currentStreak}d</span>
                     {progress.streakBadge && <span className="text-xs">{progress.streakBadge.icon}</span>}
@@ -100,37 +95,11 @@ export default function Quests() {
           </motion.div>
         )}
 
+        {/* Season + Tier */}
+        <SeasonCard />
+
         {/* Badges */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
-              Badges
-            </h2>
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {unlocked.length} / {badges.length}
-            </span>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {visible.map((b) => {
-              const locked = !b.unlockedAt;
-              return (
-                <motion.div
-                  key={b.code}
-                  whileTap={{ scale: 0.96 }}
-                  className={`relative aspect-square rounded-xl border border-border p-3 flex flex-col items-center justify-center text-center bg-gradient-to-br ${tierColor[b.tier] ?? "from-muted to-muted"} ${locked ? "opacity-40 grayscale" : ""}`}
-                >
-                  <div className="text-3xl mb-1">{locked ? <Lock className="h-6 w-6" /> : b.icon}</div>
-                  <p className="text-[10px] font-bold leading-tight line-clamp-2">{b.name}</p>
-                </motion.div>
-              );
-            })}
-            {visible.length === 0 && (
-              <p className="col-span-3 text-center text-sm text-muted-foreground py-8">
-                Start logging to unlock badges
-              </p>
-            )}
-          </div>
-        </section>
+        <BadgeShelf variant="full" />
 
         {/* Recent XP feed */}
         <section>
