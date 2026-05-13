@@ -57,6 +57,20 @@ function parseStageMinutes(value: string): number | null {
   return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : null;
 }
 
+/** Resolve a stage minute input: blank preserves existing saved value (fallback). */
+function resolveStageMinutes(value: string, fallback?: number | null): number | null {
+  if (!value.trim()) return fallback ?? null;
+  return parseStageMinutes(value);
+}
+
+/** Strip leading minus signs / clamp negatives from a numeric input string. */
+function sanitizeMinutesInput(value: string): string {
+  if (!value) return value;
+  // Remove minus signs entirely (stage minutes can't be negative)
+  const cleaned = value.replace(/-/g, "");
+  return cleaned;
+}
+
 function hasStageBreakdown(values: Array<number | null | undefined>): boolean {
   return values.some((value) => value != null);
 }
@@ -156,10 +170,10 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
       });
 
       // 2. Always upsert sleep log (fixes sleep score = 0 bug)
-      const deepVal  = parseStageMinutes(deepMin);
-      const remVal   = parseStageMinutes(remMin);
-      const lightVal = parseStageMinutes(lightMin);
-      const awakeVal = parseStageMinutes(awakeMin);
+      const deepVal  = resolveStageMinutes(deepMin,  prefillDeepMin);
+      const remVal   = resolveStageMinutes(remMin,   prefillRemMin);
+      const lightVal = resolveStageMinutes(lightMin, prefillLightMin);
+      const awakeVal = resolveStageMinutes(awakeMin, prefillAwakeMin);
       await upsertSleepLog({
         date,
         hours: sleepHours,
@@ -424,9 +438,11 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
                             <input
                               type="number"
                               inputMode="numeric"
+                              min={0}
+                              step={1}
                               placeholder="min"
                               value={value}
-                              onChange={(e) => set(e.target.value)}
+                              onChange={(e) => set(sanitizeMinutesInput(e.target.value))}
                               className="w-full h-10 rounded-lg bg-muted/50 border border-border/50 px-3 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/50"
                               style={{ fontSize: "16px" }}
                             />
