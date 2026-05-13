@@ -49,7 +49,7 @@ function DialRing({
   pct,
   color,
   sub,
-  primary,
+  subMuted,
 }: {
   label: string;
   value: number;
@@ -57,11 +57,11 @@ function DialRing({
   pct: number;
   color: string;
   sub?: string;
-  primary?: boolean;
+  subMuted?: boolean;
 }) {
-  const size = primary ? 92 : 78;
-  const r = primary ? 38 : 32;
-  const stroke = primary ? 7 : 6;
+  const size = 84;
+  const r = 34;
+  const stroke = 6;
   const c = 2 * Math.PI * r;
   const clamped = Math.max(0, Math.min(100, pct));
   return (
