@@ -6,7 +6,7 @@ import { queryKeys } from "@/lib/query-keys";
 export function useSleepLogs(daysBack = 14) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: queryKeys.sleepLogs(user?.id ?? ""),
+    queryKey: queryKeys.sleepLogs(user?.id ?? "", `${daysBack}d`),
     queryFn: () => fetchSleepLogs(daysBack),
     enabled: !!user,
     staleTime: 60_000,
