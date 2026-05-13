@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { LeaderboardEntry } from "@/lib/cloud-data";
+import AvatarFrame from "@/components/gamification/AvatarFrame";
 
 interface Props {
   entry: LeaderboardEntry;
