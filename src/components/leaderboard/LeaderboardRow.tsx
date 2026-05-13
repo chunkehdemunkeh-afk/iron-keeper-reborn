@@ -12,20 +12,25 @@ interface Props {
 }
 
 function Avatar({ entry }: { entry: LeaderboardEntry }) {
-  if (entry.avatarUrl) {
-    return (
-      <img
-        src={entry.avatarUrl}
-        alt={entry.displayName}
-        className="h-8 w-8 rounded-full object-cover flex-shrink-0"
-      />
-    );
-  }
   const initials = entry.displayName.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center text-[10px] font-display font-bold text-muted-foreground flex-shrink-0">
-      {initials}
-    </div>
+    <AvatarFrame
+      userId={entry.userId}
+      size={32}
+      className="flex-shrink-0"
+    >
+      {entry.avatarUrl ? (
+        <img
+          src={entry.avatarUrl}
+          alt={entry.displayName}
+          className="h-8 w-8 rounded-full object-cover"
+        />
+      ) : (
+        <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center text-[10px] font-display font-bold text-muted-foreground">
+          {initials}
+        </div>
+      )}
+    </AvatarFrame>
   );
 }
 
