@@ -507,3 +507,7 @@ export default function Leaderboard() {
     </div>
   );
 }
+
+function YourTierBanner() {
+  return null;
+}
