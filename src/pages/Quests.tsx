@@ -99,37 +99,11 @@ export default function Quests() {
           </motion.div>
         )}
 
+        {/* Season + Tier */}
+        <SeasonCard />
+
         {/* Badges */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
-              Badges
-            </h2>
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {unlocked.length} / {badges.length}
-            </span>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {visible.map((b) => {
-              const locked = !b.unlockedAt;
-              return (
-                <motion.div
-                  key={b.code}
-                  whileTap={{ scale: 0.96 }}
-                  className={`relative aspect-square rounded-xl border border-border p-3 flex flex-col items-center justify-center text-center bg-gradient-to-br ${tierColor[b.tier] ?? "from-muted to-muted"} ${locked ? "opacity-40 grayscale" : ""}`}
-                >
-                  <div className="text-3xl mb-1">{locked ? <Lock className="h-6 w-6" /> : b.icon}</div>
-                  <p className="text-[10px] font-bold leading-tight line-clamp-2">{b.name}</p>
-                </motion.div>
-              );
-            })}
-            {visible.length === 0 && (
-              <p className="col-span-3 text-center text-sm text-muted-foreground py-8">
-                Start logging to unlock badges
-              </p>
-            )}
-          </div>
-        </section>
+        <BadgeShelf variant="full" />
 
         {/* Recent XP feed */}
         <section>
