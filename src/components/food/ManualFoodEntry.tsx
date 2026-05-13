@@ -54,6 +54,7 @@ export default function ManualFoodEntry({ mealType, date, onLogged, onClose }: P
       return;
     }
     toast.success(`${name.trim()} logged to ${mealType}`);
+    void awardXpAndNotify({ source: "food_log_any" });
     onLogged();
     onClose();
   };
