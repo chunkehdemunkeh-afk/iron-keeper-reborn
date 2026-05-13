@@ -128,6 +128,54 @@ export type Database = {
         }
         Relationships: []
       }
+      clan_members: {
+        Row: {
+          clan_id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          clan_id: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          clan_id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      clans: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          owner_id: string
+          tag: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          tag: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          tag?: string
+        }
+        Relationships: []
+      }
       coach_notifications: {
         Row: {
           created_at: string
@@ -158,6 +206,117 @@ export type Database = {
           read?: boolean
           reps?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      community_challenges: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          ends_at: string
+          id: string
+          metric: string
+          reward_coins: number
+          reward_cosmetic_code: string | null
+          starts_at: string
+          target: number
+          title: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          ends_at: string
+          id?: string
+          metric: string
+          reward_coins?: number
+          reward_cosmetic_code?: string | null
+          starts_at?: string
+          target: number
+          title: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          ends_at?: string
+          id?: string
+          metric?: string
+          reward_coins?: number
+          reward_cosmetic_code?: string | null
+          starts_at?: string
+          target?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      community_contributions: {
+        Row: {
+          challenge_id: string
+          id: string
+          updated_at: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          challenge_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          value?: number
+        }
+        Update: {
+          challenge_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      cosmetics: {
+        Row: {
+          available: boolean
+          code: string
+          created_at: string
+          description: string
+          id: string
+          kind: string
+          name: string
+          payload: Json
+          price_coins: number
+          rarity: string
+          required_tier: string | null
+          season_exclusive_id: string | null
+        }
+        Insert: {
+          available?: boolean
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          kind: string
+          name: string
+          payload?: Json
+          price_coins?: number
+          rarity?: string
+          required_tier?: string | null
+          season_exclusive_id?: string | null
+        }
+        Update: {
+          available?: boolean
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          kind?: string
+          name?: string
+          payload?: Json
+          price_coins?: number
+          rarity?: string
+          required_tier?: string | null
+          season_exclusive_id?: string | null
         }
         Relationships: []
       }
@@ -382,6 +541,27 @@ export type Database = {
           type?: string
           updated_at?: string
           winner_id?: string | null
+        }
+        Relationships: []
+      }
+      equipped_cosmetics: {
+        Row: {
+          cosmetic_code: string
+          kind: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cosmetic_code: string
+          kind: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cosmetic_code?: string
+          kind?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -866,6 +1046,30 @@ export type Database = {
           },
         ]
       }
+      user_cosmetics: {
+        Row: {
+          acquired_at: string
+          cosmetic_code: string
+          id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          cosmetic_code: string
+          id?: string
+          source?: string
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          cosmetic_code?: string
+          id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_progress: {
         Row: {
           coins: number
@@ -1310,6 +1514,7 @@ export type Database = {
         Returns: number
       }
       settle_duel: { Args: { p_duel_id: string }; Returns: undefined }
+      settle_season: { Args: { p_season_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "coach" | "user"
