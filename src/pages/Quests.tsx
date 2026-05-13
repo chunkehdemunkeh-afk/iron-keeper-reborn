@@ -25,11 +25,6 @@ const SOURCE_LABEL: Record<string, string> = {
   first_time_feature: "New feature",
 };
 
-const tierColor: Record<string, string> = {
-  bronze: "from-orange-700/30 to-orange-800/10 text-orange-300",
-  silver: "from-slate-300/20 to-slate-400/10 text-slate-200",
-  gold: "from-amber-400/30 to-amber-500/10 text-amber-300",
-};
 
 export default function Quests() {
   const navigate = useNavigate();
