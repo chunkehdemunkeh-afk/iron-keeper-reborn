@@ -72,6 +72,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .eq("user_id", session.user.id),
             ]);
             setProfile(data);
+            // Daily login XP — awardXp dedupes via oncePerDay
+            try {
+              const { awardXpAndNotify } = await import("@/lib/gamification/notify");
+              void awardXpAndNotify({ source: "daily_open" });
+            } catch {}
           }, 0);
         } else {
           setProfile(null);
