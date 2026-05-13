@@ -46,6 +46,21 @@ interface Props {
   };
 }
 
+function minutesInput(value?: number | null): string {
+  return value != null ? String(value) : "";
+}
+
+function parseStageMinutes(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : null;
+}
+
+function hasStageBreakdown(values: Array<number | null | undefined>): boolean {
+  return values.some((value) => value != null);
+}
+
 function stressLabel(v: number): string {
   if (v < 25)  return "Low";
   if (v < 50)  return "Moderate";
@@ -64,19 +79,31 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const [stress, setStress]     = useState(prefill?.samsungStressScore ?? 35);
-  const [rhr, setRhr]           = useState(prefill?.restingHr ?? 60);
-  const [spo2, setSpo2]         = useState(prefill?.spo2Pct ?? 97);
-  const [respRate, setRespRate] = useState(prefill?.respiratoryRate ?? 15);
-  const [sleepHours, setSleepHours] = useState(prefill?.sleepHours ?? 7.5);
-  const [sleepQuality, setSleepQuality] = useState(prefill?.sleepQuality ?? 3);
-  const [sleepNotes, setSleepNotes] = useState(prefill?.sleepNotes ?? "");
+  const prefillSamsungStressScore = prefill?.samsungStressScore;
+  const prefillRestingHr = prefill?.restingHr;
+  const prefillSpo2Pct = prefill?.spo2Pct;
+  const prefillRespiratoryRate = prefill?.respiratoryRate;
+  const prefillSleepHours = prefill?.sleepHours;
+  const prefillSleepQuality = prefill?.sleepQuality;
+  const prefillSleepNotes = prefill?.sleepNotes;
+  const prefillDeepMin = prefill?.deepMin;
+  const prefillRemMin = prefill?.remMin;
+  const prefillLightMin = prefill?.lightMin;
+  const prefillAwakeMin = prefill?.awakeMin;
+
+  const [stress, setStress]     = useState(prefillSamsungStressScore ?? 35);
+  const [rhr, setRhr]           = useState(prefillRestingHr ?? 60);
+  const [spo2, setSpo2]         = useState(prefillSpo2Pct ?? 97);
+  const [respRate, setRespRate] = useState(prefillRespiratoryRate ?? 15);
+  const [sleepHours, setSleepHours] = useState(prefillSleepHours ?? 7.5);
+  const [sleepQuality, setSleepQuality] = useState(prefillSleepQuality ?? 3);
+  const [sleepNotes, setSleepNotes] = useState(prefillSleepNotes ?? "");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showStages, setShowStages]     = useState(false);
-  const [deepMin, setDeepMin]   = useState<string>(prefill?.deepMin != null ? String(prefill.deepMin) : "");
-  const [remMin, setRemMin]     = useState<string>(prefill?.remMin != null ? String(prefill.remMin) : "");
-  const [lightMin, setLightMin] = useState<string>(prefill?.lightMin != null ? String(prefill.lightMin) : "");
-  const [awakeMin, setAwakeMin] = useState<string>(prefill?.awakeMin != null ? String(prefill.awakeMin) : "");
+  const [deepMin, setDeepMin]   = useState<string>(minutesInput(prefillDeepMin));
+  const [remMin, setRemMin]     = useState<string>(minutesInput(prefillRemMin));
+  const [lightMin, setLightMin] = useState<string>(minutesInput(prefillLightMin));
+  const [awakeMin, setAwakeMin] = useState<string>(minutesInput(prefillAwakeMin));
   const [saving, setSaving]     = useState(false);
 
   // Re-hydrate from prefill whenever the sheet opens
