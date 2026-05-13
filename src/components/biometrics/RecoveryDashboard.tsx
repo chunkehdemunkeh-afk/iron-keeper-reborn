@@ -11,6 +11,7 @@ import {
 } from "@/lib/recovery-scores";
 import { useTodayScore } from "@/hooks/queries/useDailyScores";
 import { useDailyBiometrics } from "@/hooks/queries/useDailyBiometrics";
+import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import BiometricCheckIn from "./BiometricCheckIn";
 import RecoveryDetailSheet from "./RecoveryDetailSheet";
@@ -41,8 +42,10 @@ export default function RecoveryDashboard({ date }: Props) {
 
   const { data: score } = useTodayScore();
   const { data: biometrics = [] } = useDailyBiometrics(2);
+  const { data: sleepLogs = [] } = useSleepLogs(2);
 
   const todayBiometric = biometrics.find(b => b.date === date);
+  const todaySleep = sleepLogs.find(l => l.date === date);
 
   const hasData = score?.recoveryScore != null;
   const recovery = score?.recoveryScore ?? 0;
@@ -174,6 +177,13 @@ export default function RecoveryDashboard({ date }: Props) {
           restingHr: todayBiometric.restingHr ?? undefined,
           spo2Pct: todayBiometric.spo2Pct ?? undefined,
           respiratoryRate: todayBiometric.respiratoryRate ?? undefined,
+          sleepHours: todaySleep?.hours,
+          sleepQuality: todaySleep?.quality,
+          sleepNotes: todaySleep?.notes ?? undefined,
+          deepMin: todaySleep?.deepSleepMin,
+          remMin: todaySleep?.remSleepMin,
+          lightMin: todaySleep?.lightSleepMin,
+          awakeMin: todaySleep?.awakeMin,
         } : undefined}
       />
 
