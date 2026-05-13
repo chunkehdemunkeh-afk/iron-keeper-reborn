@@ -144,7 +144,9 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   );
 
   const todayBiometric = biometrics.find((b) => b.date === date);
+  const todaySleep = sleepLogs.find((l) => l.date === date);
   const hasData = score?.recoveryScore != null;
+
 
   const recovery = score?.recoveryScore ?? 0;
   const strain   = score?.strainScore   ?? 0;
