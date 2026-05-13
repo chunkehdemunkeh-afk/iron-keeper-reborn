@@ -14,6 +14,11 @@ import { toast } from "sonner";
 import { hapticSuccess } from "@/lib/haptics";
 import HelpButton from "@/components/demo/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
+import BadgeShelf from "@/components/gamification/BadgeShelf";
+import { TierBadge } from "@/components/gamification/TierBadge";
+import { useUserProgress } from "@/hooks/queries/useUserProgress";
+import { useCurrentSeason, daysRemaining } from "@/hooks/queries/useCurrentSeason";
+import { tierFromRp, nextTier, tierProgress } from "@/lib/gamification/tiers";
 
 /** Per-split intensity label and training focus for the Training Programme card. */
 const SPLIT_META: Record<string, { intensity: string; intensityColor: string; focus: string }> = {
