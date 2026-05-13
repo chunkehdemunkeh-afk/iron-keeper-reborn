@@ -144,7 +144,9 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   );
 
   const todayBiometric = biometrics.find((b) => b.date === date);
+  const todaySleep = sleepLogs.find((l) => l.date === date);
   const hasData = score?.recoveryScore != null;
+
 
   const recovery = score?.recoveryScore ?? 0;
   const strain   = score?.strainScore   ?? 0;
@@ -323,16 +325,19 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
         open={checkInOpen}
         date={date}
         onClose={() => setCheckInOpen(false)}
-        prefill={
-          todayBiometric
-            ? {
-                samsungStressScore: todayBiometric.samsungStressScore ?? undefined,
-                restingHr: todayBiometric.restingHr ?? undefined,
-                spo2Pct: todayBiometric.spo2Pct ?? undefined,
-                respiratoryRate: todayBiometric.respiratoryRate ?? undefined,
-              }
-            : undefined
-        }
+        prefill={{
+          samsungStressScore: todayBiometric?.samsungStressScore ?? undefined,
+          restingHr: todayBiometric?.restingHr ?? undefined,
+          spo2Pct: todayBiometric?.spo2Pct ?? undefined,
+          respiratoryRate: todayBiometric?.respiratoryRate ?? undefined,
+          sleepHours: todaySleep?.hours,
+          sleepQuality: todaySleep?.quality,
+          sleepNotes: todaySleep?.notes ?? undefined,
+          deepMin: todaySleep?.deepSleepMin,
+          remMin: todaySleep?.remSleepMin,
+          lightMin: todaySleep?.lightSleepMin,
+          awakeMin: todaySleep?.awakeMin,
+        }}
       />
 
       <RecoveryDetailSheet

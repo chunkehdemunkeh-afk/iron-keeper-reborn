@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Activity, Wind, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Heart, Activity, Wind, Moon, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
@@ -26,9 +26,6 @@ import {
 import { hapticSuccess } from "@/lib/haptics";
 import type { AIInsight } from "@/lib/cloud-data";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
 interface Props {
   open: boolean;
   date: string; // YYYY-MM-DD
@@ -39,6 +36,13 @@ interface Props {
     restingHr?: number;
     spo2Pct?: number;
     respiratoryRate?: number;
+    sleepHours?: number;
+    sleepQuality?: number;
+    sleepNotes?: string;
+    deepMin?: number | null;
+    remMin?: number | null;
+    lightMin?: number | null;
+    awakeMin?: number | null;
   };
 }
 
@@ -64,21 +68,36 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
   const [rhr, setRhr]           = useState(prefill?.restingHr ?? 60);
   const [spo2, setSpo2]         = useState(prefill?.spo2Pct ?? 97);
   const [respRate, setRespRate] = useState(prefill?.respiratoryRate ?? 15);
+  const [sleepHours, setSleepHours] = useState(prefill?.sleepHours ?? 7.5);
+  const [sleepQuality, setSleepQuality] = useState(prefill?.sleepQuality ?? 3);
+  const [sleepNotes, setSleepNotes] = useState(prefill?.sleepNotes ?? "");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showStages, setShowStages]     = useState(false);
-  const [deepMin, setDeepMin]   = useState<string>("");
-  const [remMin, setRemMin]     = useState<string>("");
-  const [lightMin, setLightMin] = useState<string>("");
-  const [awakeMin, setAwakeMin] = useState<string>("");
+  const [deepMin, setDeepMin]   = useState<string>(prefill?.deepMin != null ? String(prefill.deepMin) : "");
+  const [remMin, setRemMin]     = useState<string>(prefill?.remMin != null ? String(prefill.remMin) : "");
+  const [lightMin, setLightMin] = useState<string>(prefill?.lightMin != null ? String(prefill.lightMin) : "");
+  const [awakeMin, setAwakeMin] = useState<string>(prefill?.awakeMin != null ? String(prefill.awakeMin) : "");
   const [saving, setSaving]     = useState(false);
 
-  // Reset to prefill when opened
+  // Re-hydrate from prefill whenever the sheet opens
   useEffect(() => {
-    if (open && prefill) {
-      if (prefill.samsungStressScore != null) setStress(prefill.samsungStressScore);
-      if (prefill.restingHr != null) setRhr(prefill.restingHr);
-      if (prefill.spo2Pct != null) setSpo2(prefill.spo2Pct);
-      if (prefill.respiratoryRate != null) setRespRate(prefill.respiratoryRate);
+    if (!open) return;
+    if (prefill?.samsungStressScore != null) setStress(prefill.samsungStressScore);
+    if (prefill?.restingHr != null) setRhr(prefill.restingHr);
+    if (prefill?.spo2Pct != null) setSpo2(prefill.spo2Pct);
+    if (prefill?.respiratoryRate != null) setRespRate(prefill.respiratoryRate);
+    if (prefill?.sleepHours != null) setSleepHours(prefill.sleepHours);
+    if (prefill?.sleepQuality != null) setSleepQuality(prefill.sleepQuality);
+    if (prefill?.sleepNotes != null) setSleepNotes(prefill.sleepNotes);
+    setDeepMin(prefill?.deepMin != null ? String(prefill.deepMin) : "");
+    setRemMin(prefill?.remMin != null ? String(prefill.remMin) : "");
+    setLightMin(prefill?.lightMin != null ? String(prefill.lightMin) : "");
+    setAwakeMin(prefill?.awakeMin != null ? String(prefill.awakeMin) : "");
+    // Auto-expand advanced + stages if any prefilled stage data exists
+    const hasStages = prefill?.deepMin != null || prefill?.remMin != null || prefill?.lightMin != null || prefill?.awakeMin != null;
+    if (hasStages) {
+      setShowAdvanced(true);
+      setShowStages(true);
     }
   }, [open, prefill]);
 
@@ -96,28 +115,26 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
         respiratoryRate: respRate,
       });
 
-      // 2. Save sleep stages if entered
-      if (showStages && (deepMin || remMin || lightMin || awakeMin)) {
-        const existingSleepLogs = await fetchSleepLogs(1);
-        const todaySleep = existingSleepLogs.find(l => l.date === date);
-        if (todaySleep) {
-          await upsertSleepLog({
-            date,
-            hours: todaySleep.hours,
-            quality: todaySleep.quality,
-            deepSleepMin: deepMin ? parseInt(deepMin) : null,
-            remSleepMin: remMin ? parseInt(remMin) : null,
-            lightSleepMin: lightMin ? parseInt(lightMin) : null,
-            awakeMin: awakeMin ? parseInt(awakeMin) : null,
-          });
-        }
-      }
+      // 2. Always upsert sleep log (fixes sleep score = 0 bug)
+      const deepVal  = deepMin  ? parseInt(deepMin)  : null;
+      const remVal   = remMin   ? parseInt(remMin)   : null;
+      const lightVal = lightMin ? parseInt(lightMin) : null;
+      const awakeVal = awakeMin ? parseInt(awakeMin) : null;
+      await upsertSleepLog({
+        date,
+        hours: sleepHours,
+        quality: sleepQuality,
+        notes: sleepNotes.trim() || undefined,
+        deepSleepMin:  deepVal,
+        remSleepMin:   remVal,
+        lightSleepMin: lightVal,
+        awakeMin:      awakeVal,
+      });
 
       // 3. Compute scores from history + new biometrics
-      const [history, scores28d, sleepLogs] = await Promise.all([
+      const [history, scores28d] = await Promise.all([
         fetchDailyBiometrics(28),
         fetchDailyScores(2),
-        fetchSleepLogs(2),
       ]);
 
       const biometricHistory: DailyBiometric[] = history.map(b => ({
@@ -140,16 +157,15 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
         respiratoryRate: respRate,
       };
 
-      const todaySleepLog = sleepLogs.find(l => l.date === date);
-      const sleepFull: SleepLogFull | null = todaySleepLog ? {
-        date: todaySleepLog.date,
-        hours: todaySleepLog.hours,
-        quality: todaySleepLog.quality,
-        deepSleepMin: showStages && deepMin ? parseInt(deepMin) : todaySleepLog.deepSleepMin,
-        remSleepMin:  showStages && remMin  ? parseInt(remMin)  : todaySleepLog.remSleepMin,
-        lightSleepMin: showStages && lightMin ? parseInt(lightMin) : todaySleepLog.lightSleepMin,
-        awakeMin: showStages && awakeMin ? parseInt(awakeMin) : todaySleepLog.awakeMin,
-      } : null;
+      const sleepFull: SleepLogFull = {
+        date,
+        hours: sleepHours,
+        quality: sleepQuality,
+        deepSleepMin:  deepVal,
+        remSleepMin:   remVal,
+        lightSleepMin: lightVal,
+        awakeMin:      awakeVal,
+      };
 
       const prevScore = scores28d.find(s => {
         const d = new Date(date);
@@ -211,11 +227,58 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
             <div>
               <p className="text-xs font-semibold text-foreground">Open Samsung Health</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">
-                Stress → Heart rate → Blood oxygen
+                Sleep → Stress → Heart rate → Blood oxygen
               </p>
             </div>
             <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </button>
+
+          {/* ─── Sleep ─── */}
+          <div className="rounded-xl bg-muted/20 border border-border/40 p-4 space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+              <Moon className="h-3 w-3" /> Last Night's Sleep
+            </p>
+
+            <div>
+              <div className="flex items-baseline justify-between mb-2">
+                <p className="text-[11px] font-semibold text-muted-foreground">Hours</p>
+                <p className="font-display text-2xl font-bold text-foreground">
+                  {sleepHours.toFixed(1)}<span className="text-sm text-muted-foreground font-normal ml-1">h</span>
+                </p>
+              </div>
+              <Slider value={[sleepHours]} onValueChange={(v) => setSleepHours(v[0])} min={4} max={10} step={0.5} />
+            </div>
+
+            <div>
+              <p className="text-[11px] font-semibold text-muted-foreground mb-2">Quality</p>
+              <div className="grid grid-cols-5 gap-2">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setSleepQuality(n)}
+                    className={`h-11 rounded-lg font-bold text-sm transition-colors ${
+                      sleepQuality === n
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/70"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground text-center mt-1.5">
+                1 = Restless · 5 = Deep & refreshed
+              </p>
+            </div>
+
+            <textarea
+              value={sleepNotes}
+              onChange={(e) => setSleepNotes(e.target.value)}
+              placeholder="Notes (optional)"
+              className="w-full h-14 rounded-lg bg-muted/50 border border-border/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary/50 resize-none"
+              style={{ fontSize: "16px" }}
+            />
+          </div>
 
           {/* Samsung Stress Score */}
           <div>
@@ -417,8 +480,6 @@ async function generateAIInsight(
 
     const insight: AIInsight = await res.json();
 
-    // Use UPDATE (not upsert) so only ai_insight + ai_generated_at are touched —
-    // a full upsert with undefined score fields would overwrite them with null.
     await updateDailyScoreAIInsight(date, insight, new Date().toISOString());
 
     queryClient.invalidateQueries({ queryKey: ["daily-scores"] });
