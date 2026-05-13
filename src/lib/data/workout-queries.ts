@@ -140,6 +140,18 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
       console.error("Strain recompute failed:", e);
     }
   }
+
+  // Award XP (gamification). Failures swallowed inside notify.
+  try {
+    const { awardXpAndNotify } = await import("@/lib/gamification/notify");
+    await awardXpAndNotify({
+      source: "workout",
+      setCount: workout.sets.filter((s) => (s.setType ?? "working") !== "warmup").length,
+      metadata: { workoutId: workout.workoutId, workoutName: workout.workoutName },
+    });
+  } catch (e) {
+    console.error("XP award failed:", e);
+  }
 }
 
 export async function fetchWorkoutHistory(): Promise<CompletedWorkout[]> {
