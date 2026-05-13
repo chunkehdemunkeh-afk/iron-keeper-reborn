@@ -438,9 +438,11 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
                             <input
                               type="number"
                               inputMode="numeric"
+                              min={0}
+                              step={1}
                               placeholder="min"
                               value={value}
-                              onChange={(e) => set(e.target.value)}
+                              onChange={(e) => set(sanitizeMinutesInput(e.target.value))}
                               className="w-full h-10 rounded-lg bg-muted/50 border border-border/50 px-3 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/50"
                               style={{ fontSize: "16px" }}
                             />
