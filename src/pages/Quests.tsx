@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Coins, Flame } from "lucide-react";
+import { ArrowLeft, Coins, Flame, Swords } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserProgress } from "@/hooks/queries/useUserProgress";
 import { useRecentXpEvents } from "@/hooks/queries/useBadges";
@@ -7,6 +7,8 @@ import { formatDistanceToNow } from "date-fns";
 import SeasonCard from "@/components/gamification/SeasonCard";
 import BadgeShelf from "@/components/gamification/BadgeShelf";
 import { TierBadge } from "@/components/gamification/TierBadge";
+import QuestsPanel from "@/components/gamification/QuestsPanel";
+import { Button } from "@/components/ui/button";
 
 const SOURCE_LABEL: Record<string, string> = {
   daily_open: "Daily check-in",
