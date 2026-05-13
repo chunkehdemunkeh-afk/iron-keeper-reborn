@@ -509,5 +509,42 @@ export default function Leaderboard() {
 }
 
 function YourTierBanner() {
-  return null;
+  const { data: progress } = useUserProgress();
+  const { data: season } = useCurrentSeason();
+  if (!progress) return null;
+  const rp = progress.seasonRp;
+  const tier = tierFromRp(rp);
+  const next = nextTier(rp);
+  const pct = tierProgress(rp) * 100;
+  const days = daysRemaining(season);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`mb-5 rounded-2xl bg-gradient-to-br ${tier.gradient} ring-1 ring-border/40 p-4`}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <TierBadge rp={rp} />
+          <span className="text-[11px] text-muted-foreground">
+            Season {season?.number ?? 1} · {days}d left
+          </span>
+        </div>
+        <span className="font-display text-lg font-bold tabular-nums">{rp.toLocaleString()} <span className="text-[10px] uppercase tracking-widest text-muted-foreground">RP</span></span>
+      </div>
+      <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.6 }}
+          className="h-full bg-gradient-to-r from-primary to-primary/60"
+        />
+      </div>
+      {next && (
+        <p className="text-[10px] text-muted-foreground mt-1.5">
+          {(next.minRp - rp).toLocaleString()} RP to {next.label}
+        </p>
+      )}
+    </motion.div>
+  );
 }
