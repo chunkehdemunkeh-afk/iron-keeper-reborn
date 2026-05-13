@@ -52,8 +52,8 @@ export async function fetchActiveQuests(): Promise<{ daily: QuestWithProgress[];
   }
 
   // For weekly, pick first 5 by code (deterministic per week could rotate; keep stable for now).
-  const monday = mondayOfWeek(new Date());
-  const weekSeed = hashDate(monday) % Math.max(1, weeklyAll.length);
+  const mondayStr = mondayOfWeek(new Date());
+  const weekSeed = hashDate(new Date(mondayStr)) % Math.max(1, weeklyAll.length);
   const weekly: Quest[] = [];
   for (let i = 0; i < Math.min(5, weeklyAll.length); i++) {
     weekly.push(weeklyAll[(weekSeed + i) % weeklyAll.length]);
@@ -69,7 +69,7 @@ export async function fetchActiveQuests(): Promise<{ daily: QuestWithProgress[];
 async function withProgress(userId: string, q: Quest, scope: "daily" | "weekly"): Promise<QuestWithProgress> {
   const since = scope === "daily"
     ? new Date(new Date().toISOString().slice(0, 10) + "T00:00:00.000Z").toISOString()
-    : mondayOfWeek(new Date()).toISOString();
+    : new Date(mondayOfWeek(new Date()) + "T00:00:00.000Z").toISOString();
   const progress = await computeMetric(userId, q.criteria.metric, since);
   const target = q.criteria.target;
   const completed = progress >= target;

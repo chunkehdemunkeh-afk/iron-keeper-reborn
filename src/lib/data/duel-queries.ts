@@ -134,7 +134,7 @@ export async function fetchMyDuels(): Promise<DuelWithParticipants[]> {
   if (error) throw error;
   if (!duels?.length) return [];
 
-  const userIds = Array.from(new Set(duels.flatMap((d: any) => [d.challenger_id, d.opponent_id])));
+  const userIds: string[] = Array.from(new Set(duels.flatMap((d: any) => [d.challenger_id as string, d.opponent_id as string])));
   const duelIds = duels.map((d: any) => d.id);
   const [{ data: profiles }, { data: progress }] = await Promise.all([
     supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", userIds),
