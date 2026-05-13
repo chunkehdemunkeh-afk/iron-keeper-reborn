@@ -118,15 +118,7 @@ export async function evaluateBadges(ctx: EvaluateContext): Promise<UnlockedBadg
       coins: totalCoins,
       metadata: { codes: unlocked.map((b) => b.code) },
     } as never);
-    // Update progress counters
-    await supabase.rpc("increment_user_progress" as never, {
-      p_user_id: ctx.userId,
-      p_xp: totalXp,
-      p_coins: totalCoins,
-    } as never).then(() => {}, () => {
-      // Fallback: direct update if RPC missing
-      void incrementProgressFallback(ctx.userId, totalXp, totalCoins);
-    });
+    await incrementProgressFallback(ctx.userId, totalXp, totalCoins);
   }
 
   return unlocked.map((b) => ({
