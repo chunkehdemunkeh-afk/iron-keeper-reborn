@@ -176,7 +176,13 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-1.5">
             <Activity className="h-3 w-3" /> Recovery
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/check-ins")}
+              className="text-[10px] font-semibold text-muted-foreground hover:text-foreground"
+            >
+              History
+            </button>
             {hasData ? (
               <button
                 onClick={() => setCheckInOpen(true)}
