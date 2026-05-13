@@ -89,14 +89,14 @@ function DialRing({
           <span style={{ color }}>
             <AnimatedNumber
               value={value}
-              className={`font-display font-bold leading-none ${primary ? "text-2xl" : "text-xl"}`}
+              className="font-display font-bold leading-none text-xl"
             />
           </span>
           {suffix && <span className="text-[9px] text-muted-foreground leading-none mt-0.5">{suffix}</span>}
         </div>
       </div>
       {sub && (
-        <p className="text-[9px] mt-1 font-semibold" style={{ color }}>
+        <p className="text-[9px] mt-1 font-semibold" style={{ color: subMuted ? "hsl(var(--muted-foreground))" : color }}>
           {sub}
         </p>
       )}
