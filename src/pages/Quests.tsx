@@ -34,11 +34,7 @@ const tierColor: Record<string, string> = {
 export default function Quests() {
   const navigate = useNavigate();
   const { data: progress } = useUserProgress();
-  const { data: badges = [] } = useBadges();
   const { data: events = [] } = useRecentXpEvents(20);
-
-  const unlocked = badges.filter((b) => b.unlockedAt);
-  const visible = badges.filter((b) => !b.hidden || b.unlockedAt);
 
   return (
     <div className="min-h-screen bg-background pb-24">
