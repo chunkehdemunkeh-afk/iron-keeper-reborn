@@ -64,6 +64,7 @@ export default function HomeWeightTracker({ date }: Props) {
     setSaving(false);
     if (!error) {
       toast.success("Weight logged!");
+      void awardXpAndNotify({ source: "bodyweight" });
       setWeight("");
       setShowInput(false);
       fetchData();
