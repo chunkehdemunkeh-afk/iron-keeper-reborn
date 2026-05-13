@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { awardXpAndNotify } from "@/lib/gamification/notify";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
@@ -53,6 +54,7 @@ export default function ManualFoodEntry({ mealType, date, onLogged, onClose }: P
       return;
     }
     toast.success(`${name.trim()} logged to ${mealType}`);
+    void awardXpAndNotify({ source: "food_log_any" });
     onLogged();
     onClose();
   };

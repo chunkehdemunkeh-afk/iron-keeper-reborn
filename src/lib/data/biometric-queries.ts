@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { awardXpAndNotify } from "@/lib/gamification/notify";
 
 export interface DailyBiometricRecord {
   id: string;
@@ -59,6 +60,7 @@ export async function upsertDailyBiometrics(data: {
     );
 
   if (error) console.error("Failed to save biometrics:", error);
+  if (!error) void awardXpAndNotify({ source: "biometric_checkin", metadata: { date: data.date } });
   return !error;
 }
 

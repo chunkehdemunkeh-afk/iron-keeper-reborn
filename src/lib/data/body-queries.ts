@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { awardXpAndNotify } from "@/lib/gamification/notify";
 
 export interface DailyLog {
   id: string;
@@ -34,7 +35,9 @@ export async function saveBodyMeasurement(data: {
       body_fat_pct: data.bodyFatPct || null,
       notes: data.notes || null,
     });
-
+  if (!error && data.bodyWeight) {
+    void awardXpAndNotify({ source: "bodyweight" });
+  }
   return !error;
 }
 

@@ -8,6 +8,7 @@ import DailyStretchCard from "@/components/DailyStretchCard";
 import HomeDailySummary from "@/components/HomeDailySummary";
 import HomeWeightTracker from "@/components/HomeWeightTracker";
 import HomeCompleteDay from "@/components/HomeCompleteDay";
+import XpBar from "@/components/gamification/XpBar";
 
 import HomeCombinedRecoveryCard from "@/components/HomeCombinedRecoveryCard";
 import MorningCheckInPrompt from "@/components/biometrics/MorningCheckInPrompt";
@@ -111,6 +112,9 @@ const Index = () => {
           </div>
           <HelpButton />
         </motion.div>
+
+        {/* XP / Level / Streak */}
+        <XpBar />
 
         {/* Stats */}
         <StatsBar />

@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { format, subDays, startOfWeek, endOfWeek } from "date-fns";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { awardXpAndNotify } from "@/lib/gamification/notify";
 
 type TimeRange = "7d" | "30d" | "90d";
 
@@ -63,6 +64,7 @@ export default function HomeWeightTracker({ date }: Props) {
     setSaving(false);
     if (!error) {
       toast.success("Weight logged!");
+      void awardXpAndNotify({ source: "bodyweight" });
       setWeight("");
       setShowInput(false);
       fetchData();

@@ -32,6 +32,9 @@ import ResetPassword from "./pages/ResetPassword";
 import Leaderboard from "./pages/Leaderboard";
 import Recovery from "./pages/Recovery";
 import CheckInHistory from "./pages/CheckInHistory";
+import Quests from "./pages/Quests";
+import LevelUpSheet from "@/components/gamification/LevelUpSheet";
+import BadgeUnlockSheet from "@/components/gamification/BadgeUnlockSheet";
 import { isOnboardingComplete } from "@/lib/user-preferences";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -101,6 +104,7 @@ const AnimatedRoutes = () => {
         <Route path="/leaderboard" element={<PageWrapper><ProtectedRoute><Leaderboard /></ProtectedRoute></PageWrapper>} />
         <Route path="/recovery" element={<PageWrapper><ProtectedRoute><Recovery /></ProtectedRoute></PageWrapper>} />
         <Route path="/check-ins" element={<PageWrapper><ProtectedRoute><CheckInHistory /></ProtectedRoute></PageWrapper>} />
+        <Route path="/quests" element={<PageWrapper><ProtectedRoute><Quests /></ProtectedRoute></PageWrapper>} />
         <Route path="/reset-password" element={<PageWrapper><ResetPassword /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>
@@ -157,6 +161,8 @@ const AppRoutes = () => {
         <AnimatedRoutes />
       </ErrorBoundary>
       {user && <BottomNav />}
+      {user && <LevelUpSheet />}
+      {user && <BadgeUnlockSheet />}
     </>
   );
 };

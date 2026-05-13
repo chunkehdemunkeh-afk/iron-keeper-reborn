@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { stripExerciseSuffixes } from "../muscle-mapping";
+import { awardXpAndNotify } from "@/lib/gamification/notify";
 
 export interface WeeklyReview {
   id: string;
@@ -99,6 +100,7 @@ export async function upsertWeeklyReview(input: {
     console.error("Failed to save weekly review:", error);
     return null;
   }
+  void awardXpAndNotify({ source: "weekly_review", metadata: { weekStart: input.weekStart } });
   return mapReview(data);
 }
 

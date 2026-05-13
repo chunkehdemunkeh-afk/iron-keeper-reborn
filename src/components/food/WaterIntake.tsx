@@ -4,6 +4,7 @@ import { Droplet, Plus, Minus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { awardXpAndNotify } from "@/lib/gamification/notify";
 
 interface Props {
   date: string;
@@ -57,7 +58,11 @@ export default function WaterIntake({ date }: Props) {
       .single();
     if (error) { toast.error("Failed to log water"); return; }
     setEntryIds((prev) => [...prev, data.id]);
-    setTotalMl((prev) => prev + GLASS_ML);
+    const newTotal = totalMl + GLASS_ML;
+    setTotalMl(newTotal);
+    if (totalMl < goalMl && newTotal >= goalMl) {
+      void awardXpAndNotify({ source: "water_goal" });
+    }
   };
 
   const removeGlass = async () => {

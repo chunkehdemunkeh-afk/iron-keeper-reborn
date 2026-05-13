@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { awardXpAndNotify } from "@/lib/gamification/notify";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
@@ -305,6 +306,7 @@ export default function FoodSearch({ open, onClose, mealType, date, onLogged, ed
       return;
     }
     toast.success(editingLog ? `${selected.name} updated` : `${selected.name} logged to ${mealType}`);
+    if (!editingLog) void awardXpAndNotify({ source: "food_log_any" });
     setSelected(null);
     onLogged();
     if (editingLog) {
@@ -337,6 +339,7 @@ export default function FoodSearch({ open, onClose, mealType, date, onLogged, ed
       return;
     }
     toast.success(`${food.food_name} logged to ${mealType}`);
+    void awardXpAndNotify({ source: "food_log_any" });
     onLogged();
     // Stay on search for more additions
   };
