@@ -18,6 +18,7 @@ import BadgeShelf from "@/components/gamification/BadgeShelf";
 import { TierBadge } from "@/components/gamification/TierBadge";
 import { useUserProgress } from "@/hooks/queries/useUserProgress";
 import { useCurrentSeason, daysRemaining } from "@/hooks/queries/useCurrentSeason";
+import AvatarFrame from "@/components/gamification/AvatarFrame";
 import { tierFromRp, nextTier, tierProgress } from "@/lib/gamification/tiers";
 
 /** Per-split intensity label and training focus for the Training Programme card. */
@@ -218,17 +219,19 @@ export default function Profile() {
               aria-label="Change profile photo"
               className="relative group active:scale-95 transition-transform disabled:opacity-70"
             >
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt="Profile"
-                  className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/30"
-                />
-              ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-full gradient-primary glow-primary">
-                  <User className="h-10 w-10 text-primary-foreground" />
-                </div>
-              )}
+              <AvatarFrame userId={user?.id} size={80}>
+                {profile?.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt="Profile"
+                    className="h-20 w-20 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full gradient-primary glow-primary">
+                    <User className="h-10 w-10 text-primary-foreground" />
+                  </div>
+                )}
+              </AvatarFrame>
               <span className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center ring-2 ring-background shadow-md">
                 {uploadingAvatar ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
