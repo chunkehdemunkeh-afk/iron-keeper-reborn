@@ -100,6 +100,16 @@ export default function Quests() {
         {/* Season + Tier */}
         <SeasonCard />
 
+        {/* Duels CTA */}
+        <Button onClick={() => navigate("/duels")} variant="outline" className="w-full justify-start gap-2 h-12">
+          <Swords className="h-4 w-4 text-primary" />
+          <span className="font-semibold">Duels</span>
+          <span className="text-xs text-muted-foreground ml-auto">1v1 challenges →</span>
+        </Button>
+
+        {/* Quests */}
+        <QuestsPanel />
+
         {/* Badges */}
         <BadgeShelf variant="full" />
 

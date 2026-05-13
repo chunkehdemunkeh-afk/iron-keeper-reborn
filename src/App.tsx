@@ -33,6 +33,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Recovery from "./pages/Recovery";
 import CheckInHistory from "./pages/CheckInHistory";
 import Quests from "./pages/Quests";
+import Duels from "./pages/Duels";
 import LevelUpSheet from "@/components/gamification/LevelUpSheet";
 import BadgeUnlockSheet from "@/components/gamification/BadgeUnlockSheet";
 import { isOnboardingComplete } from "@/lib/user-preferences";
@@ -105,6 +106,7 @@ const AnimatedRoutes = () => {
         <Route path="/recovery" element={<PageWrapper><ProtectedRoute><Recovery /></ProtectedRoute></PageWrapper>} />
         <Route path="/check-ins" element={<PageWrapper><ProtectedRoute><CheckInHistory /></ProtectedRoute></PageWrapper>} />
         <Route path="/quests" element={<PageWrapper><ProtectedRoute><Quests /></ProtectedRoute></PageWrapper>} />
+        <Route path="/duels" element={<PageWrapper><ProtectedRoute><Duels /></ProtectedRoute></PageWrapper>} />
         <Route path="/reset-password" element={<PageWrapper><ResetPassword /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>
