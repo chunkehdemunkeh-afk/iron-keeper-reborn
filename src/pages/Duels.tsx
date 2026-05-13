@@ -238,7 +238,7 @@ function NewDuelSheet({ open, onClose, onCreate }: {
                       <p className="text-[10px] text-muted-foreground">L{u.level} · {u.season_rp} RP</p>
                     </div>
                   </div>
-                  <TierBadge rp={u.season_rp} compact />
+                  <TierBadge rp={u.season_rp} variant="icon" />
                 </button>
               ))}
             </div>
