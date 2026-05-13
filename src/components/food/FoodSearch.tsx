@@ -339,6 +339,7 @@ export default function FoodSearch({ open, onClose, mealType, date, onLogged, ed
       return;
     }
     toast.success(`${food.food_name} logged to ${mealType}`);
+    void awardXpAndNotify({ source: "food_log_any" });
     onLogged();
     // Stay on search for more additions
   };
