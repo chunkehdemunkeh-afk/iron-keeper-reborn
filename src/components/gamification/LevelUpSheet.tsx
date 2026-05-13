@@ -1,19 +1,42 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Trophy } from "lucide-react";
+import { Trophy, Bell } from "lucide-react";
 import { onLevelUp } from "@/lib/gamification/notify";
+import { pushSupported, pushPermission, subscribeToPush } from "@/lib/push/subscribe";
+import { toast } from "sonner";
+
+const PROMPTED_KEY = "ik-push-prompted";
 
 export default function LevelUpSheet() {
   const [open, setOpen] = useState(false);
   const [level, setLevel] = useState<number>(0);
+  const [showPush, setShowPush] = useState(false);
 
   useEffect(() => {
     return onLevelUp((r) => {
       setLevel(r.newLevel);
       setOpen(true);
+      // Warm moment — first level-up only, ask for push permission
+      const prompted = localStorage.getItem(PROMPTED_KEY);
+      if (!prompted && pushSupported() && pushPermission() === "default") {
+        setShowPush(true);
+      }
     });
   }, []);
+
+  const handleEnablePush = async () => {
+    localStorage.setItem(PROMPTED_KEY, "1");
+    const res = await subscribeToPush();
+    if (res.ok) toast.success("Push notifications enabled");
+    else toast.message(res.reason ?? "Could not enable notifications");
+    setShowPush(false);
+  };
+
+  const handleDismissPush = () => {
+    localStorage.setItem(PROMPTED_KEY, "1");
+    setShowPush(false);
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -32,12 +55,26 @@ export default function LevelUpSheet() {
           <p className="text-sm text-muted-foreground max-w-xs">
             Keep building. New badges unlock at every milestone.
           </p>
-          <button
-            onClick={() => setOpen(false)}
-            className="mt-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-bold text-sm"
-          >
-            Let's go
-          </button>
+          {showPush ? (
+            <div className="w-full max-w-xs space-y-2 pt-2">
+              <button
+                onClick={handleEnablePush}
+                className="w-full px-6 py-3 rounded-full bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center gap-2"
+              >
+                <Bell className="h-4 w-4" /> Enable Notifications
+              </button>
+              <button onClick={handleDismissPush} className="w-full text-xs text-muted-foreground py-1">
+                Maybe later
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setOpen(false)}
+              className="mt-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-bold text-sm"
+            >
+              Let's go
+            </button>
+          )}
         </div>
       </SheetContent>
     </Sheet>
