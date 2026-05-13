@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { awardXpAndNotify } from "@/lib/gamification/notify";
 
 export interface SleepLogRecord {
   id: string;
