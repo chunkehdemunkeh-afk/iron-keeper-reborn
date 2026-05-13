@@ -223,7 +223,6 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     pct={recovery}
                     color={ringColor}
                     sub={recoveryLabel(recovery)}
-                    primary
                   />
                   <DialRing
                     label="Sleep"
@@ -238,8 +237,9 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     value={Number(strain.toFixed(1))}
                     suffix=""
                     pct={(strain / 21) * 100}
-                    color="hsl(38 92% 55%)"
-                    sub={strainLabel(strain)}
+                    color={strain > 0 ? "hsl(38 92% 55%)" : "hsl(var(--muted-foreground))"}
+                    sub={strain > 0 ? strainLabel(strain) : "No training yet"}
+                    subMuted={strain === 0}
                   />
                 </div>
 
