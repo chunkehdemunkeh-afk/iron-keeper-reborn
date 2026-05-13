@@ -67,7 +67,7 @@ function DialRing({
   const c = 2 * Math.PI * r;
   const clamped = Math.max(0, Math.min(100, pct));
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center" title={tooltip}>
       <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
         {label}
       </p>
