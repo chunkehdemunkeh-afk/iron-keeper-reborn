@@ -34,8 +34,11 @@ import Recovery from "./pages/Recovery";
 import CheckInHistory from "./pages/CheckInHistory";
 import Quests from "./pages/Quests";
 import Duels from "./pages/Duels";
+import Shop from "./pages/Shop";
+import Community from "./pages/Community";
 import LevelUpSheet from "@/components/gamification/LevelUpSheet";
 import BadgeUnlockSheet from "@/components/gamification/BadgeUnlockSheet";
+import SeasonFinaleSheet from "@/components/gamification/SeasonFinaleSheet";
 import { isOnboardingComplete } from "@/lib/user-preferences";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -107,6 +110,8 @@ const AnimatedRoutes = () => {
         <Route path="/check-ins" element={<PageWrapper><ProtectedRoute><CheckInHistory /></ProtectedRoute></PageWrapper>} />
         <Route path="/quests" element={<PageWrapper><ProtectedRoute><Quests /></ProtectedRoute></PageWrapper>} />
         <Route path="/duels" element={<PageWrapper><ProtectedRoute><Duels /></ProtectedRoute></PageWrapper>} />
+        <Route path="/shop" element={<PageWrapper><ProtectedRoute><Shop /></ProtectedRoute></PageWrapper>} />
+        <Route path="/community" element={<PageWrapper><ProtectedRoute><Community /></ProtectedRoute></PageWrapper>} />
         <Route path="/reset-password" element={<PageWrapper><ResetPassword /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>
@@ -165,6 +170,7 @@ const AppRoutes = () => {
       {user && <BottomNav />}
       {user && <LevelUpSheet />}
       {user && <BadgeUnlockSheet />}
+      {user && <SeasonFinaleSheet />}
     </>
   );
 };
