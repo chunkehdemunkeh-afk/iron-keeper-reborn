@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Coins, Flame, Swords } from "lucide-react";
+import { ArrowLeft, Coins, Flame, Swords, ShoppingBag, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserProgress } from "@/hooks/queries/useUserProgress";
 import { useRecentXpEvents } from "@/hooks/queries/useBadges";
