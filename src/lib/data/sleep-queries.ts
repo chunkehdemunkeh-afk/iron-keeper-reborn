@@ -81,6 +81,13 @@ export async function upsertSleepLog(data: {
     );
 
   if (error) console.error("Failed to save sleep log:", error);
+  if (!error) {
+    void awardXpAndNotify({ source: "sleep_log", metadata: { date: data.date } });
+    const hasStages = data.deepSleepMin != null || data.remSleepMin != null || data.lightSleepMin != null;
+    if (hasStages) {
+      void awardXpAndNotify({ source: "sleep_log_with_stages", metadata: { date: data.date } });
+    }
+  }
   return !error;
 }
 
