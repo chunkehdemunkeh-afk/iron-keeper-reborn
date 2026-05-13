@@ -109,24 +109,37 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
   // Re-hydrate from prefill whenever the sheet opens
   useEffect(() => {
     if (!open) return;
-    if (prefill?.samsungStressScore != null) setStress(prefill.samsungStressScore);
-    if (prefill?.restingHr != null) setRhr(prefill.restingHr);
-    if (prefill?.spo2Pct != null) setSpo2(prefill.spo2Pct);
-    if (prefill?.respiratoryRate != null) setRespRate(prefill.respiratoryRate);
-    if (prefill?.sleepHours != null) setSleepHours(prefill.sleepHours);
-    if (prefill?.sleepQuality != null) setSleepQuality(prefill.sleepQuality);
-    if (prefill?.sleepNotes != null) setSleepNotes(prefill.sleepNotes);
-    setDeepMin(prefill?.deepMin != null ? String(prefill.deepMin) : "");
-    setRemMin(prefill?.remMin != null ? String(prefill.remMin) : "");
-    setLightMin(prefill?.lightMin != null ? String(prefill.lightMin) : "");
-    setAwakeMin(prefill?.awakeMin != null ? String(prefill.awakeMin) : "");
+    if (prefillSamsungStressScore != null) setStress(prefillSamsungStressScore);
+    if (prefillRestingHr != null) setRhr(prefillRestingHr);
+    if (prefillSpo2Pct != null) setSpo2(prefillSpo2Pct);
+    if (prefillRespiratoryRate != null) setRespRate(prefillRespiratoryRate);
+    if (prefillSleepHours != null) setSleepHours(prefillSleepHours);
+    if (prefillSleepQuality != null) setSleepQuality(prefillSleepQuality);
+    if (prefillSleepNotes != null) setSleepNotes(prefillSleepNotes);
+    setDeepMin(minutesInput(prefillDeepMin));
+    setRemMin(minutesInput(prefillRemMin));
+    setLightMin(minutesInput(prefillLightMin));
+    setAwakeMin(minutesInput(prefillAwakeMin));
     // Auto-expand advanced + stages if any prefilled stage data exists
-    const hasStages = prefill?.deepMin != null || prefill?.remMin != null || prefill?.lightMin != null || prefill?.awakeMin != null;
+    const hasStages = hasStageBreakdown([prefillDeepMin, prefillRemMin, prefillLightMin, prefillAwakeMin]);
     if (hasStages) {
       setShowAdvanced(true);
       setShowStages(true);
     }
-  }, [open, prefill]);
+  }, [
+    open,
+    prefillSamsungStressScore,
+    prefillRestingHr,
+    prefillSpo2Pct,
+    prefillRespiratoryRate,
+    prefillSleepHours,
+    prefillSleepQuality,
+    prefillSleepNotes,
+    prefillDeepMin,
+    prefillRemMin,
+    prefillLightMin,
+    prefillAwakeMin,
+  ]);
 
   async function handleSave() {
     if (!user) return;
@@ -143,10 +156,10 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
       });
 
       // 2. Always upsert sleep log (fixes sleep score = 0 bug)
-      const deepVal  = deepMin  ? parseInt(deepMin)  : null;
-      const remVal   = remMin   ? parseInt(remMin)   : null;
-      const lightVal = lightMin ? parseInt(lightMin) : null;
-      const awakeVal = awakeMin ? parseInt(awakeMin) : null;
+      const deepVal  = parseStageMinutes(deepMin);
+      const remVal   = parseStageMinutes(remMin);
+      const lightVal = parseStageMinutes(lightMin);
+      const awakeVal = parseStageMinutes(awakeMin);
       await upsertSleepLog({
         date,
         hours: sleepHours,
