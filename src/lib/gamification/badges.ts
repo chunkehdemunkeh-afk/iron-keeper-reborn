@@ -182,50 +182,42 @@ async function computeMetrics(
   const tasks: Promise<void>[] = [];
 
   if (wants("session_count")) {
-    tasks.push(
-      supabase
+    tasks.push((async () => {
+      const { count } = await supabase
         .from("workout_history")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .then(({ count }) => {
-          m.sessionCount = count ?? 0;
-        }),
-    );
+        .eq("user_id", userId);
+      m.sessionCount = count ?? 0;
+    })());
   }
   if (wants("sleep_logs")) {
-    tasks.push(
-      supabase
+    tasks.push((async () => {
+      const { count } = await supabase
         .from("sleep_logs")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .then(({ count }) => {
-          m.sleepLogs = count ?? 0;
-        }),
-    );
+        .eq("user_id", userId);
+      m.sleepLogs = count ?? 0;
+    })());
   }
   if (wants("food_logs")) {
-    tasks.push(
-      supabase
+    tasks.push((async () => {
+      const { data } = await supabase
         .from("food_logs")
-        .select("date", { count: "exact" })
-        .eq("user_id", userId)
-        .then(({ data }) => {
-          const days = new Set((data ?? []).map((r: any) => r.date));
-          m.foodLogs = days.size;
-        }),
-    );
+        .select("date")
+        .eq("user_id", userId);
+      const days = new Set((data ?? []).map((r: any) => r.date));
+      m.foodLogs = days.size;
+    })());
   }
   if (wants("pr_count")) {
-    tasks.push(
-      supabase
+    tasks.push((async () => {
+      const { count } = await supabase
         .from("xp_events")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
-        .eq("source", "personal_record")
-        .then(({ count }) => {
-          m.prCount = count ?? 0;
-        }),
-    );
+        .eq("source", "personal_record");
+      m.prCount = count ?? 0;
+    })());
   }
   if (wants("lifetime_volume_kg")) {
     tasks.push(computeLifetimeVolume(userId).then((v) => { m.lifetimeVolumeKg = v; }));
