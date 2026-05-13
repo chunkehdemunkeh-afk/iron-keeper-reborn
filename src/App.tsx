@@ -38,7 +38,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { ErrorBoundary } from "@/components/ui/async-boundary";
 import { ErrorState } from "@/components/ui/error-state";
 
-const queryClient = new QueryClient();
+
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
