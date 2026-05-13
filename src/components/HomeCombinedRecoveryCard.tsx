@@ -50,6 +50,7 @@ function DialRing({
   color,
   sub,
   subMuted,
+  tooltip,
 }: {
   label: string;
   value: number;
@@ -58,6 +59,7 @@ function DialRing({
   color: string;
   sub?: string;
   subMuted?: boolean;
+  tooltip?: string;
 }) {
   const size = 84;
   const r = 34;
@@ -65,7 +67,7 @@ function DialRing({
   const c = 2 * Math.PI * r;
   const clamped = Math.max(0, Math.min(100, pct));
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center" title={tooltip}>
       <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
         {label}
       </p>
@@ -223,6 +225,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     pct={recovery}
                     color={ringColor}
                     sub={recoveryLabel(recovery)}
+                    tooltip="Based on this morning's check-in (HRV, RHR, sleep, stress) plus yesterday's training load."
                   />
                   <DialRing
                     label="Sleep"
@@ -231,6 +234,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     pct={sleep}
                     color="hsl(217 91% 60%)"
                     sub={sleep >= 85 ? "Optimal" : sleep >= 70 ? "Sufficient" : "Low"}
+                    tooltip="Last night's sleep: duration, efficiency and stage breakdown vs your need."
                   />
                   <DialRing
                     label="Strain"
@@ -240,8 +244,12 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     color={strain > 0 ? "hsl(38 92% 55%)" : "hsl(var(--muted-foreground))"}
                     sub={strain > 0 ? strainLabel(strain) : "No training yet"}
                     subMuted={strain === 0}
+                    tooltip="Today's training load only — resets at midnight. Yesterday's session feeds into Recovery, not Strain."
                   />
                 </div>
+                <p className="mt-2 text-center text-[9px] text-muted-foreground/80 leading-tight">
+                  Recovery & Sleep use last night · Strain resets daily — tap a ring for details
+                </p>
 
                 {/* Stress chip */}
                 <div className="mt-3 flex items-center justify-center gap-2">
