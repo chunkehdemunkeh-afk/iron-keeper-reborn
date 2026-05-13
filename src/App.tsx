@@ -161,6 +161,8 @@ const AppRoutes = () => {
         <AnimatedRoutes />
       </ErrorBoundary>
       {user && <BottomNav />}
+      {user && <LevelUpSheet />}
+      {user && <BadgeUnlockSheet />}
     </>
   );
 };
