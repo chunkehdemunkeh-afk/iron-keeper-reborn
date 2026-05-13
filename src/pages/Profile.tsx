@@ -341,6 +341,14 @@ export default function Profile() {
           </div>
         </motion.div>
 
+        {/* Level + Tier hero */}
+        <ProfileLevelTier />
+
+        {/* Badge shelf */}
+        <div className="glass-card rounded-xl p-4">
+          <BadgeShelf variant="compact" />
+        </div>
+
         {/* Quick links */}
         <div className="grid grid-cols-2 gap-2">
           <motion.button
