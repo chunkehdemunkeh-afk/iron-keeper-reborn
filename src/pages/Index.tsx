@@ -113,6 +113,9 @@ const Index = () => {
           <HelpButton />
         </motion.div>
 
+        {/* XP / Level / Streak */}
+        <XpBar />
+
         {/* Stats */}
         <StatsBar />
 
