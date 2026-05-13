@@ -154,3 +154,35 @@ self.addEventListener("fetch", (event) => {
   // ── Everything else → NetworkOnly ─────────────────────────────────────────
   // (version.json, manifest.json, API calls, Supabase, etc.)
 });
+
+// ── Push notifications ───────────────────────────────────────────────────────
+self.addEventListener("push", (event) => {
+  let payload = { title: "Iron Keeper", body: "You have a new update", url: "/" };
+  try {
+    if (event.data) payload = { ...payload, ...event.data.json() };
+  } catch {
+    if (event.data) payload.body = event.data.text();
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: "/pwa-192x192.png",
+      badge: "/pwa-192x192.png",
+      data: { url: payload.url || "/" },
+      tag: payload.tag || "ik-default",
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window" }).then((clients) => {
+      for (const c of clients) {
+        if ("focus" in c) { c.navigate(url); return c.focus(); }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});
