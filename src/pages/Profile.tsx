@@ -582,3 +582,67 @@ export default function Profile() {
     </div>
   );
 }
+
+function ProfileLevelTier() {
+  const { data: progress } = useUserProgress();
+  const { data: season } = useCurrentSeason();
+  if (!progress) return null;
+  const rp = progress.seasonRp;
+  const tier = tierFromRp(rp);
+  const next = nextTier(rp);
+  const pct = tierProgress(rp) * 100;
+  const days = daysRemaining(season);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`rounded-2xl bg-gradient-to-br ${tier.gradient} ring-1 ring-border/40 p-4 space-y-4`}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-primary font-semibold">Level</p>
+          <p className="font-display text-4xl font-bold leading-none mt-1">{progress.level}</p>
+        </div>
+        <TierBadge rp={rp} />
+      </div>
+
+      <div>
+        <div className="flex justify-between text-[11px] text-muted-foreground tabular-nums mb-1.5">
+          <span>{progress.levelProgress.current.toLocaleString()} / {progress.levelProgress.needed.toLocaleString()} XP</span>
+          <span>L{progress.level + 1}</span>
+        </div>
+        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${progress.levelProgress.pct}%` }}
+            transition={{ duration: 0.6 }}
+            className="h-full bg-gradient-to-r from-primary to-primary/70"
+          />
+        </div>
+      </div>
+
+      <div className="pt-3 border-t border-border/40">
+        <div className="flex items-baseline justify-between mb-1.5">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            Season {season?.number ?? 1} · {rp.toLocaleString()} RP
+          </p>
+          <p className="text-[10px] text-muted-foreground">{days}d left</p>
+        </div>
+        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.6 }}
+            className="h-full bg-gradient-to-r from-primary/70 to-primary/40"
+          />
+        </div>
+        {next && (
+          <p className="text-[10px] text-muted-foreground mt-1.5">
+            {(next.minRp - rp).toLocaleString()} RP to {next.label}
+          </p>
+        )}
+      </div>
+    </motion.div>
+  );
+}
