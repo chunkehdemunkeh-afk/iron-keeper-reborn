@@ -170,10 +170,10 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
       });
 
       // 2. Always upsert sleep log (fixes sleep score = 0 bug)
-      const deepVal  = parseStageMinutes(deepMin);
-      const remVal   = parseStageMinutes(remMin);
-      const lightVal = parseStageMinutes(lightMin);
-      const awakeVal = parseStageMinutes(awakeMin);
+      const deepVal  = resolveStageMinutes(deepMin,  prefillDeepMin);
+      const remVal   = resolveStageMinutes(remMin,   prefillRemMin);
+      const lightVal = resolveStageMinutes(lightMin, prefillLightMin);
+      const awakeVal = resolveStageMinutes(awakeMin, prefillAwakeMin);
       await upsertSleepLog({
         date,
         hours: sleepHours,
