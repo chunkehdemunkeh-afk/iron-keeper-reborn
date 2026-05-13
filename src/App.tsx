@@ -110,6 +110,8 @@ const AnimatedRoutes = () => {
         <Route path="/check-ins" element={<PageWrapper><ProtectedRoute><CheckInHistory /></ProtectedRoute></PageWrapper>} />
         <Route path="/quests" element={<PageWrapper><ProtectedRoute><Quests /></ProtectedRoute></PageWrapper>} />
         <Route path="/duels" element={<PageWrapper><ProtectedRoute><Duels /></ProtectedRoute></PageWrapper>} />
+        <Route path="/shop" element={<PageWrapper><ProtectedRoute><Shop /></ProtectedRoute></PageWrapper>} />
+        <Route path="/community" element={<PageWrapper><ProtectedRoute><Community /></ProtectedRoute></PageWrapper>} />
         <Route path="/reset-password" element={<PageWrapper><ResetPassword /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>
