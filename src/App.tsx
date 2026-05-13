@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/query-client";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -37,7 +38,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { ErrorBoundary } from "@/components/ui/async-boundary";
 import { ErrorState } from "@/components/ui/error-state";
 
-const queryClient = new QueryClient();
+
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();

@@ -56,6 +56,48 @@ export type Database = {
         }
         Relationships: []
       }
+      badges: {
+        Row: {
+          category: string
+          code: string
+          coin_reward: number
+          created_at: string
+          criteria: Json
+          description: string
+          hidden: boolean
+          icon: string
+          name: string
+          tier: string
+          xp_reward: number
+        }
+        Insert: {
+          category: string
+          code: string
+          coin_reward?: number
+          created_at?: string
+          criteria: Json
+          description: string
+          hidden?: boolean
+          icon: string
+          name: string
+          tier?: string
+          xp_reward?: number
+        }
+        Update: {
+          category?: string
+          code?: string
+          coin_reward?: number
+          created_at?: string
+          criteria?: Json
+          description?: string
+          hidden?: boolean
+          icon?: string
+          name?: string
+          tier?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       body_measurements: {
         Row: {
           body_fat_pct: number | null
@@ -497,6 +539,48 @@ export type Database = {
         }
         Relationships: []
       }
+      quests: {
+        Row: {
+          active_from: string
+          active_to: string | null
+          code: string
+          coin_reward: number
+          created_at: string
+          criteria: Json
+          description: string
+          id: string
+          title: string
+          type: string
+          xp_reward: number
+        }
+        Insert: {
+          active_from?: string
+          active_to?: string | null
+          code: string
+          coin_reward?: number
+          created_at?: string
+          criteria: Json
+          description: string
+          id?: string
+          title: string
+          type: string
+          xp_reward?: number
+        }
+        Update: {
+          active_from?: string
+          active_to?: string | null
+          code?: string
+          coin_reward?: number
+          created_at?: string
+          criteria?: Json
+          description?: string
+          id?: string
+          title?: string
+          type?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       sleep_logs: {
         Row: {
           awake_min: number | null
@@ -568,6 +652,121 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_badges: {
+        Row: {
+          badge_code: string
+          id: string
+          progress: Json | null
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          badge_code: string
+          id?: string
+          progress?: Json | null
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          badge_code?: string
+          id?: string
+          progress?: Json | null
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_code_fkey"
+            columns: ["badge_code"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      user_progress: {
+        Row: {
+          coins: number
+          created_at: string
+          current_streak: number
+          freeze_tokens: number
+          last_active_date: string | null
+          level: number
+          longest_streak: number
+          season_rp: number
+          season_tier: string
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          coins?: number
+          created_at?: string
+          current_streak?: number
+          freeze_tokens?: number
+          last_active_date?: string | null
+          level?: number
+          longest_streak?: number
+          season_rp?: number
+          season_tier?: string
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          coins?: number
+          created_at?: string
+          current_streak?: number
+          freeze_tokens?: number
+          last_active_date?: string | null
+          level?: number
+          longest_streak?: number
+          season_rp?: number
+          season_tier?: string
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
+      user_quests: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          progress: number
+          quest_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          quest_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          quest_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_quests_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -796,6 +995,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      xp_events: {
+        Row: {
+          coins: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          source: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          coins?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          source: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          coins?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          source?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
       }
     }
     Views: {
