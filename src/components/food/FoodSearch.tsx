@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { awardXpAndNotify } from "@/lib/gamification/notify";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
