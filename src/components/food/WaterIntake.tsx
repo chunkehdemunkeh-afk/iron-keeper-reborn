@@ -58,7 +58,11 @@ export default function WaterIntake({ date }: Props) {
       .single();
     if (error) { toast.error("Failed to log water"); return; }
     setEntryIds((prev) => [...prev, data.id]);
-    setTotalMl((prev) => prev + GLASS_ML);
+    const newTotal = totalMl + GLASS_ML;
+    setTotalMl(newTotal);
+    if (totalMl < goalMl && newTotal >= goalMl) {
+      void awardXpAndNotify({ source: "water_goal" });
+    }
   };
 
   const removeGlass = async () => {
