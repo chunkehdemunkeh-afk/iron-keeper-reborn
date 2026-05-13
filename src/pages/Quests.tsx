@@ -56,13 +56,14 @@ export default function Quests() {
                 <p className="text-xs uppercase tracking-widest text-primary font-semibold">Level</p>
                 <p className="font-display text-5xl font-bold leading-none mt-1">{progress.level}</p>
               </div>
-              <div className="text-right">
+              <div className="text-right space-y-1">
+                <TierBadge rp={progress.seasonRp} />
                 <div className="flex items-center justify-end gap-2 text-sm">
                   <Coins className="h-4 w-4 text-amber-400" />
                   <span className="font-bold tabular-nums">{progress.coins}</span>
                 </div>
                 {progress.currentStreak > 0 && (
-                  <div className="flex items-center justify-end gap-1 text-sm mt-1">
+                  <div className="flex items-center justify-end gap-1 text-sm">
                     <Flame className="h-4 w-4 text-orange-400" />
                     <span className="font-bold">{progress.currentStreak}d</span>
                     {progress.streakBadge && <span className="text-xs">{progress.streakBadge.icon}</span>}
