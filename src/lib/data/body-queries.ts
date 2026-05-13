@@ -35,7 +35,9 @@ export async function saveBodyMeasurement(data: {
       body_fat_pct: data.bodyFatPct || null,
       notes: data.notes || null,
     });
-
+  if (!error && data.bodyWeight) {
+    void awardXpAndNotify({ source: "bodyweight" });
+  }
   return !error;
 }
 
