@@ -182,9 +182,6 @@ const Index = () => {
             {/* Body weight tracker */}
             <HomeWeightTracker date={dateStr} />
 
-            {/* Sleep tracker */}
-            <SleepCard date={dateStr} />
-
             {/* Complete Day */}
             <HomeCompleteDay date={dateStr} />
           </motion.div>
