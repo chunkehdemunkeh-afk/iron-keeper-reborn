@@ -100,12 +100,21 @@ export default function Quests() {
         {/* Season + Tier */}
         <SeasonCard />
 
-        {/* Duels CTA */}
-        <Button onClick={() => navigate("/duels")} variant="outline" className="w-full justify-start gap-2 h-12">
-          <Swords className="h-4 w-4 text-primary" />
-          <span className="font-semibold">Duels</span>
-          <span className="text-xs text-muted-foreground ml-auto">1v1 challenges →</span>
-        </Button>
+        {/* CTAs */}
+        <div className="grid grid-cols-3 gap-2">
+          <Button onClick={() => navigate("/duels")} variant="outline" className="flex-col h-auto py-3 gap-1">
+            <Swords className="h-4 w-4 text-primary" />
+            <span className="text-[11px] font-semibold">Duels</span>
+          </Button>
+          <Button onClick={() => navigate("/shop")} variant="outline" className="flex-col h-auto py-3 gap-1">
+            <ShoppingBag className="h-4 w-4 text-amber-400" />
+            <span className="text-[11px] font-semibold">Shop</span>
+          </Button>
+          <Button onClick={() => navigate("/community")} variant="outline" className="flex-col h-auto py-3 gap-1">
+            <Users className="h-4 w-4 text-primary" />
+            <span className="text-[11px] font-semibold">Community</span>
+          </Button>
+        </div>
 
         {/* Quests */}
         <QuestsPanel />
