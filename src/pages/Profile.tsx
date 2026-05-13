@@ -266,23 +266,43 @@ export default function Profile() {
             </p>
           </div>
 
-          {/* Inline metric chips */}
+          {/* Inline metric chips — lifetime / identity */}
           <div className="mt-5 grid grid-cols-3 gap-2">
-            {[
-              { icon: Flame,    label: "Streak",    value: streak > 0 ? `${streak}w` : "—",                                                                               color: streak > 0 ? "text-primary" : "text-muted-foreground", onClick: undefined },
-              { icon: Target,   label: "Workouts",  value: totalWorkouts,                                                                                                  color: "text-success",                                       onClick: () => navigate("/history") },
-              { icon: Activity, label: "Week Burn", value: weekKcal > 0 ? `${weekKcal >= 1000 ? (weekKcal/1000).toFixed(1)+"k" : weekKcal}` : "—",                          color: weekKcal > 0 ? "text-amber-400" : "text-muted-foreground", onClick: () => navigate("/progress") },
-            ].map(({ icon: Icon, label, value, color, onClick }) => (
+            {(() => {
+              const createdAt = user?.created_at ? new Date(user.created_at) : null;
+              const monthsSince = createdAt
+                ? Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24 * 30)))
+                : 0;
+              const memberValue = createdAt
+                ? monthsSince < 1
+                  ? "New"
+                  : monthsSince < 12
+                    ? `${monthsSince}mo`
+                    : `${(monthsSince / 12).toFixed(1)}y`
+                : "—";
+              const memberSub = createdAt
+                ? `Joined ${createdAt.toLocaleDateString("en-GB", { month: "short", year: "numeric" })}`
+                : "";
+              const volFmt = (kg: number) =>
+                kg >= 1_000_000 ? `${(kg / 1_000_000).toFixed(1)}M` : kg >= 1_000 ? `${(kg / 1_000).toFixed(1)}K` : `${Math.round(kg)}`;
+              return [
+                { icon: Star,     label: "Member",   value: memberValue,                                sub: memberSub,           color: "text-primary",                                              onClick: undefined as undefined | (() => void),         tooltip: "How long you've been on Iron Keeper." },
+                { icon: Target,   label: "Workouts", value: `${totalWorkouts}`,                         sub: "all-time sessions", color: "text-success",                                              onClick: () => navigate("/history"),                    tooltip: "Total workouts you've ever logged." },
+                { icon: Dumbbell, label: "Volume",   value: lifetimeKg > 0 ? volFmt(lifetimeKg) : "—",  sub: "all-time (kg)",     color: lifetimeKg > 0 ? "text-amber-400" : "text-muted-foreground", onClick: () => navigate("/progress"),                   tooltip: "Cumulative weight × reps from every working set you've ever logged." },
+              ];
+            })().map(({ icon: Icon, label, value, sub, color, onClick, tooltip }) => (
               <button
                 key={label}
                 type="button"
                 onClick={onClick}
                 disabled={!onClick}
+                title={tooltip}
                 className={`rounded-xl bg-card/40 hairline border p-3 text-center ${onClick ? "active:scale-[0.97] transition-transform" : ""}`}
               >
                 <Icon className={`h-4 w-4 mx-auto mb-1 ${color}`} />
                 <p className={`font-display text-xl font-bold tabular-nums ${color}`}>{value}</p>
                 <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{label}</p>
+                <p className="text-[9px] text-muted-foreground/70 mt-0.5 truncate">{sub}</p>
               </button>
             ))}
           </div>
