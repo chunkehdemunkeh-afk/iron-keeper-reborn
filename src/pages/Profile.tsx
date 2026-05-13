@@ -125,11 +125,27 @@ export default function Profile() {
   const { data: lifetimeKg = 0 } = useQuery({
     queryKey: queryKeys.totalWeightLifted(user?.id ?? ""),
     queryFn: async () => {
-      const { data } = await supabase
-        .from("workout_sets")
-        .select("weight, reps, workout_history!inner(user_id)")
-        .eq("workout_history.user_id", user!.id);
-      return (data || []).reduce((sum: number, s: any) => sum + (s.weight || 0) * (s.reps || 0), 0);
+      // Page through all sets (Supabase caps responses at 1000 rows).
+      // Join via workout_history.user_id because workout_sets.user_id is NULL on older rows.
+      const PAGE = 1000;
+      let from = 0;
+      let total = 0;
+      // Exclude warmups so the number reflects real working volume.
+      while (true) {
+        const { data, error } = await supabase
+          .from("workout_sets")
+          .select("weight, reps, workout_history!inner(user_id)")
+          .eq("workout_history.user_id", user!.id)
+          .neq("set_type", "warmup")
+          .range(from, from + PAGE - 1);
+        if (error || !data) break;
+        for (const s of data as Array<{ weight: number | null; reps: number | null }>) {
+          total += (Number(s.weight) || 0) * (Number(s.reps) || 0);
+        }
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
+      return total;
     },
     enabled: !!user,
   });
