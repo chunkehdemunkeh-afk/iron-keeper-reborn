@@ -121,7 +121,7 @@ Provide a JSON response with exactly these 5 fields (no markdown, just JSON):
 {
   "headline": "Short punchy 4-8 word summary of today's status",
   "recovery_summary": "2-3 sentences on what the recovery/stress numbers mean today. Reference the user's own trends where possible. Be specific — mention actual numbers.",
-  "training_recommendation": "2-3 sentences on how to approach today's training given these scores. If next_workout is provided, reference it specifically. Give clear intensity guidance.",
+  "training_recommendation": "2-3 sentences on training. If a session was already completed today, acknowledge it specifically (reference the workout name and volume), comment on whether the load matched recovery, and advise on the rest of the day (cooldown, mobility, nutrition, whether more is wise). If no training was done yet, give intensity guidance for a session today.",
   "sleep_analysis": "1-2 sentences on last night's sleep quality and what it means for today. If stage data is available, reference it. If sleep was poor, explain the impact.",
   "week_ahead": "1-2 sentences looking at the trend and giving forward-looking guidance. Mention if a deload or easy day might be needed soon."
 }
