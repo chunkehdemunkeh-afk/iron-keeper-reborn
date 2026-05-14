@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, ChevronRight, Edit2, Plus, RefreshCw } from "lucide-react";
+import { Activity, ArrowDown, ArrowUp, ChevronDown, ChevronRight, Edit2, Minus, Plus, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
