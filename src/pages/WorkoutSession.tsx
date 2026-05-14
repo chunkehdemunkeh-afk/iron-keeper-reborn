@@ -874,13 +874,13 @@ export default function WorkoutSession() {
     }
     
     saveWorkoutToCloud(completed).then(() => {
+      // Refresh only after the workout + sets + strain recompute have finished saving.
       queryClient.invalidateQueries({ queryKey: queryKeys.dailyScores(user!.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.workoutHistory(user!.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.workoutVolume(user!.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.personalRecords(user!.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.recentSets(user!.id) });
     });
-    
-    // Invalidate all related queries to force a refresh on other screens
-    queryClient.invalidateQueries({ queryKey: queryKeys.workoutHistory(user!.id) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.workoutVolume(user!.id) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.personalRecords(user!.id) });
     
     clearAutoSave();
     setFinished(true);

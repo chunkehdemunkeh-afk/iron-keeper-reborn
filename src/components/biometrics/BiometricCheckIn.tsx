@@ -14,6 +14,7 @@ import {
   upsertSleepLog,
   fetchDailyBiometrics,
   fetchDailyScores,
+  fetchWorkoutHistory,
   fetchSleepLogs,
 } from "@/lib/cloud-data";
 import { supabase } from "@/integrations/supabase/client";
@@ -480,6 +481,21 @@ async function generateAIInsight(
   queryClient: QueryClient,
 ) {
   try {
+    const history = await fetchWorkoutHistory();
+    const trainingToday = history
+      .filter((w) => String(w.date).slice(0, 10) === date)
+      .map((w) => {
+        const working = w.sets.filter((s) => s.setType !== "warmup");
+        const totalVolumeKg = working.reduce((acc, s) => acc + s.weight * s.reps, 0);
+        return {
+          name: w.workoutName,
+          durationMin: Math.round(w.duration),
+          totalSets: working.length,
+          totalVolumeKg: Math.round(totalVolumeKg),
+          caloriesBurned: w.caloriesBurned ?? null,
+        };
+      });
+
     const stress7d = biometricHistory.slice(0, 7).map(b => b.samsungStressScore).reverse();
     const rhr7d    = biometricHistory.slice(0, 7).map(b => b.restingHr).reverse();
 
@@ -497,6 +513,7 @@ async function generateAIInsight(
       },
       context: {
         next_workout: null,
+        training_today: trainingToday,
         sleep_hours: sleepFull?.hours ?? null,
         sleep_stages: sleepFull ? {
           deep:  sleepFull.deepSleepMin  ?? null,

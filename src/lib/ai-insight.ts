@@ -118,13 +118,13 @@ export async function regenerateAIInsightFromSaved(
   ]);
 
   const trainingToday: TrainingTodayEntry[] = history
-    .filter((w) => w.date === date)
+    .filter((w) => String(w.date).slice(0, 10) === date)
     .map((w) => {
       const working = w.sets.filter((s) => s.setType !== "warmup");
       const totalVolumeKg = working.reduce((acc, s) => acc + s.weight * s.reps, 0);
       return {
         name: w.workoutName,
-        durationMin: Math.round(w.duration / 60),
+          durationMin: Math.round(w.duration),
         totalSets: working.length,
         totalVolumeKg: Math.round(totalVolumeKg),
         caloriesBurned: w.caloriesBurned ?? null,
