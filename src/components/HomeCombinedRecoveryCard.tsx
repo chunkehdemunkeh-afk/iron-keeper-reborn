@@ -22,6 +22,7 @@ import { useTodayScore } from "@/hooks/queries/useDailyScores";
 import { useDailyBiometrics } from "@/hooks/queries/useDailyBiometrics";
 import { useRecentSets } from "@/hooks/queries/useRecentSets";
 import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
+import { useWorkoutHistory } from "@/hooks/queries/useWorkoutHistory";
 import BodyDiagram from "@/components/recovery/BodyDiagram";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import BiometricCheckIn from "@/components/biometrics/BiometricCheckIn";
@@ -134,6 +135,25 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   const { data: biometrics = [] } = useDailyBiometrics(2);
   const { data: sets = [] } = useRecentSets();
   const { data: sleepLogs = [] } = useSleepLogs();
+  const { data: workoutHistory = [] } = useWorkoutHistory();
+
+  const todayWorkouts = useMemo(
+    () =>
+      workoutHistory
+        .filter((w) => w.date === date)
+        .map((w) => {
+          const working = w.sets.filter((s) => s.setType !== "warmup");
+          const volumeKg = working.reduce((acc, s) => acc + s.weight * s.reps, 0);
+          return {
+            id: w.id,
+            name: w.workoutName,
+            sets: working.length,
+            volumeKg: Math.round(volumeKg),
+            durationMin: Math.round(w.duration / 60),
+          };
+        }),
+    [workoutHistory, date],
+  );
 
   const splitId = user ? getUserPreferences(user.id)?.splitId : null;
   const settings = useRecoverySettings(user?.id);
@@ -299,6 +319,29 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     <p className="text-[10px] text-primary mt-1">Full analysis →</p>
                   </div>
                 )}
+
+                {/* Detected workouts feeding the insight */}
+                <div className="mt-3 pt-3 border-t border-border/30">
+                  <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Detected today · 00:00–now
+                  </p>
+                  {todayWorkouts.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground/80 mt-1">
+                      No sessions logged yet today
+                    </p>
+                  ) : (
+                    <ul className="mt-1 space-y-0.5">
+                      {todayWorkouts.map((w) => (
+                        <li key={w.id} className="text-[11px] text-foreground/90 leading-snug">
+                          <span className="font-semibold">{w.name}</span>
+                          <span className="text-muted-foreground">
+                            {" · "}{w.sets} sets · {w.volumeKg.toLocaleString()} kg · {w.durationMin} min
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </button>
 
               {/* Manual refresh — once per day */}
