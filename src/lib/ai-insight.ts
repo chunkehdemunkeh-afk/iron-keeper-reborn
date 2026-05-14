@@ -4,10 +4,19 @@ import {
   fetchDailyBiometrics,
   fetchDailyScores,
   fetchSleepLogs,
+  fetchWorkoutHistory,
   updateDailyScoreAIInsight,
   type AIInsight,
 } from "@/lib/cloud-data";
 import type { DailyBiometric, SleepLogFull } from "@/lib/recovery-scores";
+
+export interface TrainingTodayEntry {
+  name: string;
+  durationMin: number;
+  totalSets: number;
+  totalVolumeKg: number;
+  caloriesBurned: number | null;
+}
 
 interface InsightInputs {
   date: string;
@@ -16,6 +25,7 @@ interface InsightInputs {
   sleepFull: SleepLogFull | null;
   prevStrain: number;
   spo2Pct: number;
+  trainingToday?: TrainingTodayEntry[];
 }
 
 /** Fire-and-forget AI insight call; persists result to daily_scores. */
