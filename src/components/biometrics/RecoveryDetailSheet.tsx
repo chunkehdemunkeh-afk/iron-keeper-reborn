@@ -152,7 +152,7 @@ export default function RecoveryDetailSheet({ open, score, onClose, onEdit }: Pr
           {/* 2×2 score grid */}
           <div className="grid grid-cols-2 gap-3">
             <ScoreCard
-              label="Recovery"
+              label="Readiness"
               value={`${Math.round(rec)}%`}
               subLabel={recoveryLabel(rec)}
               color={recoveryColor(rec)}
