@@ -171,7 +171,7 @@ export default function RecoveryHero({ date }: Props) {
               className="w-full flex flex-col items-center active:opacity-90 transition-opacity"
             >
               <Dial
-                label="Recovery"
+                label="Readiness"
                 value={Math.round(recovery)}
                 suffix="%"
                 pct={recovery}
