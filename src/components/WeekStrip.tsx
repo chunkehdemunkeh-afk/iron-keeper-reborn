@@ -178,6 +178,7 @@ export default function WeekStrip() {
       setPendingType(null);
       setShowOtherInput(false);
       setRefreshKey((k) => k + 1);
+      invalidateRecoveryAndStrain();
     } else {
       toast.error("Failed to log activity");
     }
@@ -188,6 +189,7 @@ export default function WeekStrip() {
     if (success) {
       toast.success("Activity removed");
       setRefreshKey((k) => k + 1);
+      invalidateRecoveryAndStrain();
     }
   };
 
@@ -197,6 +199,7 @@ export default function WeekStrip() {
       toast.success("Workout removed");
       setRefreshKey((k) => k + 1);
       setSelectedDay(null);
+      invalidateRecoveryAndStrain();
     }
   };
 
