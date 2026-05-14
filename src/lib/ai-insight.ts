@@ -110,11 +110,26 @@ export async function regenerateAIInsightFromSaved(
   date: string,
   queryClient: QueryClient,
 ): Promise<boolean> {
-  const [biometrics, sleepLogs, scores] = await Promise.all([
+  const [biometrics, sleepLogs, scores, history] = await Promise.all([
     fetchDailyBiometrics(28),
     fetchSleepLogs(7),
     fetchDailyScores(2),
+    fetchWorkoutHistory(),
   ]);
+
+  const trainingToday: TrainingTodayEntry[] = history
+    .filter((w) => w.date === date)
+    .map((w) => {
+      const working = w.sets.filter((s) => s.setType !== "warmup");
+      const totalVolumeKg = working.reduce((acc, s) => acc + s.weight * s.reps, 0);
+      return {
+        name: w.workoutName,
+        durationMin: Math.round(w.duration / 60),
+        totalSets: working.length,
+        totalVolumeKg: Math.round(totalVolumeKg),
+        caloriesBurned: w.caloriesBurned ?? null,
+      };
+    });
 
   const todayScore = scores.find((s) => s.date === date);
   if (!todayScore) {
