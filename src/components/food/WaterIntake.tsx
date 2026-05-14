@@ -71,6 +71,7 @@ export default function WaterIntake({ date }: Props) {
     if (totalMl < goalMl && newTotal >= goalMl) {
       void awardXpAndNotify({ source: "water_goal" });
     }
+    invalidateLive();
   };
 
   const removeGlass = async () => {
@@ -79,6 +80,7 @@ export default function WaterIntake({ date }: Props) {
     await supabase.from("water_intake").delete().eq("id", lastId);
     setEntryIds((prev) => prev.slice(0, -1));
     setTotalMl((prev) => Math.max(0, prev - GLASS_ML));
+    invalidateLive();
   };
 
   const glasses = Math.round(totalMl / GLASS_ML);
