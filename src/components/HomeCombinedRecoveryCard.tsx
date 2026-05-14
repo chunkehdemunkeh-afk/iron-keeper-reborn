@@ -353,6 +353,8 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     sub={recoveryLabel(recovery)}
                     timing={recoveryTiming}
                     tooltip="Morning systemic readiness from sleep, HRV, RHR and stress. Stable through the day — only updates on a new check-in."
+                    delta={readinessDelta}
+                    deltaSuffix="%"
                   />
                   <DialRing
                     label="Muscle"
@@ -363,6 +365,8 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     sub={muscleAgg.status === "fatigued" ? "Fatigued" : muscleAgg.status === "workable" ? "Workable" : "Recovered"}
                     timing="live"
                     tooltip="Live muscle recovery from worked groups. Drops the moment a session is logged."
+                    delta={muscleDelta}
+                    deltaSuffix="%"
                   />
                   <DialRing
                     label="Strain"
@@ -374,6 +378,8 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     subMuted={strain === 0}
                     timing={strain > 0 ? "today · live" : "today"}
                     tooltip="Today's training load. Tonight's session feeds tomorrow's readiness, not today's."
+                    delta={strainDelta}
+                    deltaSuffix=""
                   />
                 </div>
 
