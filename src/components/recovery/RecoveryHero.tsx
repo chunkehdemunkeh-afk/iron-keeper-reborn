@@ -12,9 +12,14 @@ import {
 import { useTodayScore } from "@/hooks/queries/useDailyScores";
 import { useDailyBiometrics } from "@/hooks/queries/useDailyBiometrics";
 import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
+import { useRecentSets } from "@/hooks/queries/useRecentSets";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import BiometricCheckIn from "@/components/biometrics/BiometricCheckIn";
 import RecoveryDetailSheet from "@/components/biometrics/RecoveryDetailSheet";
+import { useMemo } from "react";
+import { computeMuscleRecovery, aggregateMuscleRecovery, statusColor } from "@/lib/recovery";
+import { getUserPreferences } from "@/lib/user-preferences";
+import { useRecoverySettings } from "@/hooks/useRecoverySettings";
 
 interface Props {
   date: string;
