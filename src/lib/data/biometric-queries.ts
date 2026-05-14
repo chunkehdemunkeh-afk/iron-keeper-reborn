@@ -350,22 +350,29 @@ export async function backfillStrainScores(daysBack = 30): Promise<number> {
     durationMin: number;
     hrWeightedSum: number;
     maxHr: number | null;
+    zones: [number, number, number, number, number];
+    anyZones: boolean;
   };
   const dayMap = new Map<string, Bucket>();
   const ensure = (d: string): Bucket => {
-    if (!dayMap.has(d)) dayMap.set(d, { workoutCal: 0, activityCal: 0, efforts: [], durationMin: 0, hrWeightedSum: 0, maxHr: null });
+    if (!dayMap.has(d)) dayMap.set(d, { workoutCal: 0, activityCal: 0, efforts: [], durationMin: 0, hrWeightedSum: 0, maxHr: null, zones: [0, 0, 0, 0, 0], anyZones: false });
     return dayMap.get(d)!;
   };
   for (const w of workoutsRes.data ?? []) {
     const d = String((w as any).date).split("T")[0];
     const bucket = ensure(d);
-    bucket.workoutCal += (w as any).calories_burned ?? 0;
-    bucket.durationMin += (w as any).duration ?? 0;
+    bucket.workoutCal += (w as any).calories_watch ?? (w as any).calories_burned ?? 0;
+    const dur = (w as any).duration_watch ?? (w as any).duration ?? 0;
+    bucket.durationMin += dur;
     if (typeof (w as any).effort_rating === "number") bucket.efforts.push((w as any).effort_rating);
-    const dur = (w as any).duration ?? 0;
     if ((w as any).avg_hr && dur > 0) bucket.hrWeightedSum += (w as any).avg_hr * dur;
     if ((w as any).max_hr && (bucket.maxHr === null || (w as any).max_hr > bucket.maxHr)) {
       bucket.maxHr = (w as any).max_hr;
+    }
+    const z = Array.isArray((w as any).hr_zones) ? (w as any).hr_zones : null;
+    if (z && z.length === 5) {
+      for (let i = 0; i < 5; i++) bucket.zones[i] += Number(z[i]) || 0;
+      if (z.some((v: any) => Number(v) > 0)) bucket.anyZones = true;
     }
   }
   for (const a of activitiesRes.data ?? []) {
@@ -394,6 +401,7 @@ export async function backfillStrainScores(daysBack = 30): Promise<number> {
       maxHr: b.maxHr,
       restingHr: restingByDate.get(date) ?? null,
       age,
+      hrZones: b.anyZones ? b.zones : null,
     });
     const existingId = scoreIdByDate.get(date);
     if (existingId) {
