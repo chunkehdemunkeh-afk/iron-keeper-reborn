@@ -183,6 +183,8 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
     [states],
   );
 
+  const muscleAgg = useMemo(() => aggregateMuscleRecovery(states), [states]);
+
   const todayBiometric = biometrics.find((b) => b.date === date);
   const todaySleep = sleepLogs.find((l) => l.date === date);
   const hasData = score?.recoveryScore != null;
