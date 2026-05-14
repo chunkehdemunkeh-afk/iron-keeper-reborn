@@ -20,6 +20,12 @@ export default function WaterIntake({ date }: Props) {
   const [entryIds, setEntryIds] = useState<string[]>([]);
   const [goalMl, setGoalMl] = useState(2500);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const invalidateLive = useCallback(() => {
+    if (!user) return;
+    queryClient.invalidateQueries({ queryKey: queryKeys.waterIntakeDates(user.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.dailyScores(user.id) });
+  }, [queryClient, user]);
 
   // Fetch user's water goal
   useEffect(() => {
