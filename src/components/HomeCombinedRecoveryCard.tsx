@@ -251,6 +251,26 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   void score?.sleepPerformance; // sleep is surfaced inside the breakdown sheet now
   const ringColor = hasData ? recoveryColor(recovery) : "hsl(var(--muted))";
 
+  // Per-day baseline so users see how their choices move each dial today.
+  const baselineKey = STORAGE_KEYS.dialBaseline(user?.id ?? "anon", date);
+  const [baseline, setBaseline] = useState<{ readiness: number; muscle: number; strain: number } | null>(null);
+  useEffect(() => {
+    if (!hasData || !user) return;
+    const raw = localStorage.getItem(baselineKey);
+    if (raw) {
+      try { setBaseline(JSON.parse(raw)); return; } catch { /* fallthrough */ }
+    }
+    const fresh = { readiness: recovery, muscle: muscleAgg.score, strain };
+    localStorage.setItem(baselineKey, JSON.stringify(fresh));
+    setBaseline(fresh);
+    // Only seed once per day per user — deps intentionally minimal.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasData, user?.id, baselineKey]);
+
+  const readinessDelta = baseline ? recovery - baseline.readiness : 0;
+  const muscleDelta = baseline ? muscleAgg.score - baseline.muscle : 0;
+  const strainDelta = baseline ? strain - baseline.strain : 0;
+
   const recoveryTiming = (() => {
     const iso = score?.aiGeneratedAt;
     if (!iso) return "this morning";
