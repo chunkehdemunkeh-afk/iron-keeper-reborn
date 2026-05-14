@@ -1,7 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, ChevronRight, Edit2, Plus } from "lucide-react";
+import { Activity, ChevronRight, Edit2, Plus, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { regenerateAIInsightFromSaved } from "@/lib/ai-insight";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useAuth } from "@/hooks/useAuth";
 import {
   recoveryColor,
@@ -108,9 +112,18 @@ function DialRing({
 
 export default function HomeCombinedRecoveryCard({ date }: Props) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshUsed, setRefreshUsed] = useState(false);
+
+  const refreshKey = user ? STORAGE_KEYS.aiInsightRefreshed(user.id, date) : "";
+  useEffect(() => {
+    if (!refreshKey) return;
+    setRefreshUsed(localStorage.getItem(refreshKey) === "1");
+  }, [refreshKey]);
 
   const { data: score } = useTodayScore();
   const { data: biometrics = [] } = useDailyBiometrics(2);
@@ -268,6 +281,33 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                   </div>
                 )}
               </button>
+
+              {/* Manual refresh — once per day */}
+              <div className="mt-2 flex justify-end">
+                <button
+                  type="button"
+                  disabled={refreshing || refreshUsed}
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if (refreshing || refreshUsed) return;
+                    setRefreshing(true);
+                    const ok = await regenerateAIInsightFromSaved(date, queryClient);
+                    setRefreshing(false);
+                    if (ok) {
+                      localStorage.setItem(refreshKey, "1");
+                      setRefreshUsed(true);
+                      toast.success("Insight refreshed");
+                    } else {
+                      toast.error("Couldn't refresh insight");
+                    }
+                  }}
+                  className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={refreshUsed ? "Already refreshed today — resets tomorrow" : "Re-generate AI feedback using your latest data"}
+                >
+                  <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
+                  {refreshUsed ? "Refreshed today" : refreshing ? "Refreshing…" : "Refresh insight"}
+                </button>
+              </div>
 
               <div className="border-t border-border/40 my-3" />
             </motion.div>
