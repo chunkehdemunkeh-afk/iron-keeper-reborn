@@ -4,7 +4,10 @@
 
 ## Current Status
 
-**NEXT: TBD** — Gamification Phase 1–3 shipped (2026-05-13/14). All new tables migrated. Status of `ANTHROPIC_API_KEY` / edge function deploys unchanged.
+**NEXT: Run quest seed migration** — paste `supabase/migrations/20260514120000_seed_quests.sql` into the Supabase SQL editor. The Quests page shows "No quests active" until this is done.
+
+**Pending manual action (2026-05-14):**
+- [ ] Run `20260514120000_seed_quests.sql` in Supabase dashboard SQL editor to seed 7 daily + 5 weekly quests
 
 **Gamification system complete** (2026-05-12–14):
 - Migrations: `user_progress`, `xp_events`, `badges`, `user_badges`, `quests`, `user_quests`, `seasons`, `season_results`, `duels`, `duel_progress`, `push_subscriptions`, `cosmetics`, `user_cosmetics`, `equipped_cosmetics`, `community_challenges`, `community_contributions`, `clans`, `clan_members`, `workout_hr_samples`
