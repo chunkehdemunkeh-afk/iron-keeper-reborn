@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,6 +7,11 @@ const corsHeaders = {
 };
 
 const UA = "IronKeeper/1.0 (https://ironkeeper.lovable.app; contact@ironkeeper.app)";
+
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL") ?? "",
+  Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+);
 
 /** Normalise a hit from search.openfoodfacts.org into the same shape the client expects
  *  (matches the legacy world.openfoodfacts.org product structure). */
@@ -27,6 +33,23 @@ function normaliseHit(hit: any) {
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Require an authenticated Supabase user — prevents anonymous traffic from
+  // burning edge function quota by hammering this proxy.
+  const token = req.headers.get("Authorization")?.replace(/^Bearer /i, "") ?? "";
+  if (!token) {
+    return new Response(JSON.stringify({ error: "UNAUTHORIZED" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const { data: userData, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !userData?.user) {
+    return new Response(JSON.stringify({ error: "UNAUTHORIZED" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const url = new URL(req.url);
@@ -54,11 +77,7 @@ serve(async (req) => {
     }
 
     // ---------- Text search ----------
-    // Primary: search.openfoodfacts.org (Elasticsearch-backed, fast, reliable)
-    // Fallback: world.openfoodfacts.org/api/v2/search (slower, sometimes 503)
     const fields = "code,product_name,brands,brands_tags,categories_tags_en,serving_size,nutriments,image_front_small_url";
-
-    // Country filter via field-style query (Lucene syntax)
     const qExpr = `${query} +countries_tags:"en:united-kingdom"`;
     const primaryUrl = `https://search.openfoodfacts.org/search?q=${encodeURIComponent(qExpr)}&page_size=25&page=${page}&fields=${fields}`;
 
@@ -75,7 +94,6 @@ serve(async (req) => {
       );
     }
 
-    // Primary failed — try the legacy API as a fallback
     await res.text();
     const fallbackUrl = `https://world.openfoodfacts.org/api/v2/search?search_terms=${encodeURIComponent(query)}&countries_tags_en=united-kingdom&sort_by=popularity_key&page_size=25&page=${page}&fields=${fields}`;
     res = await fetch(fallbackUrl, { headers: { "User-Agent": UA } });
