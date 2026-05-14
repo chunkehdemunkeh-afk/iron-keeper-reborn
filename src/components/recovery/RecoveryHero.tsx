@@ -193,7 +193,7 @@ export default function RecoveryHero({ date }: Props) {
             {/* 3-up dial row */}
             <div className="grid grid-cols-3 gap-2 mt-5 pt-4 border-t hairline">
               <Dial
-                label="Recovery"
+                label="Readiness"
                 value={Math.round(recovery)}
                 suffix="%"
                 pct={recovery}
