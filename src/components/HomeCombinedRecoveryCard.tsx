@@ -135,7 +135,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   }, [refreshKey]);
 
   const { data: score } = useTodayScore();
-  const { data: biometrics = [] } = useDailyBiometrics(2);
+  const { data: biometrics = [] } = useDailyBiometrics(14, { range: "14d" });
   const { data: sets = [] } = useRecentSets();
   const { data: sleepLogs = [] } = useSleepLogs();
   const { data: workoutHistory = [] } = useWorkoutHistory();
