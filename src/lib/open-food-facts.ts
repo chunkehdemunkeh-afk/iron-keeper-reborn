@@ -297,7 +297,7 @@ export async function searchFoods(query: string, page = 1): Promise<FoodItem[]> 
 
   const fatSecretFetch = fetch(
     `${SUPABASE_URL}/functions/v1/fatsecret-search?q=${encodeURIComponent(query)}&page=${Math.max(0, page - 1)}&region=GB&language=en`,
-    { headers: edgeFunctionHeaders }
+    { headers: await getEdgeFunctionHeaders() }
   )
     .then((res) => res.ok ? res.json() : null)
     .then((data): FoodItem[] => {
@@ -313,7 +313,7 @@ export async function searchFoods(query: string, page = 1): Promise<FoodItem[]> 
 
   const offFetch = fetch(
     `${SUPABASE_URL}/functions/v1/food-search?q=${encodeURIComponent(query)}&page=${page}`,
-    { headers: edgeFunctionHeaders }
+    { headers: await getEdgeFunctionHeaders() }
   )
     .then((res) => res.ok ? res.json() : null)
     .then((data): FoodItem[] => {
@@ -360,7 +360,7 @@ export async function fetchExtendedNutrition(foodId: string): Promise<Pick<FoodI
   try {
     const res = await fetch(
       `${SUPABASE_URL}/functions/v1/fatsecret-search?food_id=${encodeURIComponent(foodId)}&region=GB&language=en`,
-      { headers: edgeFunctionHeaders }
+      { headers: await getEdgeFunctionHeaders() }
     );
     if (!res.ok) return null;
     const data = await res.json();
@@ -417,7 +417,7 @@ export async function fetchOFFProductDetails(barcode: string): Promise<{
   try {
     const res = await fetch(
       `${SUPABASE_URL}/functions/v1/food-search?barcode=${encodeURIComponent(barcode)}`,
-      { headers: edgeFunctionHeaders }
+      { headers: await getEdgeFunctionHeaders() }
     );
     if (!res.ok) return null;
     const data = await res.json();
@@ -450,7 +450,7 @@ export async function lookupBarcode(barcode: string): Promise<FoodItem | null> {
   try {
     const res = await fetch(
       `${SUPABASE_URL}/functions/v1/fatsecret-search?barcode=${encodeURIComponent(barcode)}&region=GB&language=en`,
-      { headers: edgeFunctionHeaders }
+      { headers: await getEdgeFunctionHeaders() }
     );
     if (res.ok) {
       const data = await res.json();
@@ -498,7 +498,7 @@ export async function lookupBarcode(barcode: string): Promise<FoodItem | null> {
   try {
     const res = await fetch(
       `${SUPABASE_URL}/functions/v1/food-search?barcode=${encodeURIComponent(barcode)}`,
-      { headers: edgeFunctionHeaders }
+      { headers: await getEdgeFunctionHeaders() }
     );
     if (!res.ok) return null;
     const data = await res.json();
