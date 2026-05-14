@@ -1,7 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, ChevronRight, Edit2, Plus } from "lucide-react";
+import { Activity, ChevronRight, Edit2, Plus, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { regenerateAIInsightFromSaved } from "@/lib/ai-insight";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useAuth } from "@/hooks/useAuth";
 import {
   recoveryColor,
