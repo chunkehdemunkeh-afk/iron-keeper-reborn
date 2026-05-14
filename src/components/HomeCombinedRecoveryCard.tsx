@@ -135,6 +135,25 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   const { data: biometrics = [] } = useDailyBiometrics(2);
   const { data: sets = [] } = useRecentSets();
   const { data: sleepLogs = [] } = useSleepLogs();
+  const { data: workoutHistory = [] } = useWorkoutHistory();
+
+  const todayWorkouts = useMemo(
+    () =>
+      workoutHistory
+        .filter((w) => w.date === date)
+        .map((w) => {
+          const working = w.sets.filter((s) => s.setType !== "warmup");
+          const volumeKg = working.reduce((acc, s) => acc + s.weight * s.reps, 0);
+          return {
+            id: w.id,
+            name: w.workoutName,
+            sets: working.length,
+            volumeKg: Math.round(volumeKg),
+            durationMin: Math.round(w.duration / 60),
+          };
+        }),
+    [workoutHistory, date],
+  );
 
   const splitId = user ? getUserPreferences(user.id)?.splitId : null;
   const settings = useRecoverySettings(user?.id);
