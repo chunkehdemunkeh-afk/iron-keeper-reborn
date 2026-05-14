@@ -282,6 +282,33 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                 )}
               </button>
 
+              {/* Manual refresh — once per day */}
+              <div className="mt-2 flex justify-end">
+                <button
+                  type="button"
+                  disabled={refreshing || refreshUsed}
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if (refreshing || refreshUsed) return;
+                    setRefreshing(true);
+                    const ok = await regenerateAIInsightFromSaved(date, queryClient);
+                    setRefreshing(false);
+                    if (ok) {
+                      localStorage.setItem(refreshKey, "1");
+                      setRefreshUsed(true);
+                      toast.success("Insight refreshed");
+                    } else {
+                      toast.error("Couldn't refresh insight");
+                    }
+                  }}
+                  className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={refreshUsed ? "Already refreshed today — resets tomorrow" : "Re-generate AI feedback using your latest data"}
+                >
+                  <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
+                  {refreshUsed ? "Refreshed today" : refreshing ? "Refreshing…" : "Refresh insight"}
+                </button>
+              </div>
+
               <div className="border-t border-border/40 my-3" />
             </motion.div>
           )}
