@@ -34,7 +34,7 @@ export async function generateAIInsight(
   queryClient: QueryClient,
 ): Promise<boolean> {
   try {
-    const { date, scores, biometricHistory, sleepFull, prevStrain, spo2Pct } = inputs;
+    const { date, scores, biometricHistory, sleepFull, prevStrain, spo2Pct, trainingToday } = inputs;
     const stress7d = biometricHistory.slice(0, 7).map((b) => b.samsungStressScore).reverse();
     const rhr7d    = biometricHistory.slice(0, 7).map((b) => b.restingHr).reverse();
 
@@ -52,6 +52,7 @@ export async function generateAIInsight(
       },
       context: {
         next_workout: null,
+        training_today: trainingToday ?? [],
         sleep_hours: sleepFull?.hours ?? null,
         sleep_stages: sleepFull
           ? {
