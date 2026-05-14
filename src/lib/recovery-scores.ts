@@ -358,6 +358,8 @@ export interface StrainHRContext {
   restingHr?: number | null;
   /** user age — for max HR estimate (220 - age). */
   age?: number | null;
+  /** Total minutes spent in HR zones Z1..Z5 across the day. */
+  hrZones?: [number, number, number, number, number] | null;
 }
 
 export function computeStrainScore(
@@ -395,6 +397,24 @@ export function computeStrainScore(
     // and blend 60/40 in favour of the HR signal when present.
     const trimpScaled = trimp / 4;
     total = workoutBase * 0.4 + trimpScaled * 0.6 + activityBase;
+  }
+
+  // ── Zone-based TRIMP (Galaxy Watch) ─────────────────────────────────────
+  // When the user enters minutes per HR zone, compute TRIMP directly from
+  // zone midpoints — far more accurate than a single avg HR. Blend the
+  // resulting watch-driven strain 70/30 with the estimate.
+  const zones = hr?.hrZones;
+  if (zones && zones.some(z => z > 0)) {
+    const midHrr = [0.55, 0.65, 0.75, 0.85, 0.95] as const;
+    const trimpZone = zones.reduce(
+      (s, mins, i) =>
+        s + (mins || 0) * midHrr[i] * 0.64 * Math.exp(1.92 * midHrr[i]),
+      0,
+    );
+    const trimpScaled = trimpZone / 4;
+    const totalWatch = trimpScaled + activityBase;
+    // 70/30 blend toward watch-driven signal
+    total = total * 0.3 + totalWatch * 0.7;
   }
 
   // Logarithmic squash onto 0–21 scale
