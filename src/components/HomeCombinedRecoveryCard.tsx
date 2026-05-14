@@ -193,7 +193,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   const recovery = score?.recoveryScore ?? 0;
   const strain   = score?.strainScore   ?? 0;
   const stress   = score?.stressLevel   ?? 0;
-  const sleep    = score?.sleepPerformance ?? 0;
+  void score?.sleepPerformance; // sleep is surfaced inside the breakdown sheet now
   const ringColor = hasData ? recoveryColor(recovery) : "hsl(var(--muted))";
 
   const recoveryTiming = (() => {
