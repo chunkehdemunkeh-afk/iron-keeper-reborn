@@ -140,7 +140,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   const todayWorkouts = useMemo(
     () =>
       workoutHistory
-        .filter((w) => w.date === date)
+        .filter((w) => String(w.date).slice(0, 10) === date)
         .map((w) => {
           const working = w.sets.filter((s) => s.setType !== "warmup");
           const volumeKg = working.reduce((acc, s) => acc + s.weight * s.reps, 0);
