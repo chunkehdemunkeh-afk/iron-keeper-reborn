@@ -38,6 +38,9 @@ export type CompletedWorkout = {
   startedAt?: string;       // ISO timestamp when session began (wall-clock gym start)
   avgHr?: number | null;    // bpm — manual entry now, Health Connect later
   maxHr?: number | null;    // bpm
+  hrZones?: [number, number, number, number, number] | null; // minutes per HR zone Z1..Z5
+  durationWatch?: number | null;  // watch-reported duration in minutes
+  caloriesWatch?: number | null;  // watch-reported kcal
 };
 
 export type WeekScheduleItem = {

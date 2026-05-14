@@ -92,8 +92,10 @@ export default function WorkoutSession() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [effortRating, setEffortRating] = useState(0);
   const [sessionNotes, setSessionNotes] = useState("");
-  const [avgHrInput, setAvgHrInput] = useState("");
   const [maxHrInput, setMaxHrInput] = useState("");
+  const [zoneInputs, setZoneInputs] = useState<[string, string, string, string, string]>(["", "", "", "", ""]);
+  const [durationWatchInput, setDurationWatchInput] = useState("");
+  const [caloriesWatchInput, setCaloriesWatchInput] = useState("");
   const [restTimerActive, setRestTimerActive] = useState(false);
   const [swapExerciseId, setSwapExerciseId] = useState<string | null>(null);
   const [swapSearch, setSwapSearch] = useState("");
@@ -855,8 +857,14 @@ export default function WorkoutSession() {
       effortRating: effortRating > 0 ? effortRating : undefined,
       sessionNotes: sessionNotes.trim() || undefined,
       startedAt: startedAtRef.current ?? undefined,
-      avgHr: avgHrInput ? Math.round(Number(avgHrInput)) || null : null,
+      avgHr: null,
       maxHr: maxHrInput ? Math.round(Number(maxHrInput)) || null : null,
+      hrZones: (() => {
+        const z = zoneInputs.map(s => Math.max(0, Math.round(Number(s) || 0))) as [number, number, number, number, number];
+        return z.some(v => v > 0) ? z : null;
+      })(),
+      durationWatch: durationWatchInput ? Math.max(1, Math.round(Number(durationWatchInput))) || null : null,
+      caloriesWatch: caloriesWatchInput ? Math.max(0, Math.round(Number(caloriesWatchInput))) || null : null,
     };
     
     if (!hasCompletedAny) {
@@ -944,41 +952,103 @@ export default function WorkoutSession() {
           <p className="text-[10px] text-muted-foreground text-right">{sessionNotes.length}/500</p>
         </div>
 
-        {/* Heart Rate (from watch) */}
-        <div className="mt-6 w-full max-w-sm space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-left">
-            Heart Rate <span className="text-muted-foreground/60 normal-case font-normal">(optional, from your watch)</span>
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] text-muted-foreground">Avg BPM</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={30}
-                max={240}
-                value={avgHrInput}
-                onChange={(e) => setAvgHrInput(e.target.value)}
-                placeholder="—"
-                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 tabular-nums"
-              />
+        {/* From your watch — Galaxy Watch summary */}
+        {(() => {
+          const elapsedMin = startedAtRef.current
+            ? Math.max(1, Math.ceil((Date.now() - new Date(startedAtRef.current).getTime()) / 60000))
+            : null;
+          const zoneTotal = zoneInputs.reduce((s, v) => s + (Math.max(0, Math.round(Number(v) || 0))), 0);
+          const ZONE_META = [
+            { label: "Z1", name: "Light" },
+            { label: "Z2", name: "Fat-burn" },
+            { label: "Z3", name: "Cardio" },
+            { label: "Z4", name: "Hard" },
+            { label: "Z5", name: "Max" },
+          ];
+          return (
+            <div className="mt-6 w-full max-w-sm space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-left">
+                From Your Watch <span className="text-muted-foreground/60 normal-case font-normal">(optional)</span>
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-muted-foreground">Duration (min)</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={600}
+                    value={durationWatchInput}
+                    onChange={(e) => setDurationWatchInput(e.target.value)}
+                    placeholder={elapsedMin ? String(elapsedMin) : "—"}
+                    className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 tabular-nums"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground">Calories (kcal)</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={3000}
+                    value={caloriesWatchInput}
+                    onChange={(e) => setCaloriesWatchInput(e.target.value)}
+                    placeholder="—"
+                    className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 tabular-nums"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-baseline justify-between">
+                  <p className="text-[10px] text-muted-foreground">Time in HR zones (min)</p>
+                  {zoneTotal > 0 && (
+                    <p className="text-[10px] text-muted-foreground tabular-nums">Total: {zoneTotal} min</p>
+                  )}
+                </div>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {ZONE_META.map((z, i) => (
+                    <div key={z.label} className="flex flex-col items-center">
+                      <span className="text-[10px] font-semibold text-foreground">{z.label}</span>
+                      <span className="text-[9px] text-muted-foreground/70 mb-1">{z.name}</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={300}
+                        value={zoneInputs[i]}
+                        onChange={(e) => {
+                          const next = [...zoneInputs] as [string, string, string, string, string];
+                          next[i] = e.target.value;
+                          setZoneInputs(next);
+                        }}
+                        placeholder="0"
+                        className="w-full rounded-lg border border-border bg-card px-1 py-2 text-center text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/50 tabular-nums"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] text-muted-foreground">Max HR reached (bpm)</label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={30}
+                  max={240}
+                  value={maxHrInput}
+                  onChange={(e) => setMaxHrInput(e.target.value)}
+                  placeholder="—"
+                  className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 tabular-nums"
+                />
+              </div>
+
+              <p className="text-[10px] text-muted-foreground">Leave blank if you didn't wear a watch — strain falls back to the estimate.</p>
             </div>
-            <div>
-              <label className="text-[10px] text-muted-foreground">Max BPM</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={30}
-                max={240}
-                value={maxHrInput}
-                onChange={(e) => setMaxHrInput(e.target.value)}
-                placeholder="—"
-                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 tabular-nums"
-              />
-            </div>
-          </div>
-          <p className="text-[10px] text-muted-foreground">Improves strain accuracy — Whoop-style scoring.</p>
-        </div>
+          );
+        })()}
 
         <div className="flex gap-3 mt-8">
           <button

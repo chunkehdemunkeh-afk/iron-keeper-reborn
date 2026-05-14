@@ -1246,11 +1246,14 @@ export type Database = {
         Row: {
           avg_hr: number | null
           calories_burned: number | null
+          calories_watch: number | null
           created_at: string
           date: string
           duration: number
+          duration_watch: number | null
           effort_rating: number | null
           exercises_completed: number
+          hr_zones: Json | null
           id: string
           max_hr: number | null
           session_notes: string | null
@@ -1263,11 +1266,14 @@ export type Database = {
         Insert: {
           avg_hr?: number | null
           calories_burned?: number | null
+          calories_watch?: number | null
           created_at?: string
           date?: string
           duration?: number
+          duration_watch?: number | null
           effort_rating?: number | null
           exercises_completed?: number
+          hr_zones?: Json | null
           id?: string
           max_hr?: number | null
           session_notes?: string | null
@@ -1280,11 +1286,14 @@ export type Database = {
         Update: {
           avg_hr?: number | null
           calories_burned?: number | null
+          calories_watch?: number | null
           created_at?: string
           date?: string
           duration?: number
+          duration_watch?: number | null
           effort_rating?: number | null
           exercises_completed?: number
+          hr_zones?: Json | null
           id?: string
           max_hr?: number | null
           session_notes?: string | null

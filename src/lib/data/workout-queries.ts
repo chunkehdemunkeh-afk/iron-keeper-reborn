@@ -70,6 +70,33 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
     ? Math.max(1, Math.ceil((Date.now() - new Date(workout.startedAt).getTime()) / 60000))
     : workout.duration;
 
+  // Derive avgHr from zones (using zone-midpoint %HRR × estimated maxHR) when zones present
+  // and the user didn't separately enter avgHr.
+  let derivedAvgHr: number | null = workout.avgHr ?? null;
+  const zones = workout.hrZones ?? null;
+  if (!derivedAvgHr && zones && zones.some(z => z > 0)) {
+    try {
+      const { data: ng } = await supabase
+        .from("nutrition_goals")
+        .select("tdee_age")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const age = (ng as { tdee_age?: number | null } | null)?.tdee_age ?? null;
+      const maxHr = age ? 220 - age : 190;
+      const restingHr = 60;
+      const reserve = Math.max(1, maxHr - restingHr);
+      const midHrr = [0.55, 0.65, 0.75, 0.85, 0.95];
+      const totalMin = zones.reduce((s, z) => s + (z || 0), 0);
+      if (totalMin > 0) {
+        const weightedHrr =
+          zones.reduce((s, z, i) => s + (z || 0) * midHrr[i], 0) / totalMin;
+        derivedAvgHr = Math.round(restingHr + weightedHrr * reserve);
+      }
+    } catch (e) {
+      console.error("Avg HR derivation failed:", e);
+    }
+  }
+
   const { data: historyRow, error: historyError } = await supabase
     .from("workout_history")
     .insert({
@@ -84,8 +111,11 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
       effort_rating: workout.effortRating ?? null,
       session_notes: workout.sessionNotes ?? null,
       calories_burned: caloriesBurned,
-      avg_hr: workout.avgHr ?? null,
+      avg_hr: derivedAvgHr,
       max_hr: workout.maxHr ?? null,
+      hr_zones: zones,
+      duration_watch: workout.durationWatch ?? null,
+      calories_watch: workout.caloriesWatch ?? null,
     } as never)
     .select("id")
     .single();
