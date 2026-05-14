@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, ChevronRight, Edit2, Plus, RefreshCw } from "lucide-react";
+import { Activity, ArrowDown, ArrowUp, ChevronDown, ChevronRight, Edit2, Minus, Plus, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -13,6 +13,8 @@ import {
   stressLevelLabel,
   stressLevelColor,
   strainLabel,
+  computeRecoveryBreakdown,
+  computeUserBaseline,
 } from "@/lib/recovery-scores";
 import { computeMuscleRecovery, statusColor, aggregateMuscleRecovery } from "@/lib/recovery";
 import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
@@ -124,6 +126,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshUsed, setRefreshUsed] = useState(false);
+  const [whyOpen, setWhyOpen] = useState(false);
 
   const refreshKey = user ? STORAGE_KEYS.aiInsightRefreshed(user.id, date) : "";
   useEffect(() => {
@@ -132,7 +135,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   }, [refreshKey]);
 
   const { data: score } = useTodayScore();
-  const { data: biometrics = [] } = useDailyBiometrics(2);
+  const { data: biometrics = [] } = useDailyBiometrics(14, { range: "14d" });
   const { data: sets = [] } = useRecentSets();
   const { data: sleepLogs = [] } = useSleepLogs();
   const { data: workoutHistory = [] } = useWorkoutHistory();
@@ -185,9 +188,41 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
 
   const muscleAgg = useMemo(() => aggregateMuscleRecovery(states), [states]);
 
+  // Top muscle drivers: most-fatigued worked regions with their % drop from fresh.
+  const muscleDrivers = useMemo(() => {
+    return MUSCLE_REGIONS.map((r) => states[r])
+      .filter((s) => s.status !== "rested")
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 3)
+      .map((s) => ({
+        region: s.region,
+        label: MUSCLE_LABELS[s.region],
+        scorePct: Math.round(s.score * 100),
+        drop: Math.round((1 - s.score) * 100),
+        status: s.status,
+      }));
+  }, [states]);
+
   const todayBiometric = biometrics.find((b) => b.date === date);
   const todaySleep = sleepLogs.find((l) => l.date === date);
   const hasData = score?.recoveryScore != null;
+
+  // Readiness drivers: top-3 factors by impact vs neutral.
+  const readinessDrivers = useMemo(() => {
+    if (!hasData) return [];
+    const baseline = computeUserBaseline(biometrics);
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().split("T")[0];
+    const prevStrain = 0; // not loaded here; only used when today is null
+    void yesterday;
+    const breakdown = computeRecoveryBreakdown(
+      todayBiometric ?? null,
+      baseline,
+      todaySleep ?? null,
+      prevStrain,
+    );
+    return breakdown.factors.slice(0, 3);
+  }, [hasData, biometrics, todayBiometric, todaySleep]);
+
 
 
   const recovery = score?.recoveryScore ?? 0;
@@ -301,8 +336,94 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     tooltip="Today's training load. Tonight's session feeds tomorrow's readiness, not today's."
                   />
                 </div>
+
+                {/* Why these scores? — compact live drivers */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); setWhyOpen((v) => !v); }}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setWhyOpen((v) => !v); } }}
+                  className="mt-3 flex items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
+                  Why these scores?
+                  <ChevronDown className={`h-3 w-3 transition-transform ${whyOpen ? "rotate-180" : ""}`} />
+                </div>
+                <AnimatePresence initial={false}>
+                  {whyOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-2 grid grid-cols-2 gap-3">
+                        {/* Readiness drivers */}
+                        <div className="rounded-lg bg-card/40 hairline border p-2.5">
+                          <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
+                            Readiness
+                          </p>
+                          {readinessDrivers.length === 0 ? (
+                            <p className="text-[10px] text-muted-foreground/80">Check in to see drivers</p>
+                          ) : (
+                            <ul className="space-y-1">
+                              {readinessDrivers.map((f) => {
+                                const dirColor =
+                                  f.direction === "positive" ? "hsl(152 70% 50%)" :
+                                  f.direction === "negative" ? "hsl(351 85% 60%)" :
+                                  "hsl(var(--muted-foreground))";
+                                const Icon = f.direction === "positive" ? ArrowUp : f.direction === "negative" ? ArrowDown : Minus;
+                                return (
+                                  <li key={f.key} className="flex items-center justify-between gap-1.5 text-[10px] leading-tight">
+                                    <span className="text-foreground/90 truncate">{f.label}</span>
+                                    <span className="flex items-center gap-0.5 font-semibold tabular-nums" style={{ color: dirColor }}>
+                                      <Icon className="h-2.5 w-2.5" />
+                                      {f.deltaPretty ?? "—"}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </div>
+
+                        {/* Muscle drivers */}
+                        <div className="rounded-lg bg-card/40 hairline border p-2.5">
+                          <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
+                            Muscle
+                          </p>
+                          {muscleDrivers.length === 0 ? (
+                            <p className="text-[10px] text-muted-foreground/80">All muscles fresh</p>
+                          ) : (
+                            <ul className="space-y-1">
+                              {muscleDrivers.map((m) => {
+                                const isFat = m.status === "fatigued";
+                                const color = statusColor(m.status);
+                                return (
+                                  <li key={m.region} className="flex items-center justify-between gap-1.5 text-[10px] leading-tight">
+                                    <span className="flex items-center gap-1 truncate">
+                                      <span className="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
+                                      <span className="text-foreground/90 truncate">{m.label}</span>
+                                    </span>
+                                    <span className="flex items-center gap-0.5 font-semibold tabular-nums" style={{ color }}>
+                                      <ArrowDown className="h-2.5 w-2.5" />
+                                      {isFat ? `−${m.drop}%` : `${m.scorePct}%`}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+                      <p className="mt-2 text-center text-[9px] text-muted-foreground/70 leading-tight">
+                        Live — updates as you log sessions, sleep and check-ins
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <p className="mt-2 text-center text-[9px] text-muted-foreground/80 leading-tight">
-                  Tap any ring for the breakdown
+                  Tap any ring for the full breakdown
                 </p>
 
                 {/* Stress chip */}
