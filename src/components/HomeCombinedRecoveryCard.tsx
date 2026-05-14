@@ -108,6 +108,9 @@ function DialRing({
           {sub}
         </p>
       )}
+      {timing && (
+        <p className="text-[8px] mt-0.5 text-muted-foreground/70 leading-none">{timing}</p>
+      )}
     </div>
   );
 }
