@@ -336,8 +336,94 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     tooltip="Today's training load. Tonight's session feeds tomorrow's readiness, not today's."
                   />
                 </div>
+
+                {/* Why these scores? — compact live drivers */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); setWhyOpen((v) => !v); }}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setWhyOpen((v) => !v); } }}
+                  className="mt-3 flex items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
+                  Why these scores?
+                  <ChevronDown className={`h-3 w-3 transition-transform ${whyOpen ? "rotate-180" : ""}`} />
+                </div>
+                <AnimatePresence initial={false}>
+                  {whyOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-2 grid grid-cols-2 gap-3">
+                        {/* Readiness drivers */}
+                        <div className="rounded-lg bg-card/40 hairline border p-2.5">
+                          <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
+                            Readiness
+                          </p>
+                          {readinessDrivers.length === 0 ? (
+                            <p className="text-[10px] text-muted-foreground/80">Check in to see drivers</p>
+                          ) : (
+                            <ul className="space-y-1">
+                              {readinessDrivers.map((f) => {
+                                const dirColor =
+                                  f.direction === "positive" ? "hsl(152 70% 50%)" :
+                                  f.direction === "negative" ? "hsl(351 85% 60%)" :
+                                  "hsl(var(--muted-foreground))";
+                                const Icon = f.direction === "positive" ? ArrowUp : f.direction === "negative" ? ArrowDown : Minus;
+                                return (
+                                  <li key={f.key} className="flex items-center justify-between gap-1.5 text-[10px] leading-tight">
+                                    <span className="text-foreground/90 truncate">{f.label}</span>
+                                    <span className="flex items-center gap-0.5 font-semibold tabular-nums" style={{ color: dirColor }}>
+                                      <Icon className="h-2.5 w-2.5" />
+                                      {f.deltaPretty ?? "—"}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </div>
+
+                        {/* Muscle drivers */}
+                        <div className="rounded-lg bg-card/40 hairline border p-2.5">
+                          <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
+                            Muscle
+                          </p>
+                          {muscleDrivers.length === 0 ? (
+                            <p className="text-[10px] text-muted-foreground/80">All muscles fresh</p>
+                          ) : (
+                            <ul className="space-y-1">
+                              {muscleDrivers.map((m) => {
+                                const isFat = m.status === "fatigued";
+                                const color = statusColor(m.status);
+                                return (
+                                  <li key={m.region} className="flex items-center justify-between gap-1.5 text-[10px] leading-tight">
+                                    <span className="flex items-center gap-1 truncate">
+                                      <span className="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
+                                      <span className="text-foreground/90 truncate">{m.label}</span>
+                                    </span>
+                                    <span className="flex items-center gap-0.5 font-semibold tabular-nums" style={{ color }}>
+                                      <ArrowDown className="h-2.5 w-2.5" />
+                                      {isFat ? `−${m.drop}%` : `${m.scorePct}%`}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+                      <p className="mt-2 text-center text-[9px] text-muted-foreground/70 leading-tight">
+                        Live — updates as you log sessions, sleep and check-ins
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <p className="mt-2 text-center text-[9px] text-muted-foreground/80 leading-tight">
-                  Tap any ring for the breakdown
+                  Tap any ring for the full breakdown
                 </p>
 
                 {/* Stress chip */}
