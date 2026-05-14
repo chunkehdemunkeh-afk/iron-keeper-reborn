@@ -4,10 +4,19 @@ import {
   fetchDailyBiometrics,
   fetchDailyScores,
   fetchSleepLogs,
+  fetchWorkoutHistory,
   updateDailyScoreAIInsight,
   type AIInsight,
 } from "@/lib/cloud-data";
 import type { DailyBiometric, SleepLogFull } from "@/lib/recovery-scores";
+
+export interface TrainingTodayEntry {
+  name: string;
+  durationMin: number;
+  totalSets: number;
+  totalVolumeKg: number;
+  caloriesBurned: number | null;
+}
 
 interface InsightInputs {
   date: string;
@@ -16,6 +25,7 @@ interface InsightInputs {
   sleepFull: SleepLogFull | null;
   prevStrain: number;
   spo2Pct: number;
+  trainingToday?: TrainingTodayEntry[];
 }
 
 /** Fire-and-forget AI insight call; persists result to daily_scores. */
@@ -24,7 +34,7 @@ export async function generateAIInsight(
   queryClient: QueryClient,
 ): Promise<boolean> {
   try {
-    const { date, scores, biometricHistory, sleepFull, prevStrain, spo2Pct } = inputs;
+    const { date, scores, biometricHistory, sleepFull, prevStrain, spo2Pct, trainingToday } = inputs;
     const stress7d = biometricHistory.slice(0, 7).map((b) => b.samsungStressScore).reverse();
     const rhr7d    = biometricHistory.slice(0, 7).map((b) => b.restingHr).reverse();
 
@@ -42,6 +52,7 @@ export async function generateAIInsight(
       },
       context: {
         next_workout: null,
+        training_today: trainingToday ?? [],
         sleep_hours: sleepFull?.hours ?? null,
         sleep_stages: sleepFull
           ? {
@@ -99,11 +110,26 @@ export async function regenerateAIInsightFromSaved(
   date: string,
   queryClient: QueryClient,
 ): Promise<boolean> {
-  const [biometrics, sleepLogs, scores] = await Promise.all([
+  const [biometrics, sleepLogs, scores, history] = await Promise.all([
     fetchDailyBiometrics(28),
     fetchSleepLogs(7),
     fetchDailyScores(2),
+    fetchWorkoutHistory(),
   ]);
+
+  const trainingToday: TrainingTodayEntry[] = history
+    .filter((w) => w.date === date)
+    .map((w) => {
+      const working = w.sets.filter((s) => s.setType !== "warmup");
+      const totalVolumeKg = working.reduce((acc, s) => acc + s.weight * s.reps, 0);
+      return {
+        name: w.workoutName,
+        durationMin: Math.round(w.duration / 60),
+        totalSets: working.length,
+        totalVolumeKg: Math.round(totalVolumeKg),
+        caloriesBurned: w.caloriesBurned ?? null,
+      };
+    });
 
   const todayScore = scores.find((s) => s.date === date);
   if (!todayScore) {
@@ -154,6 +180,7 @@ export async function regenerateAIInsightFromSaved(
       sleepFull,
       prevStrain,
       spo2Pct: todayBio?.spo2Pct ?? 97,
+      trainingToday,
     },
     queryClient,
   );

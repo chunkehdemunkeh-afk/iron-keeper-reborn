@@ -20,6 +20,13 @@ interface BiometricPayload {
   };
   context: {
     next_workout: string | null;
+    training_today?: Array<{
+      name: string;
+      durationMin: number;
+      totalSets: number;
+      totalVolumeKg: number;
+      caloriesBurned: number | null;
+    }>;
     sleep_hours: number | null;
     sleep_stages: {
       deep: number | null;
@@ -84,6 +91,12 @@ serve(async (req) => {
       ? `deep ${context.sleep_stages.deep}min, REM ${context.sleep_stages.rem}min, light ${context.sleep_stages.light}min, awake ${context.sleep_stages.awake}min`
       : "stages not recorded";
 
+    const trainingTodayText = (context.training_today && context.training_today.length > 0)
+      ? context.training_today
+          .map((w) => `${w.name} — ${w.totalSets} working sets, ${w.totalVolumeKg}kg total volume, ${w.durationMin}min${w.caloriesBurned ? `, ${w.caloriesBurned} kcal` : ""}`)
+          .join("; ")
+      : "no training logged yet today";
+
     const userMessage = `
 Today's biometric data for an athlete using Iron Keeper fitness app:
 
@@ -96,7 +109,7 @@ SCORES:
 TODAY'S CONTEXT:
 - Sleep: ${context.sleep_hours ? `${context.sleep_hours}h` : "not logged"} — ${sleepStagesText}
 - SpO2: ${context.spo2 ? `${context.spo2}%` : "not recorded"}
-- Next planned workout: ${context.next_workout ?? "rest day"}
+- Training already completed today: ${trainingTodayText}
 - Yesterday's strain: ${context.yesterday_strain ? `${context.yesterday_strain.toFixed(1)}/21` : "not recorded"}
 
 7-DAY TRENDS:
@@ -108,7 +121,7 @@ Provide a JSON response with exactly these 5 fields (no markdown, just JSON):
 {
   "headline": "Short punchy 4-8 word summary of today's status",
   "recovery_summary": "2-3 sentences on what the recovery/stress numbers mean today. Reference the user's own trends where possible. Be specific — mention actual numbers.",
-  "training_recommendation": "2-3 sentences on how to approach today's training given these scores. If next_workout is provided, reference it specifically. Give clear intensity guidance.",
+  "training_recommendation": "2-3 sentences on training. If a session was already completed today, acknowledge it specifically (reference the workout name and volume), comment on whether the load matched recovery, and advise on the rest of the day (cooldown, mobility, nutrition, whether more is wise). If no training was done yet, give intensity guidance for a session today.",
   "sleep_analysis": "1-2 sentences on last night's sleep quality and what it means for today. If stage data is available, reference it. If sleep was poor, explain the impact.",
   "week_ahead": "1-2 sentences looking at the trend and giving forward-looking guidance. Mention if a deload or easy day might be needed soon."
 }
