@@ -1,0 +1,1 @@
+UPDATE public.daily_scores SET strain_score = 10.4, updated_at = now() WHERE user_id='52f085de-e5cf-439f-9a72-1924d6941e13' AND date='2026-05-14';
