@@ -188,9 +188,41 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
 
   const muscleAgg = useMemo(() => aggregateMuscleRecovery(states), [states]);
 
+  // Top muscle drivers: most-fatigued worked regions with their % drop from fresh.
+  const muscleDrivers = useMemo(() => {
+    return MUSCLE_REGIONS.map((r) => states[r])
+      .filter((s) => s.status !== "rested")
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 3)
+      .map((s) => ({
+        region: s.region,
+        label: MUSCLE_LABELS[s.region],
+        scorePct: Math.round(s.score * 100),
+        drop: Math.round((1 - s.score) * 100),
+        status: s.status,
+      }));
+  }, [states]);
+
   const todayBiometric = biometrics.find((b) => b.date === date);
   const todaySleep = sleepLogs.find((l) => l.date === date);
   const hasData = score?.recoveryScore != null;
+
+  // Readiness drivers: top-3 factors by impact vs neutral.
+  const readinessDrivers = useMemo(() => {
+    if (!hasData) return [];
+    const baseline = computeUserBaseline(biometrics);
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().split("T")[0];
+    const prevStrain = 0; // not loaded here; only used when today is null
+    void yesterday;
+    const breakdown = computeRecoveryBreakdown(
+      todayBiometric ?? null,
+      baseline,
+      todaySleep ?? null,
+      prevStrain,
+    );
+    return breakdown.factors.slice(0, 3);
+  }, [hasData, biometrics, todayBiometric, todaySleep]);
+
 
 
   const recovery = score?.recoveryScore ?? 0;
