@@ -123,7 +123,15 @@ export default function RecoveryHero({ date }: Props) {
 
   const { data: score } = useTodayScore();
   const { data: biometrics = [] } = useDailyBiometrics(2);
-  const { data: sleepLogs = [] } = useSleepLogs(2);
+  const { data: sleepLogs = [] } = useSleepLogs(14);
+  const { data: sets = [] } = useRecentSets();
+  const splitId = user ? getUserPreferences(user.id)?.splitId : null;
+  const settings = useRecoverySettings(user?.id);
+
+  const muscle = useMemo(() => {
+    const states = computeMuscleRecovery(sets, sleepLogs, splitId, new Date(), settings);
+    return aggregateMuscleRecovery(states);
+  }, [sets, sleepLogs, splitId, settings]);
 
   const todayBiometric = biometrics.find((b) => b.date === date);
   const todaySleep = sleepLogs.find((l) => l.date === date);
@@ -132,7 +140,6 @@ export default function RecoveryHero({ date }: Props) {
   const recovery = score?.recoveryScore ?? 0;
   const strain = score?.strainScore ?? 0;
   const stress = score?.stressLevel ?? 0;
-  const sleep = score?.sleepPerformance ?? 0;
 
   const ringColor = hasData ? recoveryColor(recovery) : "hsl(var(--muted))";
 
