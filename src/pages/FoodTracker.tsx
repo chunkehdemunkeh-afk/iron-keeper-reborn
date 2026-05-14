@@ -21,6 +21,8 @@ import { SkeletonList } from "@/components/ui/loading-state";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
