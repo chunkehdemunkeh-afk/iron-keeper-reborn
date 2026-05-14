@@ -10,4 +10,5 @@ export const STORAGE_KEYS = {
   autoSaveSession: (workoutId: string) => `ik-session-autosave-${workoutId}`,
   statsBarVolumeWindow: (userId: string) => `ik-statsbar-volwin-${userId}`,
   aiInsightRefreshed: (userId: string, date: string) => `ik-ai-refresh-v3-${userId}-${date}`,
+  dialBaseline: (userId: string, date: string) => `ik-dial-baseline-${userId}-${date}`,
 } as const;
