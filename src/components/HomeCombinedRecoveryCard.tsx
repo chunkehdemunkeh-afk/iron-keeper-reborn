@@ -55,6 +55,7 @@ function DialRing({
   sub,
   subMuted,
   tooltip,
+  timing,
 }: {
   label: string;
   value: number;
@@ -64,6 +65,7 @@ function DialRing({
   sub?: string;
   subMuted?: boolean;
   tooltip?: string;
+  timing?: string;
 }) {
   const size = 84;
   const r = 34;
