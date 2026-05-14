@@ -162,7 +162,7 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
   }
 
   // Refresh today's strain score so the home/recovery cards reflect this workout.
-  if (workout.date === new Date().toISOString().split("T")[0]) {
+  if (String(workout.date).slice(0, 10) === new Date().toISOString().split("T")[0]) {
     try {
       const { recomputeTodayStrain } = await import("./biometric-queries");
       await recomputeTodayStrain();
