@@ -224,6 +224,35 @@ export function computeMuscleRecovery(
   return result;
 }
 
+/**
+ * Aggregate per-muscle states into a single 0–100 muscle recovery score
+ * suitable for a top-level dial. Worked muscles only (rested ones are
+ * excluded so localized fatigue isn't masked). Fatigued muscles are
+ * weighted ~2× so a hard leg session visibly drags the number down.
+ */
+export function aggregateMuscleRecovery(
+  states: Record<MuscleRegion, MuscleState>,
+): { score: number; status: RecoveryStatus } {
+  const worked = MUSCLE_REGIONS.map((r) => states[r]).filter((s) => s.status !== "rested");
+  if (worked.length === 0) {
+    return { score: 100, status: "recovered" };
+  }
+  let weightedSum = 0;
+  let weightTotal = 0;
+  for (const s of worked) {
+    const w = s.status === "fatigued" ? 2 : 1;
+    weightedSum += s.score * w;
+    weightTotal += w;
+  }
+  const avg = weightedSum / weightTotal; // 0..1
+  const score = Math.round(avg * 100);
+  let status: RecoveryStatus;
+  if (avg < 0.5) status = "fatigued";
+  else if (avg < 0.85) status = "workable";
+  else status = "recovered";
+  return { score, status };
+}
+
 export function statusColor(status: RecoveryStatus): string {
   switch (status) {
     case "fatigued": return "hsl(351 85% 60%)";    // rose-500
