@@ -211,7 +211,7 @@ export async function recomputeTodayStrain(): Promise<void> {
   const [workoutsRes, activitiesRes, existingRes, biometricRes, profileRes] = await Promise.all([
     supabase
       .from("workout_history")
-      .select("calories_burned, effort_rating, duration, avg_hr, max_hr")
+      .select("calories_burned, calories_watch, effort_rating, duration, duration_watch, avg_hr, max_hr, hr_zones")
       .eq("user_id", user.id)
       .eq("date", today),
     supabase
@@ -241,15 +241,19 @@ export async function recomputeTodayStrain(): Promise<void> {
   const workouts = workoutsRes.data ?? [];
   const activities = activitiesRes.data ?? [];
 
-  const workoutCalories = workouts.reduce((s: number, w: any) => s + (w.calories_burned ?? 0), 0);
+  // Prefer watch-reported calories per workout when present
+  const workoutCalories = workouts.reduce(
+    (s: number, w: any) => s + (w.calories_watch ?? w.calories_burned ?? 0),
+    0,
+  );
   const activityCalories = activities.reduce((s: number, a: any) => s + (a.calories_burned ?? 0), 0);
   const efforts = workouts.map((w: any) => w.effort_rating).filter((e: any): e is number => typeof e === "number");
   const avgEffort = efforts.length ? efforts.reduce((s, e) => s + e, 0) / efforts.length : null;
 
-  // Aggregate HR weighted by duration
-  const totalDur = workouts.reduce((s: number, w: any) => s + (w.duration ?? 0), 0);
+  // Aggregate HR weighted by duration (prefer watch duration when present)
+  const totalDur = workouts.reduce((s: number, w: any) => s + (w.duration_watch ?? w.duration ?? 0), 0);
   const hrWeightedSum = workouts.reduce(
-    (s: number, w: any) => s + ((w.avg_hr ?? 0) * (w.duration ?? 0)),
+    (s: number, w: any) => s + ((w.avg_hr ?? 0) * (w.duration_watch ?? w.duration ?? 0)),
     0,
   );
   const avgHr = totalDur > 0 && hrWeightedSum > 0 ? hrWeightedSum / totalDur : null;
@@ -257,6 +261,17 @@ export async function recomputeTodayStrain(): Promise<void> {
     (m: number | null, w: any) => (w.max_hr && (m === null || w.max_hr > m) ? w.max_hr : m),
     null as number | null,
   );
+
+  // Sum HR zones element-wise across the day
+  const zoneSum: [number, number, number, number, number] = [0, 0, 0, 0, 0];
+  let anyZones = false;
+  for (const w of workouts as any[]) {
+    const z = Array.isArray(w.hr_zones) ? w.hr_zones : null;
+    if (z && z.length === 5) {
+      for (let i = 0; i < 5; i++) zoneSum[i] += Number(z[i]) || 0;
+      if (z.some((v: any) => Number(v) > 0)) anyZones = true;
+    }
+  }
 
   const restingHr = (biometricRes.data as any)?.resting_hr ?? null;
   const age = (profileRes.data as any)?.tdee_age ?? null;
@@ -268,6 +283,7 @@ export async function recomputeTodayStrain(): Promise<void> {
     maxHr,
     restingHr,
     age,
+    hrZones: anyZones ? zoneSum : null,
   });
 
   if (existingRes.data) {
