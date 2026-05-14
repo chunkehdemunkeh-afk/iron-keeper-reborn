@@ -149,7 +149,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
             name: w.workoutName,
             sets: working.length,
             volumeKg: Math.round(volumeKg),
-            durationMin: Math.round(w.duration / 60),
+            durationMin: Math.round(w.duration),
           };
         }),
     [workoutHistory, date],
