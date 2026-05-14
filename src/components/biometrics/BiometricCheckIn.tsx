@@ -14,6 +14,7 @@ import {
   upsertSleepLog,
   fetchDailyBiometrics,
   fetchDailyScores,
+  fetchWorkoutHistory,
   fetchSleepLogs,
 } from "@/lib/cloud-data";
 import { supabase } from "@/integrations/supabase/client";
