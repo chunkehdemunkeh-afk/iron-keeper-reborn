@@ -91,6 +91,12 @@ serve(async (req) => {
       ? `deep ${context.sleep_stages.deep}min, REM ${context.sleep_stages.rem}min, light ${context.sleep_stages.light}min, awake ${context.sleep_stages.awake}min`
       : "stages not recorded";
 
+    const trainingTodayText = (context.training_today && context.training_today.length > 0)
+      ? context.training_today
+          .map((w) => `${w.name} — ${w.totalSets} working sets, ${w.totalVolumeKg}kg total volume, ${w.durationMin}min${w.caloriesBurned ? `, ${w.caloriesBurned} kcal` : ""}`)
+          .join("; ")
+      : "no training logged yet today";
+
     const userMessage = `
 Today's biometric data for an athlete using Iron Keeper fitness app:
 
@@ -103,7 +109,7 @@ SCORES:
 TODAY'S CONTEXT:
 - Sleep: ${context.sleep_hours ? `${context.sleep_hours}h` : "not logged"} — ${sleepStagesText}
 - SpO2: ${context.spo2 ? `${context.spo2}%` : "not recorded"}
-- Next planned workout: ${context.next_workout ?? "rest day"}
+- Training already completed today: ${trainingTodayText}
 - Yesterday's strain: ${context.yesterday_strain ? `${context.yesterday_strain.toFixed(1)}/21` : "not recorded"}
 
 7-DAY TRENDS:
