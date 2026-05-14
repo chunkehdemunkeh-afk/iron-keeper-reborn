@@ -212,12 +212,12 @@ export default function RecoveryHero({ date }: Props) {
                 color={ringColor}
               />
               <Dial
-                label="Sleep"
-                value={Math.round(sleep)}
+                label="Muscle"
+                value={muscle.score}
                 suffix="%"
-                pct={sleep}
-                color="hsl(217 91% 60%)"
-                sub={sleep >= 85 ? "Optimal" : sleep >= 70 ? "Sufficient" : "Low"}
+                pct={muscle.score}
+                color={statusColor(muscle.status)}
+                sub={muscle.status === "fatigued" ? "Fatigued" : muscle.status === "workable" ? "Workable" : "Fresh"}
               />
               <Dial
                 label="Strain"
