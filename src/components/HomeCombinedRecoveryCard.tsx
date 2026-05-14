@@ -126,6 +126,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshUsed, setRefreshUsed] = useState(false);
+  const [whyOpen, setWhyOpen] = useState(false);
 
   const refreshKey = user ? STORAGE_KEYS.aiInsightRefreshed(user.id, date) : "";
   useEffect(() => {
