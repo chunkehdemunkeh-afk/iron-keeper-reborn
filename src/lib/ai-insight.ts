@@ -118,7 +118,7 @@ export async function regenerateAIInsightFromSaved(
   ]);
 
   const trainingToday: TrainingTodayEntry[] = history
-    .filter((w) => w.date === date)
+    .filter((w) => String(w.date).slice(0, 10) === date)
     .map((w) => {
       const working = w.sets.filter((s) => s.setType !== "warmup");
       const totalVolumeKg = working.reduce((acc, s) => acc + s.weight * s.reps, 0);
