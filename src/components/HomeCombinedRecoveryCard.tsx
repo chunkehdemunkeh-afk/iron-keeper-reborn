@@ -59,6 +59,8 @@ function DialRing({
   subMuted,
   tooltip,
   timing,
+  delta,
+  deltaSuffix,
 }: {
   label: string;
   value: number;
@@ -69,12 +71,22 @@ function DialRing({
   subMuted?: boolean;
   tooltip?: string;
   timing?: string;
+  delta?: number;
+  deltaSuffix?: string;
 }) {
   const size = 84;
   const r = 34;
   const stroke = 6;
   const c = 2 * Math.PI * r;
   const clamped = Math.max(0, Math.min(100, pct));
+  const showDelta = typeof delta === "number" && Math.abs(delta) >= 0.1;
+  const deltaColor =
+    !showDelta ? "hsl(var(--muted-foreground))"
+    : delta! > 0 ? "hsl(152 70% 45%)"
+    : "hsl(351 85% 60%)";
+  const deltaText = showDelta
+    ? `${delta! > 0 ? "+" : "−"}${Math.abs(delta!).toFixed(deltaSuffix === "%" ? 0 : 1)}${deltaSuffix ?? ""}`
+    : null;
   return (
     <div className="flex flex-col items-center" title={tooltip}>
       <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
@@ -105,6 +117,14 @@ function DialRing({
           </span>
           {suffix && <span className="text-[9px] text-muted-foreground leading-none mt-0.5">{suffix}</span>}
         </div>
+        {deltaText && (
+          <span
+            className="absolute -top-1 -right-1 px-1 py-px rounded-full text-[8px] font-bold leading-none tabular-nums hairline border"
+            style={{ color: deltaColor, background: "hsl(var(--card))" }}
+          >
+            {deltaText}
+          </span>
+        )}
       </div>
       {sub && (
         <p className="text-[9px] mt-1 font-semibold" style={{ color: subMuted ? "hsl(var(--muted-foreground))" : color }}>
