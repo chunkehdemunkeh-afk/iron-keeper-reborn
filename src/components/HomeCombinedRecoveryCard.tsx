@@ -22,6 +22,7 @@ import { useTodayScore } from "@/hooks/queries/useDailyScores";
 import { useDailyBiometrics } from "@/hooks/queries/useDailyBiometrics";
 import { useRecentSets } from "@/hooks/queries/useRecentSets";
 import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
+import { useWorkoutHistory } from "@/hooks/queries/useWorkoutHistory";
 import BodyDiagram from "@/components/recovery/BodyDiagram";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import BiometricCheckIn from "@/components/biometrics/BiometricCheckIn";
