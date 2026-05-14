@@ -12,6 +12,14 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.6.104",
+    date: "2026-05-14",
+    title: "Updates & Fixes",
+    changes: [
+      "Fix gamification gaps: wire missing XP sources, season RP, duels identity, quests seed",
+    ],
+  },
+  {
     version: "1.6.103",
     date: "2026-05-12",
     title: "Updates & Fixes",
