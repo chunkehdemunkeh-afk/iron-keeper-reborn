@@ -151,7 +151,7 @@ export default function RecoveryHero({ date }: Props) {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  Today's Recovery
+                  Today's Readiness
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {new Date(date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
