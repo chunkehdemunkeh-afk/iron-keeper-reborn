@@ -319,6 +319,29 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     <p className="text-[10px] text-primary mt-1">Full analysis →</p>
                   </div>
                 )}
+
+                {/* Detected workouts feeding the insight */}
+                <div className="mt-3 pt-3 border-t border-border/30">
+                  <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Detected today · 00:00–now
+                  </p>
+                  {todayWorkouts.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground/80 mt-1">
+                      No sessions logged yet today
+                    </p>
+                  ) : (
+                    <ul className="mt-1 space-y-0.5">
+                      {todayWorkouts.map((w) => (
+                        <li key={w.id} className="text-[11px] text-foreground/90 leading-snug">
+                          <span className="font-semibold">{w.name}</span>
+                          <span className="text-muted-foreground">
+                            {" · "}{w.sets} sets · {w.volumeKg.toLocaleString()} kg · {w.durationMin} min
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </button>
 
               {/* Manual refresh — once per day */}
