@@ -243,6 +243,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     pct={recovery}
                     color={ringColor}
                     sub={recoveryLabel(recovery)}
+                    timing={recoveryTiming}
                     tooltip="Based on this morning's check-in (HRV, RHR, sleep, stress) plus yesterday's training load."
                   />
                   <DialRing
@@ -252,6 +253,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     pct={sleep}
                     color="hsl(217 91% 60%)"
                     sub={sleep >= 85 ? "Optimal" : sleep >= 70 ? "Sufficient" : "Low"}
+                    timing="last night"
                     tooltip="Last night's sleep: duration, efficiency and stage breakdown vs your need."
                   />
                   <DialRing
@@ -262,11 +264,12 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     color={strain > 0 ? "hsl(38 92% 55%)" : "hsl(var(--muted-foreground))"}
                     sub={strain > 0 ? strainLabel(strain) : "No training yet"}
                     subMuted={strain === 0}
-                    tooltip="Today's training load only — resets at midnight. Yesterday's session feeds into Recovery, not Strain."
+                    timing={strain > 0 ? "today · live" : "today"}
+                    tooltip="Today's training load. Tonight's session feeds tomorrow's recovery, not today's."
                   />
                 </div>
                 <p className="mt-2 text-center text-[9px] text-muted-foreground/80 leading-tight">
-                  Recovery & Sleep use last night · Strain resets daily — tap a ring for details
+                  Tap any ring for the breakdown
                 </p>
 
                 {/* Stress chip */}
@@ -288,31 +291,34 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
               </button>
 
               {/* Manual refresh — once per day */}
-              <div className="mt-2 flex justify-end">
-                <button
-                  type="button"
-                  disabled={refreshing || refreshUsed}
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    if (refreshing || refreshUsed) return;
-                    setRefreshing(true);
-                    const ok = await regenerateAIInsightFromSaved(date, queryClient);
-                    setRefreshing(false);
-                    if (ok) {
-                      localStorage.setItem(refreshKey, "1");
-                      setRefreshUsed(true);
-                      toast.success("Insight refreshed");
-                    } else {
-                      toast.error("Couldn't refresh insight");
-                    }
-                  }}
-                  className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={refreshUsed ? "Already refreshed today — resets tomorrow" : "Re-generate AI feedback using your latest data"}
-                >
-                  <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
-                  {refreshUsed ? "Refreshed today" : refreshing ? "Refreshing…" : "Refresh insight"}
-                </button>
-              </div>
+              <button
+                type="button"
+                disabled={refreshing || refreshUsed}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (refreshing || refreshUsed) return;
+                  setRefreshing(true);
+                  const ok = await regenerateAIInsightFromSaved(date, queryClient);
+                  setRefreshing(false);
+                  if (ok) {
+                    localStorage.setItem(refreshKey, "1");
+                    setRefreshUsed(true);
+                    toast.success("Insight refreshed");
+                  } else {
+                    toast.error("Couldn't refresh insight");
+                  }
+                }}
+                className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl bg-primary/10 hairline border py-2 text-xs font-semibold text-primary disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-transform"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                {refreshUsed
+                  ? "Refreshed today — resets tomorrow"
+                  : refreshing
+                  ? "Refreshing…"
+                  : score?.aiInsight?.headline
+                  ? "Refresh insight  ·  1 / day"
+                  : "Generate insight  ·  1 / day"}
+              </button>
 
               <div className="border-t border-border/40 my-3" />
             </motion.div>
