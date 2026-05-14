@@ -151,7 +151,7 @@ export default function RecoveryHero({ date }: Props) {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  Today's Recovery
+                  Today's Readiness
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {new Date(date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
@@ -171,7 +171,7 @@ export default function RecoveryHero({ date }: Props) {
               className="w-full flex flex-col items-center active:opacity-90 transition-opacity"
             >
               <Dial
-                label="Recovery"
+                label="Readiness"
                 value={Math.round(recovery)}
                 suffix="%"
                 pct={recovery}
@@ -193,7 +193,7 @@ export default function RecoveryHero({ date }: Props) {
             {/* 3-up dial row */}
             <div className="grid grid-cols-3 gap-2 mt-5 pt-4 border-t hairline">
               <Dial
-                label="Recovery"
+                label="Readiness"
                 value={Math.round(recovery)}
                 suffix="%"
                 pct={recovery}

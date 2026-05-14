@@ -14,7 +14,7 @@ import {
   stressLevelColor,
   strainLabel,
 } from "@/lib/recovery-scores";
-import { computeMuscleRecovery, statusColor } from "@/lib/recovery";
+import { computeMuscleRecovery, statusColor, aggregateMuscleRecovery } from "@/lib/recovery";
 import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
 import { getUserPreferences } from "@/lib/user-preferences";
 import { useRecoverySettings } from "@/hooks/useRecoverySettings";
@@ -183,6 +183,8 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
     [states],
   );
 
+  const muscleAgg = useMemo(() => aggregateMuscleRecovery(states), [states]);
+
   const todayBiometric = biometrics.find((b) => b.date === date);
   const todaySleep = sleepLogs.find((l) => l.date === date);
   const hasData = score?.recoveryScore != null;
@@ -191,7 +193,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   const recovery = score?.recoveryScore ?? 0;
   const strain   = score?.strainScore   ?? 0;
   const stress   = score?.stressLevel   ?? 0;
-  const sleep    = score?.sleepPerformance ?? 0;
+  void score?.sleepPerformance; // sleep is surfaced inside the breakdown sheet now
   const ringColor = hasData ? recoveryColor(recovery) : "hsl(var(--muted))";
 
   const recoveryTiming = (() => {
@@ -268,24 +270,24 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
               >
                 <div className="grid grid-cols-3 gap-2">
                   <DialRing
-                    label="Recovery"
+                    label="Readiness"
                     value={Math.round(recovery)}
                     suffix="%"
                     pct={recovery}
                     color={ringColor}
                     sub={recoveryLabel(recovery)}
                     timing={recoveryTiming}
-                    tooltip="Based on this morning's check-in (HRV, RHR, sleep, stress) plus yesterday's training load."
+                    tooltip="Morning systemic readiness from sleep, HRV, RHR and stress. Stable through the day — only updates on a new check-in."
                   />
                   <DialRing
-                    label="Sleep"
-                    value={Math.round(sleep)}
+                    label="Muscle"
+                    value={muscleAgg.score}
                     suffix="%"
-                    pct={sleep}
-                    color="hsl(217 91% 60%)"
-                    sub={sleep >= 85 ? "Optimal" : sleep >= 70 ? "Sufficient" : "Low"}
-                    timing="last night"
-                    tooltip="Last night's sleep: duration, efficiency and stage breakdown vs your need."
+                    pct={muscleAgg.score}
+                    color={statusColor(muscleAgg.status)}
+                    sub={muscleAgg.status === "fatigued" ? "Fatigued" : muscleAgg.status === "workable" ? "Workable" : "Recovered"}
+                    timing="live"
+                    tooltip="Live muscle recovery from worked groups. Drops the moment a session is logged."
                   />
                   <DialRing
                     label="Strain"
@@ -296,7 +298,7 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
                     sub={strain > 0 ? strainLabel(strain) : "No training yet"}
                     subMuted={strain === 0}
                     timing={strain > 0 ? "today · live" : "today"}
-                    tooltip="Today's training load. Tonight's session feeds tomorrow's recovery, not today's."
+                    tooltip="Today's training load. Tonight's session feeds tomorrow's readiness, not today's."
                   />
                 </div>
                 <p className="mt-2 text-center text-[9px] text-muted-foreground/80 leading-tight">

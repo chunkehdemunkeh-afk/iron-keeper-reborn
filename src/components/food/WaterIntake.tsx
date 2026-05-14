@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { awardXpAndNotify } from "@/lib/gamification/notify";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 interface Props {
   date: string;
@@ -18,6 +20,12 @@ export default function WaterIntake({ date }: Props) {
   const [entryIds, setEntryIds] = useState<string[]>([]);
   const [goalMl, setGoalMl] = useState(2500);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const invalidateLive = useCallback(() => {
+    if (!user) return;
+    queryClient.invalidateQueries({ queryKey: queryKeys.waterIntakeDates(user.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.dailyScores(user.id) });
+  }, [queryClient, user]);
 
   // Fetch user's water goal
   useEffect(() => {
@@ -63,6 +71,7 @@ export default function WaterIntake({ date }: Props) {
     if (totalMl < goalMl && newTotal >= goalMl) {
       void awardXpAndNotify({ source: "water_goal" });
     }
+    invalidateLive();
   };
 
   const removeGlass = async () => {
@@ -71,6 +80,7 @@ export default function WaterIntake({ date }: Props) {
     await supabase.from("water_intake").delete().eq("id", lastId);
     setEntryIds((prev) => prev.slice(0, -1));
     setTotalMl((prev) => Math.max(0, prev - GLASS_ML));
+    invalidateLive();
   };
 
   const glasses = Math.round(totalMl / GLASS_ML);
