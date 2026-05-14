@@ -857,8 +857,14 @@ export default function WorkoutSession() {
       effortRating: effortRating > 0 ? effortRating : undefined,
       sessionNotes: sessionNotes.trim() || undefined,
       startedAt: startedAtRef.current ?? undefined,
-      avgHr: avgHrInput ? Math.round(Number(avgHrInput)) || null : null,
+      avgHr: null,
       maxHr: maxHrInput ? Math.round(Number(maxHrInput)) || null : null,
+      hrZones: (() => {
+        const z = zoneInputs.map(s => Math.max(0, Math.round(Number(s) || 0))) as [number, number, number, number, number];
+        return z.some(v => v > 0) ? z : null;
+      })(),
+      durationWatch: durationWatchInput ? Math.max(1, Math.round(Number(durationWatchInput))) || null : null,
+      caloriesWatch: caloriesWatchInput ? Math.max(0, Math.round(Number(caloriesWatchInput))) || null : null,
     };
     
     if (!hasCompletedAny) {
