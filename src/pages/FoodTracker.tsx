@@ -113,6 +113,7 @@ export default function FoodTracker() {
   const [waterGoalMl, setWaterGoalMl] = useState(2500);
   const [burnedKcal, setBurnedKcal] = useState(0);
 
+  const queryClient = useQueryClient();
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -147,7 +148,10 @@ export default function FoodTracker() {
     setWaterMl(water.reduce((s: number, e: any) => s + e.amount_ml, 0));
     setBurnedKcal(burn.totalKcal || 0);
     setLoading(false);
-  }, [user, date]);
+    // Recompute downstream caches (recovery card, AI insight detection)
+    queryClient.invalidateQueries({ queryKey: queryKeys.foodLogDates(user.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.dailyScores(user.id) });
+  }, [user, date, queryClient]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
