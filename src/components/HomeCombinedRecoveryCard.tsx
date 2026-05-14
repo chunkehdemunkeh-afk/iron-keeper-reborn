@@ -13,6 +13,8 @@ import {
   stressLevelLabel,
   stressLevelColor,
   strainLabel,
+  computeRecoveryBreakdown,
+  computeUserBaseline,
 } from "@/lib/recovery-scores";
 import { computeMuscleRecovery, statusColor, aggregateMuscleRecovery } from "@/lib/recovery";
 import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
