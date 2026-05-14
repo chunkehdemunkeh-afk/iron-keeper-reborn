@@ -112,9 +112,18 @@ function DialRing({
 
 export default function HomeCombinedRecoveryCard({ date }: Props) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshUsed, setRefreshUsed] = useState(false);
+
+  const refreshKey = user ? STORAGE_KEYS.aiInsightRefreshed(user.id, date) : "";
+  useEffect(() => {
+    if (!refreshKey) return;
+    setRefreshUsed(localStorage.getItem(refreshKey) === "1");
+  }, [refreshKey]);
 
   const { data: score } = useTodayScore();
   const { data: biometrics = [] } = useDailyBiometrics(2);
