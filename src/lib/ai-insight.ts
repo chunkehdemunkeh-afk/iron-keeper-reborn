@@ -180,6 +180,7 @@ export async function regenerateAIInsightFromSaved(
       sleepFull,
       prevStrain,
       spo2Pct: todayBio?.spo2Pct ?? 97,
+      trainingToday,
     },
     queryClient,
   );
