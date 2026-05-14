@@ -174,6 +174,17 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
   const sleep    = score?.sleepPerformance ?? 0;
   const ringColor = hasData ? recoveryColor(recovery) : "hsl(var(--muted))";
 
+  const recoveryTiming = (() => {
+    const iso = score?.aiGeneratedAt;
+    if (!iso) return "this morning";
+    try {
+      const t = new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      return `as of ${t}`;
+    } catch {
+      return "this morning";
+    }
+  })();
+
   if (!user) return null;
 
   return (
