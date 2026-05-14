@@ -318,7 +318,7 @@ export async function backfillStrainScores(daysBack = 30): Promise<number> {
   const [workoutsRes, activitiesRes, scoresRes, biometricsRes, profileRes] = await Promise.all([
     supabase
       .from("workout_history")
-      .select("date, calories_burned, effort_rating, duration, avg_hr, max_hr")
+      .select("date, calories_burned, calories_watch, effort_rating, duration, duration_watch, avg_hr, max_hr, hr_zones")
       .eq("user_id", user.id)
       .gte("date", cutoffStr),
     supabase
