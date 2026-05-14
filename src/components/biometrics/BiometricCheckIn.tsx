@@ -489,7 +489,7 @@ async function generateAIInsight(
         const totalVolumeKg = working.reduce((acc, s) => acc + s.weight * s.reps, 0);
         return {
           name: w.workoutName,
-          durationMin: Math.round(w.duration / 60),
+          durationMin: Math.round(w.duration),
           totalSets: working.length,
           totalVolumeKg: Math.round(totalVolumeKg),
           caloriesBurned: w.caloriesBurned ?? null,
