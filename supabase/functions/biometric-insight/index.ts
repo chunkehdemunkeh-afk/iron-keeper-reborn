@@ -20,6 +20,13 @@ interface BiometricPayload {
   };
   context: {
     next_workout: string | null;
+    training_today?: Array<{
+      name: string;
+      durationMin: number;
+      totalSets: number;
+      totalVolumeKg: number;
+      caloriesBurned: number | null;
+    }>;
     sleep_hours: number | null;
     sleep_stages: {
       deep: number | null;
