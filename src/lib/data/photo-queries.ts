@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { awardXpAndNotify } from "@/lib/gamification/notify";
 
 export interface ProgressPhoto {
   id: string;
@@ -89,6 +90,8 @@ export async function uploadProgressPhoto(
     await supabase.storage.from(PHOTO_BUCKET).remove([storagePath]);
     return null;
   }
+
+  void awardXpAndNotify({ source: "progress_photo", metadata: { date } });
 
   return {
     id: row.id,

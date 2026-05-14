@@ -23,6 +23,8 @@ export type XpSource =
 export interface XpReward {
   xp: number;
   coins: number;
+  /** Season RP awarded alongside XP (contributes to competitive tier). */
+  seasonRp?: number;
   /** If true, only awarded once per UTC day per user (enforced via xp_events query). */
   oncePerDay?: boolean;
   /** If true, only awarded once per ISO week (Mon-based). */
@@ -33,8 +35,8 @@ export interface XpReward {
 
 export const XP_REWARDS: Record<XpSource, XpReward> = {
   daily_open: { xp: 5, coins: 1, oncePerDay: true },
-  workout: { xp: 50, coins: 5 }, // base; per-set bonus added separately, capped 100
-  workout_programmed_bonus: { xp: 25, coins: 3 },
+  workout: { xp: 50, coins: 5, seasonRp: 3 }, // base; per-set bonus added separately, capped 100
+  workout_programmed_bonus: { xp: 25, coins: 3, seasonRp: 2 },
   sleep_log: { xp: 15, coins: 2, oncePerDay: true },
   sleep_log_with_stages: { xp: 5, coins: 0, oncePerDay: true }, // additive
   food_log_any: { xp: 10, coins: 1, oncePerDay: true },
@@ -42,10 +44,10 @@ export const XP_REWARDS: Record<XpSource, XpReward> = {
   protein_goal: { xp: 15, coins: 2, oncePerDay: true },
   water_goal: { xp: 10, coins: 1, oncePerDay: true },
   bodyweight: { xp: 10, coins: 2, oncePerDay: true },
-  biometric_checkin: { xp: 20, coins: 3, oncePerDay: true },
+  biometric_checkin: { xp: 20, coins: 3, seasonRp: 1, oncePerDay: true },
   progress_photo: { xp: 30, coins: 5, oncePerWeek: true },
-  weekly_review: { xp: 75, coins: 10, oncePerWeek: true },
-  personal_record: { xp: 100, coins: 15 },
+  weekly_review: { xp: 75, coins: 10, seasonRp: 15, oncePerWeek: true },
+  personal_record: { xp: 100, coins: 15, seasonRp: 10 },
   first_time_feature: { xp: 50, coins: 10, oncePerLifetime: true },
 };
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, useMotionValue, animate } from "framer-motion";
 import type { PanInfo } from "framer-motion";
 import { format, addDays, subDays } from "date-fns";
@@ -23,6 +23,7 @@ import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
+import { awardXpAndNotify } from "@/lib/gamification/notify";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
@@ -154,6 +155,30 @@ export default function FoodTracker() {
   }, [user, date, queryClient]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Reset goal-fired flags when the date changes so XP can re-fire on a new day's logs.
+  const goalsFiredRef = useRef({ calories: false, protein: false });
+  useEffect(() => { goalsFiredRef.current = { calories: false, protein: false }; }, [date]);
+
+  // Fire food_log_complete / protein_goal XP when today's totals cross the threshold.
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  useEffect(() => {
+    if (date !== todayStr || !goals) return;
+    const adjust = !!goals.adjust_for_activity;
+    const effectiveGoal = adjust ? goals.calories + burnedKcal : goals.calories;
+    const totals = logs.reduce(
+      (acc, l) => ({ calories: acc.calories + l.calories, protein: acc.protein + l.protein_g }),
+      { calories: 0, protein: 0 }
+    );
+    if (!goalsFiredRef.current.calories && effectiveGoal > 0 && totals.calories >= effectiveGoal) {
+      goalsFiredRef.current.calories = true;
+      void awardXpAndNotify({ source: "food_log_complete" });
+    }
+    if (!goalsFiredRef.current.protein && goals.protein_g > 0 && totals.protein >= goals.protein_g) {
+      goalsFiredRef.current.protein = true;
+      void awardXpAndNotify({ source: "protein_goal" });
+    }
+  }, [logs, goals, burnedKcal, date]); // todayStr derived from new Date() — stable within a day
 
   // Listen for TDEE re-open from settings
   useEffect(() => {

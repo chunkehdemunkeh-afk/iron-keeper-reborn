@@ -4,7 +4,33 @@
 
 ## Current Status
 
-**NEXT: TBD** — Biometric tracking feature is fully live (2026-05-12). Migration applied, `ANTHROPIC_API_KEY` secret set, `biometric-insight` edge function deployed.
+**NEXT: TBD** — Gamification Phase 1–3 shipped (2026-05-13/14). All new tables migrated. Status of `ANTHROPIC_API_KEY` / edge function deploys unchanged.
+
+**Gamification system complete** (2026-05-12–14):
+- Migrations: `user_progress`, `xp_events`, `badges`, `user_badges`, `quests`, `user_quests`, `seasons`, `season_results`, `duels`, `duel_progress`, `push_subscriptions`, `cosmetics`, `user_cosmetics`, `equipped_cosmetics`, `community_challenges`, `community_contributions`, `clans`, `clan_members`, `workout_hr_samples`
+- `src/lib/gamification/config.ts` — XP rewards, level curve (quadratic, soft cap at 50), streak multipliers/tiers, `SEASON_TIERS`
+- `src/lib/gamification/awardXp.ts` — single chokepoint: dedupes (once-per-day/week/lifetime), streak update with freeze-token bridging, inserts `xp_events`, updates `user_progress` level
+- `src/lib/gamification/badges.ts` — `evaluateBadges` checks session count, sleep logs, food days, PR count, lifetime volume, streak against `badges` catalog
+- `src/lib/gamification/tiers.ts` — Bronze→Champion RP thresholds; `tierFromRp`, `tierProgress`
+- `src/lib/gamification/notify.ts` — `awardXpAndNotify` client wrapper: toast, query invalidation, pub-sub to `LevelUpSheet` / `BadgeUnlockSheet`
+- Components: `XpBar`, `AvatarFrame`, `BadgeShelf`, `BadgeUnlockSheet`, `LevelUpSheet`, `QuestsPanel`, `SeasonCard`, `SeasonFinaleSheet`, `TierBadge`
+- New hooks: `useUserProgress`, `useBadges`, `useQuests`, `useCurrentSeason`, `useSeasonFinale`, `useClans`, `useCommunityChallenges`, `useCosmetics`, `useDuels`
+- New data modules: `clan-queries.ts`, `community-queries.ts`, `cosmetics-queries.ts`, `duel-queries.ts`, `quest-queries.ts`, `season-queries.ts`
+- New pages: `/quests`, `/duels`, `/shop` (cosmetics), `/community` (challenges + clans tabs)
+
+**Recovery page + pull-to-refresh complete** (2026-05-13):
+- `src/pages/Recovery.tsx` (`/recovery`) — standalone recovery page using `RecoveryPanel` + `RecoveryTips`
+- `src/components/recovery/RecoveryPanel.tsx` + `RecoveryHero.tsx` — replaces old `SleepCard.tsx` (deleted)
+- `src/hooks/usePullToRefresh.tsx` + `src/components/PullToRefreshIndicator.tsx` — PTR on Recovery, Home, etc.
+- `src/pages/CheckInHistory.tsx` (`/check-ins`) — biometric check-in history log
+
+**AI insight extracted + PWA polish** (2026-05-13):
+- `src/lib/ai-insight.ts` — `generateAIInsight` extracted from `BiometricCheckIn.tsx`; fire-and-forget pattern, persists to `daily_scores`
+- `src/lib/query-client.ts` — singleton `QueryClient` extracted from `App.tsx`
+- `src/integrations/supabase/auth-attacher.ts` — auth header attacher utility
+- New UI primitives: `async-boundary.tsx` (`ErrorBoundary`), `loading-state.tsx`, `error-state.tsx`, `empty-state.tsx`, `section-header.tsx`, `section-eyebrow.tsx`, `segmented-tabs.tsx`
+- Updated PWA: custom `public/sw.js`, refreshed `manifest.json`, new 192×512 PNG icons, new logo assets in `src/assets/`
+- `PRELAUNCH_AUDIT.md` added — pre-launch checklist
 
 **Calorie burn tracking complete** (2026-04-23):
 - Migration `20260423...`: `calories_burned` on `workout_history` + `activity_logs`; `distance_km`, `incline_pct` on `activity_logs`; `adjust_for_activity` on `nutrition_goals`
@@ -216,6 +242,8 @@ This makes login/signup redirects work correctly.
 | Exercise catalogue | `src/lib/exercise-library.ts` |
 | Swap options | `src/lib/exercise-substitutions.ts` |
 | All Supabase ops | `src/lib/cloud-data.ts` |
+| Gamification core | `src/lib/gamification/` (`config`, `awardXp`, `badges`, `tiers`, `notify`) |
+| XP award (components) | `src/lib/gamification/notify.ts` → `awardXpAndNotify` |
 | Active session page | `src/pages/WorkoutSession.tsx` |
 | History cards | `src/components/history/WorkoutCard.tsx` |
 | Home week strip | `src/components/WeekStrip.tsx` |
@@ -224,7 +252,8 @@ This makes login/signup redirects work correctly.
 | Calorie burn estimation | `src/lib/calorie-burn.ts` |
 | Muscle mapping | `src/lib/muscle-mapping.ts` |
 | Body diagram | `src/components/recovery/BodyDiagram.tsx` |
-| Sleep card (home) | `src/components/recovery/SleepCard.tsx` |
+| Recovery page | `src/pages/Recovery.tsx` |
+| Recovery panel (sleep + biometrics) | `src/components/recovery/RecoveryPanel.tsx` |
 | Strength standards | `src/lib/strength-standards.ts` |
 | Weekly review helpers | `src/lib/weekly-review.ts` |
 | Weekly review sheet | `src/components/weekly/WeeklyReviewSheet.tsx` |

@@ -173,15 +173,16 @@ async function ensureProgressRow(userId: string): Promise<{
   coins: number;
   level: number;
   current_streak: number;
+  season_rp: number;
 }> {
   const { data } = await supabase
     .from("user_progress")
-    .select("xp, coins, level, current_streak")
+    .select("xp, coins, level, current_streak, season_rp")
     .eq("user_id", userId)
     .maybeSingle();
   if (data) return data as any;
   await supabase.from("user_progress").insert({ user_id: userId } as never);
-  return { xp: 0, coins: 0, level: 1, current_streak: 0 };
+  return { xp: 0, coins: 0, level: 1, current_streak: 0, season_rp: 0 };
 }
 
 export async function awardXp(input: AwardXpInput): Promise<AwardXpResult> {
@@ -230,6 +231,8 @@ export async function awardXp(input: AwardXpInput): Promise<AwardXpResult> {
   const newXp = (before.xp ?? 0) + xp;
   const newCoins = (before.coins ?? 0) + coins;
   const newLevel = levelFromXp(newXp);
+  const rpGain = reward.seasonRp ?? 0;
+  const newSeasonRp = (before.season_rp ?? 0) + rpGain;
 
   await supabase
     .from("user_progress")
@@ -237,6 +240,7 @@ export async function awardXp(input: AwardXpInput): Promise<AwardXpResult> {
       xp: newXp,
       coins: newCoins,
       level: newLevel,
+      ...(rpGain > 0 ? { season_rp: newSeasonRp } : {}),
     } as never)
     .eq("user_id", user.id);
 

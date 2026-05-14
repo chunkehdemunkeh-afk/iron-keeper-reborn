@@ -25,6 +25,7 @@ React 18 + TypeScript PWA, deployed via Lovable (auto-deploys on `git push main`
 **Key modules:**
 - `src/hooks/useAuth.tsx` — Supabase auth context. Demo mode (`isDemoMode()`) short-circuits Supabase, injects fake `User` (`id: "demo-user"`). `updateAvatar(file)` / `removeAvatar()` → `avatars` Storage bucket.
 - `src/hooks/useUserRole.tsx` — Reads `user_roles`; `isCoach` drives routing in `Index.tsx`.
+- `src/lib/query-client.ts` — Singleton `QueryClient` export. Import from here, not from `@tanstack/react-query` directly.
 - `src/lib/cloud-data.ts` — Thin barrel re-export of `src/lib/data/`. Domain modules:
   - `workout-queries.ts` — `saveWorkoutToCloud`, `fetchWorkoutHistory`, `deleteWorkoutFromCloud`, `fetchPersonalRecords`, `deletePersonalRecord`, `bestOneRmForLift`, `fetchVolumeData`, `fetchLastSessionData`, `fetchExerciseLastData`, `fetchExerciseLastDataLike`, `fetchStrengthProfile`, `fetchRecentSets`, `fetchExercisePRHistory`, `exportWorkoutHistoryCSV`, `exportSetsCSV`
   - `sleep-queries.ts` — `fetchSleepLogs`, `upsertSleepLog`, `deleteSleepLog`
@@ -33,8 +34,14 @@ React 18 + TypeScript PWA, deployed via Lovable (auto-deploys on `git push main`
   - `nutrition-queries.ts` — `lookupUserBodyweight` (falls back to `nutrition_goals.tdee_weight_kg` then 75 kg), `fetchDailyBurn`, `fetchWeeklyBurn`
   - `photo-queries.ts` — `fetchProgressPhotos`, `uploadProgressPhoto`, `deleteProgressPhoto`, `updateProgressPhotoNotes`
   - `review-queries.ts` — `fetchWeeklyReview`, `fetchAllWeeklyReviews`, `upsertWeeklyReview`, `deleteWeeklyReview`, `computeWeekStats` → `WeekSummary`
-  - `leaderboard-queries.ts` — `fetchTopExercises`, `fetchLeaderboard1RM` (includes `isTested`), `fetchLeaderboardMaxWeight`, `fetchLeaderboardMaxReps`, `fetchLeaderboardSessionVolume` → `VolumeLeaderboardEntry[]` (`sessionCount` = cumulative). `TimeFilter = 'all'|'monthly'|'weekly'|'prev_weekly'|'prev_monthly'` (prev_* internal). `updateLeaderboardVisibility`, `fetchLeaderboardVisibility`
+  - `leaderboard-queries.ts` — `fetchTopExercises`, `fetchLeaderboard1RM` (includes `isTested`), `fetchLeaderboardMaxWeight`, `fetchLeaderboardMaxReps`, `fetchLeaderboardSessionVolume`. `TimeFilter = 'all'|'monthly'|'weekly'|'prev_weekly'|'prev_monthly'` (prev_* internal). `updateLeaderboardVisibility`, `fetchLeaderboardVisibility`
   - `biometric-queries.ts` — `upsertDailyBiometrics`, `fetchDailyBiometrics`, `upsertDailyScore`, `updateDailyScoreAIInsight`, `fetchDailyScores`, `fetchTodayScore`
+  - `clan-queries.ts` — `fetchAllClans`, `fetchMyClan`, `fetchClanMembers`, `createClan`, `joinClan`, `leaveClan`
+  - `community-queries.ts` — `fetchActiveCommunityChallenges`, `fetchChallengeStats`, `addCommunityContribution`
+  - `cosmetics-queries.ts` — `fetchCosmetics`, `fetchOwnedCosmetics`, `fetchEquippedCosmetics`, `purchaseCosmetic`, `equipCosmetic`, `unequipCosmetic`
+  - `duel-queries.ts` — `fetchMyDuels`, `createDuel`, `respondToDuel`, `fetchDuelProgress`
+  - `quest-queries.ts` — `fetchActiveQuests` → `{ daily: QuestWithProgress[], weekly: QuestWithProgress[] }`
+  - `season-queries.ts` — `fetchCurrentSeason`, `fetchPendingSeasonFinale`, `fetchSeasonResult`
   - `utils.ts` — `mondayOfWeek(date)`, `recentMondays(weeks)`
 - `src/lib/query-keys.ts` — Centralized React Query key registry. Always use `queryKeys.*()` — never inline string literals.
 - `src/lib/storage-keys.ts` — Named localStorage key constants. Always use `STORAGE_KEYS.*` — never raw strings (except `user-preferences.ts` and `demo-mode.ts` which own their own keys).
@@ -47,14 +54,21 @@ React 18 + TypeScript PWA, deployed via Lovable (auto-deploys on `git push main`
 - `src/lib/strength-standards.ts` — 6-tier system for 8 lifts. `epley1RM`, `getStrengthRating(liftId, oneRm, {bodyweight,sex,age?})`, `inferLiftId`, `overallTier`.
 - `src/lib/calorie-burn.ts` — `estimateCardioBurn(CardioInput)` (MET tables), `estimateStrengthBurn(StrengthInput)`. Both round to nearest 5 kcal.
 - `src/lib/tdee-calculator.ts` — Mifflin-St Jeor. `calculateTDEE(params)` → TDEE + target calories + macros.
+- `src/lib/ai-insight.ts` — `generateAIInsight(inputs, queryClient)` fire-and-forget; calls `biometric-insight` edge function and persists result to `daily_scores`.
+- **Gamification** (`src/lib/gamification/`):
+  - `config.ts` — `XP_REWARDS`, `xpForLevel`, `levelFromXp`, `progressToNextLevel`, `streakMultiplier`, `streakTier`, `SEASON_TIERS`
+  - `awardXp.ts` — `awardXp(input)` → dedupes, applies streak multiplier, inserts `xp_events`, updates streak + `user_progress`, evaluates badges
+  - `badges.ts` — `evaluateBadges(ctx)` → checks badge criteria against DB metrics, inserts `user_badges`
+  - `tiers.ts` — `TIERS` (Bronze→Champion), `tierFromRp`, `nextTier`, `tierProgress`, `getTierMeta`
+  - `notify.ts` — `awardXpAndNotify(input)` client wrapper: shows toast, invalidates queries, fires `LevelUpSheet` / `BadgeUnlockSheet` via pub-sub callbacks
 
 **Routing:** `src/App.tsx`, auth-guarded. `Index.tsx` does role-based redirect.
 
-**Pages:** `Sessions`, `Progress` (Stats/Photos/Recovery tabs via `?tab=`), `WorkoutSession`, `WorkoutBuilder` (localStorage), `ExerciseLibrary`, `FoodTracker`, `History` (CSV export), `Onboarding`, `BodyMeasurements`, `CoachDashboard`, `Profile`, `ResetPassword`, `NutritionOnboarding`.
+**Pages:** `Sessions`, `Progress` (Stats/Photos/Recovery tabs via `?tab=`), `WorkoutSession`, `WorkoutBuilder` (localStorage), `ExerciseLibrary`, `FoodTracker`, `History` (CSV export), `Onboarding`, `BodyMeasurements`, `CoachDashboard`, `Profile`, `ResetPassword`, `NutritionOnboarding`, `Leaderboard`, `Recovery` (`/recovery`), `CheckInHistory` (`/check-ins`), `Quests` (`/quests`), `Duels` (`/duels`), `Shop` (`/shop`), `Community` (`/community` — challenges + clans tabs).
 
 **Native:** PWA only — HealthKit/Health Connect inaccessible from web. Capacitor planned. See PLAN.md → "Native App".
 
-## Database Tables (all RLS, per-user)
+## Database Tables (all RLS, per-user unless noted)
 
 | Table | Key columns |
 |-------|-------------|
@@ -69,6 +83,24 @@ React 18 + TypeScript PWA, deployed via Lovable (auto-deploys on `git push main`
 | `weekly_reviews` | `week_start` (Monday), unique `(user_id, week_start)`, `photo_id` FK → `progress_photos` |
 | `daily_biometrics` | `samsung_stress_score`, `resting_hr`, `spo2_pct`, `hrv_ms`, `respiratory_rate`, `source`; unique `(user_id, date)` |
 | `daily_scores` | `recovery_score`, `strain_score`, `stress_level`, `sleep_performance`, `ai_insight` (jsonb), `ai_generated_at`; unique `(user_id, date)` |
+| `user_progress` | `xp`, `coins`, `level`, `current_streak`, `longest_streak`, `last_active_date`, `freeze_tokens`, `season_rp`; unique per user |
+| `xp_events` | ledger: `source`, `xp`, `coins`, `metadata` (jsonb) |
+| `badges` | catalog: `code`, `criteria` (jsonb), `tier` (bronze/silver/gold), `xp_reward`, `coin_reward` |
+| `user_badges` | `(user_id, badge_code)` unique |
+| `quests` | `type` (daily/weekly), `criteria` (jsonb), `xp_reward`, `coin_reward` |
+| `user_quests` | completion tracking |
+| `seasons` | `number`, `starts_at`, `ends_at`, `status` |
+| `season_results` | `final_rp`, `final_tier`, `final_rank`; settled at season end |
+| `duels` | `challenger_id`, `opponent_id`, `type`, `rp_stake`, `status`, `starts_at`, `ends_at` |
+| `duel_progress` | per-user metric snapshots |
+| `push_subscriptions` | Web Push endpoint + keys |
+| `cosmetics` | catalog: `kind` (frame/banner/xp_theme/title), `coin_price`, `tier_required` |
+| `user_cosmetics` | owned cosmetics |
+| `equipped_cosmetics` | one equipped cosmetic per `kind` per user |
+| `community_challenges` | server-wide goals; `metric`, `target`, `reward_coins` |
+| `community_contributions` | per-user contribution to a challenge |
+| `clans` | `name`, `tag`, `owner_id`; 3–10 members |
+| `clan_members` | `role` (owner/officer/member) |
 | `water_intake`, `body_measurements`, `daily_logs`, `user_roles`, `stretch_logs` | — |
 
 Migrations in `supabase/migrations/`. Storage buckets: `avatars` (public), `progress-photos` (private).
@@ -87,6 +119,9 @@ Migrations in `supabase/migrations/`. Storage buckets: `avatars` (public), `prog
 - **Haptics:** `hapticMedium()` / `hapticSuccess()` from `src/lib/haptics.ts`.
 - **Swipe gestures:** Framer Motion `drag="x"` + `touchAction: "pan-y"`. In `Reorder.Group`: `dragListener={false}` on `Reorder.Item`, `useDragControls` on grip handle.
 - **Swipe-to-delete:** Red bg opacity via `useTransform(x, [-100, -30], [1, 0])`. Sliding div must use `bg-card` (opaque).
+- **Pull to refresh:** `usePullToRefresh({ onRefresh })` hook + `<PullToRefreshIndicator {...ptr} />`. Used on Recovery, Home, etc.
+- **Loading/error/empty states:** Use `<LoadingState>`, `<ErrorState>`, `<EmptyState>` from `src/components/ui/`. Wrap pages with `<ErrorBoundary>` from `async-boundary.tsx`.
+- **XP awards:** Always use `awardXpAndNotify(input)` from `src/lib/gamification/notify.ts` — never call `awardXp` directly from components. Gamification must never block a user action (errors are swallowed internally).
 
 ## Supabase
 
@@ -123,7 +158,7 @@ git stash && git pull --rebase origin main && git stash pop && git push origin m
 - **Machine row variant pill (`pl1`)** — "Seated Row Machine" uses `heavyStackExercises`: default = "Machine Row" (`pl1`), in-set = "Low Row" (`pl1-heavy`). Pill hidden when swapped.
 - **`WorkoutSession` warm-up sets** — Seeds 2 sets (50%×5, 75%×5), capped at 3 total (40/60/80%); excluded from PR checks and rep-range toasts; 60s rest timer; weights via `roundToPlate` (nearest 2.5 kg).
 - **`HomeCombinedRecoveryCard`** — Do not re-split into `RecoveryDashboard` + `RecoveryCard`. Top half (biometric scores + AI headline) only renders when user checked in that day; bottom half (muscle diagram) always shows.
-- **`generateAIInsight` in `BiometricCheckIn.tsx`** — `next_workout` in AI payload is always `null` (not yet wired to training split). SpO2 is passed correctly.
+- **`generateAIInsight`** — now lives in `src/lib/ai-insight.ts` (extracted from `BiometricCheckIn.tsx`). `next_workout` in AI payload is always `null` (not yet wired to training split).
 - **`biometric-insight` edge function** — needs `ANTHROPIC_API_KEY` set via Supabase dashboard → Edge Functions → Secrets.
 - **Supabase edge function calls** — always include `{ headers: { apikey: VITE_SUPABASE_PUBLISHABLE_KEY, Authorization: \`Bearer ${VITE_SUPABASE_PUBLISHABLE_KEY}\` } }`. Pattern defined as `edgeFunctionHeaders` in `src/lib/open-food-facts.ts`.
 - **`CREATE OR REPLACE FUNCTION` cannot change return type** — must `DROP FUNCTION IF EXISTS fn_name(arg_types)` first in migration.
@@ -135,3 +170,6 @@ git stash && git pull --rebase origin main && git stash pop && git push origin m
 - **WeekStrip deletes** — workout sessions → `deleteWorkoutFromCloud`; activity logs → `deleteActivityLog`. Both trigger `setRefreshKey` increment.
 - **Exercise naming** — "Flies"/"Fly" not "Flyes"/"Flye". IDs still use old spelling — do not rename IDs.
 - **Galaxy Watch / Samsung Health** — PWA cannot access Health Connect. Manual check-in is current solution. Phase 2: Capacitor + `@capacitor-community/health-connect`.
+- **Gamification new tables not in Supabase types** — `user_progress`, `xp_events`, `badges`, `user_badges`, `seasons`, `duels`, `clans`, etc. are cast via `supabase as unknown as { from: ... }` in their query files. Don't expect TypeScript safety on these tables yet.
+- **`SleepCard.tsx` deleted** — replaced by `RecoveryPanel` + `RecoveryHero`. The `/recovery` page uses `RecoveryPanel` directly.
+- **Streak freeze tokens** — awarded automatically at every 7-day milestone (capped at 3). Each missed day consumes 1 token before resetting the streak.

@@ -637,6 +637,9 @@ export default function WorkoutSession() {
           }
 
           setCelebrationPR({ name: displayName, weight: currentWeight, reps: currentReps, tierUp, isTrue1RM: isOneRmTest });
+          void import("@/lib/gamification/notify").then(({ awardXpAndNotify }) =>
+            awardXpAndNotify({ source: "personal_record", metadata: { exercise: effectiveId } })
+          );
         }
       }
 

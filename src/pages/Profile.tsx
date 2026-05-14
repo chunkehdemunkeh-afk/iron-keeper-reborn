@@ -19,6 +19,7 @@ import { TierBadge } from "@/components/gamification/TierBadge";
 import { useUserProgress } from "@/hooks/queries/useUserProgress";
 import { useCurrentSeason, daysRemaining } from "@/hooks/queries/useCurrentSeason";
 import AvatarFrame from "@/components/gamification/AvatarFrame";
+import { useEquippedCosmetics, useCosmetics } from "@/hooks/queries/useCosmetics";
 import { tierFromRp, nextTier, tierProgress } from "@/lib/gamification/tiers";
 
 /** Per-split intensity label and training focus for the Training Programme card. */
@@ -43,6 +44,11 @@ const APP_VERSION = changelog[0]?.version || "1.0.0";
 export default function Profile() {
   const { user, profile, signOut, updateDisplayName, updateAvatar, removeAvatar } = useAuth();
   const navigate = useNavigate();
+  const { data: equipped } = useEquippedCosmetics(user?.id);
+  const { data: catalog } = useCosmetics();
+  const equippedTitle = equipped?.title
+    ? (catalog?.find(c => c.code === equipped.title)?.name ?? null)
+    : null;
 
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
@@ -297,6 +303,9 @@ export default function Profile() {
                 </h1>
                 <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
               </button>
+            )}
+            {equippedTitle && (
+              <p className="text-xs font-semibold text-primary mt-0.5">{equippedTitle}</p>
             )}
             <p className="text-xs text-muted-foreground">
               {user?.email}

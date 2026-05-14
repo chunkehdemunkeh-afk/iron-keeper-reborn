@@ -3,6 +3,7 @@ import { ArrowLeft, Coins, Flame, Swords, ShoppingBag, Users } from "lucide-reac
 import { motion } from "framer-motion";
 import { useUserProgress } from "@/hooks/queries/useUserProgress";
 import { useRecentXpEvents } from "@/hooks/queries/useBadges";
+import { useEquippedCosmetics, useCosmetics } from "@/hooks/queries/useCosmetics";
 import { formatDistanceToNow } from "date-fns";
 import SeasonCard from "@/components/gamification/SeasonCard";
 import BadgeShelf from "@/components/gamification/BadgeShelf";
@@ -32,6 +33,11 @@ export default function Quests() {
   const navigate = useNavigate();
   const { data: progress } = useUserProgress();
   const { data: events = [] } = useRecentXpEvents(20);
+  const { data: equipped } = useEquippedCosmetics();
+  const { data: catalog } = useCosmetics();
+  const equippedTitle = equipped?.title
+    ? (catalog?.find(c => c.code === equipped.title)?.name ?? null)
+    : null;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -57,6 +63,9 @@ export default function Quests() {
               <div>
                 <p className="text-xs uppercase tracking-widest text-primary font-semibold">Level</p>
                 <p className="font-display text-5xl font-bold leading-none mt-1">{progress.level}</p>
+                {equippedTitle && (
+                  <p className="text-[11px] font-semibold text-primary/80 mt-1 truncate max-w-[100px]">{equippedTitle}</p>
+                )}
               </div>
               <div className="text-right space-y-1">
                 <TierBadge rp={progress.seasonRp} />

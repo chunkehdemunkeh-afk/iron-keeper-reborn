@@ -179,6 +179,12 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
       setCount: workout.sets.filter((s) => (s.setType ?? "working") !== "warmup").length,
       metadata: { workoutId: workout.workoutId, workoutName: workout.workoutName },
     });
+    if (!workout.workoutId.startsWith("custom-")) {
+      await awardXpAndNotify({
+        source: "workout_programmed_bonus",
+        metadata: { workoutId: workout.workoutId },
+      });
+    }
   } catch (e) {
     console.error("XP award failed:", e);
   }

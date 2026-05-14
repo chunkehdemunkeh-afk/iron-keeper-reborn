@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Swords, Trophy, Clock, Plus, X, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
 import { useMyDuels, useChallengeableUsers, useDuelMutations } from "@/hooks/queries/useDuels";
 import { DUEL_TYPE_LABELS, DUEL_PRESETS, type DuelType, type DuelWithParticipants } from "@/lib/data/duel-queries";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -12,6 +13,7 @@ import { toast } from "sonner";
 
 export default function Duels() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: duels = [], isLoading } = useMyDuels();
   const { create, accept, decline, cancel, refresh, settle } = useDuelMutations();
   const [open, setOpen] = useState(false);
@@ -44,7 +46,7 @@ export default function Duels() {
             {pending.length > 0 && (
               <Section title="Pending">
                 {pending.map(d => (
-                  <DuelCard key={d.id} duel={d}
+                  <DuelCard key={d.id} duel={d} myUserId={user?.id}
                     onAccept={() => accept.mutate(d.id, { onSuccess: () => toast.success("Duel accepted!") })}
                     onDecline={() => decline.mutate(d.id)}
                     onCancel={() => cancel.mutate(d.id)}
@@ -55,7 +57,7 @@ export default function Duels() {
             {active.length > 0 && (
               <Section title="Active">
                 {active.map(d => (
-                  <DuelCard key={d.id} duel={d}
+                  <DuelCard key={d.id} duel={d} myUserId={user?.id}
                     onRefresh={() => refresh.mutate(d, { onSuccess: () => toast.success("Progress updated") })}
                     onSettle={() => settle.mutate(d.id, { onSuccess: () => toast.success("Duel settled") })}
                   />
@@ -64,7 +66,7 @@ export default function Duels() {
             )}
             {completed.length > 0 && (
               <Section title="Completed">
-                {completed.map(d => <DuelCard key={d.id} duel={d} />)}
+                {completed.map(d => <DuelCard key={d.id} duel={d} myUserId={user?.id} />)}
               </Section>
             )}
           </>
@@ -105,15 +107,16 @@ function EmptyState({ onChallenge }: { onChallenge: () => void }) {
   );
 }
 
-function DuelCard({ duel, onAccept, onDecline, onCancel, onRefresh, onSettle }: {
+function DuelCard({ duel, myUserId, onAccept, onDecline, onCancel, onRefresh, onSettle }: {
   duel: DuelWithParticipants;
+  myUserId?: string;
   onAccept?: () => void;
   onDecline?: () => void;
   onCancel?: () => void;
   onRefresh?: () => void;
   onSettle?: () => void;
 }) {
-  const myIsChallenger = false; // We don't have user context here; handle via UI showing both sides equally
+  const myIsChallenger = myUserId === duel.challenger_id;
   const totalC = duel.challenger_value;
   const totalO = duel.opponent_value;
   const max = Math.max(totalC, totalO, 1);
@@ -145,14 +148,22 @@ function DuelCard({ duel, onAccept, onDecline, onCancel, onRefresh, onSettle }: 
         )}
       </div>
 
-      <Side name={duel.challenger_name} value={totalC} pct={cPct} target={duel.target} winner={duel.winner_id === duel.challenger_id} />
-      <Side name={duel.opponent_name} value={totalO} pct={oPct} target={duel.target} winner={duel.winner_id === duel.opponent_id} />
+      <Side
+        name={myIsChallenger ? "You" : (duel.challenger_name ?? "Challenger")}
+        value={totalC} pct={cPct} target={duel.target}
+        winner={duel.winner_id === duel.challenger_id} isMe={myIsChallenger}
+      />
+      <Side
+        name={!myIsChallenger ? "You" : (duel.opponent_name ?? "Opponent")}
+        value={totalO} pct={oPct} target={duel.target}
+        winner={duel.winner_id === duel.opponent_id} isMe={!myIsChallenger}
+      />
 
       {(onAccept || onDecline || onCancel || onRefresh || onSettle) && (
         <div className="flex gap-2 pt-2 border-t border-border">
-          {onAccept && <Button size="sm" onClick={onAccept} className="flex-1 gap-1"><Check className="h-3 w-3"/> Accept</Button>}
-          {onDecline && <Button size="sm" variant="ghost" onClick={onDecline} className="gap-1"><X className="h-3 w-3"/> Decline</Button>}
-          {onCancel && <Button size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>}
+          {onAccept && !myIsChallenger && <Button size="sm" onClick={onAccept} className="flex-1 gap-1"><Check className="h-3 w-3"/> Accept</Button>}
+          {onDecline && !myIsChallenger && <Button size="sm" variant="ghost" onClick={onDecline} className="gap-1"><X className="h-3 w-3"/> Decline</Button>}
+          {onCancel && myIsChallenger && <Button size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>}
           {onRefresh && <Button size="sm" variant="outline" onClick={onRefresh} className="flex-1">Refresh progress</Button>}
           {onSettle && duel.ends_at && new Date(duel.ends_at) <= new Date() && (
             <Button size="sm" onClick={onSettle} className="flex-1">Settle</Button>
@@ -163,11 +174,11 @@ function DuelCard({ duel, onAccept, onDecline, onCancel, onRefresh, onSettle }: 
   );
 }
 
-function Side({ name, value, pct, target, winner }: { name: string | null; value: number; pct: number; target: number | null; winner: boolean }) {
+function Side({ name, value, pct, target, winner, isMe }: { name: string | null; value: number; pct: number; target: number | null; winner: boolean; isMe?: boolean }) {
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs">
-        <span className={`truncate ${winner ? "font-bold text-amber-400" : "font-medium"}`}>{name ?? "Anonymous"}</span>
+        <span className={`truncate ${winner ? "font-bold text-amber-400" : isMe ? "font-bold text-primary" : "font-medium"}`}>{name ?? "Anonymous"}</span>
         <span className="tabular-nums text-muted-foreground">
           {Math.round(value).toLocaleString()}{target ? ` / ${Math.round(target).toLocaleString()}` : ""}
         </span>
