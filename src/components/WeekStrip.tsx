@@ -68,6 +68,15 @@ export default function WeekStrip() {
   const [otherLabel, setOtherLabel] = useState("");
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const invalidateRecoveryAndStrain = useCallback(() => {
+    if (!user) return;
+    queryClient.invalidateQueries({ queryKey: queryKeys.activityLogs(user.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.dailyScores(user.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.recentSets(user.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.workoutHistory(user.id) });
+  }, [queryClient, user]);
 
   const getDateForDayIndex = useCallback((dayIdx: number) => {
     const now = new Date();
