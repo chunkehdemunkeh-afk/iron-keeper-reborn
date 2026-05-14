@@ -30,10 +30,20 @@ export class ServiceUnavailableError extends Error {
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-const edgeFunctionHeaders = {
-  apikey: SUPABASE_ANON_KEY,
-  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-};
+import { supabase } from "@/integrations/supabase/client";
+
+/** Build headers for Supabase edge function calls. Uses the current user's session
+ *  token when available so functions that enforce JWT validation (food-search,
+ *  fatsecret-search, biometric-insight) accept the request. Falls back to the
+ *  publishable anon key for unauthenticated contexts. */
+async function getEdgeFunctionHeaders(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token ?? SUPABASE_ANON_KEY;
+  return {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${token}`,
+  };
+}
 
 // ---------- FatSecret helpers ----------
 
