@@ -4,10 +4,17 @@
 
 ## Current Status
 
-**NEXT: Run quest seed migration** — paste `supabase/migrations/20260514120000_seed_quests.sql` into the Supabase SQL editor. The Quests page shows "No quests active" until this is done.
+All migrations applied. No pending manual actions.
 
-**Pending manual action (2026-05-14):**
-- [ ] Run `20260514120000_seed_quests.sql` in Supabase dashboard SQL editor to seed 7 daily + 5 weekly quests
+**Per-set tracking + enriched CSV export complete** (2026-05-16):
+- Migration `20260516000000_workout_sets_per_set_fields.sql` applied — adds `rir`, `target_rir`, `target_reps`, `target_weight`, `is_pr` to `workout_sets`
+- `src/lib/training-splits.ts` — `targetRir` added to all built-in splits (PPL/PPLU/PPLUL/Arnold/Bro: 0-1; GK/Upper-Lower/Full Body: 1-2; 5/3/1: 2-3)
+- `WorkoutSession.tsx` — RIR picker appears after completing a non-warmup set; highlights prescribed range; targets pre-populated from exercise definition + last session; `isPr` flagged automatically on PR sets
+- `exportSetsCSV` now outputs 10 columns: Date, Exercise, Set Type, Reps, Weight (kg), Target Reps, Target Weight (kg), RIR, Target RIR, PR
+- Superset delete button added to superset header card
+
+**Quest seed migration applied** (2026-05-16):
+- `20260514120000_seed_quests.sql` run — 7 daily + 5 weekly quests now active
 
 **Gamification system complete** (2026-05-12–14):
 - Migrations: `user_progress`, `xp_events`, `badges`, `user_badges`, `quests`, `user_quests`, `seasons`, `season_results`, `duels`, `duel_progress`, `push_subscriptions`, `cosmetics`, `user_cosmetics`, `equipped_cosmetics`, `community_challenges`, `community_contributions`, `clans`, `clan_members`, `workout_hr_samples`
