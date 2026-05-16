@@ -1,6 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { stripExerciseSuffixes } from "../muscle-mapping";
 import { awardXpAndNotify } from "@/lib/gamification/notify";
+import { WORKOUTS } from "../workout-data";
+import { EXERCISE_SUBSTITUTIONS } from "../exercise-substitutions";
+import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "../accessory-routines";
+import { EXERCISE_LIBRARY } from "../exercise-library";
 
 export interface WeeklyReview {
   id: string;
@@ -282,6 +286,13 @@ export async function computeWeekStats(weekStart: string): Promise<WeekSummary> 
       if (!priorMax[base] || w > priorMax[base]) priorMax[base] = w;
     });
 
+    const nameMap: Record<string, string> = {};
+    WORKOUTS.forEach((w) => w.exercises.forEach((ex: any) => { if (ex.name) nameMap[ex.id] = ex.name; }));
+    ACCESSORY_ROUTINES.forEach((r) => r.exercises.forEach((ex: any) => { if (ex.name) nameMap[ex.id] = ex.name; }));
+    Object.values(EXERCISE_SUBSTITUTIONS).flat().forEach((sub: any) => { if (sub.name) nameMap[sub.id] = sub.name; });
+    Object.values(ACCESSORY_SUBSTITUTIONS).flat().forEach((sub: any) => { if (sub.name) nameMap[sub.id] = sub.name; });
+    EXERCISE_LIBRARY.forEach((ex) => { if (ex.name) nameMap[ex.id] = ex.name; });
+
     const newMax: Record<string, { weight: number; name: string }> = {};
     (weekSets || []).forEach((s: any) => {
       const base = stripExerciseSuffixes(s.exercise_id);
@@ -289,7 +300,11 @@ export async function computeWeekStats(weekStart: string): Promise<WeekSummary> 
       const prior = priorMax[base] || 0;
       if (w > prior) {
         if (!newMax[base] || w > newMax[base].weight) {
-          newMax[base] = { weight: w, name: s.exercise_name || base };
+          const resolvedName =
+            s.exercise_name && s.exercise_name !== s.exercise_id
+              ? s.exercise_name
+              : nameMap[s.exercise_id] ?? nameMap[base] ?? s.exercise_name ?? base;
+          newMax[base] = { weight: w, name: resolvedName };
         }
       }
     });

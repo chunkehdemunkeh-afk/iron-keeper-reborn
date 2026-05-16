@@ -110,7 +110,7 @@ Migrations in `supabase/migrations/`. Storage buckets: `avatars` (public), `prog
 - `exercise-library.ts` — 60 originals (`lib-1`–`lib-60`) + 717 from free-exercise-db (`lib-db-*`). **Do not re-import.** Next hand-written ID: `lib-61`.
 - `exercise-substitutions.ts` — keys must match `workout-data.ts` IDs exactly or swap sheet silently shows nothing.
 - `accessory-routines.ts` — 3 routines (Abs, Grip, Wrist) with superset flags.
-- `training-splits.ts` — 10+ built-in splits (GK, PPL, Upper/Lower, 5/3/1, Arnold, etc.).
+- `training-splits.ts` — 10+ built-in splits (GK, PPL, Upper/Lower, Upper/Lower A/B DUP, 5/3/1, Arnold, etc.).
 
 ## UX Conventions
 
@@ -156,6 +156,8 @@ git stash && git pull --rebase origin main && git stash pop && git push origin m
 - **`isBilateralDumbbell` is keyword-only** — matches `DB_INDICATORS` against name + ID. Exercises without "dumbbell" in name (e.g. "Bulgarian Split Squat") must be explicitly added.
 - **Previous-sets fallback after substitutions** — `fetchLastSessionData` only returns the most-recent session. `WorkoutSession` calls `fetchExerciseLastData(exerciseId)` in parallel for missing exercises.
 - **Machine row variant pill (`pl1`)** — "Seated Row Machine" uses `heavyStackExercises`: default = "Machine Row" (`pl1`), in-set = "Low Row" (`pl1-heavy`). Pill hidden when swapped.
+- **Substitute IDs as primary exercise IDs** — A substitution ID (e.g. `sub-up5a` for Dumbbell Shoulder Press) can be used directly as the primary `id` in `workout-data.ts` to preserve history accumulated via that substitution. The app displays the friendly name correctly because `saveWorkoutToCloud`, `fetchRecentSets`, `fetchExercisePRHistory`, `WorkoutCard`, `review-queries`, and `leaderboard-queries` all include `EXERCISE_SUBSTITUTIONS` in their name resolution maps.
+- **Exercise name resolution layers** — Display name priority: (1) `exercise_name` DB column if it differs from `exercise_id`, (2) client-side nameMap built from WORKOUTS + EXERCISE_SUBSTITUTIONS + ACCESSORY_SUBSTITUTIONS + EXERCISE_LIBRARY, (3) `exercise_id` stripped of suffixes. When adding new name-display surfaces always include all four sources in the nameMap.
 - **`WorkoutSession` warm-up sets** — Seeds 2 sets (50%×5, 75%×5), capped at 3 total (40/60/80%); excluded from PR checks and rep-range toasts; 60s rest timer; weights via `roundToPlate` (nearest 2.5 kg).
 - **`HomeCombinedRecoveryCard`** — Do not re-split into `RecoveryDashboard` + `RecoveryCard`. Top half (biometric scores + AI headline) only renders when user checked in that day; bottom half (muscle diagram) always shows.
 - **`generateAIInsight`** — now lives in `src/lib/ai-insight.ts` (extracted from `BiometricCheckIn.tsx`). `next_workout` in AI payload is always `null` (not yet wired to training split).

@@ -207,13 +207,15 @@ export async function recomputeTodayStrain(): Promise<void> {
   if (!user) return;
 
   const today = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().split("T")[0];
 
   const [workoutsRes, activitiesRes, existingRes, biometricRes, profileRes] = await Promise.all([
     supabase
       .from("workout_history")
       .select("calories_burned, calories_watch, effort_rating, duration, duration_watch, avg_hr, max_hr, hr_zones")
       .eq("user_id", user.id)
-      .eq("date", today),
+      .gte("date", today)
+      .lt("date", tomorrow),
     supabase
       .from("activity_logs")
       .select("calories_burned")

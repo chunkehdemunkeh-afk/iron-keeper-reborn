@@ -1,4 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
+import { WORKOUTS } from "../workout-data";
+import { EXERCISE_SUBSTITUTIONS } from "../exercise-substitutions";
+import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "../accessory-routines";
+import { EXERCISE_LIBRARY } from "../exercise-library";
+import { stripExerciseSuffixes } from "../muscle-mapping";
+
+function buildExerciseNameMap(): Record<string, string> {
+  const m: Record<string, string> = {};
+  WORKOUTS.forEach((w) => w.exercises.forEach((ex: any) => { if (ex.name) m[ex.id] = ex.name; }));
+  ACCESSORY_ROUTINES.forEach((r) => r.exercises.forEach((ex: any) => { if (ex.name) m[ex.id] = ex.name; }));
+  Object.values(EXERCISE_SUBSTITUTIONS).flat().forEach((sub: any) => { if (sub.name) m[sub.id] = sub.name; });
+  Object.values(ACCESSORY_SUBSTITUTIONS).flat().forEach((sub: any) => { if (sub.name) m[sub.id] = sub.name; });
+  EXERCISE_LIBRARY.forEach((ex) => { if (ex.name) m[ex.id] = ex.name; });
+  return m;
+}
 
 export type TimeFilter = 'all' | 'monthly' | 'weekly' | 'prev_weekly' | 'prev_monthly';
 
@@ -31,11 +46,19 @@ export async function fetchTopExercises(timeFilter: TimeFilter = 'all'): Promise
     p_limit: 20,
   });
   if (error || !data) return [];
-  return (data as any[]).map((r) => ({
-    exerciseId: r.exercise_id,
-    exerciseName: r.exercise_name,
-    logCount: Number(r.log_count),
-  }));
+  const nameMap = buildExerciseNameMap();
+  return (data as any[]).map((r) => {
+    const base = stripExerciseSuffixes(r.exercise_id);
+    const resolvedName =
+      r.exercise_name && r.exercise_name !== r.exercise_id
+        ? r.exercise_name
+        : nameMap[r.exercise_id] ?? nameMap[base] ?? r.exercise_name ?? r.exercise_id;
+    return {
+      exerciseId: r.exercise_id,
+      exerciseName: resolvedName,
+      logCount: Number(r.log_count),
+    };
+  });
 }
 
 export async function fetchLeaderboard1RM(exerciseId: string, timeFilter: TimeFilter): Promise<LeaderboardEntry[]> {

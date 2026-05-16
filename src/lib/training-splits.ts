@@ -142,6 +142,20 @@ export const TRAINING_SPLITS: TrainingSplit[] = [
     ],
   },
   {
+    id: "upper_lower_ab",
+    name: "Upper/Lower A/B",
+    recommendedDays: [4],
+    description: "Daily Undulating Periodisation — upper and lower body each twice weekly. A days are strength-biased (6–8 reps), B days are hypertrophy-biased (10–15 reps).",
+    tag: "DUP · 2× Frequency",
+    targetRir: "1-2",
+    schedule: [
+      { label: "Upper A", workoutId: "upper_a", color: "from-blue-500/20 to-sky-500/10",       icon: User },
+      { label: "Lower A", workoutId: "lower_a", color: "from-green-500/20 to-lime-500/10",     icon: Footprints },
+      { label: "Upper B", workoutId: "upper_b", color: "from-purple-500/20 to-fuchsia-500/10", icon: Dumbbell },
+      { label: "Lower B", workoutId: "lower_b", color: "from-amber-500/20 to-orange-500/10",   icon: Layers },
+    ],
+  },
+  {
     id: "custom",
     name: "Custom Split",
     recommendedDays: [2, 3, 4, 5, 6],
