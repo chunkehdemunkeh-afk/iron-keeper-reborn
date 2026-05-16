@@ -153,6 +153,11 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
           reps: s.reps,
           weight: s.weight,
           set_type: s.setType ?? "working",
+          rir: s.rir ?? null,
+          target_rir: s.targetRir ?? null,
+          target_reps: s.targetReps ?? null,
+          target_weight: s.targetWeight ?? null,
+          is_pr: s.isPr ?? false,
         } as never))
       );
 
@@ -678,18 +683,24 @@ export async function exportSetsCSV(): Promise<string> {
 
   const { data: sets } = await supabase
     .from("workout_sets")
-    .select("exercise_name, reps, weight, created_at")
+    .select("exercise_name, reps, weight, created_at, set_type, rir, target_rir, target_reps, target_weight, is_pr")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (!sets) return "";
 
-  const headers = ["Date", "Exercise", "Reps", "Weight (kg)"];
-  const rows = sets.map(s => [
+  const headers = ["Date", "Exercise", "Set Type", "Reps", "Weight (kg)", "Target Reps", "Target Weight (kg)", "RIR", "Target RIR", "PR"];
+  const rows = (sets as any[]).map(s => [
     new Date(s.created_at).toLocaleDateString("en-GB"),
-    `"${s.exercise_name}"`,
+    `"${String(s.exercise_name).replace(/"/g, '""')}"`,
+    s.set_type ?? "working",
     s.reps,
     s.weight,
+    s.target_reps ?? "",
+    s.target_weight ?? "",
+    s.rir ?? "",
+    s.target_rir ?? "",
+    s.is_pr ? "yes" : "no",
   ]);
 
   return [headers.join(","), ...rows.map(r => r.join(","))].join("\n");

@@ -31,7 +31,7 @@ export type CompletedWorkout = {
   duration: number; // minutes
   exercisesCompleted: number;
   totalExercises: number;
-  sets: { exerciseId: string; originalExerciseId?: string; exerciseName?: string; reps: number; weight: number; setType?: "working" | "warmup" | "1rm_test" }[];
+  sets: { exerciseId: string; originalExerciseId?: string; exerciseName?: string; reps: number; weight: number; setType?: "working" | "warmup" | "1rm_test"; rir?: number | null; targetRir?: string | null; targetReps?: number | null; targetWeight?: number | null; isPr?: boolean }[];
   effortRating?: number;    // 1-5 star rating
   sessionNotes?: string;    // notes for coach
   caloriesBurned?: number | null;

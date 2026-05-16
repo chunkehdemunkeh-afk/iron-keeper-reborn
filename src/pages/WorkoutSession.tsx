@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { WORKOUTS, type CompletedWorkout, type Exercise } from "@/lib/workout-data";
 import { getAllCustomWorkouts } from "@/pages/WorkoutBuilder";
 import { saveWorkoutToCloud, fetchLastSessionData, fetchExerciseLastData, fetchExerciseLastDataLike } from "@/lib/cloud-data";
-import { ArrowLeft, Check, Timer, ChevronDown, ChevronUp, Trophy, Play, RotateCcw, TrendingUp, TrendingDown, Shuffle, Star, MessageSquare, Plus, Flame, History, Search, Hand, Zap, Dumbbell, Target, HelpCircle } from "lucide-react";
+import { ArrowLeft, Check, Timer, ChevronDown, ChevronUp, Trophy, Play, RotateCcw, TrendingUp, TrendingDown, Shuffle, Star, MessageSquare, Plus, Flame, History, Search, Hand, Zap, Dumbbell, Target, HelpCircle, Trash2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { toast } from "sonner";
@@ -21,6 +21,8 @@ import SwipeableSetRow from "@/components/workout/SwipeableSetRow";
 import ExerciseDragItem from "@/components/workout/ExerciseDragItem";
 import { warmupRamp, roundToPlate, formatWorkoutTime, attachmentKey, isCableAttachmentExercise } from "@/lib/workout-session-utils";
 import { queryKeys } from "@/lib/query-keys";
+import { getUserPreferences } from "@/lib/user-preferences";
+import { getSplitById } from "@/lib/training-splits";
 import { usePersonalRecords } from "@/hooks/queries/usePersonalRecords";
 import { useStrengthProfile } from "@/hooks/queries/useStrengthProfile";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,7 +35,18 @@ import {
 } from "@/lib/strength-standards";
 
 type SetType = "working" | "warmup" | "1rm_test";
-type SetLog = { reps: number; weight: number; completed: boolean; setType?: SetType };
+type SetLog = {
+  reps: number;
+  weight: number;
+  completed: boolean;
+  setType?: SetType;
+  rir?: number;
+  targetRir?: string;
+  targetReps?: number;
+  targetWeight?: number;
+  isPr?: boolean;
+  showRirPicker?: boolean;
+};
 
 // Lazily built on first use — iterating 3 data sources at import time is expensive.
 type SwapExercise = { id: string; name: string; muscleGroup: string; equipment: string; description: string };
@@ -77,6 +90,10 @@ export default function WorkoutSession() {
   const queryClient = useQueryClient();
 
   const workout = WORKOUTS.find((w) => w.id === id) || getAllCustomWorkouts().find((w) => w.id === id);
+
+  const sessionTargetRir = user
+    ? getSplitById(getUserPreferences(user.id)?.splitId ?? "")?.targetRir
+    : undefined;
 
   const [started, setStarted] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -145,8 +162,14 @@ export default function WorkoutSession() {
   // Auto-save session state to localStorage
   const saveSessionToStorage = useCallback(() => {
     if (!autoSaveKey || !started || finished || showFeedback) return;
+    const cleanSetLogs = Object.fromEntries(
+      Object.entries(setLogs).map(([exId, sets]) => [
+        exId,
+        sets.map(({ showRirPicker: _, ...rest }) => rest),
+      ])
+    );
     const sessionState = {
-      setLogs,
+      setLogs: cleanSetLogs,
       exerciseNotes,
       exerciseOrder,
       exerciseOverrides,
@@ -419,10 +442,16 @@ export default function WorkoutSession() {
     const initial: Record<string, SetLog[]> = {};
     workout.exercises.forEach((ex) => {
       if (!setLogs[ex.id]) {
-        initial[ex.id] = Array.from({ length: ex.sets }, () => ({
+        const lastData = lastSessionData[ex.id] ?? [];
+        const m = ex.reps.match(/(\d+)/);
+        const parsedTargetReps = m ? parseInt(m[1], 10) : undefined;
+        initial[ex.id] = Array.from({ length: ex.sets }, (_, si) => ({
           reps: 0,
           weight: 0,
           completed: false,
+          targetReps: parsedTargetReps,
+          targetWeight: lastData[si]?.weight ?? lastData[0]?.weight ?? undefined,
+          targetRir: sessionTargetRir,
         }));
       }
     });
@@ -482,7 +511,17 @@ export default function WorkoutSession() {
     setAddedAccessories(prev => [...prev, accId]);
     const newLogs: Record<string, SetLog[]> = {};
     routine.exercises.forEach(ex => {
-      newLogs[ex.id] = Array.from({ length: ex.sets }, () => ({ reps: 0, weight: 0, completed: false }));
+      const lastData = getLastDataForExercise(ex.id);
+      const m = ex.reps.match(/(\d+)/);
+      const parsedTargetReps = m ? parseInt(m[1], 10) : undefined;
+      newLogs[ex.id] = Array.from({ length: ex.sets }, (_, si) => ({
+        reps: 0,
+        weight: 0,
+        completed: false,
+        targetReps: parsedTargetReps,
+        targetWeight: lastData[si]?.weight ?? lastData[0]?.weight ?? undefined,
+        targetRir: sessionTargetRir,
+      }));
     });
     setSetLogs(prev => ({ ...prev, ...newLogs }));
     // Only the first exercise represents the group in exerciseOrder; the rest are
@@ -502,7 +541,7 @@ export default function WorkoutSession() {
     });
     hapticMedium();
     toast.success(`Added ${routine.name} accessory`);
-  }, [addedAccessories, applyHistoricalVariantSelections]);
+  }, [addedAccessories, applyHistoricalVariantSelections, getLastDataForExercise, sessionTargetRir]);
 
   const addSingleExercise = useCallback((entry: { id: string; name: string; muscleGroup: string }) => {
     const alreadyExists = allExercises.some(e => e.id === entry.id);
@@ -582,6 +621,16 @@ export default function WorkoutSession() {
     // Pure state update
     setSetLogs(prev => ({ ...prev, [exerciseId]: newSets }));
 
+    // Show RIR picker for non-warmup sets that were just completed
+    if (!wasCompleted && newSets[setIdx]?.setType !== "warmup") {
+      setSetLogs(prev => {
+        const s = prev[exerciseId] ? [...prev[exerciseId]] : [];
+        if (!s[setIdx]) return prev;
+        s[setIdx] = { ...s[setIdx], showRirPicker: true };
+        return { ...prev, [exerciseId]: s };
+      });
+    }
+
     if (!wasCompleted) {
       hapticMedium();
       setRestTimerActive(true);
@@ -637,6 +686,12 @@ export default function WorkoutSession() {
           }
 
           setCelebrationPR({ name: displayName, weight: currentWeight, reps: currentReps, tierUp, isTrue1RM: isOneRmTest });
+          setSetLogs(prev => {
+            const exSets = prev[exerciseId] ? [...prev[exerciseId]] : [];
+            if (!exSets[setIdx]) return prev;
+            exSets[setIdx] = { ...exSets[setIdx], isPr: true };
+            return { ...prev, [exerciseId]: exSets };
+          });
           void import("@/lib/gamification/notify").then(({ awardXpAndNotify }) =>
             awardXpAndNotify({ source: "personal_record", metadata: { exercise: effectiveId } })
           );
@@ -702,6 +757,17 @@ export default function WorkoutSession() {
         sets[setIdx] = { ...sets[setIdx], [field]: value };
         updated[exerciseId] = sets;
         return updated;
+      });
+    }, []
+  );
+
+  const updateSetLogField = useCallback(
+    (exerciseId: string, setIdx: number, patch: Partial<SetLog>) => {
+      setSetLogs(prev => {
+        const sets = prev[exerciseId] ? [...prev[exerciseId]] : [];
+        if (!sets[setIdx]) return prev;
+        sets[setIdx] = { ...sets[setIdx], ...patch };
+        return { ...prev, [exerciseId]: sets };
       });
     }, []
   );
@@ -855,6 +921,11 @@ export default function WorkoutSession() {
           reps: s.reps,
           weight: s.weight,
           setType: s.setType ?? "working",
+          rir: s.rir ?? null,
+          targetRir: s.targetRir ?? null,
+          targetReps: s.targetReps ?? null,
+          targetWeight: s.targetWeight ?? null,
+          isPr: s.isPr ?? false,
         }));
       }),
       effortRating: effortRating > 0 ? effortRating : undefined,
@@ -1506,8 +1577,8 @@ export default function WorkoutSession() {
                                   const wuIdx = isWarmup ? warmupIdxCounter++ : -1;
                                   const wuRamp = isWarmup ? warmupRamp(workingWeight, wuIdx, warmupCount, isDb) : null;
                                   return (
+                                <React.Fragment key={si}>
                                 <SwipeableSetRow
-                                  key={si}
                                   onDelete={() => deleteSet(ex.id, si)}
                                 >
                                   <div className={`grid ${isTimeBased ? "grid-cols-[28px_1fr_36px]" : showWeight ? "grid-cols-[28px_1fr_1fr_36px]" : "grid-cols-[28px_1fr_36px]"} gap-x-1.5 items-center bg-background ${is1RM ? "rounded-lg ring-1 ring-amber-400/50 bg-amber-400/5 px-1 py-0.5" : isWarmup ? "rounded-lg bg-orange-400/5 px-1 py-0.5" : ""}`}>
@@ -1552,6 +1623,40 @@ export default function WorkoutSession() {
                                     </button>
                                   </div>
                                 </SwipeableSetRow>
+                                {set.showRirPicker && (
+                                  <div className="flex flex-col gap-1 px-1 pb-1 -mt-0.5">
+                                    {set.targetRir && (
+                                      <span className="text-[10px] text-muted-foreground">
+                                        Target RIR: <span className="font-semibold text-primary">{set.targetRir}</span>
+                                      </span>
+                                    )}
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-[10px] text-muted-foreground mr-1">RIR</span>
+                                      {([0, 1, 2, 3] as const).map(n => {
+                                        const label = n === 3 ? "3+" : String(n);
+                                        const targetMin = set.targetRir ? parseInt(set.targetRir[0], 10) : null;
+                                        const targetMax = set.targetRir ? parseInt(set.targetRir[set.targetRir.length - 1], 10) : null;
+                                        const isTarget = targetMin !== null && targetMax !== null && n >= targetMin && n <= targetMax;
+                                        return (
+                                          <button
+                                            key={n}
+                                            onClick={() => updateSetLogField(ex.id, si, { rir: n, showRirPicker: false })}
+                                            className={`flex-1 rounded-md py-1.5 text-[11px] font-bold transition-all active:scale-95 ${isTarget ? "bg-primary/20 text-primary ring-1 ring-primary/40" : "bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary"}`}
+                                          >
+                                            {label}
+                                          </button>
+                                        );
+                                      })}
+                                      <button
+                                        onClick={() => updateSetLogField(ex.id, si, { showRirPicker: false })}
+                                        className="flex-shrink-0 rounded-md px-2 py-1.5 text-[10px] text-muted-foreground/60 bg-muted/30 hover:bg-muted/60 active:scale-95 transition-all"
+                                      >
+                                        skip
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                                </React.Fragment>
                               );});})()}
                               {/* Add Set + Warm-up + 1RM Test buttons */}
                               <div className="flex gap-1.5 mt-1">
@@ -1635,6 +1740,13 @@ export default function WorkoutSession() {
                         </div>
                         <span className="text-[11px] text-muted-foreground">{maxSets} rounds</span>
                       </div>
+                      <button
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        onClick={e => { e.stopPropagation(); removeExercise(ex.id); }}
+                        aria-label="Remove superset"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                       <div className="text-muted-foreground">
                         {isSSExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       </div>
