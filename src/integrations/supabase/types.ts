@@ -1349,9 +1349,14 @@ export type Database = {
           exercise_id: string
           exercise_name: string
           id: string
+          is_pr: boolean
           original_exercise_id: string | null
           reps: number
+          rir: number | null
           set_type: string
+          target_reps: number | null
+          target_rir: string | null
+          target_weight: number | null
           user_id: string
           weight: number
           workout_history_id: string
@@ -1361,9 +1366,14 @@ export type Database = {
           exercise_id: string
           exercise_name?: string
           id?: string
+          is_pr?: boolean
           original_exercise_id?: string | null
           reps?: number
+          rir?: number | null
           set_type?: string
+          target_reps?: number | null
+          target_rir?: string | null
+          target_weight?: number | null
           user_id: string
           weight?: number
           workout_history_id: string
@@ -1373,9 +1383,14 @@ export type Database = {
           exercise_id?: string
           exercise_name?: string
           id?: string
+          is_pr?: boolean
           original_exercise_id?: string | null
           reps?: number
+          rir?: number | null
           set_type?: string
+          target_reps?: number | null
+          target_rir?: string | null
+          target_weight?: number | null
           user_id?: string
           weight?: number
           workout_history_id?: string
