@@ -67,7 +67,7 @@ function ChallengesList() {
 function ChallengeCard({ challengeId }: { challengeId: string }) {
   const { data: challenges = [] } = useCommunityChallenges();
   const { data: stats } = useChallengeStats(challengeId);
-  const c = challenges.find((x) => x.id === challenges.findIndex ? 0 : 0) ?? challenges.find((x) => x.id === challengeId);
+  const c = challenges.find((x) => x.id === challengeId);
   if (!c) return null;
   const total = stats?.totalProgress ?? 0;
   const mine = stats?.myContribution ?? 0;
