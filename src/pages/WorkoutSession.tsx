@@ -492,7 +492,7 @@ export default function WorkoutSession() {
       setExpandedExercise(workout.exercises[0]?.id ?? null);
       setExerciseOrder(workout.exercises.map(ex => ex.id));
     }
-  }, [workout, lastSessionData]);
+  }, [workout, lastSessionData, progressionsByExId]);
 
   // Check if an exercise belongs to an accessory routine
   const getAccessoryForExercise = useCallback((exerciseId: string): string | null => {
