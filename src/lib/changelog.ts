@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.109",
+    version: "1.6.110",
     date: "2026-05-17",
     title: "Updates & Fixes",
     changes: [
-      "Feat: use strengthSets for strength mode when RIR is logged",
+      "Feat: explain MEV/MAV/MRV in volume detail sheet",
     ],
   },
   {
