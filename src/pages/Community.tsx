@@ -67,10 +67,23 @@ function ChallengesList() {
 function ChallengeCard({ challengeId }: { challengeId: string }) {
   const { data: challenges = [] } = useCommunityChallenges();
   const { data: stats } = useChallengeStats(challengeId);
-  const c = challenges.find((x) => x.id === challengeId);
+  const c = challenges.find((x) => x.id === challenges.findIndex ? 0 : 0) ?? challenges.find((x) => x.id === challengeId);
   if (!c) return null;
   const total = stats?.totalProgress ?? 0;
-  const pct = Math.min(100, (total / Number(c.target)) * 100);
+  const mine = stats?.myContribution ?? 0;
+  const targetNum = Number(c.target);
+  const pct = Math.min(100, (total / targetNum) * 100);
+
+  const isWeight = c.metric === "volume_kg";
+  const useTonnes = isWeight && targetNum >= 1000;
+  const unit = useTonnes ? "t" : c.metric;
+  const fmt = (v: number) => {
+    if (useTonnes) {
+      const t = v / 1000;
+      return t >= 100 ? Math.round(t).toLocaleString() : t.toLocaleString(undefined, { maximumFractionDigits: 1 });
+    }
+    return Math.round(v).toLocaleString();
+  };
 
   return (
     <motion.div
@@ -90,8 +103,8 @@ function ChallengeCard({ challengeId }: { challengeId: string }) {
 
       <div>
         <div className="flex justify-between text-[11px] tabular-nums mb-1.5">
-          <span className="font-bold">{Math.round(total).toLocaleString()}</span>
-          <span className="text-muted-foreground">{Number(c.target).toLocaleString()} {c.metric}</span>
+          <span className="font-bold">{fmt(total)}{useTonnes ? "t" : ""}</span>
+          <span className="text-muted-foreground">{fmt(targetNum)} {unit}</span>
         </div>
         <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
           <motion.div
@@ -104,8 +117,8 @@ function ChallengeCard({ challengeId }: { challengeId: string }) {
       </div>
 
       <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-        <span>You: <span className="font-bold text-foreground tabular-nums">{Math.round(stats?.myContribution ?? 0).toLocaleString()}</span></span>
-        <span>{stats?.contributorCount ?? 0} contributors</span>
+        <span>You: <span className="font-bold text-foreground tabular-nums">{fmt(mine)}{useTonnes ? "t" : ""}</span></span>
+          <span>{stats?.contributorCount ?? 0} contributors</span>
       </div>
 
       <p className="text-[10px] text-center text-amber-400 font-semibold">
