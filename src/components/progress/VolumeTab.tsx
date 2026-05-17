@@ -38,10 +38,14 @@ export default function VolumeTab() {
   const statuses = useMemo<Record<MuscleRegion, VolumeStatus>>(() => {
     const out = {} as Record<MuscleRegion, VolumeStatus>;
     for (const m of MUSCLE_REGIONS) {
-      out[m] = getVolumeStatus(m, selectedWeek?.muscles[m]?.sets ?? 0, activeStandards[m]);
+      const muscleData = selectedWeek?.muscles[m];
+      const count = goal === "strength" && (muscleData?.rirLoggedSets ?? 0) > 0
+        ? (muscleData?.strengthSets ?? 0)
+        : (muscleData?.sets ?? 0);
+      out[m] = getVolumeStatus(m, count, activeStandards[m]);
     }
     return out;
-  }, [selectedWeek, activeStandards]);
+  }, [selectedWeek, goal, activeStandards]);
 
   const sorted = useMemo(() => {
     return [...MUSCLE_REGIONS].sort((a, b) => {
@@ -294,26 +298,42 @@ export default function VolumeTab() {
               </div>
 
               {/* This week */}
-              <div className="glass-card rounded-xl p-3 mb-4 flex items-center justify-between">
-                <div>
-                  <div className="text-xs text-muted-foreground">This week</div>
-                  <div className="text-2xl font-bold font-display" style={{ color: VOLUME_STATUS_COLOR[sheetMuscleStatus] }}>
-                    {selectedWeek?.muscles[sheetMuscle]?.sets ?? 0}
-                    <span className="text-sm font-normal text-muted-foreground ml-1">sets</span>
+              {(() => {
+                const md = selectedWeek?.muscles[sheetMuscle];
+                const useStrSets = goal === "strength" && (md?.rirLoggedSets ?? 0) > 0;
+                const displayCount = useStrSets ? (md?.strengthSets ?? 0) : (md?.sets ?? 0);
+                return (
+                  <div className="glass-card rounded-xl p-3 mb-4 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs text-muted-foreground">This week</div>
+                      <div className="text-2xl font-bold font-display" style={{ color: VOLUME_STATUS_COLOR[sheetMuscleStatus] }}>
+                        {displayCount}
+                        <span className="text-sm font-normal text-muted-foreground ml-1">sets</span>
+                      </div>
+                      {useStrSets && (md?.sets ?? 0) !== displayCount && (
+                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                          {md?.sets ?? 0} total · {displayCount} heavy (RIR ≤ 1)
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground">Volume</div>
+                      <div className="text-sm font-semibold">
+                        {Math.round(md?.load ?? 0).toLocaleString()} kg
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs text-muted-foreground">Volume</div>
-                  <div className="text-sm font-semibold">
-                    {Math.round(selectedWeek?.muscles[sheetMuscle]?.load ?? 0).toLocaleString()} kg
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Feedback */}
               <div className="glass-card rounded-xl p-3 mb-4">
                 <p className="text-sm text-foreground leading-relaxed">
-                  {getVolumeFeedback(sheetMuscle, sheetMuscleStatus, selectedWeek?.muscles[sheetMuscle]?.sets ?? 0, goal)}
+                  {(() => {
+                    const md = selectedWeek?.muscles[sheetMuscle];
+                    const useStrSets = goal === "strength" && (md?.rirLoggedSets ?? 0) > 0;
+                    return getVolumeFeedback(sheetMuscle, sheetMuscleStatus, useStrSets ? (md?.strengthSets ?? 0) : (md?.sets ?? 0), goal);
+                  })()}
                 </p>
               </div>
 

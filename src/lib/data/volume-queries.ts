@@ -12,6 +12,7 @@ export interface MuscleSetsForWeek {
   sets: number;
   load: number;
   strengthSets: number;
+  rirLoggedSets: number;
 }
 
 export interface WeeklyMuscleData {
@@ -21,7 +22,7 @@ export interface WeeklyMuscleData {
 
 function emptyMuscles(): Record<MuscleRegion, MuscleSetsForWeek> {
   const out = {} as Record<MuscleRegion, MuscleSetsForWeek>;
-  for (const m of MUSCLE_REGIONS) out[m] = { sets: 0, load: 0, strengthSets: 0 };
+  for (const m of MUSCLE_REGIONS) out[m] = { sets: 0, load: 0, strengthSets: 0, rirLoggedSets: 0 };
   return out;
 }
 
@@ -142,6 +143,7 @@ export async function fetchWeeklyMuscleData(weeksBack = 4): Promise<WeeklyMuscle
       weekData[muscle].sets += 1;
       weekData[muscle].load += load;
       if (isStr) weekData[muscle].strengthSets += 1;
+      if (s.rir !== null && s.rir !== undefined) weekData[muscle].rirLoggedSets += 1;
     }
   }
 
