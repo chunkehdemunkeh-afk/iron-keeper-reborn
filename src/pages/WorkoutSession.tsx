@@ -1407,6 +1407,14 @@ export default function WorkoutSession() {
                       className="overflow-hidden"
                     >
                       <div className="px-3 pb-3 space-y-2">
+                        {progressionsByExId[ex.id]?.pendingSuggestion && (
+                          <ProgressionSuggestionBanner
+                            progression={progressionsByExId[ex.id]}
+                            onApplied={({ weight, repsLow, repsHigh }) =>
+                              applyProgressionToSetLogs(ex.id, weight, repsLow, repsHigh)
+                            }
+                          />
+                        )}
                         {(override?.notes || ex.notes) && (
                           <p className="text-[11px] text-primary/80 bg-primary/5 rounded-lg px-2 py-1.5">
                             {override?.notes || ex.notes}
