@@ -194,6 +194,31 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
     console.error("Progression evaluation failed:", e);
   }
 
+  // Contribute to active community challenges. Failures non-fatal.
+  try {
+    const { fetchActiveCommunityChallenges, contributeToChallenge } = await import("./community-queries");
+    const challenges = await fetchActiveCommunityChallenges();
+    if (challenges.length > 0) {
+      const workingSets = workout.sets.filter((s) => {
+        const t = s.setType ?? "working";
+        return t === "working" || t === "1rm_test";
+      });
+      const volumeKg = workingSets.reduce((sum, s) => sum + (Number(s.weight) || 0) * (Number(s.reps) || 0), 0);
+      const setCount = workingSets.length;
+      const repCount = workingSets.reduce((s, x) => s + (Number(x.reps) || 0), 0);
+      for (const ch of challenges) {
+        let delta = 0;
+        if (ch.metric === "volume_kg") delta = volumeKg;
+        else if (ch.metric === "sets") delta = setCount;
+        else if (ch.metric === "reps") delta = repCount;
+        else if (ch.metric === "workouts") delta = 1;
+        if (delta > 0) await contributeToChallenge(user.id, ch.id, delta);
+      }
+    }
+  } catch (e) {
+    console.error("Community contribution failed:", e);
+  }
+
   // Award XP (gamification). Failures swallowed inside notify.
   try {
     const { awardXpAndNotify } = await import("@/lib/gamification/notify");
