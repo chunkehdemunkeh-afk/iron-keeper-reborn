@@ -283,11 +283,11 @@ export default function VolumeTab() {
               </SheetHeader>
 
               {/* Standards grid */}
-              <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="grid grid-cols-3 gap-2 mb-1">
                 {[
-                  { label: "MEV", value: sheetMuscleStd.mev, desc: "minimum" },
-                  { label: "MAV", value: `${sheetMuscleStd.mavLow}–${sheetMuscleStd.mavHigh}`, desc: "optimal" },
-                  { label: "MRV", value: sheetMuscleStd.mrv, desc: "maximum" },
+                  { label: "MEV", value: sheetMuscleStd.mev, desc: "min effective" },
+                  { label: "MAV", value: `${sheetMuscleStd.mavLow}–${sheetMuscleStd.mavHigh}`, desc: "optimal range" },
+                  { label: "MRV", value: sheetMuscleStd.mrv, desc: "max recoverable" },
                 ].map(({ label, value, desc }) => (
                   <div key={label} className="glass-card rounded-xl p-2.5 text-center">
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</div>
@@ -296,6 +296,9 @@ export default function VolumeTab() {
                   </div>
                 ))}
               </div>
+              <p className="text-[10px] text-muted-foreground/70 text-center mb-4 px-1">
+                Sets per week below MEV don't drive growth · MAV is your sweet spot · above MRV recovery suffers
+              </p>
 
               {/* This week */}
               {(() => {
