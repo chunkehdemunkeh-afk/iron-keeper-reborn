@@ -1948,6 +1948,26 @@ export default function WorkoutSession() {
                                               ))}
                                             </select>
                                           )}
+                                          {isSingleArmEligible(gExId, displayName) && (
+                                            <div className="flex items-center rounded-full bg-muted/50 p-0.5 select-none">
+                                              <button
+                                                onClick={() => singleArmExercises.has(gExId) && setSingleArmExercises(prev => {
+                                                  const next = new Set(prev); next.delete(gExId); return next;
+                                                })}
+                                                className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-all ${!singleArmExercises.has(gExId) ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+                                              >
+                                                2 Arm
+                                              </button>
+                                              <button
+                                                onClick={() => !singleArmExercises.has(gExId) && setSingleArmExercises(prev => {
+                                                  const next = new Set(prev); next.add(gExId); return next;
+                                                })}
+                                                className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-all ${singleArmExercises.has(gExId) ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+                                              >
+                                                1 Arm
+                                              </button>
+                                            </div>
+                                          )}
                                         </div>
                                       );
                                     }
