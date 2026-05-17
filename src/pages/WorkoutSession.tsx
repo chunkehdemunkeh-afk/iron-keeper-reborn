@@ -467,12 +467,20 @@ export default function WorkoutSession() {
         const lastData = lastSessionData[ex.id] ?? [];
         const m = ex.reps.match(/(\d+)/);
         const parsedTargetReps = m ? parseInt(m[1], 10) : undefined;
+        // Auto-progression: if there's a stored target for this exercise, prefer it.
+        const prog = progressionsByExId[ex.id];
+        const progTargetWeight = prog && prog.targetWeight > 0 ? prog.targetWeight : undefined;
+        const progTargetReps = prog?.targetRepsLow || undefined;
         initial[ex.id] = Array.from({ length: ex.sets }, (_, si) => ({
           reps: 0,
           weight: 0,
           completed: false,
-          targetReps: parsedTargetReps,
-          targetWeight: lastData[si]?.weight ?? lastData[0]?.weight ?? undefined,
+          targetReps: progTargetReps ?? parsedTargetReps,
+          targetWeight:
+            progTargetWeight ??
+            lastData[si]?.weight ??
+            lastData[0]?.weight ??
+            undefined,
           targetRir: sessionTargetRir,
         }));
       }
