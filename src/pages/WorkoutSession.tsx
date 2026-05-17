@@ -1586,6 +1586,36 @@ export default function WorkoutSession() {
                                         ))}
                                       </select>
                                     )}
+                                    {isSingleArmEligible(ex.id, displayName) && (
+                                      <div className="flex items-center rounded-full bg-muted/50 p-0.5 select-none">
+                                        <button
+                                          onClick={() => {
+                                            if (singleArmExercises.has(ex.id)) {
+                                              hapticMedium();
+                                              setSingleArmExercises(prev => {
+                                                const next = new Set(prev); next.delete(ex.id); return next;
+                                              });
+                                            }
+                                          }}
+                                          className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${!singleArmExercises.has(ex.id) ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+                                        >
+                                          2 Arm
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            if (!singleArmExercises.has(ex.id)) {
+                                              hapticMedium();
+                                              setSingleArmExercises(prev => {
+                                                const next = new Set(prev); next.add(ex.id); return next;
+                                              });
+                                            }
+                                          }}
+                                          className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${singleArmExercises.has(ex.id) ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
+                                        >
+                                          1 Arm
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 </>
                               )}
