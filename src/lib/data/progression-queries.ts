@@ -226,14 +226,22 @@ export async function evaluateAndStoreProgression(sets: EvalSet[]): Promise<void
 
     const exName = exSets[0].exerciseName || exId;
 
-    // Range from this session's prescribed targets, else from existing row,
-    // else fall back to a sensible default.
-    const sessionHigh = Math.max(0, ...exSets.map(s => s.targetRepsHigh ?? 0));
-    const sessionLow = Math.max(0, ...exSets.map(s => s.targetRepsLow ?? 0));
+    // Resolve the prescribed rep range: caller-provided first, else static defs.
+    const sessionHighRaw = Math.max(0, ...exSets.map(s => s.targetRepsHigh ?? 0));
+    const sessionLowRaw = Math.max(0, ...exSets.map(s => s.targetRepsLow ?? 0));
+    const staticRange = repRangeForExercise(exId);
     const prev = existing.get(exId);
 
-    const repsHigh = sessionHigh || prev?.target_reps_high || 10;
-    const repsLow = sessionLow || prev?.target_reps_low || Math.max(1, repsHigh - 2);
+    const repsHigh =
+      sessionHighRaw ||
+      staticRange?.[1] ||
+      prev?.target_reps_high ||
+      10;
+    const repsLow =
+      sessionLowRaw ||
+      staticRange?.[0] ||
+      prev?.target_reps_low ||
+      Math.max(1, repsHigh - 2);
 
     const heaviest = Math.max(...exSets.map(s => s.weight));
     const currentTarget = prev ? Number(prev.target_weight) || 0 : heaviest;
