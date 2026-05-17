@@ -105,3 +105,39 @@ export function shouldShowMondayBanner(userId: string, hasPreviousReview: boolea
   if (day !== 1 && day !== 2) return false;
   return !isPromptDismissedForPreviousWeek(userId);
 }
+
+// ── Volume summary prompt ────────────────────────────────────────────────────
+
+const VOL_PROMPT_KEY = (userId: string, weekStart: string) =>
+  `ik-vol-prompt-dismissed-${userId}-${weekStart}`;
+
+export function isVolumeDismissed(userId: string, weekStart: string): boolean {
+  try {
+    return !!localStorage.getItem(VOL_PROMPT_KEY(userId, weekStart));
+  } catch {
+    return false;
+  }
+}
+
+export function dismissVolumePrompt(userId: string, weekStart: string): void {
+  try {
+    localStorage.setItem(VOL_PROMPT_KEY(userId, weekStart), "1");
+  } catch {
+    // ignore
+  }
+}
+
+/** Sunday after 18:00 — show current week's volume summary. */
+export function shouldShowVolumePromptSunday(userId: string): boolean {
+  const now = new Date();
+  if (now.getDay() !== 0 || now.getHours() < 18) return false;
+  return !isVolumeDismissed(userId, getCurrentWeekStart());
+}
+
+/** Monday or Tuesday — show previous week's volume summary. */
+export function shouldShowVolumePromptMonday(userId: string): boolean {
+  const now = new Date();
+  const day = now.getDay();
+  if (day !== 1 && day !== 2) return false;
+  return !isVolumeDismissed(userId, getPreviousWeekStart());
+}

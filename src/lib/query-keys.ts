@@ -77,4 +77,7 @@ export const queryKeys = {
   // ── Progression ───────────────────────────────────────────────────────────
   progressions: (userId: string) => ["progressions", userId] as const,
   pendingProgressions: (userId: string) => ["progressions-pending", userId] as const,
+
+  // ── Muscle volume ─────────────────────────────────────────────────────────
+  muscleVolume: (userId: string) => ["muscle-volume", userId] as const,
 } as const;

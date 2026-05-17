@@ -42,6 +42,7 @@ React 18 + TypeScript PWA, deployed via Lovable (auto-deploys on `git push main`
   - `duel-queries.ts` — `fetchMyDuels`, `createDuel`, `respondToDuel`, `fetchDuelProgress`
   - `quest-queries.ts` — `fetchActiveQuests` → `{ daily: QuestWithProgress[], weekly: QuestWithProgress[] }`
   - `season-queries.ts` — `fetchCurrentSeason`, `fetchPendingSeasonFinale`, `fetchSeasonResult`
+  - `progression-queries.ts` — Double-progression model. `fetchAllProgressions`, `fetchPendingProgressions`, `acceptProgression`, `dismissProgression`, `resetAllProgressions`, `evaluateAndStoreProgression(sets)`. Stores one row per `(user_id, exercise_id)` in `exercise_progression`; `exercise_id` is the *effective* id (includes attachment/variant suffix). `suggestIncrement` heuristic: lower compound +5kg, upper compound +2.5kg, isolation +1.25kg.
   - `utils.ts` — `mondayOfWeek(date)`, `recentMondays(weeks)`
 - `src/lib/query-keys.ts` — Centralized React Query key registry. Always use `queryKeys.*()` — never inline string literals.
 - `src/lib/storage-keys.ts` — Named localStorage key constants. Always use `STORAGE_KEYS.*` — never raw strings (except `user-preferences.ts` and `demo-mode.ts` which own their own keys).
@@ -49,12 +50,15 @@ React 18 + TypeScript PWA, deployed via Lovable (auto-deploys on `git push main`
 - `src/lib/user-preferences.ts` — Split/schedule in localStorage under `ik-prefs-{userId}`. `isGKSplit(userId)`, `isNoWorkoutMode(userId)` (`splitId === "none"`).
 - `src/lib/demo-mode.ts` / `demo-data.ts` / `demo-supabase.ts` — Demo mode: sessionStorage flag `ik-demo`. `demo-supabase.ts` intercepts `.from()` calls → in-memory store. `demo-tours.ts` defines guided tour steps per route.
 - `src/lib/muscle-mapping.ts` — 17 canonical `MUSCLE_REGIONS`, `getMusclesWorked(...)`, `stripExerciseSuffixes(id)`.
+- `src/lib/single-arm-variants.ts` — `isSingleArmEligible(exerciseId, exerciseName)` → shows "2 Arm / 1 Arm" toggle pill. Appends `-sa` suffix to effective exercise ID so per-arm history tracks separately. `DEFAULT_SINGLE_ARM_IDS` (currently `lib-61` Bayesian Curl) defaults to single-arm mode.
 - `src/lib/recovery.ts` — pure: `computeMuscleRecovery(sets, sleepLogs, splitId, now, settings)` → `Record<MuscleRegion, MuscleState>`.
 - `src/lib/recovery-scores.ts` — Whoop-style scoring (pure). `computeRecoveryScore` (0–100), `computeStrainScore` (0–21), `computeStressLevel` (0–3), `computeSleepPerformance` (0–100), `computeAllScores(...)`.
 - `src/lib/strength-standards.ts` — 6-tier system for 8 lifts. `epley1RM`, `getStrengthRating(liftId, oneRm, {bodyweight,sex,age?})`, `inferLiftId`, `overallTier`.
 - `src/lib/calorie-burn.ts` — `estimateCardioBurn(CardioInput)` (MET tables), `estimateStrengthBurn(StrengthInput)`. Both round to nearest 5 kcal.
 - `src/lib/tdee-calculator.ts` — Mifflin-St Jeor. `calculateTDEE(params)` → TDEE + target calories + macros.
 - `src/lib/ai-insight.ts` — `generateAIInsight(inputs, queryClient)` fire-and-forget; calls `biometric-insight` edge function and persists result to `daily_scores`.
+- `src/hooks/queries/useProgressions.ts` — `useProgressions()`, `usePendingProgressions()`, `progressionMap(rows)` (exerciseId → row lookup), `useProgressionActions()` (accept/dismiss mutations with toast + haptic).
+- `src/components/workout/ProgressionSuggestionBanner.tsx` — Inline banner above exercise card when `pendingSuggestion` is non-null. Accept applies new weight/reps; dismiss clears suggestion.
 - **Gamification** (`src/lib/gamification/`):
   - `config.ts` — `XP_REWARDS`, `xpForLevel`, `levelFromXp`, `progressToNextLevel`, `streakMultiplier`, `streakTier`, `SEASON_TIERS`
   - `awardXp.ts` — `awardXp(input)` → dedupes, applies streak multiplier, inserts `xp_events`, updates streak + `user_progress`, evaluates badges
@@ -97,6 +101,7 @@ React 18 + TypeScript PWA, deployed via Lovable (auto-deploys on `git push main`
 | `cosmetics` | catalog: `kind` (frame/banner/xp_theme/title), `coin_price`, `tier_required` |
 | `user_cosmetics` | owned cosmetics |
 | `equipped_cosmetics` | one equipped cosmetic per `kind` per user |
+| `exercise_progression` | double-progression tracking: `exercise_id` (effective id), `target_weight`, `target_reps_low/high`, `pending_suggestion` (jsonb), `last_evaluated_at`; unique `(user_id, exercise_id)` |
 | `community_challenges` | server-wide goals; `metric`, `target`, `reward_coins` |
 | `community_contributions` | per-user contribution to a challenge |
 | `clans` | `name`, `tag`, `owner_id`; 3–10 members |
@@ -154,6 +159,8 @@ git stash && git pull --rebase origin main && git stash pop && git push origin m
 - **LucideIcon serialization** — `JSON.stringify` drops functions/Symbols → `icon` becomes `{}` in localStorage. `getAllCustomWorkouts()` patches with `icon: Dumbbell`.
 - **Superset accessory `exerciseOrder` rule** — Only the **first** exercise in a superset is added to `exerciseOrder`. Must use `<Reorder.Item dragListener={false}>` — a plain `<div>` causes `onReorder` to silently drop IDs.
 - **`isBilateralDumbbell` is keyword-only** — matches `DB_INDICATORS` against name + ID. Exercises without "dumbbell" in name (e.g. "Bulgarian Split Squat") must be explicitly added.
+- **Single-arm `-sa` suffix** — `isSingleArmEligible` from `single-arm-variants.ts` drives the "2 Arm / 1 Arm" pill. When toggled, the effective exercise ID gets a `-sa` suffix so per-arm PRs/history track independently. Mirrors the `-{attachmentKey}` cable pattern.
+- **Auto-progression** — `evaluateAndStoreProgression(sets)` is called after a session saves. It uses the *effective* exercise ID (same as PR tracking), skips warmup/1rm_test sets and pure-bodyweight exercises. Suggestions persist in `exercise_progression.pending_suggestion` until accepted or dismissed.
 - **Previous-sets fallback after substitutions** — `fetchLastSessionData` only returns the most-recent session. `WorkoutSession` calls `fetchExerciseLastData(exerciseId)` in parallel for missing exercises.
 - **Machine row variant pill (`pl1`)** — "Seated Row Machine" uses `heavyStackExercises`: default = "Machine Row" (`pl1`), in-set = "Low Row" (`pl1-heavy`). Pill hidden when swapped.
 - **Substitute IDs as primary exercise IDs** — A substitution ID (e.g. `sub-up5a` for Dumbbell Shoulder Press) can be used directly as the primary `id` in `workout-data.ts` to preserve history accumulated via that substitution. The app displays the friendly name correctly because `saveWorkoutToCloud`, `fetchRecentSets`, `fetchExercisePRHistory`, `WorkoutCard`, `review-queries`, and `leaderboard-queries` all include `EXERCISE_SUBSTITUTIONS` in their name resolution maps.

@@ -32,6 +32,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useState } from "react";
 import PhotosTab from "@/components/progress/PhotosTab";
+import VolumeTab from "@/components/progress/VolumeTab";
 import StrengthLevelCard from "@/components/progress/StrengthLevelCard";
 import WeeklyEnergyCard from "@/components/WeeklyEnergyCard";
 import HRVTrendCard from "@/components/biometrics/HRVTrendCard";
@@ -364,7 +365,7 @@ export default function Progress() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const tab = tabParam === "photos" ? tabParam : "stats";
+  const tab = (tabParam === "photos" || tabParam === "volume") ? tabParam : "stats";
 
   const { data: history = [], isLoading: historyLoading } = useWorkoutHistory();
 
@@ -451,6 +452,7 @@ export default function Progress() {
           }}
           options={[
             { value: "stats", label: "Stats" },
+            { value: "volume", label: "Volume" },
             { value: "photos", label: "Photos" },
           ]}
           layoutId="progress-tab-pill"
@@ -459,6 +461,12 @@ export default function Progress() {
         {tab === "photos" && (
           <div className="mt-4">
             <PhotosTab />
+          </div>
+        )}
+
+        {tab === "volume" && (
+          <div className="mt-4">
+            <VolumeTab />
           </div>
         )}
 

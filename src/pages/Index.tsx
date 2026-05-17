@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import HelpButton from "@/components/demo/HelpButton";
 import WeeklyReviewPrompt from "@/components/weekly/WeeklyReviewPrompt";
 import MondayBanner from "@/components/weekly/MondayBanner";
+import VolumeSummaryBanner from "@/components/weekly/VolumeSummaryBanner";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
@@ -121,6 +122,9 @@ const Index = () => {
 
         {/* Monday catch-up banner — only Mon/Tue if last week unreviewed */}
         {isCurrentDay && <MondayBanner />}
+
+        {/* Sunday/Monday volume summary banner */}
+        {isCurrentDay && <VolumeSummaryBanner />}
 
         {/* Week strip */}
         <div>
