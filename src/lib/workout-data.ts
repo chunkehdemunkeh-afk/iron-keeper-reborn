@@ -426,8 +426,6 @@ export const WORKOUTS: WorkoutDay[] = [
     focus: "Chest · Back · Rear Delts · Arms — Hypertrophy Bias",
     color: "from-purple-500/20 to-fuchsia-500/10",
     exercises: [
-      { id: "lib-61", name: "Bayesian Curl",                            sets: 3, reps: "10-12",     targetMuscle: "Biceps",            notes: "Single-arm cable behind body — max long-head stretch. Step forward of low pulley, elbow stays slightly behind torso, slow eccentric" },
-      { id: "lib-db-Machine_Preacher_Curls", name: "Machine Preacher Curl", sets: 3, reps: "10-12", targetMuscle: "Biceps",            notes: "Short-head / peak focus — arms locked on pad, controlled out of the bottom, full squeeze at top" },
       { id: "pu3", name: "15° Incline Dumbbell Bench Press",            sets: 4, reps: "10-12",     targetMuscle: "Upper Chest",       notes: "Higher reps vs Upper A — different angle, squeeze at top" },
       { id: "pl1", name: "Seated Row Machine",                          sets: 4, reps: "10-12",     targetMuscle: "Mid Back",          notes: "Keep progressing. Pull to lower chest, squeeze shoulder blades" },
       { id: "dl5", name: "Dumbbell Row",                                sets: 3, reps: "10-12",     targetMuscle: "Lats/Mid Back",     notes: "Two-handed bent-over row — full stretch at bottom, drive elbows back. Toggle 1 Arm pill for unilateral" },
