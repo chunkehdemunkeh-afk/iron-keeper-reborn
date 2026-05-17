@@ -22,15 +22,12 @@ interface Props {
 export default function MuscleVolumeRow({
   muscle,
   sets,
-  strengthSets,
   status,
   standard,
   weeklySetCounts,
-  goal,
   isHighlighted,
   onClick,
 }: Props) {
-  const displaySets = goal === "strength" ? strengthSets : sets;
   const color = VOLUME_STATUS_COLOR[status];
   const { mev, mavLow, mavHigh, mrv } = standard;
   const cap = mrv > 0 ? mrv : 30;
@@ -39,7 +36,7 @@ export default function MuscleVolumeRow({
   const mevPct = Math.round((mev / cap) * 100);
   const mavLowPct = Math.round((mavLow / cap) * 100);
   const mavHighPct = Math.round((mavHigh / cap) * 100);
-  const fillPct = Math.min(Math.round((displaySets / cap) * 100), 100);
+  const fillPct = Math.min(Math.round((sets / cap) * 100), 100);
 
   // Sparkline
   const sparkMax = Math.max(...weeklySetCounts, mrv, 1);
@@ -92,7 +89,7 @@ export default function MuscleVolumeRow({
 
           <div className="flex justify-between mt-0.5">
             <span className="text-[10px] text-muted-foreground tabular-nums">
-              {displaySets} sets{goal === "strength" && sets !== strengthSets ? ` (${sets} total)` : ""}
+              {sets} sets
             </span>
             <span className="text-[10px] text-muted-foreground tabular-nums">
               target {mavLow}–{mavHigh}

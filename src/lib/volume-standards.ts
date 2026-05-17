@@ -41,9 +41,37 @@ export const VOLUME_STANDARDS: Record<MuscleRegion, VolumeStandard> = {
   lower_back:     { mev: 4,  mavLow: 6,  mavHigh: 10, mrv: 14 },
 };
 
-export function getVolumeStatus(muscle: MuscleRegion, sets: number): VolumeStatus {
+// Strength-focused MEV/MAV/MRV — RP strength programming uses ~40-50% of
+// hypertrophy volume; quality and load progression matter more than set count.
+export const STRENGTH_STANDARDS: Record<MuscleRegion, VolumeStandard> = {
+  chest:          { mev: 3,  mavLow: 5,  mavHigh: 8,  mrv: 10 },
+  front_delts:    { mev: 0,  mavLow: 2,  mavHigh: 5,  mrv: 7  },
+  side_delts:     { mev: 3,  mavLow: 6,  mavHigh: 10, mrv: 12 },
+  rear_delts:     { mev: 2,  mavLow: 4,  mavHigh: 8,  mrv: 10 },
+  biceps:         { mev: 3,  mavLow: 5,  mavHigh: 8,  mrv: 10 },
+  triceps:        { mev: 2,  mavLow: 4,  mavHigh: 6,  mrv: 9  },
+  forearms:       { mev: 2,  mavLow: 4,  mavHigh: 6,  mrv: 8  },
+  abs:            { mev: 6,  mavLow: 8,  mavHigh: 12, mrv: 15 },
+  obliques:       { mev: 3,  mavLow: 5,  mavHigh: 8,  mrv: 10 },
+  quads:          { mev: 3,  mavLow: 5,  mavHigh: 8,  mrv: 10 },
+  hamstrings:     { mev: 2,  mavLow: 4,  mavHigh: 6,  mrv: 9  },
+  glutes:         { mev: 2,  mavLow: 4,  mavHigh: 8,  mrv: 10 },
+  abductors:      { mev: 2,  mavLow: 3,  mavHigh: 6,  mrv: 8  },
+  adductors:      { mev: 2,  mavLow: 3,  mavHigh: 6,  mrv: 8  },
+  calves:         { mev: 4,  mavLow: 6,  mavHigh: 10, mrv: 12 },
+  lats:           { mev: 4,  mavLow: 6,  mavHigh: 10, mrv: 12 },
+  traps:          { mev: 2,  mavLow: 4,  mavHigh: 6,  mrv: 8  },
+  mid_back:       { mev: 2,  mavLow: 4,  mavHigh: 6,  mrv: 8  },
+  lower_back:     { mev: 2,  mavLow: 3,  mavHigh: 5,  mrv: 7  },
+};
+
+export function getVolumeStatus(
+  muscle: MuscleRegion,
+  sets: number,
+  standard?: VolumeStandard,
+): VolumeStatus {
   if (sets === 0) return "untrained";
-  const { mev, mavLow, mavHigh, mrv } = VOLUME_STANDARDS[muscle];
+  const { mev, mavLow, mavHigh, mrv } = standard ?? VOLUME_STANDARDS[muscle];
   if (sets > mrv) return "over_mrv";
   if (sets > mavHigh) return "approaching_mrv";
   if (sets >= mavLow) return "optimal";
@@ -96,7 +124,8 @@ export function getVolumeFeedback(
   goal: "hypertrophy" | "strength",
 ): string {
   const label = MUSCLE_LABELS[muscle];
-  const { mev, mavLow, mavHigh } = VOLUME_STANDARDS[muscle];
+  const std = goal === "strength" ? STRENGTH_STANDARDS[muscle] : VOLUME_STANDARDS[muscle];
+  const { mev, mavLow, mavHigh } = std;
 
   if (goal === "strength") {
     switch (status) {

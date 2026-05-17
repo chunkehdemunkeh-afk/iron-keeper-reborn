@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { MUSCLE_REGIONS, MUSCLE_LABELS, type MuscleRegion } from "@/lib/muscle-mapping";
 import {
   VOLUME_STANDARDS,
+  STRENGTH_STANDARDS,
   VOLUME_STATUS_COLOR,
   VOLUME_STATUS_LABEL,
   STATUS_SORT_ORDER,
@@ -32,16 +33,15 @@ export default function VolumeTab() {
   const safeIdx = Math.min(selectedWeekIdx, Math.max(weeklyData.length - 1, 0));
   const selectedWeek = weeklyData[safeIdx];
 
+  const activeStandards = goal === "strength" ? STRENGTH_STANDARDS : VOLUME_STANDARDS;
+
   const statuses = useMemo<Record<MuscleRegion, VolumeStatus>>(() => {
     const out = {} as Record<MuscleRegion, VolumeStatus>;
     for (const m of MUSCLE_REGIONS) {
-      const count = goal === "strength"
-        ? (selectedWeek?.muscles[m]?.strengthSets ?? 0)
-        : (selectedWeek?.muscles[m]?.sets ?? 0);
-      out[m] = getVolumeStatus(m, count);
+      out[m] = getVolumeStatus(m, selectedWeek?.muscles[m]?.sets ?? 0, activeStandards[m]);
     }
     return out;
-  }, [selectedWeek, goal]);
+  }, [selectedWeek, activeStandards]);
 
   const sorted = useMemo(() => {
     return [...MUSCLE_REGIONS].sort((a, b) => {
@@ -69,7 +69,7 @@ export default function VolumeTab() {
   const untrainedMuscles = sorted.filter(m => statuses[m] === "untrained");
 
   const sheetMuscleStatus = sheetMuscle ? statuses[sheetMuscle] : null;
-  const sheetMuscleStd = sheetMuscle ? VOLUME_STANDARDS[sheetMuscle] : null;
+  const sheetMuscleStd = sheetMuscle ? activeStandards[sheetMuscle] : null;
 
   if (isLoading) return <LoadingState label="Calculating muscle volume" />;
   if (!weeklyData.length) {
@@ -208,7 +208,7 @@ export default function VolumeTab() {
                 load={selectedWeek?.muscles[m]?.load ?? 0}
                 strengthSets={selectedWeek?.muscles[m]?.strengthSets ?? 0}
                 status={statuses[m]}
-                standard={VOLUME_STANDARDS[m]}
+                standard={activeStandards[m]}
                 weeklySetCounts={sparklines[m]}
                 goal={goal}
                 isHighlighted={highlighted === m}
@@ -242,7 +242,7 @@ export default function VolumeTab() {
                     load={0}
                     strengthSets={0}
                     status="untrained"
-                    standard={VOLUME_STANDARDS[m]}
+                    standard={activeStandards[m]}
                     weeklySetCounts={sparklines[m]}
                     goal={goal}
                     isHighlighted={highlighted === m}
@@ -298,16 +298,9 @@ export default function VolumeTab() {
                 <div>
                   <div className="text-xs text-muted-foreground">This week</div>
                   <div className="text-2xl font-bold font-display" style={{ color: VOLUME_STATUS_COLOR[sheetMuscleStatus] }}>
-                    {goal === "strength"
-                      ? (selectedWeek?.muscles[sheetMuscle]?.strengthSets ?? 0)
-                      : (selectedWeek?.muscles[sheetMuscle]?.sets ?? 0)}
+                    {selectedWeek?.muscles[sheetMuscle]?.sets ?? 0}
                     <span className="text-sm font-normal text-muted-foreground ml-1">sets</span>
                   </div>
-                  {goal === "strength" && (
-                    <div className="text-[10px] text-muted-foreground mt-0.5">
-                      {selectedWeek?.muscles[sheetMuscle]?.sets ?? 0} total sets
-                    </div>
-                  )}
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-muted-foreground">Volume</div>
@@ -320,14 +313,7 @@ export default function VolumeTab() {
               {/* Feedback */}
               <div className="glass-card rounded-xl p-3 mb-4">
                 <p className="text-sm text-foreground leading-relaxed">
-                  {getVolumeFeedback(
-                    sheetMuscle,
-                    sheetMuscleStatus,
-                    goal === "strength"
-                      ? (selectedWeek?.muscles[sheetMuscle]?.strengthSets ?? 0)
-                      : (selectedWeek?.muscles[sheetMuscle]?.sets ?? 0),
-                    goal,
-                  )}
+                  {getVolumeFeedback(sheetMuscle, sheetMuscleStatus, selectedWeek?.muscles[sheetMuscle]?.sets ?? 0, goal)}
                 </p>
               </div>
 
@@ -338,7 +324,7 @@ export default function VolumeTab() {
                   {sparklines[sheetMuscle].map((count, i) => {
                     const max = Math.max(...sparklines[sheetMuscle], sheetMuscleStd.mrv, 1);
                     const isNow = i === sparklines[sheetMuscle].length - 1;
-                    const status = getVolumeStatus(sheetMuscle, count);
+                    const status = getVolumeStatus(sheetMuscle, count, sheetMuscleStd);
                     const color = VOLUME_STATUS_COLOR[status];
                     return (
                       <div key={i} className="flex flex-col items-center gap-1 flex-1">
