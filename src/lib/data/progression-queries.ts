@@ -1,0 +1,285 @@
+/**
+ * Auto-progression: double-progression model.
+ *
+ * Rule: when every working set hits the TOP of the prescribed rep range at
+ * (or above) the current target weight, suggest a small weight bump and
+ * reset the target reps to the bottom of the range.
+ *
+ * Storage: one row per (user_id, exercise_id) in `exercise_progression`.
+ * exercise_id is the *effective* id (includes attachment suffix like
+ * `pl3-rope`) so each cable attachment / dumbbell variant progresses
+ * independently — matching how PR history is tracked.
+ */
+import { supabase } from "@/integrations/supabase/client";
+import { WORKOUTS } from "@/lib/workout-data";
+import { EXERCISE_LIBRARY } from "@/lib/exercise-library";
+import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "@/lib/accessory-routines";
+import { EXERCISE_SUBSTITUTIONS } from "@/lib/exercise-substitutions";
+import { stripExerciseSuffixes } from "@/lib/muscle-mapping";
+
+/** Build base-id → "6-8" lookup once. */
+let _repsMap: Map<string, string> | null = null;
+function repRangeForExercise(exerciseId: string): [number, number] | null {
+  if (!_repsMap) {
+    _repsMap = new Map();
+    WORKOUTS.forEach(w => w.exercises.forEach(ex => _repsMap!.set(ex.id, ex.reps)));
+    ACCESSORY_ROUTINES.forEach(r => r.exercises.forEach(ex => _repsMap!.set(ex.id, ex.reps)));
+    Object.values(EXERCISE_SUBSTITUTIONS).flat().forEach(s => {
+      if (!_repsMap!.has(s.id)) _repsMap!.set(s.id, "8-10");
+    });
+    Object.values(ACCESSORY_SUBSTITUTIONS).flat().forEach(s => {
+      if (!_repsMap!.has(s.id)) _repsMap!.set(s.id, "8-10");
+    });
+    EXERCISE_LIBRARY.forEach(ex => {
+      if (!_repsMap!.has(ex.id)) _repsMap!.set(ex.id, "8-12");
+    });
+  }
+  const range =
+    _repsMap.get(exerciseId) ??
+    _repsMap.get(stripExerciseSuffixes(exerciseId)) ??
+    null;
+  if (!range) return null;
+  return parseRepRange(range);
+}
+
+export type ProgressionSuggestion = {
+  type: "increase" | "deload";
+  suggestedWeight: number;
+  suggestedRepsLow: number;
+  suggestedRepsHigh: number;
+  prevWeight: number;
+  reason: string;
+};
+
+export type ProgressionRow = {
+  exerciseId: string;
+  exerciseName: string;
+  targetWeight: number;
+  targetRepsLow: number;
+  targetRepsHigh: number;
+  pendingSuggestion: ProgressionSuggestion | null;
+  lastEvaluatedAt: string | null;
+};
+
+type DbRow = {
+  exercise_id: string;
+  exercise_name: string;
+  target_weight: number;
+  target_reps_low: number;
+  target_reps_high: number;
+  pending_suggestion: ProgressionSuggestion | null;
+  last_evaluated_at: string | null;
+};
+
+const tbl = () =>
+  (supabase as unknown as { from: (t: string) => any }).from("exercise_progression");
+
+function rowToProgression(r: DbRow): ProgressionRow {
+  return {
+    exerciseId: r.exercise_id,
+    exerciseName: r.exercise_name,
+    targetWeight: Number(r.target_weight) || 0,
+    targetRepsLow: r.target_reps_low,
+    targetRepsHigh: r.target_reps_high,
+    pendingSuggestion: r.pending_suggestion,
+    lastEvaluatedAt: r.last_evaluated_at,
+  };
+}
+
+/** Parse "8-10", "6 - 8", "12" → [low, high]. Returns null if no digits. */
+export function parseRepRange(reps: string): [number, number] | null {
+  const nums = (reps.match(/\d+/g) ?? []).map(n => parseInt(n, 10));
+  if (nums.length === 0) return null;
+  if (nums.length === 1) return [nums[0], nums[0]];
+  return [nums[0], nums[1]];
+}
+
+/**
+ * Weight increment heuristic by exercise name/id.
+ * Lower body compounds: +5kg. Upper compounds: +2.5kg. Isolation: +1.25kg.
+ */
+export function suggestIncrement(exerciseName: string, exerciseId: string): number {
+  const t = `${exerciseName} ${exerciseId}`.toLowerCase();
+  const lowerCompound = /(squat|deadlift|leg press|hip thrust|romanian|rdl|good morning)/.test(t);
+  if (lowerCompound) return 5;
+  const upperCompound = /(bench|overhead press|ohp|military|barbell row|pendlay|t-bar|pulldown|chin[- ]?up|pull[- ]?up|dip)/.test(t);
+  if (upperCompound) return 2.5;
+  return 1.25;
+}
+
+export async function fetchAllProgressions(): Promise<ProgressionRow[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await tbl().select("*").eq("user_id", user.id);
+  if (error) {
+    console.error("fetchAllProgressions failed:", error);
+    return [];
+  }
+  return ((data ?? []) as DbRow[]).map(rowToProgression);
+}
+
+export async function fetchPendingProgressions(): Promise<ProgressionRow[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await tbl()
+    .select("*")
+    .eq("user_id", user.id)
+    .not("pending_suggestion", "is", null);
+  if (error) {
+    console.error("fetchPendingProgressions failed:", error);
+    return [];
+  }
+  return ((data ?? []) as DbRow[]).map(rowToProgression);
+}
+
+/** Accept the pending suggestion → it becomes the new target. */
+export async function acceptProgression(exerciseId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const { data, error: fetchErr } = await tbl()
+    .select("pending_suggestion")
+    .eq("user_id", user.id)
+    .eq("exercise_id", exerciseId)
+    .maybeSingle();
+  if (fetchErr || !data?.pending_suggestion) return;
+  const sug = data.pending_suggestion as ProgressionSuggestion;
+  const { error } = await tbl()
+    .update({
+      target_weight: sug.suggestedWeight,
+      target_reps_low: sug.suggestedRepsLow,
+      target_reps_high: sug.suggestedRepsHigh,
+      pending_suggestion: null,
+    })
+    .eq("user_id", user.id)
+    .eq("exercise_id", exerciseId);
+  if (error) console.error("acceptProgression failed:", error);
+}
+
+/** Dismiss the pending suggestion without changing the target. */
+export async function dismissProgression(exerciseId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const { error } = await tbl()
+    .update({ pending_suggestion: null })
+    .eq("user_id", user.id)
+    .eq("exercise_id", exerciseId);
+  if (error) console.error("dismissProgression failed:", error);
+}
+
+/** Wipe all progression data for the current user (used by settings). */
+export async function resetAllProgressions(): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await tbl().delete().eq("user_id", user.id);
+}
+
+type EvalSet = {
+  exerciseId: string;
+  exerciseName: string;
+  reps: number;
+  weight: number;
+  setType?: string;
+  /** the rep range the user was prescribed for this exercise this session */
+  targetRepsLow?: number;
+  targetRepsHigh?: number;
+};
+
+/**
+ * Evaluate a just-completed session and write progression rows / suggestions.
+ *
+ * For each exercise in the payload:
+ *   • Filter to working sets only (excludes warmup, 1rm_test).
+ *   • Skip if every set is bodyweight (weight === 0).
+ *   • Determine current target (existing row, else seed from this session).
+ *   • If every working set met BOTH the rep_high AND the current target weight
+ *     → write a `pending_suggestion` to bump weight + reset reps to low.
+ *   • Otherwise just refresh target_weight to the heaviest working set used.
+ */
+export async function evaluateAndStoreProgression(sets: EvalSet[]): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  // Group by exercise_id
+  const byEx = new Map<string, EvalSet[]>();
+  for (const s of sets) {
+    if ((s.setType ?? "working") !== "working") continue;
+    if (!s.exerciseId) continue;
+    if (!byEx.has(s.exerciseId)) byEx.set(s.exerciseId, []);
+    byEx.get(s.exerciseId)!.push(s);
+  }
+  if (byEx.size === 0) return;
+
+  const exIds = Array.from(byEx.keys());
+  const { data: existingRows } = await tbl()
+    .select("*")
+    .eq("user_id", user.id)
+    .in("exercise_id", exIds);
+  const existing = new Map<string, DbRow>();
+  ((existingRows ?? []) as DbRow[]).forEach(r => existing.set(r.exercise_id, r));
+
+  const upserts: Array<Record<string, unknown>> = [];
+  const now = new Date().toISOString();
+
+  for (const [exId, exSets] of byEx) {
+    // Need at least one set with weight > 0; otherwise it's bodyweight/skip.
+    if (!exSets.some(s => s.weight > 0)) continue;
+
+    const exName = exSets[0].exerciseName || exId;
+
+    // Resolve the prescribed rep range: caller-provided first, else static defs.
+    const sessionHighRaw = Math.max(0, ...exSets.map(s => s.targetRepsHigh ?? 0));
+    const sessionLowRaw = Math.max(0, ...exSets.map(s => s.targetRepsLow ?? 0));
+    const staticRange = repRangeForExercise(exId);
+    const prev = existing.get(exId);
+
+    const repsHigh =
+      sessionHighRaw ||
+      staticRange?.[1] ||
+      prev?.target_reps_high ||
+      10;
+    const repsLow =
+      sessionLowRaw ||
+      staticRange?.[0] ||
+      prev?.target_reps_low ||
+      Math.max(1, repsHigh - 2);
+
+    const heaviest = Math.max(...exSets.map(s => s.weight));
+    const currentTarget = prev ? Number(prev.target_weight) || 0 : heaviest;
+
+    // Did EVERY working set hit the top of the range at >= current target?
+    const allHitTop =
+      exSets.length > 0 &&
+      exSets.every(s => s.reps >= repsHigh && s.weight >= currentTarget);
+
+    let pendingSuggestion: ProgressionSuggestion | null = null;
+    if (allHitTop && currentTarget > 0) {
+      const inc = suggestIncrement(exName, exId);
+      pendingSuggestion = {
+        type: "increase",
+        suggestedWeight: Math.round((currentTarget + inc) * 10) / 10,
+        suggestedRepsLow: repsLow,
+        suggestedRepsHigh: repsHigh,
+        prevWeight: currentTarget,
+        reason: `Hit ${repsHigh} reps on all sets — bump +${inc}kg and rebuild reps.`,
+      };
+    }
+
+    upserts.push({
+      user_id: user.id,
+      exercise_id: exId,
+      exercise_name: exName,
+      target_weight: currentTarget || heaviest,
+      target_reps_low: repsLow,
+      target_reps_high: repsHigh,
+      // Preserve an existing pending suggestion if the user hasn't responded yet
+      // and this session didn't generate a new one.
+      pending_suggestion:
+        pendingSuggestion ?? (prev?.pending_suggestion ?? null),
+      last_evaluated_at: now,
+    });
+  }
+
+  if (upserts.length === 0) return;
+  const { error } = await tbl().upsert(upserts, { onConflict: "user_id,exercise_id" });
+  if (error) console.error("evaluateAndStoreProgression upsert failed:", error);
+}

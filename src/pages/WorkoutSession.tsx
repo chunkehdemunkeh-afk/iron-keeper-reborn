@@ -33,6 +33,8 @@ import {
   isBilateralDumbbell,
   type Tier,
 } from "@/lib/strength-standards";
+import { useProgressions, progressionMap } from "@/hooks/queries/useProgressions";
+import ProgressionSuggestionBanner from "@/components/workout/ProgressionSuggestionBanner";
 
 type SetType = "working" | "warmup" | "1rm_test";
 type SetLog = {
@@ -156,6 +158,26 @@ export default function WorkoutSession() {
   const { data: strengthProfile } = useStrengthProfile();
   const strengthProfileRef = useRef(strengthProfile);
   useEffect(() => { strengthProfileRef.current = strengthProfile; }, [strengthProfile]);
+
+  // Auto-progression suggestions (double-progression model).
+  const { data: progressionRows } = useProgressions();
+  const progressionsByExId = useMemo(() => progressionMap(progressionRows), [progressionRows]);
+  /** Apply an accepted progression suggestion to the current set logs. */
+  const applyProgressionToSetLogs = useCallback((exId: string, weight: number, repsLow: number, repsHigh: number) => {
+    setSetLogs(prev => {
+      const cur = prev[exId];
+      if (!cur) return prev;
+      return {
+        ...prev,
+        [exId]: cur.map(s =>
+          s.setType && s.setType !== "working"
+            ? s
+            : { ...s, targetWeight: weight, targetReps: repsLow }
+        ),
+      };
+    });
+    toast.success(`New target: ${weight}kg × ${repsLow}-${repsHigh}`);
+  }, []);
 
   const autoSaveKey = workout ? `workout-autosave-${workout.id}` : null;
 
@@ -445,12 +467,20 @@ export default function WorkoutSession() {
         const lastData = lastSessionData[ex.id] ?? [];
         const m = ex.reps.match(/(\d+)/);
         const parsedTargetReps = m ? parseInt(m[1], 10) : undefined;
+        // Auto-progression: if there's a stored target for this exercise, prefer it.
+        const prog = progressionsByExId[ex.id];
+        const progTargetWeight = prog && prog.targetWeight > 0 ? prog.targetWeight : undefined;
+        const progTargetReps = prog?.targetRepsLow || undefined;
         initial[ex.id] = Array.from({ length: ex.sets }, (_, si) => ({
           reps: 0,
           weight: 0,
           completed: false,
-          targetReps: parsedTargetReps,
-          targetWeight: lastData[si]?.weight ?? lastData[0]?.weight ?? undefined,
+          targetReps: progTargetReps ?? parsedTargetReps,
+          targetWeight:
+            progTargetWeight ??
+            lastData[si]?.weight ??
+            lastData[0]?.weight ??
+            undefined,
           targetRir: sessionTargetRir,
         }));
       }
@@ -462,7 +492,7 @@ export default function WorkoutSession() {
       setExpandedExercise(workout.exercises[0]?.id ?? null);
       setExerciseOrder(workout.exercises.map(ex => ex.id));
     }
-  }, [workout, lastSessionData]);
+  }, [workout, lastSessionData, progressionsByExId]);
 
   // Check if an exercise belongs to an accessory routine
   const getAccessoryForExercise = useCallback((exerciseId: string): string | null => {
@@ -1377,6 +1407,14 @@ export default function WorkoutSession() {
                       className="overflow-hidden"
                     >
                       <div className="px-3 pb-3 space-y-2">
+                        {progressionsByExId[ex.id]?.pendingSuggestion && (
+                          <ProgressionSuggestionBanner
+                            progression={progressionsByExId[ex.id]}
+                            onApplied={({ weight, repsLow, repsHigh }) =>
+                              applyProgressionToSetLogs(ex.id, weight, repsLow, repsHigh)
+                            }
+                          />
+                        )}
                         {(override?.notes || ex.notes) && (
                           <p className="text-[11px] text-primary/80 bg-primary/5 rounded-lg px-2 py-1.5">
                             {override?.notes || ex.notes}
