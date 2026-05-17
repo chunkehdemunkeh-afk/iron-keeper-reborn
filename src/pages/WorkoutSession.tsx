@@ -33,6 +33,8 @@ import {
   isBilateralDumbbell,
   type Tier,
 } from "@/lib/strength-standards";
+import { useProgressions, progressionMap } from "@/hooks/queries/useProgressions";
+import ProgressionSuggestionBanner from "@/components/workout/ProgressionSuggestionBanner";
 
 type SetType = "working" | "warmup" | "1rm_test";
 type SetLog = {
