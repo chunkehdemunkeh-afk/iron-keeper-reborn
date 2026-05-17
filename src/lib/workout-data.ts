@@ -396,9 +396,8 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "pl3",       name: "Lat Pulldown - Pronated Grip",     sets: 4, reps: "6-8",   targetMuscle: "Lats",           notes: "Strength focus — heavier load, full stretch at top, drive elbows down hard" },
       { id: "sub-up5a",  name: "Dumbbell Shoulder Press",          sets: 3, reps: "8-10",  targetMuscle: "Shoulders",      notes: "Seated or standing — move this early in the session" },
       { id: "ua6",       name: "Cable Lateral Raises",             sets: 3, reps: "12-15", targetMuscle: "Side Delts",     notes: "Constant tension through full ROM — reach across body at bottom" },
-      { id: "lib-db-Machine_Preacher_Curls", name: "Machine Preacher Curl",     sets: 3, reps: "10-12", targetMuscle: "Biceps",         notes: "Short-head / peak focus — arms locked on pad, controlled out of the bottom, full squeeze at top" },
-      { id: "lib-61",    name: "Bayesian Curl",                    sets: 3, reps: "10-12", targetMuscle: "Biceps",         notes: "Single-arm cable behind body — max long-head stretch. Step forward of low pulley, elbow stays slightly behind torso, slow eccentric" },
       { id: "lib-59",    name: "JM Press",                         sets: 4, reps: "8-10",  targetMuscle: "Triceps",        notes: "Hybrid close-grip bench / skull crusher — lower toward chin with elbows tucked, drive back up" },
+      { id: "pu5",       name: "X-Over Cable Tricep Extensions",   sets: 3, reps: "10-12", targetMuscle: "Triceps",        notes: "Tricep finisher — lock elbows in place, full extension, squeeze the lockout" },
     ],
   },
   {
