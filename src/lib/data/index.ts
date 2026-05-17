@@ -8,3 +8,4 @@ export * from "./review-queries";
 export * from "./leaderboard-queries";
 export * from "./sleep-queries";
 export * from "./biometric-queries";
+export * from "./progression-queries";
