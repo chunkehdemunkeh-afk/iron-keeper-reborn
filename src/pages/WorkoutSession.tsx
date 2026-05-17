@@ -159,6 +159,26 @@ export default function WorkoutSession() {
   const strengthProfileRef = useRef(strengthProfile);
   useEffect(() => { strengthProfileRef.current = strengthProfile; }, [strengthProfile]);
 
+  // Auto-progression suggestions (double-progression model).
+  const { data: progressionRows } = useProgressions();
+  const progressionsByExId = useMemo(() => progressionMap(progressionRows), [progressionRows]);
+  /** Apply an accepted progression suggestion to the current set logs. */
+  const applyProgressionToSetLogs = useCallback((exId: string, weight: number, repsLow: number, repsHigh: number) => {
+    setSetLogs(prev => {
+      const cur = prev[exId];
+      if (!cur) return prev;
+      return {
+        ...prev,
+        [exId]: cur.map(s =>
+          s.setType && s.setType !== "working"
+            ? s
+            : { ...s, targetWeight: weight, targetReps: repsLow }
+        ),
+      };
+    });
+    toast.success(`New target: ${weight}kg × ${repsLow}-${repsHigh}`);
+  }, []);
+
   const autoSaveKey = workout ? `workout-autosave-${workout.id}` : null;
 
   // Auto-save session state to localStorage
