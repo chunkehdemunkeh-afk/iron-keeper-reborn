@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.108",
+    version: "1.6.109",
     date: "2026-05-17",
     title: "Updates & Fixes",
     changes: [
-      "Fix: strength mode blank — use separate lower volume standards instead of filtering by RIR",
+      "Feat: use strengthSets for strength mode when RIR is logged",
     ],
   },
   {
