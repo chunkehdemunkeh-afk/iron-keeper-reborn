@@ -431,10 +431,10 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "pu4", name: "Flat Dumbbell Flies",                         sets: 3, reps: "12-15",     targetMuscle: "Chest",             notes: "Move before shoulder press — keep slight bend in elbow throughout" },
       { id: "pl3", name: "Lat Pulldown - Pronated Grip",                sets: 3, reps: "10-12",     targetMuscle: "Lats",              notes: "Higher-rep lat work to balance the heavy pulldown on Upper A" },
       { id: "pl4", name: "Face Pulls",                                  sets: 3, reps: "15-20",     targetMuscle: "Rear Delts",        notes: "Non-negotiable for shoulder longevity — high pull, external rotate at top" },
-      { id: "pu6", name: "Single Arm Overhead Cable Tricep Extensions", sets: 3, reps: "12-15",     targetMuscle: "Triceps",           notes: "Overhead position targets long head — stretch at bottom, squeeze at lockout" },
+      { id: "pu5", name: "Tricep Pushdown (Rope)",                     sets: 3, reps: "12-15",     targetMuscle: "Triceps",           notes: "Lateral head focus — elbows pinned, spread rope at the bottom, full lockout" },
       { id: "am3", name: "Incline Dumbbell Curl",                       sets: 2, reps: "10-12",     targetMuscle: "Biceps",            notes: "Extra biceps volume to match PPLU — long head stretch" },
       { id: "ub6", name: "Rope Hammer Curl (Cable)",                    sets: 3, reps: "12-15",     targetMuscle: "Biceps/Brachialis", notes: "Cable keeps constant tension — replaces DB hammer curls to break plateau" },
-      { id: "sh5", name: "Single Arm Cross Body Reverse Fly",           sets: 3, reps: "12-15",     targetMuscle: "Rear Delts",        notes: "Rear delt isolation — controlled, squeeze at the top" },
+      { id: "sh4", name: "Dumbbell Lateral Raise",                     sets: 3, reps: "12-15",     targetMuscle: "Side Delts",        notes: "Balances side delt volume across the week — slight forward lean, lead with elbows, controlled lowering" },
     ],
   },
   {
