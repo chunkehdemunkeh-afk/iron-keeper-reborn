@@ -40,6 +40,7 @@ export const EXERCISE_LIBRARY: LibraryExercise[] = [
   { id: "lib-16", name: "Barbell Curl", muscleGroup: "Biceps", equipment: "Barbell", description: "Curl bar with strict form, no swinging." },
   { id: "lib-17", name: "Hammer Curl", muscleGroup: "Biceps", equipment: "Dumbbells", description: "Neutral grip curls for brachialis and forearms." },
   { id: "lib-18", name: "Incline Dumbbell Curl", muscleGroup: "Biceps", equipment: "Dumbbells", description: "Curl on incline bench for stretch." },
+  { id: "lib-61", name: "Bayesian Curl", muscleGroup: "Biceps", equipment: "Cable", description: "Single-arm cable curl with the cable behind you and arm extended back — places the long head of the biceps under maximal stretch. Step forward of a low pulley, grab a D-handle, let the arm trail behind the torso, then curl up keeping the elbow fixed and slightly behind the body. Slow eccentric." },
 
   // Triceps
   { id: "lib-19", name: "Tricep Pushdown", muscleGroup: "Triceps", equipment: "Cable", description: "Push cable attachment down, lock out elbows." },
