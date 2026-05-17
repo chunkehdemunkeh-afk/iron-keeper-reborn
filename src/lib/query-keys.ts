@@ -73,4 +73,8 @@ export const queryKeys = {
     ["leaderboard-max-reps", exerciseId, filter] as const,
   leaderboardSessionVolume: (type: string, filter: string) =>
     ["leaderboard-session-volume", type, filter] as const,
+
+  // ── Progression ───────────────────────────────────────────────────────────
+  progressions: (userId: string) => ["progressions", userId] as const,
+  pendingProgressions: (userId: string) => ["progressions-pending", userId] as const,
 } as const;
