@@ -1,26 +1,30 @@
-## Goal
+## Final volume edits — Upper/Lower A/B
 
-Let Bayesian Curl show the same `2 Arm / 1 Arm` pill as other eligible exercises, defaulting to **1 Arm** (its natural form) but allowing a 2-arm variant (both cables simultaneously) for users who want it.
+All in `src/lib/workout-data.ts`.
 
-## Changes
+### Upper A (`upper_a`)
+- Remove `lib-db-Machine_Preacher_Curls` (Machine Preacher Curl)
+- Remove `lib-61` (Bayesian Curl)
+- **Add finisher at end:** `pu5` X-Over Cable Tricep Extensions — 3 × 10–12, targetMuscle "Triceps", notes "Tricep finisher — lock elbows in place, full extension, squeeze the lockout"
 
-### 1. `src/lib/single-arm-variants.ts`
-- Remove `"bayesian"` from `EXCLUDE_PATTERNS` so the eligibility check passes.
-- Verify it now resolves true: name contains "cable" (equipment) + "curl" (pattern), no remaining excludes.
+Final order: Barbell Bench → T-Bar Row → 45° Incline DB Press → Lat Pulldown Pronated → DB Shoulder Press → Cable Lat Raises → JM Press → X-Over Cable Tricep Extensions.
 
-### 2. `src/pages/WorkoutSession.tsx`
-- Treat Bayesian Curl as **default single-arm**: on session init / when its slot is first encountered, seed its ID into `singleArmExercises` so the pill starts on "1 Arm" and `-sa` suffix applies immediately.
-- Implementation: a small `DEFAULT_SINGLE_ARM_IDS` set (just `lib-61` for now) merged into `singleArmExercises` initial state, and also applied when restoring from autosave if the key is absent (so existing in-progress sessions don't suddenly switch to 2-arm).
-- Weight semantics, PR bucketing, and warmups already work correctly via the existing `-sa` suffix path — no further changes needed.
+### Upper B (`upper_b`)
+- **Keep** `dl5` Dumbbell Row (back volume)
+- Remove `pl3` Lat Pulldown - Pronated Grip
+- Remove `pu5` Tricep Pushdown (Rope)
+- Move `lib-61` Bayesian Curl to position 1 (3 × 10–12)
+- Move `lib-db-Machine_Preacher_Curls` Machine Preacher Curl to position 2 (3 × 10–12)
 
-### 3. No routine changes
-`workout-data.ts` keeps `lib-61` as Bayesian Curl. Display name still reads "Bayesian Curl"; toggling to 2 Arm drops the `-sa` suffix and the weight column header flips from "per arm" to "per dumbbell"/"per side" accordingly.
+Final order: Bayesian Curl → Machine Preacher Curl → 15° Incline DB Bench → Seated Row Machine → Dumbbell Row → Flat DB Flies → Face Pulls → Incline DB Curl → Rope Hammer Curl → DB Lateral Raise.
 
-## Files touched
+### Lower A (`lower_a`)
+Append:
+- `lib-db-Machine_Preacher_Curls` Machine Preacher Curl — 3 × 10–12, "Biceps"
+- `lib-61` Bayesian Curl — 3 × 10–12, "Biceps"
 
-- `src/lib/single-arm-variants.ts` (one-line exclude removal)
-- `src/pages/WorkoutSession.tsx` (default-on set + autosave restore guard)
+### Lower B
+No changes.
 
-## Out of scope
-
-- No new library entry, no DB change, no history rewrite. Existing Bayesian PRs (saved under base `lib-61`) will be bucketed as the new 2-Arm variant; the 1-Arm variant starts a fresh `lib-61-sa` PR history. If you'd rather have existing Bayesian history count as 1-Arm instead, say so and I'll invert which ID is the suffixed one.
+### Note on `pu5` id reuse
+`pu5` is already defined as "X-Over Cable Tricep Extensions" elsewhere in `workout-data.ts` (line 133) and has its own substitution entry — reusing it on Upper A preserves PR history and the swap sheet. The current Upper B usage of `pu5` ("Tricep Pushdown Rope") is being removed in the same edit, so no conflict remains.
