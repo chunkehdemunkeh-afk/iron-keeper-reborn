@@ -111,7 +111,7 @@ const EXCLUDE_PATTERNS = [
   "1-arm",
   "1 arm",
   "single hand",
-  "bayesian",
+  
   "concentration",
   "kickback", // kickbacks are conventionally one-arm-at-a-time
   "bulgarian",
