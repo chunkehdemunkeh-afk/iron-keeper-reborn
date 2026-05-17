@@ -390,7 +390,7 @@ export const WORKOUTS: WorkoutDay[] = [
     focus: "Chest · Back · Shoulders · Arms — Strength Bias",
     color: "from-blue-500/20 to-sky-500/10",
     exercises: [
-      { id: "up3",       name: "Flat Dumbbell Bench Press",        sets: 4, reps: "6-8",   targetMuscle: "Chest",          notes: "Strength focus — heavier than usual, chase a top-set PR" },
+      { id: "lib-1",     name: "Barbell Bench Press",              sets: 4, reps: "6-8",   targetMuscle: "Chest",          notes: "Top strength lift — chase a heavy top set, controlled eccentric, pause if grinding" },
       { id: "pl2",       name: "T-Bar Row",                        sets: 4, reps: "6-8",   targetMuscle: "Back Thickness", notes: "Keep chest on pad, drive elbows back" },
       { id: "pu1",       name: "45° Incline Dumbbell Bench Press", sets: 4, reps: "6-8",   targetMuscle: "Upper Chest",    notes: "Strength focus — heavier load, full stretch at bottom, controlled eccentric" },
       { id: "pl3",       name: "Lat Pulldown - Pronated Grip",     sets: 4, reps: "6-8",   targetMuscle: "Lats",           notes: "Strength focus — heavier load, full stretch at top, drive elbows down hard" },
@@ -398,7 +398,7 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "ua6",       name: "Cable Lateral Raises",             sets: 3, reps: "12-15", targetMuscle: "Side Delts",     notes: "Constant tension through full ROM — reach across body at bottom" },
       { id: "lib-db-Machine_Preacher_Curls", name: "Machine Preacher Curl",     sets: 3, reps: "10-12", targetMuscle: "Biceps",         notes: "Short-head / peak focus — arms locked on pad, controlled out of the bottom, full squeeze at top" },
       { id: "lib-61",    name: "Bayesian Curl",                    sets: 3, reps: "10-12", targetMuscle: "Biceps",         notes: "Single-arm cable behind body — max long-head stretch. Step forward of low pulley, elbow stays slightly behind torso, slow eccentric" },
-      { id: "lib-59",    name: "JM Press",                         sets: 3, reps: "8-10",  targetMuscle: "Triceps",        notes: "Hybrid close-grip bench / skull crusher — lower toward chin with elbows tucked, drive back up" },
+      { id: "lib-59",    name: "JM Press",                         sets: 4, reps: "8-10",  targetMuscle: "Triceps",        notes: "Hybrid close-grip bench / skull crusher — lower toward chin with elbows tucked, drive back up" },
     ],
   },
   {
