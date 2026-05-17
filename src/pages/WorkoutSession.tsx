@@ -35,7 +35,7 @@ import {
 } from "@/lib/strength-standards";
 import { useProgressions, progressionMap } from "@/hooks/queries/useProgressions";
 import ProgressionSuggestionBanner from "@/components/workout/ProgressionSuggestionBanner";
-import { isSingleArmEligible } from "@/lib/single-arm-variants";
+import { isSingleArmEligible, DEFAULT_SINGLE_ARM_IDS } from "@/lib/single-arm-variants";
 
 type SetType = "working" | "warmup" | "1rm_test";
 type SetLog = {
