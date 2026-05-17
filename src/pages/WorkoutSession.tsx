@@ -102,6 +102,7 @@ export default function WorkoutSession() {
   const startedAtRef = useRef<string | null>(null);
   const [twoHandedExercises, setTwoHandedExercises] = useState<Set<string>>(new Set());
   const [heavyStackExercises, setHeavyStackExercises] = useState<Set<string>>(new Set());
+  const [singleArmExercises, setSingleArmExercises] = useState<Set<string>>(new Set());
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [exerciseOrder, setExerciseOrder] = useState<string[]>([]);
   const [setLogs, setSetLogs] = useState<Record<string, SetLog[]>>({});
@@ -128,10 +129,11 @@ export default function WorkoutSession() {
     let effective = base;
     if (twoHandedExercises.has(originalId)) effective += "-2h";
     if (heavyStackExercises.has(originalId)) effective += "-heavy";
+    if (singleArmExercises.has(originalId)) effective += "-sa";
     const att = cableAttachments[originalId];
     if (att) effective += `-${attachmentKey(att)}`;
     return effective;
-  }, [exerciseOverrides, twoHandedExercises, heavyStackExercises, cableAttachments]);
+  }, [exerciseOverrides, twoHandedExercises, heavyStackExercises, singleArmExercises, cableAttachments]);
   const [restTimerKey, setRestTimerKey] = useState(0);
   const [restDuration, setRestDuration] = useState(workout?.id === "power" ? 45 : 60);
   const [videoExercise, setVideoExercise] = useState<{ name: string; id: string } | null>(null);
@@ -200,6 +202,7 @@ export default function WorkoutSession() {
       bodyweightExercises: Array.from(bodyweightExercises),
       twoHandedExercises: Array.from(twoHandedExercises),
       heavyStackExercises: Array.from(heavyStackExercises),
+      singleArmExercises: Array.from(singleArmExercises),
       cableAttachments,
       elapsed,
       startedAt: startedAtRef.current,
@@ -213,7 +216,7 @@ export default function WorkoutSession() {
     } catch (e) {
       console.warn("Failed to auto-save workout:", e);
     }
-  }, [autoSaveKey, started, finished, showFeedback, setLogs, exerciseNotes, exerciseOrder, exerciseOverrides, addedAccessories, addedExercises, bodyweightExercises, twoHandedExercises, heavyStackExercises, cableAttachments, elapsed, expandedExercise, weightUpSuggestions, weightDownSuggestions]);
+  }, [autoSaveKey, started, finished, showFeedback, setLogs, exerciseNotes, exerciseOrder, exerciseOverrides, addedAccessories, addedExercises, bodyweightExercises, twoHandedExercises, heavyStackExercises, singleArmExercises, cableAttachments, elapsed, expandedExercise, weightUpSuggestions, weightDownSuggestions]);
 
   // Save on visibility change (user switching apps / leaving)
   useEffect(() => {
@@ -286,6 +289,7 @@ export default function WorkoutSession() {
         setBodyweightExercises(new Set(parsed.bodyweightExercises || []));
         setTwoHandedExercises(new Set(parsed.twoHandedExercises || []));
         setHeavyStackExercises(new Set(parsed.heavyStackExercises || []));
+        setSingleArmExercises(new Set(parsed.singleArmExercises || []));
         setCableAttachments(parsed.cableAttachments || {});
         setElapsed(parsed.elapsed || 0);
         startedAtRef.current = parsed.startedAt || new Date().toISOString();
@@ -941,6 +945,7 @@ export default function WorkoutSession() {
         let slotId = exId;
         if (twoHandedExercises.has(exId)) slotId += "-2h";
         if (heavyStackExercises.has(exId)) slotId += "-heavy";
+        if (singleArmExercises.has(exId)) slotId += "-sa";
         const att = cableAttachments[exId];
         if (att) slotId += `-${attachmentKey(att)}`;
         const originalExerciseId = override?.substituteId && slotId !== effectiveId ? slotId : undefined;
@@ -2089,6 +2094,7 @@ export default function WorkoutSession() {
                             let effId = sub.id;
                             if (twoHandedExercises.has(swapExerciseId)) effId += "-2h";
                             if (heavyStackExercises.has(swapExerciseId)) effId += "-heavy";
+                            if (singleArmExercises.has(swapExerciseId)) effId += "-sa";
                             const att = cableAttachments[swapExerciseId];
                             if (att) effId += `-${attachmentKey(att)}`;
                             const idsToFetch = Array.from(new Set([sub.id, effId]));
@@ -2149,6 +2155,7 @@ export default function WorkoutSession() {
                                 let effId = ex.id;
                                 if (twoHandedExercises.has(swapExerciseId)) effId += "-2h";
                                 if (heavyStackExercises.has(swapExerciseId)) effId += "-heavy";
+                                if (singleArmExercises.has(swapExerciseId)) effId += "-sa";
                                 const att = cableAttachments[swapExerciseId];
                                 if (att) effId += `-${attachmentKey(att)}`;
                                 const idsToFetch = Array.from(new Set([ex.id, effId]));
