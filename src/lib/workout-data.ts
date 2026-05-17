@@ -431,7 +431,7 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "dl5", name: "Dumbbell Row",                                sets: 3, reps: "10-12",     targetMuscle: "Lats/Mid Back",     notes: "Two-handed bent-over row — full stretch at bottom, drive elbows back. Toggle 1 Arm pill for unilateral" },
       { id: "pu4", name: "Flat Dumbbell Flies",                         sets: 3, reps: "12-15",     targetMuscle: "Chest",             notes: "Move before shoulder press — keep slight bend in elbow throughout" },
       { id: "pl4", name: "Face Pulls",                                  sets: 3, reps: "15-20",     targetMuscle: "Rear Delts",        notes: "Non-negotiable for shoulder longevity — high pull, external rotate at top" },
-      { id: "am3", name: "Incline Dumbbell Curl",                       sets: 2, reps: "10-12",     targetMuscle: "Biceps",            notes: "Extra biceps volume to match PPLU — long head stretch" },
+      { id: "am3", name: "Incline Dumbbell Curl",                       sets: 3, reps: "10-12",     targetMuscle: "Biceps",            notes: "Extra biceps volume to match PPLU — long head stretch" },
       { id: "ub6", name: "Rope Hammer Curl (Cable)",                    sets: 3, reps: "12-15",     targetMuscle: "Biceps/Brachialis", notes: "Cable keeps constant tension — replaces DB hammer curls to break plateau" },
       { id: "sh4", name: "Dumbbell Lateral Raise",                      sets: 3, reps: "12-15",     targetMuscle: "Side Delts",        notes: "Balances side delt volume across the week — slight forward lean, lead with elbows, controlled lowering" },
     ],
