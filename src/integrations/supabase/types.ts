@@ -565,6 +565,48 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_progression: {
+        Row: {
+          created_at: string
+          exercise_id: string
+          exercise_name: string
+          id: string
+          last_evaluated_at: string | null
+          pending_suggestion: Json | null
+          target_reps_high: number
+          target_reps_low: number
+          target_weight: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_id: string
+          exercise_name?: string
+          id?: string
+          last_evaluated_at?: string | null
+          pending_suggestion?: Json | null
+          target_reps_high?: number
+          target_reps_low?: number
+          target_weight?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exercise_id?: string
+          exercise_name?: string
+          id?: string
+          last_evaluated_at?: string | null
+          pending_suggestion?: Json | null
+          target_reps_high?: number
+          target_reps_low?: number
+          target_weight?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       favourite_foods: {
         Row: {
           barcode: string | null
