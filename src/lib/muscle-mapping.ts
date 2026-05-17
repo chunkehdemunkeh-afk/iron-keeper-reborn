@@ -253,6 +253,7 @@ const SUFFIX_TOKENS = [
   "cuff",
   "heavy",
   "2h",
+  "sa",
 ];
 
 export function stripExerciseSuffixes(id: string): string {

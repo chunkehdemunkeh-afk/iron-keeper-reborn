@@ -468,6 +468,9 @@ const DB_INDICATORS = ["dumbbell", " db ", "db bench", "db press", "db fly", "db
  * Returns false for unilateral movements (curls, single-arm rows, etc.).
  */
 export function isBilateralDumbbell(exerciseId: string, exerciseName: string): boolean {
+  // Single-arm toggle (suffix `-sa`) forces unilateral semantics regardless of
+  // what the base name says. Logged weight is per-arm; no ×2 for total load.
+  if (exerciseId.toLowerCase().endsWith("-sa")) return false;
   const hay = `${exerciseName} ${exerciseId}`.toLowerCase();
   if (!DB_INDICATORS.some((d) => hay.includes(d))) return false;
   if (UNILATERAL_INDICATORS.some((u) => hay.includes(u))) return false;
