@@ -390,7 +390,7 @@ export const WORKOUTS: WorkoutDay[] = [
     focus: "Chest · Back · Shoulders · Arms — Strength Bias",
     color: "from-blue-500/20 to-sky-500/10",
     exercises: [
-      { id: "pu2",       name: "Barbell Bench Press",              sets: 4, reps: "6-8",   targetMuscle: "Chest",          notes: "Top strength lift — chase a heavy top set, controlled eccentric, pause if grinding" },
+      { id: "lib-1",     name: "Barbell Bench Press",              sets: 4, reps: "6-8",   targetMuscle: "Chest",          notes: "Top strength lift — chase a heavy top set, controlled eccentric, pause if grinding" },
       { id: "pl2",       name: "T-Bar Row",                        sets: 4, reps: "6-8",   targetMuscle: "Back Thickness", notes: "Keep chest on pad, drive elbows back" },
       { id: "pu1",       name: "45° Incline Dumbbell Bench Press", sets: 4, reps: "6-8",   targetMuscle: "Upper Chest",    notes: "Strength focus — heavier load, full stretch at bottom, controlled eccentric" },
       { id: "pl3",       name: "Lat Pulldown - Pronated Grip",     sets: 4, reps: "6-8",   targetMuscle: "Lats",           notes: "Strength focus — heavier load, full stretch at top, drive elbows down hard" },
