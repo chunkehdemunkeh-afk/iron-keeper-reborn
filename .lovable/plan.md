@@ -1,48 +1,44 @@
-## Goal
-Replace the confusing single "Recovery %" dial with a clearer split, and make every part recompute the moment anything is logged (workout, run/walk, rest day, food, water, sleep, biometrics).
+## Code changes (`src/lib/workout-data.ts`)
 
-## New model on the home + recovery cards
+### Upper A (lines 392–401) — same edits as before, plus 1 bicep addition
 
-Three independent signals shown side-by-side, each with its own timing label:
+1. `pu1` 45° Incline DB Bench: `sets: 4, reps: "6-8"` (was 3 / 8-10)
+2. `pl3` Lat Pulldown Pronated: `sets: 4, reps: "6-8"` (was 3 / 8-10)
+3. Replace `pu5` X-Over Cable Tricep Extensions with `lib-59` **JM Press**, 3 × 8-10
+4. **Add after Incline DB Curl**: Cable Bicep Curl (`am-cable-curl` or reuse existing id), **3 × 10-12**, note "Constant tension finisher"
 
-- **Readiness** (was "Recovery") — morning systemic readiness from sleep, RHR, stress, SpO2, resp. Stable through the day; only changes when biometrics/sleep are edited. Label clarifies "as of HH:MM".
-- **Muscle recovery** (new) — aggregate of the per-muscle states already powering the body diagram. Drops immediately when a session is logged because legs/biceps go red. This is the number that should match what the diagram shows.
-- **Strain** — today's accumulated training load. Already live; keep behaviour.
+### Upper B (lines 426–434) — add 1 back + 1 bicep
 
-Stress chip stays. AI headline stays. Detected-workouts panel stays.
+1. **Add after Seated Row Machine**: Single-Arm Dumbbell Row (`dl5`), **3 × 8-10 each**, note "Unilateral row — full stretch, drive elbow back"
+2. **Add after Face Pulls**: Lat Pulldown - Neutral Grip (or reuse `pl3` pronated 3 × 10-12) — **3 × 10-12**, note "Higher-rep lat work to balance the strength block on Upper A"
+3. Keep existing Rope Hammer Curl, and **add Incline Dumbbell Curl** (`am3`) **2 × 10-12** before it, note "Extra biceps volume to match PPLU"
 
-## Real-time updates on every log
+No changes to Lower A / Lower B.
 
-Anything that mutates today's signals will invalidate the right query keys so the cards repaint within a second:
+## Revised weekly volume
 
-- Workout save → recent sets, workout history, daily scores (already partly wired), plus muscle recovery (derived from recent sets — auto).
-- Activity log (run/walk/rest) → activity logs + daily scores (strain recompute already exists; ensure invalidation fires).
-- Food log + water intake → daily logs / food log dates / water intake dates → triggers a lightweight "fuel" indicator refresh and AI insight eligibility (does not change readiness or muscle recovery, but does refresh the "Detected today" + nutrition-aware AI context).
-- Sleep / biometric check-in → daily biometrics, sleep logs, daily scores (already wired).
+```text
+Muscle         PPLU   U/L A/B (new)   Delta
+Chest           15        14          ~same
+Back            18        18          MATCHED
+Side delts       5         3          slightly lower
+Rear delts       3         6          higher
+Biceps          11        11          MATCHED
+Triceps          8         6          slightly lower
+Quads            9        13          higher
+Hamstrings       6        14          higher
+Calves           3         7          higher
+Abs              0         6          new direct work
+Grip             0         3          new direct work
+```
 
-Where invalidation is missing today, add it at the save site. No polling — purely event-driven via React Query.
+Back: Upper A 4+4 = 8 (heavy) + Upper B 4+3+3 = 10 → **18 ✓**
+Biceps: Upper A 3+3 = 6 + Upper B 2+3 = 5 → **11 ✓**
 
-## Aggregate muscle recovery score
+## Session length
 
-Pure helper added to `src/lib/recovery.ts`:
-- Average of `score` across all muscle regions that have been worked in the last 7 days, with fatigued muscles weighted ~2× so a hard leg session visibly drags the number down.
-- Unworked/rested muscles excluded from the average (they shouldn't mask localized fatigue).
-- Returns 0–100 plus a status band (Fatigued / Workable / Recovered) reusing the existing colour scale.
+Upper A grows to 9 exercises, Upper B to 9 exercises. Sessions will run ~75-90 min. If that's too long, the easiest trim is dropping the side-delt cable raise from Upper A and the rear-delt cross-body fly from Upper B (both isolation, lowest priority).
 
-## UI changes
+## Abs & grip — unchanged from before
 
-- `HomeCombinedRecoveryCard.tsx`:
-  - Three dials: Readiness · Muscle recovery · Strain.
-  - Tooltips/copy reworked so it's obvious which is morning-only vs live.
-  - Stress chip + detected workouts stay below.
-- `RecoveryHero.tsx` and `RecoveryDetailSheet.tsx`: rename Recovery → Readiness in copy + add a Muscle recovery row in the breakdown so the two pages are consistent.
-- DB unchanged (still stored as `recovery_score`); this is presentation + a derived score.
-
-## Validation
-- Pure unit tests for the new aggregate helper (rested → high; localized fatigue → low; mixed → mid).
-- Manual check: log a leg session → muscle recovery + strain change instantly without a refresh; readiness stays put until a new check-in.
-
-## Technical notes (non-user)
-- New helper signature: `aggregateMuscleRecovery(states): { score: number; status: RecoveryStatus }`.
-- Add `queryClient.invalidateQueries` calls in: activity save, food save, water intake save, rest-day save (where missing). Workout save already invalidates most; add `recentSets` if not already there.
-- Real-time = React Query invalidation, not Supabase Realtime — keeps cost flat and matches existing patterns.
+Already covered by Lower A (Cable Crunches) + Lower B (Oblique Raises + Farmer's Walk). No accessory routine needed unless grip is a specific focus.
