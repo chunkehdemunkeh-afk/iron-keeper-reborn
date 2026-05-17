@@ -176,6 +176,24 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
     }
   }
 
+  // Evaluate auto-progression suggestions (double-progression model).
+  try {
+    const { evaluateAndStoreProgression } = await import("./progression-queries");
+    await evaluateAndStoreProgression(
+      workout.sets.map(s => ({
+        exerciseId: s.exerciseId,
+        exerciseName: resolveName(s.exerciseId, s.exerciseName),
+        reps: s.reps,
+        weight: s.weight,
+        setType: s.setType,
+        targetRepsLow: (s as { targetRepsLow?: number }).targetRepsLow,
+        targetRepsHigh: (s as { targetRepsHigh?: number }).targetRepsHigh,
+      }))
+    );
+  } catch (e) {
+    console.error("Progression evaluation failed:", e);
+  }
+
   // Award XP (gamification). Failures swallowed inside notify.
   try {
     const { awardXpAndNotify } = await import("@/lib/gamification/notify");
