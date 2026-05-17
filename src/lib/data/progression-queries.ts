@@ -11,6 +11,36 @@
  * independently — matching how PR history is tracked.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { WORKOUTS } from "@/lib/workout-data";
+import { EXERCISE_LIBRARY } from "@/lib/exercise-library";
+import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "@/lib/accessory-routines";
+import { EXERCISE_SUBSTITUTIONS } from "@/lib/exercise-substitutions";
+import { stripExerciseSuffixes } from "@/lib/muscle-mapping";
+
+/** Build base-id → "6-8" lookup once. */
+let _repsMap: Map<string, string> | null = null;
+function repRangeForExercise(exerciseId: string): [number, number] | null {
+  if (!_repsMap) {
+    _repsMap = new Map();
+    WORKOUTS.forEach(w => w.exercises.forEach(ex => _repsMap!.set(ex.id, ex.reps)));
+    ACCESSORY_ROUTINES.forEach(r => r.exercises.forEach(ex => _repsMap!.set(ex.id, ex.reps)));
+    Object.values(EXERCISE_SUBSTITUTIONS).flat().forEach(s => {
+      if (!_repsMap!.has(s.id)) _repsMap!.set(s.id, "8-10");
+    });
+    Object.values(ACCESSORY_SUBSTITUTIONS).flat().forEach(s => {
+      if (!_repsMap!.has(s.id)) _repsMap!.set(s.id, "8-10");
+    });
+    EXERCISE_LIBRARY.forEach(ex => {
+      if (!_repsMap!.has(ex.id)) _repsMap!.set(ex.id, "8-12");
+    });
+  }
+  const range =
+    _repsMap.get(exerciseId) ??
+    _repsMap.get(stripExerciseSuffixes(exerciseId)) ??
+    null;
+  if (!range) return null;
+  return parseRepRange(range);
+}
 
 export type ProgressionSuggestion = {
   type: "increase" | "deload";
