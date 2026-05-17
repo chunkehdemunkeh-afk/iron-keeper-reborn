@@ -414,6 +414,8 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "lg2", name: "Dumbbell RDL",           sets: 3, reps: "10-12", targetMuscle: "Hamstrings/Glutes", notes: "Slow 3s eccentric — hinge at hips, keep back flat, feel the hamstring stretch" },
       { id: "lg6", name: "Standing Calf Raise",   sets: 4, reps: "15-20", targetMuscle: "Calves",          notes: "Full stretch at bottom every rep, pause at top" },
       { id: "la6", name: "Cable Crunches",         sets: 3, reps: "12-15", targetMuscle: "Core",            notes: "Kneel below rope attachment — pull with abs only, not arms" },
+      { id: "lib-db-Machine_Preacher_Curls", name: "Machine Preacher Curl", sets: 3, reps: "10-12", targetMuscle: "Biceps", notes: "Short-head / peak focus — arms locked on pad, controlled out of the bottom, full squeeze at top" },
+      { id: "lib-61", name: "Bayesian Curl",        sets: 3, reps: "10-12", targetMuscle: "Biceps",          notes: "Single-arm cable behind body — max long-head stretch. Step forward of low pulley, elbow stays slightly behind torso, slow eccentric" },
     ],
   },
   {
