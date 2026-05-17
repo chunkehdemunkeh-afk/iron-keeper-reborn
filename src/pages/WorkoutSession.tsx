@@ -35,7 +35,7 @@ import {
 } from "@/lib/strength-standards";
 import { useProgressions, progressionMap } from "@/hooks/queries/useProgressions";
 import ProgressionSuggestionBanner from "@/components/workout/ProgressionSuggestionBanner";
-import { isSingleArmEligible } from "@/lib/single-arm-variants";
+import { isSingleArmEligible, DEFAULT_SINGLE_ARM_IDS } from "@/lib/single-arm-variants";
 
 type SetType = "working" | "warmup" | "1rm_test";
 type SetLog = {
@@ -103,7 +103,7 @@ export default function WorkoutSession() {
   const startedAtRef = useRef<string | null>(null);
   const [twoHandedExercises, setTwoHandedExercises] = useState<Set<string>>(new Set());
   const [heavyStackExercises, setHeavyStackExercises] = useState<Set<string>>(new Set());
-  const [singleArmExercises, setSingleArmExercises] = useState<Set<string>>(new Set());
+  const [singleArmExercises, setSingleArmExercises] = useState<Set<string>>(() => new Set(DEFAULT_SINGLE_ARM_IDS));
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [exerciseOrder, setExerciseOrder] = useState<string[]>([]);
   const [setLogs, setSetLogs] = useState<Record<string, SetLog[]>>({});
@@ -290,7 +290,9 @@ export default function WorkoutSession() {
         setBodyweightExercises(new Set(parsed.bodyweightExercises || []));
         setTwoHandedExercises(new Set(parsed.twoHandedExercises || []));
         setHeavyStackExercises(new Set(parsed.heavyStackExercises || []));
-        setSingleArmExercises(new Set(parsed.singleArmExercises || []));
+        setSingleArmExercises(
+          new Set(parsed.singleArmExercises ?? Array.from(DEFAULT_SINGLE_ARM_IDS)),
+        );
         setCableAttachments(parsed.cableAttachments || {});
         setElapsed(parsed.elapsed || 0);
         startedAtRef.current = parsed.startedAt || new Date().toISOString();

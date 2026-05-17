@@ -17,6 +17,17 @@
  */
 
 /**
+ * Exercises that default to single-arm mode on a fresh session.
+ * Users can still toggle them to 2-Arm via the pill; the choice persists
+ * via autosave.
+ *
+ * `lib-61` — Bayesian Curl: natural form is one arm at a time on a low
+ * cable, but the 2-arm both-cables variant is a valid alternative.
+ */
+export const DEFAULT_SINGLE_ARM_IDS: ReadonlySet<string> = new Set(["lib-61"]);
+
+
+/**
  * Equipment keywords that, when found in the exercise name, indicate the
  * movement is a candidate for a single-arm variation.
  */
@@ -111,7 +122,7 @@ const EXCLUDE_PATTERNS = [
   "1-arm",
   "1 arm",
   "single hand",
-  "bayesian",
+  
   "concentration",
   "kickback", // kickbacks are conventionally one-arm-at-a-time
   "bulgarian",
