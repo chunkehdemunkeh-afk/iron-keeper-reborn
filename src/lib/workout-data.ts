@@ -448,6 +448,7 @@ export const WORKOUTS: WorkoutDay[] = [
     day: "Lower B",
     focus: "Hamstrings · Glutes · Grip · Core — Hinge & Posterior Focus",
     color: "from-amber-500/20 to-orange-500/10",
+    targetRir: "1-2",
     exercises: [
       { id: "lg1",              name: "Seated Hamstring Curl",    sets: 4, reps: "10-12", targetMuscle: "Hamstrings",         notes: "Lead with isolation — squeeze at the bottom, slow negative" },
       { id: "fb2",              name: "Romanian Deadlift",         sets: 4, reps: "8-10",  targetMuscle: "Hamstrings/Glutes", notes: "Barbell if available. Slow 3s eccentric, hip hinge pattern" },
