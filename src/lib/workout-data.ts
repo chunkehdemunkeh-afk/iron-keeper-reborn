@@ -410,6 +410,7 @@ export const WORKOUTS: WorkoutDay[] = [
     day: "Lower A",
     focus: "Quads · Glutes · Hamstrings · Calves · Core — Quad Focus",
     color: "from-green-500/20 to-lime-500/10",
+    targetRir: "0-1",
     exercises: [
       { id: "lg4", name: "Pendulum Squat",       sets: 4, reps: "6-8",   targetMuscle: "Quads",           notes: "Strength focus — load up, deep range of motion, drive through midfoot" },
       { id: "lg3", name: "Bulgarian Split Squats", sets: 3, reps: "8-10", targetMuscle: "Quads/Glutes",   notes: "Commit to 16kg — rear foot elevated, control the descent" },
