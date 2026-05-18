@@ -1724,7 +1724,7 @@ export default function WorkoutSession() {
                                     </button>
                                   </div>
                                 </SwipeableSetRow>
-                                {set.showRirPicker && (
+                                {set.showRirPicker ? (
                                   <div className="flex flex-col gap-1 px-1 pb-1 -mt-0.5">
                                     {set.targetRir && (
                                       <span className="text-[10px] text-muted-foreground">
@@ -1738,11 +1738,21 @@ export default function WorkoutSession() {
                                         const targetMin = set.targetRir ? parseInt(set.targetRir[0], 10) : null;
                                         const targetMax = set.targetRir ? parseInt(set.targetRir[set.targetRir.length - 1], 10) : null;
                                         const isTarget = targetMin !== null && targetMax !== null && n >= targetMin && n <= targetMax;
+                                        const isSelected = set.rir === n;
                                         return (
                                           <button
                                             key={n}
-                                            onClick={() => updateSetLogField(ex.id, si, { rir: n, showRirPicker: false })}
-                                            className={`flex-1 rounded-md py-1.5 text-[11px] font-bold transition-all active:scale-95 ${isTarget ? "bg-primary/20 text-primary ring-1 ring-primary/40" : "bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary"}`}
+                                            onClick={() => {
+                                              hapticMedium();
+                                              updateSetLogField(ex.id, si, { rir: n, showRirPicker: false });
+                                            }}
+                                            className={`flex-1 rounded-md py-1.5 text-[11px] font-bold transition-all active:scale-95 ${
+                                              isSelected
+                                                ? "bg-primary text-primary-foreground ring-2 ring-primary scale-105"
+                                                : isTarget
+                                                ? "bg-primary/20 text-primary ring-1 ring-primary/40"
+                                                : "bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                                            }`}
                                           >
                                             {label}
                                           </button>
@@ -1756,6 +1766,23 @@ export default function WorkoutSession() {
                                       </button>
                                     </div>
                                   </div>
+                                ) : (
+                                  set.rir !== undefined && (
+                                    <div className="flex items-center gap-2 px-1 pb-1 -mt-0.5">
+                                      <button
+                                        onClick={() => updateSetLogField(ex.id, si, { showRirPicker: true })}
+                                        className="inline-flex items-center gap-1 rounded-md bg-primary/15 px-2 py-1 text-[10px] font-bold text-primary ring-1 ring-primary/30 active:scale-95 transition-all"
+                                      >
+                                        RIR {set.rir === 3 ? "3+" : set.rir}
+                                        <span className="text-[8px] text-primary/70 font-normal">tap to edit</span>
+                                      </button>
+                                      {set.targetRir && (
+                                        <span className="text-[10px] text-muted-foreground">
+                                          target {set.targetRir}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )
                                 )}
                                 </React.Fragment>
                               );});})()}
