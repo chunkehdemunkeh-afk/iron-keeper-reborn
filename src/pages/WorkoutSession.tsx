@@ -577,7 +577,7 @@ export default function WorkoutSession() {
         completed: false,
         targetReps: parsedTargetReps,
         targetWeight: lastData[si]?.weight ?? lastData[0]?.weight ?? undefined,
-        targetRir: workout?.targetRir ?? targetRirForReps(ex.reps, sessionTargetRir),
+        targetRir: ex.targetRir ?? workout?.targetRir ?? targetRirForReps(ex.reps, sessionTargetRir),
       }));
     });
     setSetLogs(prev => ({ ...prev, ...newLogs }));
