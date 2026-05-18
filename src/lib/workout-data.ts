@@ -21,6 +21,8 @@ export type WorkoutDay = {
   focus: string;
   exercises: Exercise[];
   color: string;
+  /** Workout-level target RIR override (e.g. "0-1"). Overrides per-exercise rep-range mapping. */
+  targetRir?: string;
 };
 
 export type CompletedWorkout = {
@@ -389,6 +391,7 @@ export const WORKOUTS: WorkoutDay[] = [
     day: "Upper A",
     focus: "Chest · Back · Shoulders · Arms — Strength Bias",
     color: "from-blue-500/20 to-sky-500/10",
+    targetRir: "0-1",
     exercises: [
       { id: "lib-1",     name: "Barbell Bench Press",              sets: 4, reps: "6-8",   targetMuscle: "Chest",          notes: "Top strength lift — chase a heavy top set, controlled eccentric, pause if grinding" },
       { id: "pl2",       name: "T-Bar Row",                        sets: 4, reps: "6-8",   targetMuscle: "Back Thickness", notes: "Keep chest on pad, drive elbows back" },
@@ -407,6 +410,7 @@ export const WORKOUTS: WorkoutDay[] = [
     day: "Lower A",
     focus: "Quads · Glutes · Hamstrings · Calves · Core — Quad Focus",
     color: "from-green-500/20 to-lime-500/10",
+    targetRir: "0-1",
     exercises: [
       { id: "lg4", name: "Pendulum Squat",       sets: 4, reps: "6-8",   targetMuscle: "Quads",           notes: "Strength focus — load up, deep range of motion, drive through midfoot" },
       { id: "lg3", name: "Bulgarian Split Squats", sets: 3, reps: "8-10", targetMuscle: "Quads/Glutes",   notes: "Commit to 16kg — rear foot elevated, control the descent" },
@@ -425,6 +429,7 @@ export const WORKOUTS: WorkoutDay[] = [
     day: "Upper B",
     focus: "Chest · Back · Rear Delts · Arms — Hypertrophy Bias",
     color: "from-purple-500/20 to-fuchsia-500/10",
+    targetRir: "1-2",
     exercises: [
       { id: "pu3", name: "15° Incline Dumbbell Bench Press",            sets: 4, reps: "10-12",     targetMuscle: "Upper Chest",       notes: "Higher reps vs Upper A — different angle, squeeze at top" },
       { id: "pl1", name: "Seated Row Machine",                          sets: 4, reps: "10-12",     targetMuscle: "Mid Back",          notes: "Keep progressing. Pull to lower chest, squeeze shoulder blades" },
@@ -443,6 +448,7 @@ export const WORKOUTS: WorkoutDay[] = [
     day: "Lower B",
     focus: "Hamstrings · Glutes · Grip · Core — Hinge & Posterior Focus",
     color: "from-amber-500/20 to-orange-500/10",
+    targetRir: "1-2",
     exercises: [
       { id: "lg1",              name: "Seated Hamstring Curl",    sets: 4, reps: "10-12", targetMuscle: "Hamstrings",         notes: "Lead with isolation — squeeze at the bottom, slow negative" },
       { id: "fb2",              name: "Romanian Deadlift",         sets: 4, reps: "8-10",  targetMuscle: "Hamstrings/Glutes", notes: "Barbell if available. Slow 3s eccentric, hip hinge pattern" },
