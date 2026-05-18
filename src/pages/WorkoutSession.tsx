@@ -848,7 +848,22 @@ export default function WorkoutSession() {
         sets[setIdx] = { ...sets[setIdx], ...patch };
         return { ...prev, [exerciseId]: sets };
       });
-    }, []
+      // If the RIR picker just closed and every set is now complete,
+      // auto-expand the next exercise (deferred from toggleSet).
+      if (patch.showRirPicker === false) {
+        setSetLogs(latest => {
+          const arr = latest[exerciseId] || [];
+          const allDone = arr.length > 0 && arr.every(s => s.completed);
+          if (allDone) {
+            const idx = exerciseOrder.indexOf(exerciseId);
+            if (idx >= 0 && idx < exerciseOrder.length - 1) {
+              setExpandedExercise(exerciseOrder[idx + 1]);
+            }
+          }
+          return latest;
+        });
+      }
+    }, [exerciseOrder]
   );
 
   const addSet = useCallback((exerciseId: string) => {
