@@ -515,6 +515,22 @@ export default function WorkoutSession() {
     if (Object.keys(initial).length > 0) {
       setSetLogs(prev => ({ ...prev, ...initial }));
     }
+    // Refresh targetRir on EXISTING setLogs (e.g. restored from localStorage)
+    // so changes to workout-data take effect immediately.
+    setSetLogs(prev => {
+      let changed = false;
+      const next = { ...prev };
+      workout.exercises.forEach(ex => {
+        const desired = ex.targetRir ?? workout.targetRir ?? targetRirForReps(ex.reps, sessionTargetRir);
+        const arr = prev[ex.id];
+        if (!arr || !desired) return;
+        if (arr.some(s => s.targetRir !== desired)) {
+          changed = true;
+          next[ex.id] = arr.map(s => ({ ...s, targetRir: desired }));
+        }
+      });
+      return changed ? next : prev;
+    });
     if (exerciseOrder.length === 0) {
       setExpandedExercise(workout.exercises[0]?.id ?? null);
       setExerciseOrder(workout.exercises.map(ex => ex.id));
