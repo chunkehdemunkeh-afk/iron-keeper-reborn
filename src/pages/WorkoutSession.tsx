@@ -86,6 +86,26 @@ function accessoryIcon(id: string) {
   return Zap;
 }
 
+/** Parse "6-8", "12", "8 - 10" → [low, high]; null if no digits. */
+function parseRepsRange(reps: string | undefined): [number, number] | null {
+  if (!reps) return null;
+  const nums = (reps.match(/\d+/g) ?? []).map(n => parseInt(n, 10));
+  if (nums.length === 0) return null;
+  if (nums.length === 1) return [nums[0], nums[0]];
+  return [nums[0], nums[1]];
+}
+
+/** Map an exercise's prescribed rep range to a sensible target RIR string. */
+function targetRirForReps(reps: string | undefined, fallback?: string): string | undefined {
+  const range = parseRepsRange(reps);
+  if (!range) return fallback;
+  const high = range[1];
+  if (high <= 5) return "0-1";
+  if (high <= 10) return "1-2";
+  if (high <= 15) return "1-3";
+  return "2-3";
+}
+
 export default function WorkoutSession() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
