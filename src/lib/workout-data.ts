@@ -11,6 +11,7 @@ export type Exercise = {
   trackWeight?: boolean;  // false = bodyweight/no load (default true)
   repLabel?: string;      // e.g. "Reps", "Sec", "Metres", "Rounds" (default "Reps")
   weightLabel?: string;   // e.g. "Kg", "Height (cm)" (default "Kg")
+  targetRir?: string;     // e.g. "0-1" — per-exercise RIR override (highest precedence)
 };
 
 export type WorkoutDay = {
@@ -391,16 +392,16 @@ export const WORKOUTS: WorkoutDay[] = [
     day: "Upper A",
     focus: "Chest · Back · Shoulders · Arms — Strength Bias",
     color: "from-blue-500/20 to-sky-500/10",
-    targetRir: "0-1",
+    targetRir: "1-2",
     exercises: [
-      { id: "lib-1",     name: "Barbell Bench Press",              sets: 4, reps: "6-8",   targetMuscle: "Chest",          notes: "Top strength lift — chase a heavy top set, controlled eccentric, pause if grinding" },
-      { id: "pl2",       name: "T-Bar Row",                        sets: 4, reps: "6-8",   targetMuscle: "Back Thickness", notes: "Keep chest on pad, drive elbows back" },
-      { id: "pu1",       name: "45° Incline Dumbbell Bench Press", sets: 4, reps: "6-8",   targetMuscle: "Upper Chest",    notes: "Strength focus — heavier load, full stretch at bottom, controlled eccentric" },
-      { id: "pl3",       name: "Lat Pulldown - Pronated Grip",     sets: 4, reps: "6-8",   targetMuscle: "Lats",           notes: "Strength focus — heavier load, full stretch at top, drive elbows down hard" },
-      { id: "sub-up5a",  name: "Dumbbell Shoulder Press",          sets: 3, reps: "8-10",  targetMuscle: "Shoulders",      notes: "Seated or standing — move this early in the session" },
-      { id: "ua6",       name: "Cable Lateral Raises",             sets: 3, reps: "12-15", targetMuscle: "Side Delts",     notes: "Constant tension through full ROM — reach across body at bottom" },
-      { id: "lib-59",    name: "JM Press",                         sets: 4, reps: "8-10",  targetMuscle: "Triceps",        notes: "Hybrid close-grip bench / skull crusher — lower toward chin with elbows tucked, drive back up" },
-      { id: "pu5",       name: "X-Over Cable Tricep Extensions",   sets: 3, reps: "10-12", targetMuscle: "Triceps",        notes: "Tricep finisher — lock elbows in place, full extension, squeeze the lockout" },
+      { id: "lib-1",     name: "Barbell Bench Press",              sets: 4, reps: "6-8",   targetMuscle: "Chest",          targetRir: "0-1", notes: "Top strength lift — chase a heavy top set, controlled eccentric, pause if grinding" },
+      { id: "pl2",       name: "T-Bar Row",                        sets: 4, reps: "6-8",   targetMuscle: "Back Thickness", targetRir: "0-1", notes: "Keep chest on pad, drive elbows back" },
+      { id: "pu1",       name: "45° Incline Dumbbell Bench Press", sets: 4, reps: "6-8",   targetMuscle: "Upper Chest",    targetRir: "0-1", notes: "Strength focus — heavier load, full stretch at bottom, controlled eccentric" },
+      { id: "pl3",       name: "Lat Pulldown - Pronated Grip",     sets: 4, reps: "6-8",   targetMuscle: "Lats",           targetRir: "0-1", notes: "Strength focus — heavier load, full stretch at top, drive elbows down hard" },
+      { id: "sub-up5a",  name: "Dumbbell Shoulder Press",          sets: 3, reps: "8-10",  targetMuscle: "Shoulders",      targetRir: "0-1", notes: "Seated or standing — move this early in the session" },
+      { id: "ua6",       name: "Cable Lateral Raises",             sets: 3, reps: "12-15", targetMuscle: "Side Delts",     targetRir: "1-2", notes: "Constant tension through full ROM — reach across body at bottom" },
+      { id: "lib-59",    name: "JM Press",                         sets: 4, reps: "8-10",  targetMuscle: "Triceps",        targetRir: "1-2", notes: "Hybrid close-grip bench / skull crusher — lower toward chin with elbows tucked, drive back up" },
+      { id: "pu5",       name: "X-Over Cable Tricep Extensions",   sets: 3, reps: "10-12", targetMuscle: "Triceps",        targetRir: "1-2", notes: "Tricep finisher — lock elbows in place, full extension, squeeze the lockout" },
     ],
   },
   {
@@ -410,16 +411,16 @@ export const WORKOUTS: WorkoutDay[] = [
     day: "Lower A",
     focus: "Quads · Glutes · Hamstrings · Calves · Core — Quad Focus",
     color: "from-green-500/20 to-lime-500/10",
-    targetRir: "0-1",
+    targetRir: "1-2",
     exercises: [
-      { id: "lg4", name: "Pendulum Squat",       sets: 4, reps: "6-8",   targetMuscle: "Quads",           notes: "Strength focus — load up, deep range of motion, drive through midfoot" },
-      { id: "lg3", name: "Bulgarian Split Squats", sets: 3, reps: "8-10", targetMuscle: "Quads/Glutes",   notes: "Commit to 16kg — rear foot elevated, control the descent" },
-      { id: "lg5", name: "Leg Extension",         sets: 3, reps: "12-15", targetMuscle: "Quads",           notes: "Push toward 65kg. Squeeze at the top, 2s hold" },
-      { id: "lg2", name: "Dumbbell RDL",           sets: 3, reps: "10-12", targetMuscle: "Hamstrings/Glutes", notes: "Slow 3s eccentric — hinge at hips, keep back flat, feel the hamstring stretch" },
-      { id: "lg6", name: "Standing Calf Raise",   sets: 4, reps: "15-20", targetMuscle: "Calves",          notes: "Full stretch at bottom every rep, pause at top" },
-      { id: "la6", name: "Cable Crunches",         sets: 3, reps: "12-15", targetMuscle: "Core",            notes: "Kneel below rope attachment — pull with abs only, not arms" },
-      { id: "lib-db-Machine_Preacher_Curls", name: "Machine Preacher Curl", sets: 3, reps: "10-12", targetMuscle: "Biceps", notes: "Short-head / peak focus — arms locked on pad, controlled out of the bottom, full squeeze at top" },
-      { id: "lib-61", name: "Bayesian Curl",        sets: 3, reps: "10-12", targetMuscle: "Biceps",          notes: "Single-arm cable behind body — max long-head stretch. Step forward of low pulley, elbow stays slightly behind torso, slow eccentric" },
+      { id: "lg4", name: "Pendulum Squat",       sets: 4, reps: "6-8",   targetMuscle: "Quads",           targetRir: "0-1", notes: "Strength focus — load up, deep range of motion, drive through midfoot" },
+      { id: "lg3", name: "Bulgarian Split Squats", sets: 3, reps: "8-10", targetMuscle: "Quads/Glutes",   targetRir: "0-1", notes: "Commit to 16kg — rear foot elevated, control the descent" },
+      { id: "lg5", name: "Leg Extension",         sets: 3, reps: "12-15", targetMuscle: "Quads",           targetRir: "1-2", notes: "Push toward 65kg. Squeeze at the top, 2s hold" },
+      { id: "lg2", name: "Dumbbell RDL",           sets: 3, reps: "10-12", targetMuscle: "Hamstrings/Glutes", targetRir: "0-1", notes: "Slow 3s eccentric — hinge at hips, keep back flat, feel the hamstring stretch" },
+      { id: "lg6", name: "Standing Calf Raise",   sets: 4, reps: "15-20", targetMuscle: "Calves",          targetRir: "1-2", notes: "Full stretch at bottom every rep, pause at top" },
+      { id: "la6", name: "Cable Crunches",         sets: 3, reps: "12-15", targetMuscle: "Core",            targetRir: "1-2", notes: "Kneel below rope attachment — pull with abs only, not arms" },
+      { id: "lib-db-Machine_Preacher_Curls", name: "Machine Preacher Curl", sets: 3, reps: "10-12", targetMuscle: "Biceps", targetRir: "1-2", notes: "Short-head / peak focus — arms locked on pad, controlled out of the bottom, full squeeze at top" },
+      { id: "lib-61", name: "Bayesian Curl",        sets: 3, reps: "10-12", targetMuscle: "Biceps",          targetRir: "1-2", notes: "Single-arm cable behind body — max long-head stretch. Step forward of low pulley, elbow stays slightly behind torso, slow eccentric" },
     ],
   },
   {
