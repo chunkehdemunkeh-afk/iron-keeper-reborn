@@ -760,9 +760,12 @@ export default function WorkoutSession() {
       // also skip the warnings — they're light by design.
       if (!isOneRmTest && currentSetType !== "warmup") {
         // Determine rep thresholds based on exercise target range
+        // Parse the exercise's actual prescribed rep range (e.g. "6-8" → [6, 8]).
+        // Fallback to legacy heuristic if unparseable.
+        const range = parseRepsRange(exercise?.reps);
         const isAccessoryRange = exercise?.reps?.includes("12-15");
-        const upThreshold = isAccessoryRange ? 15 : 12;
-        const downThreshold = isAccessoryRange ? 12 : 8;
+        const upThreshold = range ? range[1] + 1 : (isAccessoryRange ? 16 : 13);
+        const downThreshold = range ? range[0] : (isAccessoryRange ? 12 : 8);
 
         // Suggest weight increase if reps hit the top of the range
         if (newSets[setIdx].reps >= upThreshold) {
