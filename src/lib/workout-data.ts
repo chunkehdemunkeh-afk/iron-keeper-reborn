@@ -429,6 +429,7 @@ export const WORKOUTS: WorkoutDay[] = [
     day: "Upper B",
     focus: "Chest · Back · Rear Delts · Arms — Hypertrophy Bias",
     color: "from-purple-500/20 to-fuchsia-500/10",
+    targetRir: "1-2",
     exercises: [
       { id: "pu3", name: "15° Incline Dumbbell Bench Press",            sets: 4, reps: "10-12",     targetMuscle: "Upper Chest",       notes: "Higher reps vs Upper A — different angle, squeeze at top" },
       { id: "pl1", name: "Seated Row Machine",                          sets: 4, reps: "10-12",     targetMuscle: "Mid Back",          notes: "Keep progressing. Pull to lower chest, squeeze shoulder blades" },
