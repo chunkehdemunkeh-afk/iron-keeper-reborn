@@ -814,9 +814,12 @@ export default function WorkoutSession() {
         setRestDuration(300);
       }
 
-      // Auto-expand next exercise if this was the last set
+      // Auto-expand next exercise if this was the last set.
+      // Skip when a RIR picker was just opened — collapsing now would hide it.
+      // The picker's pick/skip handlers will trigger the auto-expand instead.
       const allSetsNowDone = newSets.every(s => s.completed);
-      if (allSetsNowDone) {
+      const justOpenedRirPicker = newSets[setIdx]?.setType !== "warmup";
+      if (allSetsNowDone && !justOpenedRirPicker) {
         const currentOrderIdx = exerciseOrder.indexOf(exerciseId);
         if (currentOrderIdx >= 0 && currentOrderIdx < exerciseOrder.length - 1) {
           setExpandedExercise(exerciseOrder[currentOrderIdx + 1]);
