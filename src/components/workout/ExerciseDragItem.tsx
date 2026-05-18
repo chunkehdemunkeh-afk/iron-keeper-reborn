@@ -76,7 +76,14 @@ export default function ExerciseDragItem({
             </span>
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">{name}</p>
-              <p className="text-xs text-muted-foreground">{sets} × {reps}</p>
+              <p className="text-xs text-muted-foreground">
+                {sets} × {reps}
+                {targetRir && (
+                  <span className="ml-1.5 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold bg-primary/15 text-primary">
+                    RIR {targetRir}
+                  </span>
+                )}
+              </p>
               {lastSub && (
                 <div className="flex items-center gap-1 mt-0.5">
                   <Shuffle className="h-2.5 w-2.5 text-amber-400" />
