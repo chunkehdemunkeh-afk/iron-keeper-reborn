@@ -508,7 +508,7 @@ export default function WorkoutSession() {
             lastData[si]?.weight ??
             lastData[0]?.weight ??
             undefined,
-          targetRir: sessionTargetRir,
+          targetRir: targetRirForReps(ex.reps, sessionTargetRir),
         }));
       }
     });
