@@ -11,6 +11,7 @@ export type Exercise = {
   trackWeight?: boolean;  // false = bodyweight/no load (default true)
   repLabel?: string;      // e.g. "Reps", "Sec", "Metres", "Rounds" (default "Reps")
   weightLabel?: string;   // e.g. "Kg", "Height (cm)" (default "Kg")
+  targetRir?: string;     // e.g. "0-1" — per-exercise RIR override (highest precedence)
 };
 
 export type WorkoutDay = {
