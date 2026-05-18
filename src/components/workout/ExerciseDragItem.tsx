@@ -9,6 +9,7 @@ interface ExerciseDragItemProps {
   name: string;
   sets: number;
   reps: string;
+  targetRir?: string;
   onToggleExpand: () => void;
   onPlayVideo: () => void;
   onSwap: () => void;
@@ -19,7 +20,7 @@ interface ExerciseDragItemProps {
 }
 
 export default function ExerciseDragItem({
-  exId, isExpanded, allDone, index, name, sets, reps, onToggleExpand, onPlayVideo, onSwap, hasSubs,
+  exId, isExpanded, allDone, index, name, sets, reps, targetRir, onToggleExpand, onPlayVideo, onSwap, hasSubs,
   lastSub, onDelete, children,
 }: ExerciseDragItemProps) {
   const dragControls = useDragControls();
