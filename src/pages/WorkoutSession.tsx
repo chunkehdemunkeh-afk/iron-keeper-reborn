@@ -764,7 +764,7 @@ export default function WorkoutSession() {
         // Fallback to legacy heuristic if unparseable.
         const range = parseRepsRange(exercise?.reps);
         const isAccessoryRange = exercise?.reps?.includes("12-15");
-        const upThreshold = range ? range[1] + 1 : (isAccessoryRange ? 16 : 13);
+        const upThreshold = range ? range[1] : (isAccessoryRange ? 15 : 12);
         const downThreshold = range ? range[0] : (isAccessoryRange ? 12 : 8);
 
         // Suggest weight increase if reps hit the top of the range
