@@ -1420,6 +1420,7 @@ export default function WorkoutSession() {
                 name={displayName}
                 sets={setLogs[ex.id]?.length || ex.sets}
                 reps={ex.reps}
+                targetRir={setLogs[ex.id]?.find(s => s.targetRir)?.targetRir ?? ex.targetRir ?? workout?.targetRir ?? targetRirForReps(ex.reps, sessionTargetRir)}
                 onToggleExpand={() => setExpandedExercise(isExpanded ? null : ex.id)}
                 onPlayVideo={() => setVideoExercise({ name: displayName, id: ex.id })}
                 onSwap={() => setSwapExerciseId(ex.id)}
