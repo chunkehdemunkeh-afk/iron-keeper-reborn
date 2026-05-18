@@ -86,6 +86,26 @@ function accessoryIcon(id: string) {
   return Zap;
 }
 
+/** Parse "6-8", "12", "8 - 10" → [low, high]; null if no digits. */
+function parseRepsRange(reps: string | undefined): [number, number] | null {
+  if (!reps) return null;
+  const nums = (reps.match(/\d+/g) ?? []).map(n => parseInt(n, 10));
+  if (nums.length === 0) return null;
+  if (nums.length === 1) return [nums[0], nums[0]];
+  return [nums[0], nums[1]];
+}
+
+/** Map an exercise's prescribed rep range to a sensible target RIR string. */
+function targetRirForReps(reps: string | undefined, fallback?: string): string | undefined {
+  const range = parseRepsRange(reps);
+  if (!range) return fallback;
+  const high = range[1];
+  if (high <= 5) return "0-1";
+  if (high <= 10) return "1-2";
+  if (high <= 15) return "1-3";
+  return "2-3";
+}
+
 export default function WorkoutSession() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -488,7 +508,7 @@ export default function WorkoutSession() {
             lastData[si]?.weight ??
             lastData[0]?.weight ??
             undefined,
-          targetRir: sessionTargetRir,
+          targetRir: targetRirForReps(ex.reps, sessionTargetRir),
         }));
       }
     });
@@ -557,7 +577,7 @@ export default function WorkoutSession() {
         completed: false,
         targetReps: parsedTargetReps,
         targetWeight: lastData[si]?.weight ?? lastData[0]?.weight ?? undefined,
-        targetRir: sessionTargetRir,
+        targetRir: targetRirForReps(ex.reps, sessionTargetRir),
       }));
     });
     setSetLogs(prev => ({ ...prev, ...newLogs }));
@@ -740,9 +760,12 @@ export default function WorkoutSession() {
       // also skip the warnings — they're light by design.
       if (!isOneRmTest && currentSetType !== "warmup") {
         // Determine rep thresholds based on exercise target range
+        // Parse the exercise's actual prescribed rep range (e.g. "6-8" → [6, 8]).
+        // Fallback to legacy heuristic if unparseable.
+        const range = parseRepsRange(exercise?.reps);
         const isAccessoryRange = exercise?.reps?.includes("12-15");
-        const upThreshold = isAccessoryRange ? 15 : 12;
-        const downThreshold = isAccessoryRange ? 12 : 8;
+        const upThreshold = range ? range[1] : (isAccessoryRange ? 15 : 12);
+        const downThreshold = range ? range[0] : (isAccessoryRange ? 12 : 8);
 
         // Suggest weight increase if reps hit the top of the range
         if (newSets[setIdx].reps >= upThreshold) {
@@ -1701,7 +1724,7 @@ export default function WorkoutSession() {
                                     </button>
                                   </div>
                                 </SwipeableSetRow>
-                                {set.showRirPicker && (
+                                {set.showRirPicker ? (
                                   <div className="flex flex-col gap-1 px-1 pb-1 -mt-0.5">
                                     {set.targetRir && (
                                       <span className="text-[10px] text-muted-foreground">
@@ -1715,11 +1738,21 @@ export default function WorkoutSession() {
                                         const targetMin = set.targetRir ? parseInt(set.targetRir[0], 10) : null;
                                         const targetMax = set.targetRir ? parseInt(set.targetRir[set.targetRir.length - 1], 10) : null;
                                         const isTarget = targetMin !== null && targetMax !== null && n >= targetMin && n <= targetMax;
+                                        const isSelected = set.rir === n;
                                         return (
                                           <button
                                             key={n}
-                                            onClick={() => updateSetLogField(ex.id, si, { rir: n, showRirPicker: false })}
-                                            className={`flex-1 rounded-md py-1.5 text-[11px] font-bold transition-all active:scale-95 ${isTarget ? "bg-primary/20 text-primary ring-1 ring-primary/40" : "bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary"}`}
+                                            onClick={() => {
+                                              hapticMedium();
+                                              updateSetLogField(ex.id, si, { rir: n, showRirPicker: false });
+                                            }}
+                                            className={`flex-1 rounded-md py-1.5 text-[11px] font-bold transition-all active:scale-95 ${
+                                              isSelected
+                                                ? "bg-primary text-primary-foreground ring-2 ring-primary scale-105"
+                                                : isTarget
+                                                ? "bg-primary/20 text-primary ring-1 ring-primary/40"
+                                                : "bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                                            }`}
                                           >
                                             {label}
                                           </button>
@@ -1733,6 +1766,23 @@ export default function WorkoutSession() {
                                       </button>
                                     </div>
                                   </div>
+                                ) : (
+                                  set.rir !== undefined && (
+                                    <div className="flex items-center gap-2 px-1 pb-1 -mt-0.5">
+                                      <button
+                                        onClick={() => updateSetLogField(ex.id, si, { showRirPicker: true })}
+                                        className="inline-flex items-center gap-1 rounded-md bg-primary/15 px-2 py-1 text-[10px] font-bold text-primary ring-1 ring-primary/30 active:scale-95 transition-all"
+                                      >
+                                        RIR {set.rir === 3 ? "3+" : set.rir}
+                                        <span className="text-[8px] text-primary/70 font-normal">tap to edit</span>
+                                      </button>
+                                      {set.targetRir && (
+                                        <span className="text-[10px] text-muted-foreground">
+                                          target {set.targetRir}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )
                                 )}
                                 </React.Fragment>
                               );});})()}
