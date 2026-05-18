@@ -21,6 +21,8 @@ export type WorkoutDay = {
   focus: string;
   exercises: Exercise[];
   color: string;
+  /** Workout-level target RIR override (e.g. "0-1"). Overrides per-exercise rep-range mapping. */
+  targetRir?: string;
 };
 
 export type CompletedWorkout = {
