@@ -814,9 +814,12 @@ export default function WorkoutSession() {
         setRestDuration(300);
       }
 
-      // Auto-expand next exercise if this was the last set
+      // Auto-expand next exercise if this was the last set.
+      // Skip when a RIR picker was just opened — collapsing now would hide it.
+      // The picker's pick/skip handlers will trigger the auto-expand instead.
       const allSetsNowDone = newSets.every(s => s.completed);
-      if (allSetsNowDone) {
+      const justOpenedRirPicker = newSets[setIdx]?.setType !== "warmup";
+      if (allSetsNowDone && !justOpenedRirPicker) {
         const currentOrderIdx = exerciseOrder.indexOf(exerciseId);
         if (currentOrderIdx >= 0 && currentOrderIdx < exerciseOrder.length - 1) {
           setExpandedExercise(exerciseOrder[currentOrderIdx + 1]);
@@ -845,7 +848,22 @@ export default function WorkoutSession() {
         sets[setIdx] = { ...sets[setIdx], ...patch };
         return { ...prev, [exerciseId]: sets };
       });
-    }, []
+      // If the RIR picker just closed and every set is now complete,
+      // auto-expand the next exercise (deferred from toggleSet).
+      if (patch.showRirPicker === false) {
+        setSetLogs(latest => {
+          const arr = latest[exerciseId] || [];
+          const allDone = arr.length > 0 && arr.every(s => s.completed);
+          if (allDone) {
+            const idx = exerciseOrder.indexOf(exerciseId);
+            if (idx >= 0 && idx < exerciseOrder.length - 1) {
+              setExpandedExercise(exerciseOrder[idx + 1]);
+            }
+          }
+          return latest;
+        });
+      }
+    }, [exerciseOrder]
   );
 
   const addSet = useCallback((exerciseId: string) => {
