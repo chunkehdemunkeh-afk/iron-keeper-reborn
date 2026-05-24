@@ -400,7 +400,7 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "pl3",       name: "Lat Pulldown - Pronated Grip",     sets: 4, reps: "6-8",   targetMuscle: "Lats",           targetRir: "0-1", notes: "Strength focus — heavier load, full stretch at top, drive elbows down hard" },
       { id: "sub-up5a",  name: "Dumbbell Shoulder Press",          sets: 3, reps: "8-10",  targetMuscle: "Shoulders",      targetRir: "0-1", notes: "Seated or standing — move this early in the session" },
       { id: "ua6",       name: "Cable Lateral Raises",             sets: 3, reps: "12-15", targetMuscle: "Side Delts",     targetRir: "1-2", notes: "Constant tension through full ROM — reach across body at bottom" },
-      { id: "lib-59",    name: "JM Press",                         sets: 4, reps: "8-10",  targetMuscle: "Triceps",        targetRir: "1-2", notes: "Hybrid close-grip bench / skull crusher — lower toward chin with elbows tucked, drive back up" },
+      { id: "lib-62",    name: "Plate Loaded Dip Machine",         sets: 4, reps: "6-8",   targetMuscle: "Triceps",        targetRir: "0-1", notes: "Heavy triceps press — torso upright, full lockout at top, controlled stretch at bottom" },
       { id: "pu5",       name: "X-Over Cable Tricep Extensions",   sets: 3, reps: "10-12", targetMuscle: "Triceps",        targetRir: "1-2", notes: "Tricep finisher — lock elbows in place, full extension, squeeze the lockout" },
     ],
   },
