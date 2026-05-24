@@ -47,6 +47,7 @@ export const EXERCISE_LIBRARY: LibraryExercise[] = [
   { id: "lib-20", name: "Overhead Tricep Extension", muscleGroup: "Triceps", equipment: "Dumbbell", description: "Extend dumbbell overhead behind head." },
   { id: "lib-21", name: "Close Grip Bench Press", muscleGroup: "Triceps", equipment: "Barbell", description: "Bench press with narrow grip for triceps." },
   { id: "lib-59", name: "JM Press", muscleGroup: "Triceps", equipment: "Barbell", description: "Hybrid press-and-skull-crusher — lower bar toward chin with elbows tucked, press back up, stop short of lockout." },
+  { id: "lib-62", name: "Plate Loaded Dip Machine", muscleGroup: "Triceps", equipment: "Machine", description: "Plate-loaded seated dip machine — torso upright for triceps emphasis, full lockout at top, controlled stretch at the bottom. Heavier loading and more stability than bodyweight dips." },
 
   // Quads
   { id: "lib-22", name: "Back Squat", muscleGroup: "Quads", equipment: "Barbell", description: "Bar on traps, squat to parallel or below." },
