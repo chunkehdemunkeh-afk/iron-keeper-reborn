@@ -534,6 +534,33 @@ export default function WorkoutSession() {
     if (exerciseOrder.length === 0) {
       setExpandedExercise(workout.exercises[0]?.id ?? null);
       setExerciseOrder(workout.exercises.map(ex => ex.id));
+    } else {
+      // Reconcile persisted order with current workout definition:
+      // append any new exercises and drop ones no longer in the workout/accessories/added.
+      const validIds = new Set<string>([
+        ...workout.exercises.map(e => e.id),
+        ...accessoryExercises.map(e => e.id),
+        ...addedExercises.map(e => e.id),
+      ]);
+      const workoutIds = workout.exercises.map(e => e.id);
+      const filtered = exerciseOrder.filter(id => validIds.has(id));
+      const missingWorkout = workoutIds.filter(id => !filtered.includes(id));
+      if (missingWorkout.length > 0 || filtered.length !== exerciseOrder.length) {
+        // Insert missing workout exercises at their natural position relative to the workout list.
+        const next = [...filtered];
+        missingWorkout.forEach(id => {
+          const idx = workoutIds.indexOf(id);
+          // Find the nearest preceding workout id already in `next` to anchor insertion.
+          let insertAt = next.length;
+          for (let i = idx - 1; i >= 0; i--) {
+            const prevId = workoutIds[i];
+            const pos = next.indexOf(prevId);
+            if (pos !== -1) { insertAt = pos + 1; break; }
+          }
+          next.splice(insertAt, 0, id);
+        });
+        setExerciseOrder(next);
+      }
     }
   }, [workout, lastSessionData, progressionsByExId]);
 
