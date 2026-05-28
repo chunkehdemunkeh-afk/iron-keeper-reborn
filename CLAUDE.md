@@ -194,6 +194,12 @@ git stash && git pull --rebase origin main && git stash pop && git push origin m
 - **Gamification new tables not in Supabase types** — `user_progress`, `xp_events`, `badges`, `user_badges`, `seasons`, `duels`, `clans`, etc. are cast via `supabase as unknown as { from: ... }` in their query files. Don't expect TypeScript safety on these tables yet.
 - **`SleepCard.tsx` deleted** — replaced by `RecoveryPanel` + `RecoveryHero`. The `/recovery` page uses `RecoveryPanel` directly.
 - **Streak freeze tokens** — awarded automatically at every 7-day milestone (capped at 3). Each missed day consumes 1 token before resetting the streak.
+- **Exercise ID remapping checklist** — When changing a custom ID to `lib-*`: (1) update `workout-data.ts`, (2) update `exercise-substitutions.ts` key (lib-* keys require quotes: `"lib-13": [...]`), (3) SQL migration updating `workout_sets.exercise_id`, `workout_sets.original_exercise_id`, `workout_sets.exercise_name`, and `exercise_progression.exercise_id` — use `LIKE 'old-%'` to catch suffixed variants (e.g. `am3-sa`).
+- **Legacy `exercise_name` rows** — old rows may have `exercise_name = exercise_id` (raw ID stored). Fix via SQL: `WHERE exercise_name NOT LIKE '% %'` catches ID-format values safely (IDs never have spaces, names always do).
+- **Volume set counting: only `primary` counts** — `getMusclesWorked` returns `{ primary, secondary }`. In `volume-queries.ts`, only `primary` muscles get `sets += 1`. Secondary is tracked but not counted. Synergist muscles (triceps in bench, glutes in generic squats) belong in `secondary` to avoid inflation.
+- **`nameHeuristic` order is significant** — more specific patterns must come before general ones. "split squat" must be checked before "squat" or `n.includes("squat")` swallows it first. Same principle for "dip" before "bench".
+- **Duplicate exercise IDs across workouts** — the same ID used for different exercises in different workout definitions causes PR/history conflation. Check all WORKOUTS for existing uses of an ID before assigning it.
+- **`EXERCISE_LIBRARY` overwrites WORKOUTS in `nameById`** — `WorkoutCard.tsx` builds the `names` map with WORKOUTS first then EXERCISE_LIBRARY, so library names take final precedence. Using a `lib-*` ID in `workout-data.ts` will display the library's canonical name, not the workout's name field.
 
 # CLAUDE.md
 
