@@ -127,6 +127,15 @@ const ID_OVERRIDES: Record<string, MuscleHits> = {
   // Forearms
   "lib-42": { primary: ["forearms"], secondary: [] },
   "lib-43": { primary: ["forearms", "traps"], secondary: [] },
+  // Home workout exercises
+  "home-2": { primary: ["forearms", "lats"], secondary: [] }, // Dead Hang
+  "home-3": { primary: ["forearms", "lats"], secondary: [] }, // Towel Hang
+  "home-4": { primary: ["abs"], secondary: ["lats"] },        // Ab Wheel Rollouts
+  "home-5": { primary: ["forearms"], secondary: [] },         // Wrist Roller
+  "home-6": { primary: ["forearms"], secondary: [] },         // Rice Bucket
+  "home-7": { primary: ["abs"], secondary: ["obliques"] },    // Hanging Knee Raises
+  "home-8": { primary: ["obliques"], secondary: ["abs"] },    // Russian Twists
+  "home-9": { primary: ["abs"], secondary: [] },              // Hollow Body Hold
 };
 
 // Map muscleGroup string from EXERCISE_LIBRARY to canonical regions

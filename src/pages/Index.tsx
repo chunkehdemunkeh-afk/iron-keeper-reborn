@@ -13,6 +13,7 @@ import XpBar from "@/components/gamification/XpBar";
 import HomeCombinedRecoveryCard from "@/components/HomeCombinedRecoveryCard";
 import MorningCheckInPrompt from "@/components/biometrics/MorningCheckInPrompt";
 import { isGKSplit, isNoWorkoutMode } from "@/lib/user-preferences";
+import HomeSessionCard from "@/components/home/HomeSessionCard";
 import PostOnboardingTip from "@/components/PostOnboardingTip";
 import { format, subDays, addDays, isToday } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -136,6 +137,9 @@ const Index = () => {
 
         {/* Next session — only show on today and when user has a workout plan */}
         {isCurrentDay && !noWorkoutMode && <NextSessionCard />}
+
+        {/* Home session launcher — always available on today */}
+        {isCurrentDay && <HomeSessionCard />}
 
         {/* Date navigation pill */}
         <div className="flex items-center justify-center">

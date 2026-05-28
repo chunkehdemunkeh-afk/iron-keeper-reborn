@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { WORKOUTS, type CompletedWorkout, type Exercise } from "@/lib/workout-data";
 import { getAllCustomWorkouts } from "@/pages/WorkoutBuilder";
+import { HOME_WORKOUTS } from "@/lib/home-workouts";
 import { saveWorkoutToCloud, fetchLastSessionData, fetchExerciseLastData, fetchExerciseLastDataLike } from "@/lib/cloud-data";
 import { ArrowLeft, Check, Timer, ChevronDown, ChevronUp, Trophy, Play, RotateCcw, TrendingUp, TrendingDown, Shuffle, Star, MessageSquare, Plus, Flame, History, Search, Hand, Zap, Dumbbell, Target, HelpCircle, Trash2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -112,7 +113,7 @@ export default function WorkoutSession() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const workout = WORKOUTS.find((w) => w.id === id) || getAllCustomWorkouts().find((w) => w.id === id);
+  const workout = WORKOUTS.find((w) => w.id === id) || getAllCustomWorkouts().find((w) => w.id === id) || HOME_WORKOUTS.find((w) => w.id === id);
 
   const sessionTargetRir = user
     ? getSplitById(getUserPreferences(user.id)?.splitId ?? "")?.targetRir
