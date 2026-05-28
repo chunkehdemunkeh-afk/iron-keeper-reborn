@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.113",
+    version: "1.6.114",
     date: "2026-05-28",
     title: "Updates & Fixes",
     changes: [
-      "Feat: home session card with pull, abs, and wrist routines",
+      "Fix: correct home session route to /workout/:id",
     ],
   },
   {
