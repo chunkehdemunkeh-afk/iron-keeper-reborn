@@ -459,6 +459,30 @@ export default function WorkoutSession() {
     } catch {}
   }, [workout, addedAccessories, addedExercises, applyHistoricalVariantSelections]);
 
+  // Fetch-on-demand for variant toggles: when the user switches Machine Row↔Low Row,
+  // 1-arm/2-hand, or cable attachment, the effective exercise id changes. The initial
+  // fetchLastSessionData only loads the most recent session's variants, so toggling to
+  // a different variant would show zeros. Lazily pull that variant's history.
+  const pendingVariantFetches = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!workout) return;
+    const sessionExercises = [
+      ...(workout.exercises || []),
+      ...accessoryExercises,
+      ...addedExercises,
+    ];
+    sessionExercises.forEach(ex => {
+      const eff = getEffectiveExId(ex.id);
+      if (lastSessionData[eff] !== undefined) return;
+      if (pendingVariantFetches.current.has(eff)) return;
+      pendingVariantFetches.current.add(eff);
+      fetchExerciseLastData(eff).then(sets => {
+        if (sets.length === 0) return;
+        setLastSessionData(prev => prev[eff] ? prev : { ...prev, [eff]: sets });
+      });
+    });
+  }, [workout, accessoryExercises, addedExercises, getEffectiveExId, lastSessionData]);
+
   // Compute all exercises including accessories
   const accessoryExercises = addedAccessories.flatMap(accId => {
     const routine = ACCESSORY_ROUTINES.find(r => r.id === accId);
