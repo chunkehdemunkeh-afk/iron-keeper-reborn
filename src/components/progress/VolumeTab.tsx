@@ -315,7 +315,7 @@ export default function VolumeTab() {
                       </div>
                       {useStrSets && (md?.sets ?? 0) !== displayCount && (
                         <div className="text-[10px] text-muted-foreground mt-0.5">
-                          {md?.sets ?? 0} total · {displayCount} heavy (RIR ≤ 1)
+                          {Math.round(md?.sets ?? 0)} total · {displayCount} heavy (RIR ≤ 1)
                         </div>
                       )}
                     </div>

@@ -126,7 +126,7 @@ export async function fetchWeeklyMuscleData(weeksBack = 4): Promise<WeeklyMuscle
         ? s.exercise_name
         : nameMap[baseId] ?? nameMap[s.exercise_id] ?? s.exercise_name ?? "";
 
-    const { primary } = getMusclesWorked(
+    const { primary, secondary } = getMusclesWorked(
       s.exercise_id,
       realName,
       targetMap[baseId] ?? targetMap[s.exercise_id],
@@ -144,6 +144,10 @@ export async function fetchWeeklyMuscleData(weeksBack = 4): Promise<WeeklyMuscle
       weekData[muscle].load += load;
       if (isStr) weekData[muscle].strengthSets += 1;
       if (s.rir !== null && s.rir !== undefined) weekData[muscle].rirLoggedSets += 1;
+    }
+    for (const muscle of secondary) {
+      weekData[muscle].sets += 0.5;
+      weekData[muscle].load += load * 0.5;
     }
   }
 

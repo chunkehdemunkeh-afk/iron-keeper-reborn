@@ -89,7 +89,7 @@ export default function MuscleVolumeRow({
 
           <div className="flex justify-between mt-0.5">
             <span className="text-[10px] text-muted-foreground tabular-nums">
-              {sets} sets
+              {Math.round(sets)} sets
             </span>
             <span className="text-[10px] text-muted-foreground tabular-nums">
               target {mavLow}–{mavHigh}

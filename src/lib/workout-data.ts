@@ -415,8 +415,8 @@ export const WORKOUTS: WorkoutDay[] = [
     exercises: [
       { id: "lg4", name: "Pendulum Squat",       sets: 4, reps: "6-8",   targetMuscle: "Quads",           targetRir: "0-1", notes: "Strength focus — load up, deep range of motion, drive through midfoot" },
       { id: "lg3", name: "Bulgarian Split Squats", sets: 3, reps: "8-10", targetMuscle: "Quads/Glutes",   targetRir: "0-1", notes: "Commit to 16kg — rear foot elevated, control the descent" },
-      { id: "lg5", name: "Leg Extension",         sets: 3, reps: "12-15", targetMuscle: "Quads",           targetRir: "1-2", notes: "Push toward 65kg. Squeeze at the top, 2s hold" },
       { id: "lg2", name: "Dumbbell RDL",           sets: 3, reps: "10-12", targetMuscle: "Hamstrings/Glutes", targetRir: "1-2", notes: "Slow 3s eccentric — hinge at hips, keep back flat, feel the hamstring stretch" },
+      { id: "lg5", name: "Leg Extension",         sets: 3, reps: "12-15", targetMuscle: "Quads",           targetRir: "1-2", notes: "Push toward 65kg. Squeeze at the top, 2s hold" },
       { id: "lg6", name: "Standing Calf Raise",   sets: 4, reps: "15-20", targetMuscle: "Calves",          targetRir: "1-2", notes: "Full stretch at bottom every rep, pause at top" },
       { id: "la6", name: "Cable Crunches",         sets: 3, reps: "12-15", targetMuscle: "Core",            targetRir: "1-2", notes: "Kneel below rope attachment — pull with abs only, not arms" },
       { id: "lib-db-Machine_Preacher_Curls", name: "Machine Preacher Curl", sets: 3, reps: "10-12", targetMuscle: "Biceps", targetRir: "1-2", notes: "Short-head / peak focus — arms locked on pad, controlled out of the bottom, full squeeze at top" },

@@ -153,7 +153,7 @@ export default function VolumeSummarySheet({ open, weekData, onClose, onDismiss 
                         <span className="text-sm font-semibold">{MUSCLE_LABELS[m]}</span>
                       </div>
                       <span className="text-xs tabular-nums" style={{ color }}>
-                        {sets} sets
+                        {Math.round(sets)} sets
                       </span>
                     </div>
                     <div className="h-1.5 rounded-full bg-muted/40 overflow-hidden">
