@@ -18,7 +18,7 @@ const HomeSessionCard = () => {
         {HOME_WORKOUTS.map((workout) => (
           <button
             key={workout.id}
-            onClick={() => navigate(`/session/${workout.id}`)}
+            onClick={() => navigate(`/workout/${workout.id}`)}
             className="flex flex-col items-start gap-1 rounded-xl bg-card hairline border p-3 active:scale-95 transition-transform text-left"
           >
             <span
