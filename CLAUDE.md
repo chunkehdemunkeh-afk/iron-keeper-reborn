@@ -43,6 +43,7 @@ React 18 + TypeScript PWA, deployed via Lovable (auto-deploys on `git push main`
   - `quest-queries.ts` — `fetchActiveQuests` → `{ daily: QuestWithProgress[], weekly: QuestWithProgress[] }`
   - `season-queries.ts` — `fetchCurrentSeason`, `fetchPendingSeasonFinale`, `fetchSeasonResult`
   - `progression-queries.ts` — Double-progression model. `fetchAllProgressions`, `fetchPendingProgressions`, `acceptProgression`, `dismissProgression`, `resetAllProgressions`, `evaluateAndStoreProgression(sets)`. Stores one row per `(user_id, exercise_id)` in `exercise_progression`; `exercise_id` is the *effective* id (includes attachment/variant suffix). `suggestIncrement` heuristic: lower compound +5kg, upper compound +2.5kg, isolation +1.25kg.
+  - `volume-queries.ts` — `fetchWeeklyMuscleData(weeksBack)`: queries `workout_sets` directly (NOT via `fetchRecentSets` — that omits `set_type`/`rir`) to aggregate working sets per primary muscle per ISO week. Returns `WeeklyMuscleData[]`.
   - `utils.ts` — `mondayOfWeek(date)`, `recentMondays(weeks)`
 - `src/lib/query-keys.ts` — Centralized React Query key registry. Always use `queryKeys.*()` — never inline string literals.
 - `src/lib/storage-keys.ts` — Named localStorage key constants. Always use `STORAGE_KEYS.*` — never raw strings (except `user-preferences.ts` and `demo-mode.ts` which own their own keys).
@@ -58,7 +59,14 @@ React 18 + TypeScript PWA, deployed via Lovable (auto-deploys on `git push main`
 - `src/lib/tdee-calculator.ts` — Mifflin-St Jeor. `calculateTDEE(params)` → TDEE + target calories + macros.
 - `src/lib/ai-insight.ts` — `generateAIInsight(inputs, queryClient)` fire-and-forget; calls `biometric-insight` edge function and persists result to `daily_scores`.
 - `src/hooks/queries/useProgressions.ts` — `useProgressions()`, `usePendingProgressions()`, `progressionMap(rows)` (exerciseId → row lookup), `useProgressionActions()` (accept/dismiss mutations with toast + haptic).
+- `src/hooks/queries/useVolumeData.ts` — `useWeeklyMuscleVolume(weeksBack)` hook.
 - `src/components/workout/ProgressionSuggestionBanner.tsx` — Inline banner above exercise card when `pendingSuggestion` is non-null. Accept applies new weight/reps; dismiss clears suggestion.
+- `src/lib/volume-standards.ts` — MEV/MAV/MRV for all 19 muscle regions (RP-based). `getVolumeStatus`, `getVolumeFeedback(muscle, status, sets, goal)`, `isStrengthSet(rir, weight, pr)`, `VOLUME_STATUS_COLOR/LABEL`, `STATUS_SORT_ORDER`.
+- `src/components/progress/VolumeBodyDiagram.tsx` — Body diagram coloured by `VolumeStatus`. Intentionally decoupled from `BodyDiagram.tsx`; copies `REGION_TO_LIB`/`LIB_TO_REGION`.
+- `src/components/progress/MuscleVolumeRow.tsx` — Per-muscle row: segmented MEV→MAV→MRV progress bar + 4-week sparkline.
+- `src/components/progress/VolumeTab.tsx` — Volume tab for Progress page (Stats | Volume | Photos). Week selector, goal toggle (Hypertrophy/Strength), diagram, sorted muscle list, detail sheet.
+- `src/components/weekly/VolumeSummarySheet.tsx` — Sunday/Monday bottom sheet: muscle list, top-3 recommendations, "View full breakdown" → `/progress?tab=volume`.
+- `src/components/weekly/VolumeSummaryBanner.tsx` — Home-screen volume banner (rendered in `Index.tsx` below `MondayBanner`). Shows Sunday ≥18:00 (current week) or Mon/Tue (previous week); per-week localStorage dismissal.
 - **Gamification** (`src/lib/gamification/`):
   - `config.ts` — `XP_REWARDS`, `xpForLevel`, `levelFromXp`, `progressToNextLevel`, `streakMultiplier`, `streakTier`, `SEASON_TIERS`
   - `awardXp.ts` — `awardXp(input)` → dedupes, applies streak multiplier, inserts `xp_events`, updates streak + `user_progress`, evaluates badges
@@ -112,7 +120,7 @@ Migrations in `supabase/migrations/`. Storage buckets: `avatars` (public), `prog
 
 ## Static Data
 
-- `exercise-library.ts` — 60 originals (`lib-1`–`lib-60`) + 717 from free-exercise-db (`lib-db-*`). **Do not re-import.** Next hand-written ID: `lib-61`.
+- `exercise-library.ts` — 60 originals (`lib-1`–`lib-60`) + 717 from free-exercise-db (`lib-db-*`). **Do not re-import.** Next hand-written ID: `lib-64`.
 - `exercise-substitutions.ts` — keys must match `workout-data.ts` IDs exactly or swap sheet silently shows nothing.
 - `accessory-routines.ts` — 3 routines (Abs, Grip, Wrist) with superset flags.
 - `training-splits.ts` — 10+ built-in splits (GK, PPL, Upper/Lower, Upper/Lower A/B DUP, 5/3/1, Arnold, etc.).
@@ -160,6 +168,10 @@ git stash && git pull --rebase origin main && git stash pop && git push origin m
 - **Superset accessory `exerciseOrder` rule** — Only the **first** exercise in a superset is added to `exerciseOrder`. Must use `<Reorder.Item dragListener={false}>` — a plain `<div>` causes `onReorder` to silently drop IDs.
 - **`isBilateralDumbbell` is keyword-only** — matches `DB_INDICATORS` against name + ID. Exercises without "dumbbell" in name (e.g. "Bulgarian Split Squat") must be explicitly added.
 - **Single-arm `-sa` suffix** — `isSingleArmEligible` from `single-arm-variants.ts` drives the "2 Arm / 1 Arm" pill. When toggled, the effective exercise ID gets a `-sa` suffix so per-arm PRs/history track independently. Mirrors the `-{attachmentKey}` cable pattern.
+- **`fetchRecentSets` omits `set_type` and `rir`** — any feature needing those columns must issue its own Supabase query directly against `workout_sets`.
+- **No local node_modules** — `npm run dev/build/lint` all fail locally. Build runs via Lovable CI on `git push main`. Test against the live deployment at `ironkeeper2.lovable.app` (demo mode available from the login page).
+- **Home-screen banners** (`MondayBanner`, `VolumeSummaryBanner`) render in `src/pages/Index.tsx`, guarded by `isCurrentDay`. Not in `Sessions.tsx`.
+- **`src/lib/weekly-review.ts` owns all Sunday/Monday timing + localStorage dismissal logic.** Add new prompt helpers here (pattern: `shouldShow*`, `dismiss*`, keyed by `userId + weekStart`).
 - **Auto-progression** — `evaluateAndStoreProgression(sets)` is called after a session saves. It uses the *effective* exercise ID (same as PR tracking), skips warmup/1rm_test sets and pure-bodyweight exercises. Suggestions persist in `exercise_progression.pending_suggestion` until accepted or dismissed.
 - **Previous-sets fallback after substitutions** — `fetchLastSessionData` only returns the most-recent session. `WorkoutSession` calls `fetchExerciseLastData(exerciseId)` in parallel for missing exercises.
 - **Machine row variant pill (`pl1`)** — "Seated Row Machine" uses `heavyStackExercises`: default = "Machine Row" (`pl1`), in-set = "Low Row" (`pl1-heavy`). Pill hidden when swapped.
@@ -182,3 +194,69 @@ git stash && git pull --rebase origin main && git stash pop && git push origin m
 - **Gamification new tables not in Supabase types** — `user_progress`, `xp_events`, `badges`, `user_badges`, `seasons`, `duels`, `clans`, etc. are cast via `supabase as unknown as { from: ... }` in their query files. Don't expect TypeScript safety on these tables yet.
 - **`SleepCard.tsx` deleted** — replaced by `RecoveryPanel` + `RecoveryHero`. The `/recovery` page uses `RecoveryPanel` directly.
 - **Streak freeze tokens** — awarded automatically at every 7-day milestone (capped at 3). Each missed day consumes 1 token before resetting the streak.
+
+# CLAUDE.md
+
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+
+## 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+---
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -75,7 +75,7 @@ export type MuscleHits = { primary: MuscleRegion[]; secondary: MuscleRegion[] };
 // Lookup overrides for specific exercise IDs (compound lifts get sensible secondaries)
 const ID_OVERRIDES: Record<string, MuscleHits> = {
   // Library — chest
-  "lib-1": { primary: ["chest", "triceps"], secondary: ["front_delts"] }, // Bench
+  "lib-1": { primary: ["chest"], secondary: ["triceps", "front_delts"] }, // Bench
   "lib-2": { primary: ["chest", "front_delts"], secondary: ["triceps"] }, // Incline DB
   "lib-3": { primary: ["chest"], secondary: ["triceps", "front_delts", "abs"] }, // Push-ups
   "lib-4": { primary: ["chest"], secondary: ["front_delts"] }, // Cable flies
@@ -87,7 +87,7 @@ const ID_OVERRIDES: Record<string, MuscleHits> = {
   "lib-9": { primary: ["mid_back", "lats"], secondary: ["biceps", "rear_delts"] }, // Cable row
   "lib-10": { primary: ["lats", "mid_back"], secondary: ["biceps"] }, // 1-arm row
   // Shoulders
-  "lib-11": { primary: ["front_delts", "triceps"], secondary: ["side_delts", "traps"] }, // OHP
+  "lib-11": { primary: ["front_delts"], secondary: ["triceps", "side_delts", "traps"] }, // OHP
   "lib-12": { primary: ["side_delts"], secondary: [] },
   "lib-13": { primary: ["rear_delts"], secondary: ["traps"] },
   "lib-14": { primary: ["front_delts", "side_delts"], secondary: ["triceps"] },
@@ -179,7 +179,6 @@ function nameHeuristic(name: string): MuscleHits | null {
   const n = name.toLowerCase();
   // Order matters — most specific first
   if (n.includes("deadlift")) return { primary: ["hamstrings", "glutes", "lower_back"], secondary: ["lats", "traps", "forearms"] };
-  if (n.includes("squat")) return { primary: ["quads", "glutes"], secondary: ["hamstrings", "lower_back"] };
   if (n.includes("hip thrust") || n.includes("glute bridge")) return { primary: ["glutes"], secondary: ["hamstrings"] };
   if (n.includes("rdl") || n.includes("romanian")) return { primary: ["hamstrings", "glutes"], secondary: ["lower_back"] };
   if (n.includes("good morning")) return { primary: ["hamstrings", "lower_back"], secondary: ["glutes"] };
@@ -189,10 +188,16 @@ function nameHeuristic(name: string): MuscleHits | null {
   if (n.includes("calf")) return { primary: ["calves"], secondary: [] };
   if (n.includes("hip abduction") || n.includes("abductor")) return { primary: ["abductors"], secondary: ["glutes"] };
   if (n.includes("hip adduction") || n.includes("adductor") || n.includes("inner thigh")) return { primary: ["adductors"], secondary: [] };
+  // lunge/split squat must come before generic squat — glutes are a primary target
   if (n.includes("lunge") || n.includes("split squat")) return { primary: ["quads", "glutes"], secondary: ["hamstrings", "adductors"] };
+  // generic squat (hack squat, pendulum squat etc.) — quad-dominant; glutes secondary
+  if (n.includes("squat")) return { primary: ["quads"], secondary: ["glutes", "hamstrings", "lower_back"] };
 
-  if (n.includes("bench") || n.includes("chest press") || n.includes("dip") || n.includes("push-up") || n.includes("pushup")) {
-    return { primary: ["chest", "triceps"], secondary: ["front_delts"] };
+  // dip is a direct tricep movement — keep triceps as primary
+  if (n.includes("dip")) return { primary: ["chest", "triceps"], secondary: ["front_delts"] };
+  // bench/press/push-up — chest primary, triceps synergist only
+  if (n.includes("bench") || n.includes("chest press") || n.includes("push-up") || n.includes("pushup")) {
+    return { primary: ["chest"], secondary: ["triceps", "front_delts"] };
   }
   if (n.includes("fly") || n.includes("flies") || n.includes("flye")) return { primary: ["chest"], secondary: ["front_delts"] };
 
@@ -203,7 +208,7 @@ function nameHeuristic(name: string): MuscleHits | null {
   if (n.includes("shrug")) return { primary: ["traps"], secondary: [] };
 
   if (n.includes("overhead press") || n.includes("ohp") || n.includes("military press") || n.includes("shoulder press")) {
-    return { primary: ["front_delts", "triceps"], secondary: ["side_delts", "traps"] };
+    return { primary: ["front_delts"], secondary: ["triceps", "side_delts", "traps"] };
   }
   if (n.includes("lateral raise")) return { primary: ["side_delts"], secondary: [] };
   if (n.includes("rear delt") || n.includes("reverse fly")) return { primary: ["rear_delts"], secondary: ["traps"] };

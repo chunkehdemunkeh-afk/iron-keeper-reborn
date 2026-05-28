@@ -160,7 +160,7 @@ export const EXERCISE_SUBSTITUTIONS: Record<string, SubstituteExercise[]> = {
     { id: "sub-pl3a", name: "Lat Pull Down - Supinated Grip", targetMuscle: "Lats", notes: "Underhand grip, pull to upper chest, squeeze lats", description: "Supinated (underhand) lat pulldown" },
     { id: "sub-pl3b", name: "Straight-Arm Pulldown", targetMuscle: "Lats", notes: "Arms straight, pull bar to thighs, feel lats stretch", description: "Cable straight-arm lat pulldown" },
   ],
-  pl4: [ // Face Pulls with Rope
+  "lib-13": [ // Face Pulls with Rope
     { id: "sub-pl4a", name: "Band Pull-Apart", targetMuscle: "Rear Delts", notes: "Pull band apart at chest height, squeeze shoulder blades", trackWeight: false, repLabel: "Reps", description: "Resistance band horizontal pull-apart" },
     { id: "sub-pl4b", name: "Single Arm Cross Body Reverse Fly", targetMuscle: "Rear Delts", notes: "Cable at mid height, pull across body to rear delt", description: "Single-arm cable cross-body reverse fly" },
   ],
@@ -502,7 +502,7 @@ export const EXERCISE_SUBSTITUTIONS: Record<string, SubstituteExercise[]> = {
     { id: "sub-am2a", name: "Overhead Dumbbell Tricep Extension", targetMuscle: "Triceps", notes: "Single or double arm overhead — great long head stretch", description: "Overhead dumbbell tricep extension" },
     { id: "sub-am2b", name: "Close-Grip Bench Press", targetMuscle: "Triceps", notes: "Compound pressing — allows heavier tricep loading", description: "Close-grip bench press" },
   ],
-  am3: [ // Incline Dumbbell Curl
+  "lib-18": [ // Incline Dumbbell Curl
     { id: "sub-am3a", name: "Spider Curl", targetMuscle: "Biceps", notes: "Lie chest-down on incline bench, curl from fully stretched — hits long head hard", description: "Incline bench spider curl" },
     { id: "sub-am3b", name: "Cable Curl", targetMuscle: "Biceps", notes: "Low cable, constant tension — great for the stretched position", description: "Cable bicep curl" },
   ],
