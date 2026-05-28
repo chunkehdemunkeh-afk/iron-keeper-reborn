@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.112",
+    version: "1.6.113",
     date: "2026-05-28",
     title: "Updates & Fixes",
     changes: [
-      "Feat: fractional set counting for secondary muscles + Lower A RDL reorder",
+      "Feat: home session card with pull, abs, and wrist routines",
     ],
   },
   {
