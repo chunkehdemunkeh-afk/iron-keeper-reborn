@@ -466,6 +466,26 @@ export default function WorkoutSession() {
   });
   const allExercises = workout ? [...workout.exercises, ...accessoryExercises, ...addedExercises] : [];
 
+  // Fetch-on-demand for variant toggles: when the user switches Machine Row↔Low Row,
+  // 1-arm/2-hand, or cable attachment, the effective exercise id changes. The initial
+  // fetchLastSessionData only loads the most recent session's variants, so toggling to
+  // a different variant would show zeros. Lazily pull that variant's history.
+  const pendingVariantFetchesRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!workout) return;
+    allExercises.forEach(ex => {
+      const eff = getEffectiveExId(ex.id);
+      if (lastSessionData[eff] !== undefined) return;
+      if (pendingVariantFetchesRef.current.has(eff)) return;
+      pendingVariantFetchesRef.current.add(eff);
+      fetchExerciseLastData(eff).then(sets => {
+        if (sets.length === 0) return;
+        setLastSessionData(prev => prev[eff] ? prev : { ...prev, [eff]: sets });
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workout, addedAccessories.length, addedExercises.length, heavyStackExercises, twoHandedExercises, singleArmExercises, cableAttachments, exerciseOverrides, lastSessionData]);
+
   // Build superset group map: exerciseId → { groupLabel, exerciseIds, isFirst, isLast }
   const supersetMap = useMemo(() => {
     const map: Record<string, { groupLabel: string; exerciseIds: string[]; isFirst: boolean; isLast: boolean }> = {};
