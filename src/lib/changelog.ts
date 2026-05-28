@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.115",
+    version: "1.6.116",
     date: "2026-05-28",
     title: "Updates & Fixes",
     changes: [
-      "Feat: smart rest timer based on intensity and exercise type",
+      "Feat: show rest reason in timer label",
     ],
   },
   {
