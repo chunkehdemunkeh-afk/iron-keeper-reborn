@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 interface RestTimerProps {
   isActive: boolean;
   initialSeconds: number;
+  reason?: string;
   onClose: () => void;
   onTimerEnd: () => void;
 }
@@ -30,7 +31,7 @@ function playBeep() {
   }
 }
 
-export default function RestTimer({ isActive, initialSeconds, onClose, onTimerEnd }: RestTimerProps) {
+export default function RestTimer({ isActive, initialSeconds, reason, onClose, onTimerEnd }: RestTimerProps) {
   const [remaining, setRemaining] = useState(initialSeconds);
   const [paused, setPaused] = useState(false);
   const hasEndedRef = useRef(false);
@@ -154,7 +155,7 @@ export default function RestTimer({ isActive, initialSeconds, onClose, onTimerEn
                 {remaining === 0 ? "Rest Complete!" : "Rest Timer"}
               </p>
               <p className="text-xs text-muted-foreground">
-                {remaining === 0 ? "Ready for next set" : "Recover before your next set"}
+                {remaining === 0 ? "Ready for next set" : (reason || "Recover before your next set")}
               </p>
             </div>
 

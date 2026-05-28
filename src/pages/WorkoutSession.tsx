@@ -114,17 +114,16 @@ const COMPOUND_KEYWORDS = [
   "farmer",
 ];
 
-function getRestSeconds(name: string, targetRir: string | undefined, setType: string): number {
-  if (setType === "warmup") return 60;
-  if (setType === "1rm_test") return 300;
+function getRestInfo(name: string, targetRir: string | undefined, setType: string): { seconds: number; reason: string } {
+  if (setType === "warmup") return { seconds: 60, reason: "Warm-up set" };
+  if (setType === "1rm_test") return { seconds: 300, reason: "1RM test" };
   const n = name.toLowerCase();
   const isCompound = COMPOUND_KEYWORDS.some(kw => n.includes(kw));
-  // strength = targetRir starts with "0" (i.e. "0-1")
   const isStrength = !!targetRir && targetRir.startsWith("0");
-  if (isStrength && isCompound) return 150; // 2.5 min
-  if (isStrength) return 90;               // strength isolation
-  if (isCompound) return 90;               // hypertrophy compound
-  return 60;                               // hypertrophy isolation
+  if (isStrength && isCompound) return { seconds: 150, reason: "Strength compound" };
+  if (isStrength)               return { seconds: 90,  reason: "Strength isolation" };
+  if (isCompound)               return { seconds: 90,  reason: "Hypertrophy compound" };
+  return                               { seconds: 60,  reason: "Hypertrophy isolation" };
 }
 
 export default function WorkoutSession() {
@@ -178,6 +177,7 @@ export default function WorkoutSession() {
   }, [exerciseOverrides, twoHandedExercises, heavyStackExercises, singleArmExercises, cableAttachments]);
   const [restTimerKey, setRestTimerKey] = useState(0);
   const [restDuration, setRestDuration] = useState(workout?.id === "power" ? 45 : 60);
+  const [restReason, setRestReason] = useState("");
   const [videoExercise, setVideoExercise] = useState<{ name: string; id: string } | null>(null);
   const [lastSessionData, setLastSessionData] = useState<Record<string, { reps: number; weight: number }[]>>({});
   const [weightUpSuggestions, setWeightUpSuggestions] = useState<Record<string, number[]>>({});
@@ -876,7 +876,9 @@ export default function WorkoutSession() {
 
       // Adjust rest timer based on set type, exercise intensity, and compound/isolation.
       const effectiveRir = exercise?.targetRir ?? workout?.targetRir;
-      setRestDuration(getRestSeconds(displayName, effectiveRir, currentSetType ?? "working"));
+      const restInfo = getRestInfo(displayName, effectiveRir, currentSetType ?? "working");
+      setRestDuration(restInfo.seconds);
+      setRestReason(restInfo.reason);
 
       // Auto-expand next exercise if this was the last set.
       // Skip when a RIR picker was just opened — collapsing now would hide it.
@@ -2235,7 +2237,7 @@ export default function WorkoutSession() {
         </div>
       </div>
 
-      <RestTimer key={restTimerKey} isActive={restTimerActive} initialSeconds={restDuration} onClose={() => setRestTimerActive(false)} onTimerEnd={() => toast("Rest complete! Time for the next set 💪")} />
+      <RestTimer key={restTimerKey} isActive={restTimerActive} initialSeconds={restDuration} reason={restReason} onClose={() => setRestTimerActive(false)} onTimerEnd={() => toast("Rest complete! Time for the next set 💪")} />
 
       <ExerciseVideoSheet
         open={!!videoExercise}
