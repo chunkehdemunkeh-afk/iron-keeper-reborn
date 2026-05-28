@@ -107,6 +107,26 @@ function targetRirForReps(reps: string | undefined, fallback?: string): string |
   return "2-3";
 }
 
+const COMPOUND_KEYWORDS = [
+  "squat", "deadlift", "rdl", "romanian", "bench", "chest press",
+  "row", "pull-up", "pullup", "pull up", "chin-up", "chinup", "pulldown",
+  "dip", "lunge", "split squat", "hack", "pendulum", "hip thrust", "press",
+  "farmer",
+];
+
+function getRestSeconds(name: string, targetRir: string | undefined, setType: string): number {
+  if (setType === "warmup") return 60;
+  if (setType === "1rm_test") return 300;
+  const n = name.toLowerCase();
+  const isCompound = COMPOUND_KEYWORDS.some(kw => n.includes(kw));
+  // strength = targetRir starts with "0" (i.e. "0-1")
+  const isStrength = !!targetRir && targetRir.startsWith("0");
+  if (isStrength && isCompound) return 150; // 2.5 min
+  if (isStrength) return 90;               // strength isolation
+  if (isCompound) return 90;               // hypertrophy compound
+  return 60;                               // hypertrophy isolation
+}
+
 export default function WorkoutSession() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -854,13 +874,9 @@ export default function WorkoutSession() {
         }
       }
 
-      // Adjust rest timer based on set type.
-      if (currentSetType === "warmup") {
-        setRestDuration(60);
-      } else if (isOneRmTest) {
-        // Longer default rest after a true 1RM attempt — these need real recovery.
-        setRestDuration(300);
-      }
+      // Adjust rest timer based on set type, exercise intensity, and compound/isolation.
+      const effectiveRir = exercise?.targetRir ?? workout?.targetRir;
+      setRestDuration(getRestSeconds(displayName, effectiveRir, currentSetType ?? "working"));
 
       // Auto-expand next exercise if this was the last set.
       // Skip when a RIR picker was just opened — collapsing now would hide it.
