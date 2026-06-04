@@ -115,7 +115,14 @@ if (!isInIframe && !isPreviewHost) {
     try {
       const res = await fetch(`/?_v=${Date.now()}`, { cache: "no-store" });
       if (!res.ok) return;
-      const hash = djb2(await res.text());
+      const html = await res.text();
+      // Hash ONLY the Vite-hashed asset filenames (e.g. /assets/index-ABC123.js).
+      // Hashing the entire HTML is unreliable because Lovable's preview/analytics
+      // injects a `data-context-token` JWT whose `exp` claim changes every request,
+      // which would trigger an infinite "update available" reload loop.
+      const assetRefs = html.match(/\/assets\/[A-Za-z0-9_-]+\.(?:js|css)/g);
+      const fingerprint = assetRefs ? assetRefs.sort().join("|") : html;
+      const hash = djb2(fingerprint);
       if (baselineHash === null) {
         baselineHash = hash;          // record the version we started with
         try { localStorage.setItem(STORAGE_KEYS.htmlHash, hash.toString()); } catch {}

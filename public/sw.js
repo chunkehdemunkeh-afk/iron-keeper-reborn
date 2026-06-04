@@ -72,7 +72,16 @@ self.addEventListener("fetch", (event) => {
           if (cached) {
             const cachedHtml = await cached.text();
 
-            if (freshHtml !== cachedHtml) {
+            // Compare only the Vite-hashed asset references, not the full HTML.
+            // Lovable preview/analytics injects a JWT with a per-request `exp`
+            // claim, so raw HTML comparison would flap every navigation and
+            // cause infinite "update available" reloads.
+            const assetSig = (s) => {
+              const m = s.match(/\/assets\/[A-Za-z0-9_-]+\.(?:js|css)/g);
+              return m ? m.sort().join("|") : s;
+            };
+
+            if (assetSig(freshHtml) !== assetSig(cachedHtml)) {
               // ✅ New version detected — update cache …
               await cache.put(
                 req,
