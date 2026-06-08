@@ -518,4 +518,26 @@ export const EXERCISE_SUBSTITUTIONS: Record<string, SubstituteExercise[]> = {
     { id: "sub-am6a", name: "Tricep Pushdown", targetMuscle: "Triceps", notes: "V-bar attachment, slight overhand grip — great for heavy sets", description: "V-bar cable tricep pushdown" },
     { id: "sub-am6b", name: "Skull Crushers", targetMuscle: "Triceps", notes: "Barbell or dumbbell — great compound tricep movement to swap in", description: "Skull crushers" },
   ],
+
+  // ── Upper/Lower A/B additions ────────────────────────────────────────────
+  "lib-64": [ // Mag Grip Seated Cable Row
+    { id: "sub-pl64a", name: "Chest-Supported Machine Row", targetMuscle: "Mid Back", notes: "Chest pad supported — isolates back, removes lower-back fatigue", description: "Chest-supported machine row" },
+    { id: "sub-pl64b", name: "Barbell Bent-Over Row", targetMuscle: "Back Thickness", notes: "Overhand grip, hinge 45°, row to lower chest — heavier loading", description: "Classic barbell bent-over row" },
+  ],
+  "lib-65": [ // Hex Bar Squat Jumps
+    { id: "sub-pl65a", name: "Squat Jumps", targetMuscle: "Quads/Power", notes: "Bodyweight full squat to max height jump, soft landing, reset each rep", trackWeight: false, repLabel: "Reps", description: "Bodyweight explosive squat jump" },
+    { id: "sub-pl65b", name: "Kettlebell Swing", targetMuscle: "Hip Power", notes: "Hip-snap driven swing — low impact alternative when hex bar unavailable", description: "Explosive kettlebell hip-snap swing" },
+  ],
+  "lib-66": [ // Box Jumps with Drop Jump
+    { id: "sub-pl66a", name: "Depth Jumps", targetMuscle: "Power/Reactive", notes: "Step off lower box, immediately rebound max height — minimise ground contact", trackWeight: false, repLabel: "Reps", description: "Reactive depth jump from low box" },
+    { id: "sub-pl66b", name: "Tuck Jumps", targetMuscle: "Power/Reactive", notes: "Jump max height, tuck knees to chest at peak, soft landing", trackWeight: false, repLabel: "Reps", description: "Vertical tuck jump for reactive power" },
+  ],
+  "lib-67": [ // Broad Jumps
+    { id: "sub-pl67a", name: "Single-Leg Broad Jump", targetMuscle: "Power/Horizontal", notes: "One-leg takeoff for max horizontal distance, stick the landing", trackWeight: false, repLabel: "Reps", description: "Unilateral horizontal broad jump" },
+    { id: "sub-pl67b", name: "Med Ball Forward Throw", targetMuscle: "Power/Horizontal", notes: "Squat, explosive triple extension, throw ball forward for distance", repLabel: "Reps", description: "Med ball forward projection throw" },
+  ],
+  la6: [ // Core Finisher (rotation slot)
+    { id: "sub-la6a", name: "Hanging Knee Raises", targetMuscle: "Core", notes: "Controlled raise — no swinging, pause at top, lower with control", trackWeight: false, repLabel: "Reps", description: "Hanging knee raise for lower abs" },
+    { id: "sub-la6b", name: "Ab Wheel Rollouts", targetMuscle: "Core", notes: "Full extension, keep hips tucked, squeeze back to start", trackWeight: false, repLabel: "Reps", description: "Progressive core stability rollout" },
+  ],
 };
