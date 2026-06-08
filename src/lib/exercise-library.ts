@@ -98,6 +98,10 @@ export const EXERCISE_LIBRARY: LibraryExercise[] = [
   { id: "lib-52", name: "Plyo Push-Up", muscleGroup: "Plyometric", equipment: "Bodyweight", description: "Explosive push-up, hands leave ground." },
   { id: "lib-53", name: "Med Ball Slam", muscleGroup: "Plyometric", equipment: "Medicine Ball", description: "Overhead extension, slam ball to ground." },
   { id: "lib-54", name: "Lateral Bound", muscleGroup: "Plyometric", equipment: "Bodyweight", description: "Leap side to side, stick each landing." },
+  { id: "lib-65", name: "Hex Bar Squat Jumps", muscleGroup: "Plyometric", equipment: "Hex Bar", description: "Moderate load on hex bar — explosive drive from floor, full hip extension, soft landing, fully reset before next rep." },
+  { id: "lib-66", name: "Box Jumps with Drop Jump", muscleGroup: "Plyometric", equipment: "Box", description: "Jump onto box, step off (do not jump off), land softly, immediately jump again from the landing position. The reactive landing is the stimulus." },
+  { id: "lib-67", name: "Broad Jumps", muscleGroup: "Plyometric", equipment: "Bodyweight", description: "Maximum horizontal distance each jump. Two-foot takeoff, swing arms, land soft with knees bent. Walk back between reps." },
+  { id: "lib-64", name: "Mag Grip Seated Cable Row", muscleGroup: "Back", equipment: "Cable", description: "Seated cable row with mag (neutral) grip. Pull to lower chest, drive elbows back, squeeze shoulder blades, full stretch at extension." },
 
   // Agility
   { id: "lib-55", name: "Lateral Shuffle", muscleGroup: "Agility", equipment: "None", description: "Low stance, quick shuffle side to side." },
