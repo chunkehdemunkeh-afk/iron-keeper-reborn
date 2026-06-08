@@ -1,23 +1,22 @@
-## Fix
+Add 5 missing entries to `src/lib/exercise-substitutions.ts` so the swap sheet works for every exercise currently in the Upper/Lower A/B routines.
 
-Per-exercise rep-range mapping is too aggressive — for Upper A / Lower A the user wants every set at RIR **0-1** (heavy, near failure), and Upper B / Lower B at **1-2**.
+1. **`lib-64` — Mag Grip Seated Cable Row** (Upper A, replaced T-Bar Row)
+   - Sub-pl64a: Chest-Supported Machine Row (mid-back, removes lower-back fatigue)
+   - Sub-pl64b: Barbell Bent-Over Row (back thickness, heavier loading)
 
-### Change
-Add an optional `targetRir?: string` field on the `Workout` type in `src/lib/workout-data.ts`. Set it on the four workouts:
+2. **`lib-65` — Hex Bar Squat Jumps** (Lower A, explosive block)
+   - Sub-pl65a: Squat Jumps (bodyweight, same explosive drive pattern)
+   - Sub-pl65b: Kettlebell Swing (hip-snap power, low impact alternative)
 
-- `upper_a` → `"0-1"`
-- `lower_a` → `"0-1"`
-- `upper_b` → `"1-2"`
-- `lower_b` → `"1-2"`
+3. **`lib-66` — Box Jumps with Drop Jump** (Lower A, explosive block)
+   - Sub-pl66a: Depth Jumps (step off lower box, immediately rebound)
+   - Sub-pl66b: Tuck Jumps (max height vertical jump, soft landing)
 
-In `src/pages/WorkoutSession.tsx`, change the two seeding sites (around lines 511 and 580) to prefer the workout-level value:
+4. **`lib-67` — Broad Jumps** (Lower A, explosive block)
+   - Sub-pl67a: Single-Leg Broad Jump (unilateral horizontal power)
+   - Sub-pl67b: Med Ball Forward Throw (horizontal projection, full-body)
 
-```
-targetRir: workout.targetRir ?? targetRirForReps(ex.reps, sessionTargetRir),
-```
-
-The per-exercise `targetRirForReps` mapping remains the fallback for workouts without an explicit override (e.g. accessory days, custom workouts), and the split-level value remains the final fallback.
-
-### Files touched
-- `src/lib/workout-data.ts` — add `targetRir` field on `Workout` type and on the four workouts.
-- `src/pages/WorkoutSession.tsx` — prefer `workout.targetRir` in the two seeding sites.
+5. **`la6` — Core Finisher** (Lower A & Lower B, rotation slot)
+   - Sub-la6a: Hanging Knee Raises (bodyweight, controlled, no swinging)
+   - Sub-la6b: Ab Wheel Rollouts (full extension, progressive difficulty)
+   - *Rationale:* The finisher note already rotates between Cable Crunches, Decline Bench Crunches, and Ab Crunch Machine. These two substitutes give additional core options that preserve the "finisher" character (moderate reps, core-focused).
