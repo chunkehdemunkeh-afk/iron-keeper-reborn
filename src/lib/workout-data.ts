@@ -395,7 +395,7 @@ export const WORKOUTS: WorkoutDay[] = [
     targetRir: "1-2",
     exercises: [
       { id: "lib-1",     name: "Barbell Bench Press",              sets: 4, reps: "6-8",   targetMuscle: "Chest",          targetRir: "0-1", notes: "Top strength lift — chase a heavy top set, controlled eccentric, pause if grinding" },
-      { id: "pl2",       name: "T-Bar Row",                        sets: 4, reps: "6-8",   targetMuscle: "Back Thickness", targetRir: "0-1", notes: "Keep chest on pad, drive elbows back" },
+      { id: "lib-64",    name: "Mag Grip Seated Cable Row",        sets: 4, reps: "6-8",   targetMuscle: "Back Thickness", targetRir: "0-1", notes: "Mag (neutral) grip — pull to lower chest, drive elbows back, squeeze shoulder blades, full stretch at extension. Don't chase old T-Bar weights — cable mechanics differ" },
       { id: "pu1",       name: "45° Incline Dumbbell Bench Press", sets: 4, reps: "6-8",   targetMuscle: "Upper Chest",    targetRir: "0-1", notes: "Strength focus — heavier load, full stretch at bottom, controlled eccentric" },
       { id: "pl3",       name: "Lat Pulldown - Pronated Grip",     sets: 4, reps: "6-8",   targetMuscle: "Lats",           targetRir: "0-1", notes: "Strength focus — heavier load, full stretch at top, drive elbows down hard" },
       { id: "sub-up5a",  name: "Dumbbell Shoulder Press",          sets: 3, reps: "8-10",  targetMuscle: "Shoulders",      targetRir: "0-1", notes: "Seated or standing — move this early in the session" },
