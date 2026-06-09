@@ -536,7 +536,10 @@ export const EXERCISE_SUBSTITUTIONS: Record<string, SubstituteExercise[]> = {
     { id: "sub-pl67a", name: "Single-Leg Broad Jump", targetMuscle: "Power/Horizontal", notes: "One-leg takeoff for max horizontal distance, stick the landing", trackWeight: false, repLabel: "Reps", description: "Unilateral horizontal broad jump" },
     { id: "sub-pl67b", name: "Med Ball Forward Throw", targetMuscle: "Power/Horizontal", notes: "Squat, explosive triple extension, throw ball forward for distance", repLabel: "Reps", description: "Med ball forward projection throw" },
   ],
-  la6: [ // Core Finisher (rotation slot)
+  la6: [ // Core Finisher (rotation slot) — primary picks first, then alternates
+    { id: "sub-la6-cable", name: "Cable Crunches", targetMuscle: "Core", notes: "Kneel below rope, pull with abs only — round spine, no hip flexion", description: "Cable rope crunch — pick attachment below" },
+    { id: "sub-la6-decline", name: "Decline Bench Crunches", targetMuscle: "Core", notes: "Controlled, full crunch — hold a plate on chest to add load", repLabel: "Reps", description: "Decline bench weighted crunch" },
+    { id: "sub-la6-machine", name: "Ab Crunch Machine", targetMuscle: "Core", notes: "Full ROM, squeeze hard at the bottom, slow eccentric", description: "Plate-loaded or selectorized ab crunch machine" },
     { id: "sub-la6a", name: "Hanging Knee Raises", targetMuscle: "Core", notes: "Controlled raise — no swinging, pause at top, lower with control", trackWeight: false, repLabel: "Reps", description: "Hanging knee raise for lower abs" },
     { id: "sub-la6b", name: "Ab Wheel Rollouts", targetMuscle: "Core", notes: "Full extension, keep hips tucked, squeeze back to start", trackWeight: false, repLabel: "Reps", description: "Progressive core stability rollout" },
   ],

@@ -420,7 +420,7 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "lg3", name: "Bulgarian Split Squats",      sets: 2, reps: "10",    targetMuscle: "Quads/Glutes",      targetRir: "0-1", notes: "Each side. Rear foot elevated, control the descent. Weights will be lower than usual due to pre-fatigue — that's expected. Son: bodyweight or 5kg max. 2 min rest" },
       { id: "lg5", name: "Leg Extension",               sets: 3, reps: "12-15", targetMuscle: "Quads",             targetRir: "1-2", notes: "Push toward 65kg. Squeeze at top, 2s hold. 90s rest" },
       { id: "lg6", name: "Standing Calf Raise",         sets: 3, reps: "15-20", targetMuscle: "Calves",            targetRir: "1-2", notes: "Reduced to 3 sets. Full stretch at bottom every rep, pause at top. 90s rest" },
-      { id: "la6", name: "Core Finisher",               sets: 3, reps: "12-15", targetMuscle: "Core",              targetRir: "1-2", notes: "ROTATION — pick whichever is available: (1) Cable Crunches (kneel below rope, pull with abs only), (2) Decline Bench Crunches (controlled, full crunch), or (3) Ab Crunch Machine (full ROM, squeeze). Log whichever you did. 60s rest" },
+      { id: "la6", name: "Core Finisher",               sets: 3, reps: "12-15", targetMuscle: "Core",              targetRir: "1-2", notes: "Tap Swap to pick: Cable Crunches, Decline Bench Crunches, or Ab Crunch Machine (Hanging Knee Raises / Ab Wheel also available). 60s rest" },
       { id: "lib-db-Machine_Preacher_Curls", name: "Machine Preacher Curl", sets: 3, reps: "10-12", targetMuscle: "Biceps", targetRir: "1-2", notes: "Arms locked on pad, controlled out of bottom, full squeeze at top" },
       { id: "lib-61", name: "Bayesian Curl",            sets: 3, reps: "10-12", targetMuscle: "Biceps",            targetRir: "1-2", notes: "45° cable behind body. Long head stretch. Slow eccentric" },
     ],
@@ -461,7 +461,7 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "lib-db-Hack_Squat", name: "Hack Squat",              sets: 3, reps: "10-12", targetMuscle: "Quads",             targetRir: "1-2", notes: "Quad variation vs Pendulum — full depth, controlled descent. Open at 90kg next session. 90s rest" },
       { id: "rf3",              name: "Farmer's Walk",            sets: 3, reps: "30-40", targetMuscle: "Grip/Traps/Core",   targetRir: "1-2", notes: "Heavy as possible, shoulders back and down. 90s rest", repLabel: "Metres" },
       { id: "lg6",              name: "Standing Calf Raise",      sets: 3, reps: "20",    targetMuscle: "Calves",            targetRir: "1-2", notes: "Second calf stimulus for the week — full ROM, full stretch at bottom. 90s rest" },
-      { id: "la6",              name: "Core Finisher",            sets: 3, reps: "12-15", targetMuscle: "Core",              targetRir: "1-2", notes: "ROTATION — pick whichever is available: (1) Cable Crunches (kneel below rope, abs only), (2) Decline Bench Crunches (controlled, full crunch), or (3) Ab Crunch Machine (full ROM, squeeze). Log whichever you did. 60s rest" },
+      { id: "la6",              name: "Core Finisher",            sets: 3, reps: "12-15", targetMuscle: "Core",              targetRir: "1-2", notes: "Tap Swap to pick: Cable Crunches, Decline Bench Crunches, or Ab Crunch Machine (Hanging Knee Raises / Ab Wheel also available). 60s rest" },
     ],
   },
 ];
