@@ -451,6 +451,26 @@ export default function WorkoutSession() {
         }
       }
 
+      // Sibling-variant pre-load: when last session only has a suffixed variant
+      // (e.g. `pl1-heavy` for Low Row), also fetch the bare base id (`pl1` for
+      // Machine Row) so toggling the variant pill shows that variant's actual
+      // history instead of zeros.
+      const siblingFetches = sessionExercises.flatMap(ex => {
+        if (ex.id.startsWith("acc-")) return [];
+        const hasBase = !!data[ex.id]?.length;
+        const hasSuffixedVariant = Object.keys(data).some(k => k.startsWith(`${ex.id}-`));
+        if (hasBase || !hasSuffixedVariant) return [];
+        return [ex.id];
+      });
+      if (siblingFetches.length > 0) {
+        const siblings = await Promise.all(
+          siblingFetches.map(id => fetchExerciseLastData(id).then(sets => ({ id, sets })))
+        );
+        for (const { id, sets } of siblings) {
+          if (sets.length > 0) data[id] = sets;
+        }
+      }
+
       setLastSessionData(data);
       if (Object.keys(preSelected).length > 0) {
         // Keep real user/resumed choices, but don't let blank autosave values
