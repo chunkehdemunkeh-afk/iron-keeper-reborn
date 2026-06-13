@@ -50,12 +50,12 @@ export const EXERCISE_VIDEOS: Record<string, string> = {
   pl6: "https://www.youtube.com/shorts/NyW2fT2gQhM", // Dumbbell Preacher Hammer Curls
 
   // Legs day
-  lg1: "https://www.youtube.com/shorts/d6sg829PgNs", // Laying Hamstring Curl (KevTheTrainer 66K views)
+  lg1: "https://www.youtube.com/shorts/pasQYajR_eI", // Seated Hamstring Curl (correct variation)
   lg2: "https://www.youtube.com/shorts/OVd1pq1cAvE", // Barbell RDL
   lg3: "https://www.youtube.com/shorts/uODWo4YqbT8", // Dumbbell Split Squat (Davis Diley 5.7M views)
-  lg4: "https://www.youtube.com/shorts/lRYBbchqxtI", // Goblet Squat (SquatCouple 2.8M views)
+  // lg4 Pendulum Squat — no verified Short yet, falls back to YouTube search (better than wrong video)
   lg5: "https://www.youtube.com/shorts/Tae3aeJe5Ks", // Leg Extension (DeltaBolic 309K views)
-  lg6: "https://www.youtube.com/shorts/baEXLy09Ncc", // Seated Calf Raise (Jeff Nippard 8.8M views)
+  lg6: "https://www.youtube.com/shorts/yQZDGjL-xT4", // Standing Calf Raise (correct variation)
 
   // Upper day
   up1: "https://www.youtube.com/shorts/7PE3MlvGAts", // Seated Cable Row - V Bar
@@ -291,6 +291,11 @@ export const EXERCISE_VIDEOS: Record<string, string> = {
   am5: "https://www.youtube.com/shorts/NyW2fT2gQhM", // Dumbbell Preacher Hammer Curls (reuse pl6)
   am6: "https://www.youtube.com/shorts/aHfbuBf1TJk", // Tricep Push Down - Rope (reuse up8)
 
+  // ── Programme lib-* exercises (Upper/Lower A/B) ──────────────────────────
+  "lib-29": "https://www.youtube.com/shorts/PM23l_EVxYc", // Nordic Hamstring Curl (reuse st4)
+  "ua6":    "https://www.youtube.com/shorts/f_OGBg2KxgY", // Cable Lateral Raises (reuse sub-pu2a)
+  "ub6":    "https://www.youtube.com/shorts/NyW2fT2gQhM", // Rope Hammer Curl (Cable) (reuse pl6)
+
   // ── New substitute videos ─────────────────────────────────────────────────
   // Full Body subs
   "sub-fb1a": "https://www.youtube.com/shorts/eLX_dyvooKQ", // Goblet Squat (reuse st1)
@@ -461,6 +466,16 @@ const GITHUB_BASE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/
 
 // Maps custom exercise IDs to free-exercise-db folder names
 const EXERCISE_DB_FOLDERS: Record<string, string> = {
+  // ── Programme lib-* exercises — verified folder names from existing mappings ──
+  "lib-1":  "Barbell_Bench_Press_-_Medium_Grip",       // Upper A: Barbell Bench Press
+  "lib-13": "Face_Pull",                               // Upper B: Face Pulls
+  "lib-18": "Alternate_Incline_Dumbbell_Curl",         // Upper B: Incline Dumbbell Curl
+  "lib-19": "Triceps_Pushdown_-_Rope_Attachment",      // Upper B: Tricep Pushdown
+  "lib-54": "Lateral_Box_Jump",                        // Lower B: Lateral Bound
+  "lib-62": "Dips_-_Triceps_Version",                  // Upper A: Plate Loaded Dip Machine (closest match)
+  "lib-64": "Seated_Cable_Rows",                       // Upper A: Mag Grip Seated Cable Row (closest match)
+  "lib-66": "Box_Jump_Multiple_Response",              // Lower A: Box Jumps with Drop Jump
+
   // Power day
   pw1: "Box_Jump_Multiple_Response",
   pw2: "Depth_Jump_Leap",
