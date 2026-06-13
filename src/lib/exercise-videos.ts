@@ -293,6 +293,10 @@ export const EXERCISE_VIDEOS: Record<string, string> = {
 
   // ── Programme lib-* exercises (Upper/Lower A/B) ──────────────────────────
   "lib-29": "https://www.youtube.com/shorts/PM23l_EVxYc", // Nordic Hamstring Curl (reuse st4)
+  "lib-61": "https://www.youtube.com/shorts/EhC6ejgDGF0", // Bayesian Curl
+  "lib-65": "https://www.youtube.com/shorts/FlZh3CshfZQ", // Hex Bar Squat Jumps
+  "lib-67": "https://www.youtube.com/shorts/v0yrBWA3eEs", // Broad Jumps
+  lg4:      "https://www.youtube.com/shorts/RsSGq7aN_ww",  // Pendulum Squat
   "ua6":    "https://www.youtube.com/shorts/f_OGBg2KxgY", // Cable Lateral Raises (reuse sub-pu2a)
   "ub6":    "https://www.youtube.com/shorts/NyW2fT2gQhM", // Rope Hammer Curl (Cable) (reuse pl6)
 
