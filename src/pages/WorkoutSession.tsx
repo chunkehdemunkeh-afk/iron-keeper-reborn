@@ -1713,6 +1713,50 @@ export default function WorkoutSession() {
                                         </Popover>
                                       </div>
                                     )}
+                                    {ex.id === "la6" && (
+                                      <select
+                                        value={exerciseOverrides[ex.id]?.substituteId || ""}
+                                        onChange={async (e) => {
+                                          const subId = e.target.value;
+                                          if (!subId) {
+                                            setExerciseOverrides(prev => {
+                                              const next = { ...prev };
+                                              delete next[ex.id];
+                                              return next;
+                                            });
+                                            return;
+                                          }
+                                          const sub = (EXERCISE_SUBSTITUTIONS[ex.id] || []).find(s => s.id === subId);
+                                          if (!sub) return;
+                                          setExerciseOverrides(prev => ({
+                                            ...prev,
+                                            [ex.id]: { name: sub.name, notes: sub.notes, targetMuscle: sub.targetMuscle, trackWeight: sub.trackWeight, repLabel: sub.repLabel, weightLabel: sub.weightLabel, substituteId: sub.id },
+                                          }));
+                                          let effId = sub.id;
+                                          if (heavyStackExercises.has(ex.id)) effId += "-heavy";
+                                          if (singleArmExercises.has(ex.id)) effId += "-sa";
+                                          const att = cableAttachments[ex.id];
+                                          if (att) effId += `-${attachmentKey(att)}`;
+                                          const idsToFetch = Array.from(new Set([sub.id, effId]));
+                                          await Promise.all(idsToFetch.map(async (id) => {
+                                            if (lastSessionData[id]) return;
+                                            const subData = await fetchExerciseLastData(id);
+                                            if (subData.length > 0) setLastSessionData(prev => ({ ...prev, [id]: subData }));
+                                          }));
+                                          hapticMedium();
+                                        }}
+                                        className={`rounded-full px-2.5 py-1 text-[11px] font-medium bg-muted/50 border-0 outline-none cursor-pointer transition-all ${
+                                          exerciseOverrides[ex.id]?.substituteId
+                                            ? "text-primary ring-1 ring-primary/30 bg-primary/15"
+                                            : "text-muted-foreground"
+                                        }`}
+                                      >
+                                        <option value="">Pick variant</option>
+                                        {(EXERCISE_SUBSTITUTIONS["la6"] || []).map(sub => (
+                                          <option key={sub.id} value={sub.id}>{sub.name}</option>
+                                        ))}
+                                      </select>
+                                    )}
                                     {isCableAttachmentExercise(displayName) && (
                                       <select
                                         value={cableAttachments[ex.id] || ""}
