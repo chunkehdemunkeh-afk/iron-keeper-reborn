@@ -12,6 +12,14 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.6.117",
+    date: "2026-06-13",
+    title: "Updates & Fixes",
+    changes: [
+      "Feat: MEV programme update — volume reduction + Upper A/B exercise swaps",
+    ],
+  },
+  {
     version: "1.6.116",
     date: "2026-05-28",
     title: "Updates & Fixes",
