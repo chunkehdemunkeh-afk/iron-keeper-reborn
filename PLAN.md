@@ -6,6 +6,13 @@
 
 All migrations applied. No pending manual actions.
 
+**MEV programme update complete** (2026-06-13):
+- Upper A: all compounds 4→3 sets; DB Shoulder Press (`sub-up5a`) replaced by Smith Machine Seated Military Press (`lib-db-Smith_Machine_Overhead_Shoulder_Press`, 3×6-8 RIR 0-1); Cable Lateral Raises + Tricep Extensions → 2 sets
+- Upper B: DB Lateral Raise (`sh4`) replaced by DB Shoulder Press (`sub-up5a`, 2×10-12 RIR 1-2); compounds 4→3 sets; Cable Flies, Face Pulls, Rope Hammer Curl, Tricep Pushdown → 2 sets; coaching notes updated (neutral grip Seated Row, 45° bench Incline Curl)
+- Lower A: Hex Bar Jumps 4→3 sets; all isolations/accessories (Leg Extension, Calves, Core Finisher, Preacher Curl, Bayesian Curl) → 2 sets
+- Lower B: Nordic Hamstring Curls 3→2 sets, reps updated to "3-5" with progressive range notes; Calves + Core Finisher → 2 sets
+- Philosophy: MEV focus for calorie deficit phase (88kg→80kg). 3 sets max per exercise, 2 sets for isolations.
+
 **Per-set tracking + enriched CSV export complete** (2026-05-16):
 - Migration `20260516000000_workout_sets_per_set_fields.sql` applied — adds `rir`, `target_rir`, `target_reps`, `target_weight`, `is_pr` to `workout_sets`
 - `src/lib/training-splits.ts` — `targetRir` added to all built-in splits (PPL/PPLU/PPLUL/Arnold/Bro: 0-1; GK/Upper-Lower/Full Body: 1-2; 5/3/1: 2-3)
