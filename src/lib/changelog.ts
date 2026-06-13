@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.119",
+    version: "1.6.120",
     date: "2026-06-13",
     title: "Updates & Fixes",
     changes: [
-      "Fix: add missing exercise demo videos for last 4 programme exercises",
+      "Docs: update PLAN.md with MEV programme update (2026-06-13)",
     ],
   },
   {
