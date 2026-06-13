@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.118",
+    version: "1.6.119",
     date: "2026-06-13",
     title: "Updates & Fixes",
     changes: [
-      "Fix: correct exercise demo images for all programme lib-* exercises",
+      "Fix: add missing exercise demo videos for last 4 programme exercises",
     ],
   },
   {
