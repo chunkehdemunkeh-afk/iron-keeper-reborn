@@ -100,18 +100,53 @@ export function parseRepRange(reps: string): [number, number] | null {
   return [nums[0], nums[1]];
 }
 
-/**
- * Weight increment heuristic by exercise name/id.
- * Lower body compounds: +5kg. Upper compounds: +2.5kg. Isolation: +1.25kg.
- */
-export function suggestIncrement(exerciseName: string, exerciseId: string): number {
+/** Exercise class for picking a sensible weight step. */
+function exerciseClass(exerciseName: string, exerciseId: string): "lower" | "upper" | "isolation" {
   const t = `${exerciseName} ${exerciseId}`.toLowerCase();
-  const lowerCompound = /(squat|deadlift|leg press|hip thrust|romanian|rdl|good morning)/.test(t);
-  if (lowerCompound) return 5;
-  const upperCompound = /(bench|overhead press|ohp|military|barbell row|pendlay|t-bar|pulldown|chin[- ]?up|pull[- ]?up|dip)/.test(t);
-  if (upperCompound) return 2.5;
+  if (/(squat|deadlift|leg press|hip thrust|romanian|rdl|good morning)/.test(t)) return "lower";
+  if (/(bench|overhead press|ohp|military|barbell row|pendlay|t-bar|pulldown|chin[- ]?up|pull[- ]?up|dip)/.test(t)) return "upper";
+  return "isolation";
+}
+
+/** Smallest sensible plate jump for this lift. */
+function baseStep(cls: "lower" | "upper" | "isolation"): number {
+  if (cls === "lower") return 5;
+  if (cls === "upper") return 2.5;
   return 1.25;
 }
+
+/** Snap a weight to the nearest loadable plate for this lift class. */
+function snapToPlate(weight: number, cls: "lower" | "upper" | "isolation"): number {
+  const step = cls === "isolation" ? 1.25 : 2.5;
+  return Math.round(weight / step) * step;
+}
+
+/**
+ * Contextual weight increment. Scales by how far the user blew past the rep
+ * cap on the trigger set, and caps as a % of current target so isolation
+ * lifts don't make absurd jumps.
+ *
+ * Back-compat: also callable as `suggestIncrement(name, id)` (returns base step).
+ */
+export function suggestIncrement(
+  ctxOrName:
+    | string
+    | { exerciseName: string; exerciseId: string; currentTarget: number; repsOver: number },
+  exerciseId?: string,
+): number {
+  if (typeof ctxOrName === "string") {
+    return baseStep(exerciseClass(ctxOrName, exerciseId ?? ""));
+  }
+  const { exerciseName, exerciseId: id, currentTarget, repsOver } = ctxOrName;
+  const cls = exerciseClass(exerciseName, id);
+  const step = baseStep(cls);
+  const multiplier = repsOver <= 1 ? 1 : repsOver === 2 ? 2 : 3;
+  const scaled = step * multiplier;
+  const pctCap = cls === "lower" ? 0.05 : cls === "upper" ? 0.06 : 0.08;
+  const cap = Math.max(step, snapToPlate(currentTarget * pctCap, cls));
+  return Math.max(step, Math.min(scaled, cap));
+}
+
 
 export async function fetchAllProgressions(): Promise<ProgressionRow[]> {
   const { data: { user } } = await supabase.auth.getUser();
