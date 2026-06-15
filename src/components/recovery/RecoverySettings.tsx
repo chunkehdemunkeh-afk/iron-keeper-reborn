@@ -60,6 +60,7 @@ export default function RecoverySettings() {
       const fresh = getRecoverySettings(user.id);
       setModel(fresh.model);
       setSleepWeight(fresh.sleepWeight);
+      setDeloadOn(isDeloadEnabled(user.id));
     }
     setOpen(next);
   }
