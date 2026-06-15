@@ -68,6 +68,7 @@ export default function RecoverySettings() {
   function handleSave() {
     if (!user) return;
     saveRecoverySettings(user.id, { model, sleepWeight });
+    setDeloadEnabled(user.id, deloadOn);
     hapticSuccess();
     toast.success("Recovery settings saved");
     // Invalidate any query that depends on settings (recompute happens client-side
