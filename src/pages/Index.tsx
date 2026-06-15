@@ -25,6 +25,7 @@ import HelpButton from "@/components/demo/HelpButton";
 import WeeklyReviewPrompt from "@/components/weekly/WeeklyReviewPrompt";
 import MondayBanner from "@/components/weekly/MondayBanner";
 import VolumeSummaryBanner from "@/components/weekly/VolumeSummaryBanner";
+import DeloadRecommendationBanner from "@/components/home/DeloadRecommendationBanner";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
