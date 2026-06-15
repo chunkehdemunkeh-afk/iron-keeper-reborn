@@ -122,6 +122,9 @@ const Index = () => {
         {/* Stats */}
         <StatsBar />
 
+        {/* Smart deload recommendation (data-driven, not time-based) */}
+        {isCurrentDay && <DeloadRecommendationBanner />}
+
         {/* Monday catch-up banner — only Mon/Tue if last week unreviewed */}
         {isCurrentDay && <MondayBanner />}
 
