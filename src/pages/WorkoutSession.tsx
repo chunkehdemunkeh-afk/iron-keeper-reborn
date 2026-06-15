@@ -647,7 +647,7 @@ export default function WorkoutSession() {
         setExerciseOrder(next);
       }
     }
-  }, [workout, lastSessionData, progressionsByExId]);
+  }, [workout, lastSessionData, progressionsByExId, deloadPlanByExId]);
 
   // Check if an exercise belongs to an accessory routine
   const getAccessoryForExercise = useCallback((exerciseId: string): string | null => {
