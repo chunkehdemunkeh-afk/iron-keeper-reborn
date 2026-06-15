@@ -20,6 +20,7 @@ import {
   saveRecoverySettings,
   type RecoveryModel,
 } from "@/lib/recovery-settings";
+import { isDeloadEnabled, setDeloadEnabled } from "@/lib/data/deload-queries";
 
 const MODEL_OPTIONS: {
   value: RecoveryModel;
