@@ -182,6 +182,42 @@ export default function RecoverySettings() {
             </p>
           </div>
 
+          {/* Deload recommendations */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
+              Deload recommendations
+            </p>
+            <button
+              type="button"
+              onClick={() => setDeloadOn(v => !v)}
+              className={`w-full text-left rounded-xl border px-4 py-3 transition-colors flex items-center justify-between ${
+                deloadOn ? "border-primary/60 bg-primary/10" : "border-border/40 bg-card/40"
+              }`}
+            >
+              <div className="min-w-0 pr-3">
+                <p className="text-sm font-semibold text-foreground">
+                  Auto-suggest deload weeks
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Watches your logged sessions, recovery and tonnage. A deload week
+                  is only generated if you accept the suggestion.
+                </p>
+              </div>
+              <span
+                className={`h-5 w-9 rounded-full transition-colors flex-shrink-0 relative ${
+                  deloadOn ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${
+                    deloadOn ? "left-[18px]" : "left-0.5"
+                  }`}
+                />
+              </span>
+            </button>
+          </div>
+
+
           <button
             onClick={handleSave}
             className="w-full rounded-xl bg-primary text-primary-foreground py-3 text-sm font-semibold active:scale-[0.98] transition-transform"
