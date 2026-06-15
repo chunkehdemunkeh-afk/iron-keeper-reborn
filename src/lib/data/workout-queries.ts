@@ -194,6 +194,14 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
     console.error("Progression evaluation failed:", e);
   }
 
+  // Evaluate smart deload signals (writes a pending recommendation if criteria met).
+  try {
+    const { evaluateDeload } = await import("./deload-queries");
+    await evaluateDeload();
+  } catch (e) {
+    console.error("Deload evaluation failed:", e);
+  }
+
   // Contribute to active community challenges. Failures non-fatal.
   try {
     const { fetchActiveCommunityChallenges, contributeToChallenge } = await import("./community-queries");
