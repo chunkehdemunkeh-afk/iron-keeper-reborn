@@ -1,43 +1,98 @@
-## Goal
+## Problems
 
-Replace the "tap Swap to pick…" text on the **Core Finisher** (`la6`) with an inline dropdown shown directly on the exercise card. When a variant is picked (e.g. Cable Crunches), the existing downstream toggles (cable attachment selector, weight tracking, rep label) automatically appear because they key off the displayed exercise name.
+1. **Apply tick does nothing visible.** `applyProgressionToSetLogs` writes to `set.targetWeight` / `set.targetReps`, but the visible weight/reps inputs render `set.weight` and `set.reps` (lines 1876, 1883, 2231, 2233). The placeholder still reads from last session's weight, so the user sees no change.
+2. **Suggestion is wrong / stale (e.g. always "50 → 52.5kg").** `evaluateAndStoreProgression` requires *every* working set to hit the top of the rep range AND ≥ current target; it then always adds a fixed heuristic increment (`+2.5kg` for any upper compound, `+5kg` for any lower compound, `+1.25kg` for isolation), regardless of how far the user blew past the range or what they actually lifted. Once stored, the `pending_suggestion` persists across sessions until accepted/dismissed, so a stale row keeps showing the old `prevWeight → suggestedWeight` even after newer, heavier sessions.
+3. **No context in the banner.** It only shows `prev → suggested`. No "you hit X kg × Y reps, Z over the cap".
 
-## Where
+## Fix
 
-`src/pages/WorkoutSession.tsx` — inside the toggle row that already renders Bodyweight / Light-Heavy / Cable Attachment / Single-arm pills (around line 1599, before the `isCableAttachmentExercise` block at 1716).
+### 1. Trigger rules (`src/lib/data/progression-queries.ts`)
 
-## What to add
+Replace the "all sets hit top" check with:
 
-A new conditional block, only when `ex.id === "la6"`, rendering a `<select>` styled like the existing cable-attachment dropdown. Options come from `EXERCISE_SUBSTITUTIONS.la6`:
+- Compute `topReps` = prescribed `repsHigh`.
+- For each working set, compute `overflow = reps - topReps` (only counts when `weight >= currentTarget`).
+- **Fire a suggestion when EITHER**:
+  - `every set has overflow >= 0` (hit top on all sets), OR
+  - `at least one set has overflow >= 1` (went above top on any set).
+- Track the "trigger set": the set with the highest `overflow` (tiebreak: heaviest weight). Store its `reps`, `weight`, and `overflow` on the suggestion so the banner can render them.
 
-- Cable Crunches (`sub-la6-cable`)
-- Decline Bench Crunches (`sub-la6-decline`)
-- Ab Crunch Machine (`sub-la6-machine`)
-- Hanging Knee Raises (`sub-la6a`)
-- Ab Wheel Rollouts (`sub-la6b`)
+### 2. Contextual weight increment
 
-Selecting an option reuses the **exact same logic** the Swap sheet runs at lines 2310–2330: writes to `exerciseOverrides[ex.id]` with `{ name, notes, targetMuscle, trackWeight, repLabel, weightLabel, substituteId }`, clears stale per-set weights for the variant change, and tracks `lastSubstitutions`.
+Replace the fixed `suggestIncrement(name, id)` constant with `suggestIncrement(ctx)` that scales:
 
-Selected value is derived from `exerciseOverrides["la6"]?.substituteId` so it persists and re-renders correctly after picking.
+- **Base step** stays exercise-class-aware (lower compound 5 kg, upper compound 2.5 kg, isolation 1.25 kg) but acts as the *minimum* jump.
+- **Scale by overflow** on the trigger set:
+  - `overflow == 0` → 1× base step.
+  - `overflow == 1` → 1× base step.
+  - `overflow == 2` → 2× base step.
+  - `overflow >= 3` → 3× base step (cap).
+- **Cap by % of current target** so isolation lifts don't jump 15%: never recommend more than `max(baseStep, round(currentTarget * 0.08, plate))` for isolation, `0.06` for upper compound, `0.05` for lower compound. Floor at one base step.
+- Snap final weight via `roundToPlate` (lib/workout-session-utils.ts: nearest 2.5 kg) — and to 1.25 kg for isolation if we keep micro-loading; otherwise 2.5 kg.
 
-## Why this gives you the cascading toggles
+### 3. Suggestion schema additions
 
-- `displayName` is `override?.name || ex.name`, so after picking "Cable Crunches" the name becomes "Cable Crunches".
-- `isCableAttachmentExercise("Cable Crunches")` returns true (matches the `cable` keyword) → the **Attachment** dropdown automatically appears next to the new variant dropdown.
-- `trackWeight` / `repLabel` from the substitution override drive the weight column and rep label (e.g. Hanging Knee Raises auto-hides weight inputs).
+Extend `ProgressionSuggestion`:
 
-## Cleanup
+```ts
+type ProgressionSuggestion = {
+  type: "increase" | "deload";
+  suggestedWeight: number;
+  suggestedRepsLow: number;
+  suggestedRepsHigh: number;
+  prevWeight: number;
+  // NEW
+  triggerWeight: number;   // weight on the trigger set
+  triggerReps: number;     // reps achieved
+  repsOver: number;        // reps above repsHigh (0 if just-at-cap)
+  reason: string;
+};
+```
 
-Update `src/lib/workout-data.ts` `la6` `notes` to a short cue like "Pick a variant from the dropdown — 60s rest" instead of the "tap Swap…" instruction.
+Reason copy examples:
+- `repsOver === 0` → "Hit top of range on every set — bump weight."
+- `repsOver >= 1` → "You hit ${triggerReps} reps at ${triggerWeight}kg (${repsOver} over the ${repsHigh} cap) — time to add weight."
+
+### 4. Banner UI (`src/components/workout/ProgressionSuggestionBanner.tsx`)
+
+Add a second line under the headline showing the trigger set:
+
+```
+You hit 12 reps @ 50kg (2 over the 10 cap)
+Suggest: 55kg × 6-8
+```
+
+Buttons: rename `Apply` → ✓ (no copy change needed) but make Apply actually update visible inputs (see §5).
+
+### 5. Apply must populate the inputs (`src/pages/WorkoutSession.tsx`)
+
+Rewrite `applyProgressionToSetLogs` to update both the *target* and the *actual entry* fields for working sets that are not yet completed:
+
+```ts
+cur.map(s =>
+  s.setType && s.setType !== "working"
+    ? s
+    : s.completed
+      ? s
+      : { ...s, weight, reps: 0, targetWeight: weight, targetReps: repsLow }
+)
+```
+
+(We set `weight = newSuggestedWeight` so the visible input pre-fills; leave `reps` empty so the user logs their actual performance.)
+
+### 6. Staleness guard
+
+In `evaluateAndStoreProgression`, when a new session does **not** meet the trigger rule **and** the heaviest weight this session is `>= existing.target_weight` AND `>= existing.pending_suggestion.suggestedWeight`, clear the stale `pending_suggestion` (user already progressed past it). Prevents the "always 50 → 52.5kg" residue.
 
 ## Out of scope
 
-- No changes to substitution data, swap sheet, or other exercises.
-- No new toggles — we rely on the existing attachment selector to appear automatically for cable variants.
+- No DB schema migration (the `pending_suggestion` column is `jsonb`, new fields slot in).
+- No changes to deload logic, accept/dismiss mutations, or banner styling beyond the new line.
+- No changes to where/when the banner is rendered.
 
 ## Verification
 
-1. Open a Lower body session containing Core Finisher → expand card → variant dropdown is visible.
-2. Pick "Cable Crunches" → card title updates, attachment dropdown appears, weight/reps inputs visible.
-3. Pick "Hanging Knee Raises" → weight input disappears, rep label = "Reps", no attachment dropdown.
-4. Reload session mid-workout → selection persists (via existing `exerciseOverrides` persistence).
+1. Log a session where one set goes 2 reps over the cap → on next session start, banner shows trigger set + bigger jump than base step.
+2. Log a session that just hits the top on every set → banner shows 1× base step.
+3. Hit Apply → the weight inputs for incomplete working sets pre-fill with the new suggested weight; reps stay empty.
+4. Log a heavier session after dismissing → no stale suggestion lingers.
