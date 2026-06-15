@@ -48,6 +48,12 @@ export type ProgressionSuggestion = {
   suggestedRepsLow: number;
   suggestedRepsHigh: number;
   prevWeight: number;
+  /** Weight on the trigger set (the set that earned the suggestion). */
+  triggerWeight: number;
+  /** Reps achieved on the trigger set. */
+  triggerReps: number;
+  /** How many reps above the prescribed cap (0 if just-at-cap). */
+  repsOver: number;
   reason: string;
 };
 
