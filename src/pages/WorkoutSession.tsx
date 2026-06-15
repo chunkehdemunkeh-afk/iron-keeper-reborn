@@ -213,11 +213,12 @@ export default function WorkoutSession() {
       if (!cur) return prev;
       return {
         ...prev,
-        [exId]: cur.map(s =>
-          s.setType && s.setType !== "working"
-            ? s
-            : { ...s, targetWeight: weight, targetReps: repsLow }
-        ),
+        [exId]: cur.map(s => {
+          if (s.setType && s.setType !== "working") return s;
+          if (s.completed) return s;
+          // Pre-fill the visible weight input; leave reps empty for the user to log.
+          return { ...s, weight, targetWeight: weight, targetReps: repsLow };
+        }),
       };
     });
     toast.success(`New target: ${weight}kg × ${repsLow}-${repsHigh}`);
