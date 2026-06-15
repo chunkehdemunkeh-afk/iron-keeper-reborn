@@ -35,6 +35,7 @@ import {
   type Tier,
 } from "@/lib/strength-standards";
 import { useProgressions, progressionMap } from "@/hooks/queries/useProgressions";
+import { useActiveDeload } from "@/hooks/queries/useDeload";
 import ProgressionSuggestionBanner from "@/components/workout/ProgressionSuggestionBanner";
 import { isSingleArmEligible, DEFAULT_SINGLE_ARM_IDS } from "@/lib/single-arm-variants";
 
@@ -206,6 +207,24 @@ export default function WorkoutSession() {
   // Auto-progression suggestions (double-progression model).
   const { data: progressionRows } = useProgressions();
   const progressionsByExId = useMemo(() => progressionMap(progressionRows), [progressionRows]);
+
+  // Active deload (only "accepted" + covering today applies a lighter plan)
+  const { data: activeDeload } = useActiveDeload();
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const deloadActive =
+    !!activeDeload &&
+    activeDeload.status === "accepted" &&
+    !!activeDeload.weekStart &&
+    !!activeDeload.weekEnd &&
+    todayIso >= activeDeload.weekStart &&
+    todayIso <= activeDeload.weekEnd;
+  const deloadPlanByExId = useMemo(() => {
+    const m = new Map<string, { weight: number; reps: number; sets: number }>();
+    if (deloadActive && activeDeload?.plan) {
+      for (const p of activeDeload.plan) m.set(p.exerciseId, { weight: p.weight, reps: p.reps, sets: p.sets });
+    }
+    return m;
+  }, [deloadActive, activeDeload]);
   /** Apply an accepted progression suggestion to the current set logs. */
   const applyProgressionToSetLogs = useCallback((exId: string, weight: number, repsLow: number, repsHigh: number) => {
     setSetLogs(prev => {
@@ -556,16 +575,20 @@ export default function WorkoutSession() {
         const lastData = lastSessionData[ex.id] ?? [];
         const m = ex.reps.match(/(\d+)/);
         const parsedTargetReps = m ? parseInt(m[1], 10) : undefined;
+        // Deload plan takes precedence when active.
+        const dl = deloadPlanByExId.get(ex.id);
         // Auto-progression: if there's a stored target for this exercise, prefer it.
         const prog = progressionsByExId[ex.id];
         const progTargetWeight = prog && prog.targetWeight > 0 ? prog.targetWeight : undefined;
         const progTargetReps = prog?.targetRepsLow || undefined;
-        initial[ex.id] = Array.from({ length: ex.sets }, (_, si) => ({
+        const setCount = dl ? Math.max(1, Math.min(ex.sets, dl.sets)) : ex.sets;
+        initial[ex.id] = Array.from({ length: setCount }, (_, si) => ({
           reps: 0,
-          weight: 0,
+          weight: dl?.weight ?? 0,
           completed: false,
-          targetReps: progTargetReps ?? parsedTargetReps,
+          targetReps: dl?.reps ?? progTargetReps ?? parsedTargetReps,
           targetWeight:
+            dl?.weight ??
             progTargetWeight ??
             lastData[si]?.weight ??
             lastData[0]?.weight ??
@@ -624,7 +647,7 @@ export default function WorkoutSession() {
         setExerciseOrder(next);
       }
     }
-  }, [workout, lastSessionData, progressionsByExId]);
+  }, [workout, lastSessionData, progressionsByExId, deloadPlanByExId]);
 
   // Check if an exercise belongs to an accessory routine
   const getAccessoryForExercise = useCallback((exerciseId: string): string | null => {
@@ -1356,6 +1379,12 @@ export default function WorkoutSession() {
               <div className="flex items-center gap-1.5 mt-2 text-xs text-success">
                 <RotateCcw className="h-3 w-3" />
                 <span>Weights auto-filled from last session</span>
+              </div>
+            )}
+            {deloadActive && (
+              <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 text-amber-500 px-2.5 py-1 text-[11px] font-semibold">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                Deload week — ~60% load, half the sets
               </div>
             )}
           </div>

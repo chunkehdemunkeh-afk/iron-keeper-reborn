@@ -458,6 +458,45 @@ export type Database = {
         }
         Relationships: []
       }
+      deload_recommendations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          id: string
+          plan: Json | null
+          signals: Json
+          status: string
+          updated_at: string
+          user_id: string
+          week_end: string | null
+          week_start: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          plan?: Json | null
+          signals: Json
+          status?: string
+          updated_at?: string
+          user_id: string
+          week_end?: string | null
+          week_start?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          plan?: Json | null
+          signals?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+          week_end?: string | null
+          week_start?: string | null
+        }
+        Relationships: []
+      }
       duel_progress: {
         Row: {
           baseline: number | null

@@ -20,6 +20,7 @@ import {
   saveRecoverySettings,
   type RecoveryModel,
 } from "@/lib/recovery-settings";
+import { isDeloadEnabled, setDeloadEnabled } from "@/lib/data/deload-queries";
 
 const MODEL_OPTIONS: {
   value: RecoveryModel;
@@ -51,6 +52,7 @@ export default function RecoverySettings() {
   const initial = user ? getRecoverySettings(user.id) : getRecoverySettings(null);
   const [model, setModel] = useState<RecoveryModel>(initial.model);
   const [sleepWeight, setSleepWeight] = useState<number>(initial.sleepWeight);
+  const [deloadOn, setDeloadOn] = useState<boolean>(user ? isDeloadEnabled(user.id) : true);
 
   function handleOpenChange(next: boolean) {
     if (next && user) {
@@ -58,6 +60,7 @@ export default function RecoverySettings() {
       const fresh = getRecoverySettings(user.id);
       setModel(fresh.model);
       setSleepWeight(fresh.sleepWeight);
+      setDeloadOn(isDeloadEnabled(user.id));
     }
     setOpen(next);
   }
@@ -65,6 +68,7 @@ export default function RecoverySettings() {
   function handleSave() {
     if (!user) return;
     saveRecoverySettings(user.id, { model, sleepWeight });
+    setDeloadEnabled(user.id, deloadOn);
     hapticSuccess();
     toast.success("Recovery settings saved");
     // Invalidate any query that depends on settings (recompute happens client-side
@@ -177,6 +181,42 @@ export default function RecoverySettings() {
               Off ignores sleep entirely; Maximum doubles the bonus or penalty.
             </p>
           </div>
+
+          {/* Deload recommendations */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
+              Deload recommendations
+            </p>
+            <button
+              type="button"
+              onClick={() => setDeloadOn(v => !v)}
+              className={`w-full text-left rounded-xl border px-4 py-3 transition-colors flex items-center justify-between ${
+                deloadOn ? "border-primary/60 bg-primary/10" : "border-border/40 bg-card/40"
+              }`}
+            >
+              <div className="min-w-0 pr-3">
+                <p className="text-sm font-semibold text-foreground">
+                  Auto-suggest deload weeks
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Watches your logged sessions, recovery and tonnage. A deload week
+                  is only generated if you accept the suggestion.
+                </p>
+              </div>
+              <span
+                className={`h-5 w-9 rounded-full transition-colors flex-shrink-0 relative ${
+                  deloadOn ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${
+                    deloadOn ? "left-[18px]" : "left-0.5"
+                  }`}
+                />
+              </span>
+            </button>
+          </div>
+
 
           <button
             onClick={handleSave}
