@@ -35,6 +35,7 @@ import {
   type Tier,
 } from "@/lib/strength-standards";
 import { useProgressions, progressionMap } from "@/hooks/queries/useProgressions";
+import { useActiveDeload } from "@/hooks/queries/useDeload";
 import ProgressionSuggestionBanner from "@/components/workout/ProgressionSuggestionBanner";
 import { isSingleArmEligible, DEFAULT_SINGLE_ARM_IDS } from "@/lib/single-arm-variants";
 
