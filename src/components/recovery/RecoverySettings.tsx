@@ -52,6 +52,7 @@ export default function RecoverySettings() {
   const initial = user ? getRecoverySettings(user.id) : getRecoverySettings(null);
   const [model, setModel] = useState<RecoveryModel>(initial.model);
   const [sleepWeight, setSleepWeight] = useState<number>(initial.sleepWeight);
+  const [deloadOn, setDeloadOn] = useState<boolean>(user ? isDeloadEnabled(user.id) : true);
 
   function handleOpenChange(next: boolean) {
     if (next && user) {
