@@ -1381,6 +1381,12 @@ export default function WorkoutSession() {
                 <span>Weights auto-filled from last session</span>
               </div>
             )}
+            {deloadActive && (
+              <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 text-amber-500 px-2.5 py-1 text-[11px] font-semibold">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                Deload week — ~60% load, half the sets
+              </div>
+            )}
           </div>
 
           {/* Weight increase reminders from last session */}
