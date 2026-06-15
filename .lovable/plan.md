@@ -1,98 +1,62 @@
-## Problems
+# Smart Deload Week
 
-1. **Apply tick does nothing visible.** `applyProgressionToSetLogs` writes to `set.targetWeight` / `set.targetReps`, but the visible weight/reps inputs render `set.weight` and `set.reps` (lines 1876, 1883, 2231, 2233). The placeholder still reads from last session's weight, so the user sees no change.
-2. **Suggestion is wrong / stale (e.g. always "50 → 52.5kg").** `evaluateAndStoreProgression` requires *every* working set to hit the top of the rep range AND ≥ current target; it then always adds a fixed heuristic increment (`+2.5kg` for any upper compound, `+5kg` for any lower compound, `+1.25kg` for isolation), regardless of how far the user blew past the range or what they actually lifted. Once stored, the `pending_suggestion` persists across sessions until accepted/dismissed, so a stale row keeps showing the old `prevWeight → suggestedWeight` even after newer, heavier sessions.
-3. **No context in the banner.** It only shows `prev → suggested`. No "you hit X kg × Y reps, Z over the cap".
+Whole-body deload prompt driven by the user's actual logged data — not a fixed 6–8 week timer. When the evidence stacks up, the app proposes a deload; **the deload week is only generated once the user explicitly accepts**. Dismissing leaves training untouched.
 
-## Fix
+## Research basis (what science actually says)
 
-### 1. Trigger rules (`src/lib/data/progression-queries.ts`)
+Modern programming literature (Renaissance Periodization / Israetel; Helms / 3DMJ; Mike Tuchscherer's RTS; sports-science ACWR work — Gabbett 2016) converges on these objective deload triggers, in priority order:
 
-Replace the "all sets hit top" check with:
+1. **Performance regression on working sets** — same lift, same weight, reps drop ≥ ~15% vs the best of the prior 2–3 sessions, on 2+ consecutive sessions. Strongest single signal.
+2. **Progression stall** — a lift has had no accepted weight increase for ≥ 3 consecutive sessions despite repeated attempts (or repeated failed top-set attempts on `exercise_progression`).
+3. **Acute:Chronic workload ratio (ACWR)** — this week's whole-body tonnage ÷ trailing 4-week average. >1.5 = overreaching, <0.8 = already detraining. (Gabbett "sweet spot" 0.8–1.3.)
+4. **Recovery / HRV / sleep trend** — rolling 7-day `recovery_score` or `sleep_performance` ≥ 10 points below the trailing 28-day baseline, OR HRV ≥ 1 SD below baseline on 4+ of last 7 days.
+5. **Minimum-time guard** — never recommend a deload within 3 weeks of the last accepted/completed deload, to avoid thrashing.
 
-- Compute `topReps` = prescribed `repsHigh`.
-- For each working set, compute `overflow = reps - topReps` (only counts when `weight >= currentTarget`).
-- **Fire a suggestion when EITHER**:
-  - `every set has overflow >= 0` (hit top on all sets), OR
-  - `at least one set has overflow >= 1` (went above top on any set).
-- Track the "trigger set": the set with the highest `overflow` (tiebreak: heaviest weight). Store its `reps`, `weight`, and `overflow` on the suggestion so the banner can render them.
+A deload is **recommended** when any 2 of signals 1–4 fire AND the time guard passes. A single-signal firing surfaces as a softer "monitor closely" hint only — no deload plan.
 
-### 2. Contextual weight increment
+## Deload protocol (only built on acceptance)
 
-Replace the fixed `suggestIncrement(name, id)` constant with `suggestIncrement(ctx)` that scales:
+Industry-standard volume-dominant deload (RP-style):
+- **Volume:** working sets reduced to ~50% of normal (round down, min 1).
+- **Intensity:** target weight = 60% of current `target_weight` per lift, snapped to plate.
+- **Reps:** target reps = `repsLow` (bottom of range), stop ≥ 3 RIR.
+- **Duration:** 1 calendar week (Mon–Sun) from the date the user accepts.
+- Applies to every scheduled session inside the window; cardio/accessory routines unchanged.
 
-- **Base step** stays exercise-class-aware (lower compound 5 kg, upper compound 2.5 kg, isolation 1.25 kg) but acts as the *minimum* jump.
-- **Scale by overflow** on the trigger set:
-  - `overflow == 0` → 1× base step.
-  - `overflow == 1` → 1× base step.
-  - `overflow == 2` → 2× base step.
-  - `overflow >= 3` → 3× base step (cap).
-- **Cap by % of current target** so isolation lifts don't jump 15%: never recommend more than `max(baseStep, round(currentTarget * 0.08, plate))` for isolation, `0.06` for upper compound, `0.05` for lower compound. Floor at one base step.
-- Snap final weight via `roundToPlate` (lib/workout-session-utils.ts: nearest 2.5 kg) — and to 1.25 kg for isolation if we keep micro-loading; otherwise 2.5 kg.
+## Plan
 
-### 3. Suggestion schema additions
+### 1. New module `src/lib/deload.ts` (pure)
+- `computeDeloadSignals(sessions, sets, scores, sleep, progressions, now)` → `DeloadSignals` with per-signal booleans, numeric evidence (ACWR value, regressed lifts list, stalled lifts list, recovery delta), `firedCount`, and human-readable reasons.
+- `shouldRecommendDeload(signals, lastDeloadAt)` → boolean.
+- `buildDeloadPlan(progressions)` → `Map<exerciseId, { weight, reps, sets }>` using the protocol. **Only called at acceptance time, never at recommendation time.**
+- Unit-testable; no Supabase imports.
 
-Extend `ProgressionSuggestion`:
+### 2. New table `deload_recommendations`
+Columns: `user_id`, `created_at`, `status` (`pending` | `accepted` | `dismissed` | `completed` | `expired`), `accepted_at`, `week_start`, `week_end`, `signals` (jsonb evidence snapshot), `plan` (jsonb, **null until accepted**). RLS per-user + standard GRANTs. A pending row stores only the evidence; `week_start`/`week_end`/`plan` are written when the user accepts.
 
-```ts
-type ProgressionSuggestion = {
-  type: "increase" | "deload";
-  suggestedWeight: number;
-  suggestedRepsLow: number;
-  suggestedRepsHigh: number;
-  prevWeight: number;
-  // NEW
-  triggerWeight: number;   // weight on the trigger set
-  triggerReps: number;     // reps achieved
-  repsOver: number;        // reps above repsHigh (0 if just-at-cap)
-  reason: string;
-};
-```
+### 3. Evaluation hook
+After `evaluateAndStoreProgression` runs (in `saveWorkoutToCloud`), call new `evaluateDeload()`:
+- Pulls last 8 weeks of `workout_sets` + `workout_history`, last 28 days of `daily_scores` + `sleep_logs`, current `exercise_progression`.
+- Runs `computeDeloadSignals`. If `shouldRecommendDeload` is true and no pending/accepted row exists inside the time-guard window, insert a `pending` row with signals only (no plan).
+- Auto-expires stale `pending` rows older than 14 days.
 
-Reason copy examples:
-- `repsOver === 0` → "Hit top of range on every set — bump weight."
-- `repsOver >= 1` → "You hit ${triggerReps} reps at ${triggerWeight}kg (${repsOver} over the ${repsHigh} cap) — time to add weight."
+### 4. UI surfaces
+- **Home banner** (`src/pages/Index.tsx`): new `<DeloadRecommendationBanner />` above `MondayBanner` when a `pending` row exists. Lists the 2–3 firing signals in plain English with the actual numbers ("3 lifts regressed last session", "Tonnage 62% above 4-week average", "Recovery score down 14 pts vs baseline"). Two actions:
+  - **Start deload week** → builds the plan via `buildDeloadPlan`, sets `status='accepted'`, writes `week_start=today`, `week_end=today+6`, persists `plan`. **This is the only path that creates the deload week.**
+  - **Dismiss** → `status='dismissed'`; training continues as normal.
+- **WorkoutSession**: when an `accepted` row covers the session date, render a slim "Deload week" pill at the top and auto-apply the plan's weight/reps/set count to working sets on mount (same mechanism as `applyProgressionToSetLogs`). Per-set edits still allowed.
+- **Completion**: once the session date crosses `week_end`, mark `status='completed'` on next save.
 
-### 4. Banner UI (`src/components/workout/ProgressionSuggestionBanner.tsx`)
+### 5. Settings
+Add an "Auto-recommend deloads" toggle in Recovery settings (default on). When off, `evaluateDeload` short-circuits so no recommendations are ever inserted.
 
-Add a second line under the headline showing the trigger set:
+### 6. Tests
+`src/test/deload.test.ts`: ACWR maths, regression detection across synthetic sessions, time-guard, plate snapping, signal-count gating, and a test confirming `plan` stays null until acceptance.
 
-```
-You hit 12 reps @ 50kg (2 over the 10 cap)
-Suggest: 55kg × 6-8
-```
-
-Buttons: rename `Apply` → ✓ (no copy change needed) but make Apply actually update visible inputs (see §5).
-
-### 5. Apply must populate the inputs (`src/pages/WorkoutSession.tsx`)
-
-Rewrite `applyProgressionToSetLogs` to update both the *target* and the *actual entry* fields for working sets that are not yet completed:
-
-```ts
-cur.map(s =>
-  s.setType && s.setType !== "working"
-    ? s
-    : s.completed
-      ? s
-      : { ...s, weight, reps: 0, targetWeight: weight, targetReps: repsLow }
-)
-```
-
-(We set `weight = newSuggestedWeight` so the visible input pre-fills; leave `reps` empty so the user logs their actual performance.)
-
-### 6. Staleness guard
-
-In `evaluateAndStoreProgression`, when a new session does **not** meet the trigger rule **and** the heaviest weight this session is `>= existing.target_weight` AND `>= existing.pending_suggestion.suggestedWeight`, clear the stale `pending_suggestion` (user already progressed past it). Prevents the "always 50 → 52.5kg" residue.
-
-## Out of scope
-
-- No DB schema migration (the `pending_suggestion` column is `jsonb`, new fields slot in).
-- No changes to deload logic, accept/dismiss mutations, or banner styling beyond the new line.
-- No changes to where/when the banner is rendered.
-
-## Verification
-
-1. Log a session where one set goes 2 reps over the cap → on next session start, banner shows trigger set + bigger jump than base step.
-2. Log a session that just hits the top on every set → banner shows 1× base step.
-3. Hit Apply → the weight inputs for incomplete working sets pre-fill with the new suggested weight; reps stay empty.
-4. Log a heavier session after dismissing → no stale suggestion lingers.
+## Technical notes
+- Signal 1 uses `workout_sets` filtered to `set_type='working'`, grouped by effective `exercise_id`, comparing the best set of the latest session vs the best of the prior 2.
+- Signal 2 reads `exercise_progression.last_evaluated_at` + change history of `target_weight`.
+- ACWR uses ISO-week tonnage from `workout_sets` (`SUM(weight*reps)` where `set_type IN ('working','1rm_test')`).
+- Recovery/HRV signals are optional — if the user has < 7 days of `daily_scores`/`sleep_logs`, that signal cannot fire (doesn't penalise users without a wearable).
+- Banner copy is contextual, citing the actual numbers, never the phrase "every 6–8 weeks".
+- No edge function needed; logic runs client-side off React Query caches plus one extra fetch on save.
