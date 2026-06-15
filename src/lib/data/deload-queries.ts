@@ -183,8 +183,14 @@ export async function evaluateDeload(): Promise<void> {
   if (!user) return;
   if (!isDeloadEnabled(user.id)) return;
 
-  // Expire stale pending rows first so they don't block a fresh evaluation.
+  // Expire stale pending rows and complete any accepted weeks that have ended.
   await expireOldPending();
+  const today = new Date().toISOString().slice(0, 10);
+  await tbl()
+    .update({ status: "completed" })
+    .eq("user_id", user.id)
+    .eq("status", "accepted")
+    .lt("week_end", today);
 
   // Don't stack recommendations.
   const active = await fetchActiveDeload();
