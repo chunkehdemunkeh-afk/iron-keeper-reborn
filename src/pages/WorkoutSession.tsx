@@ -207,6 +207,24 @@ export default function WorkoutSession() {
   // Auto-progression suggestions (double-progression model).
   const { data: progressionRows } = useProgressions();
   const progressionsByExId = useMemo(() => progressionMap(progressionRows), [progressionRows]);
+
+  // Active deload (only "accepted" + covering today applies a lighter plan)
+  const { data: activeDeload } = useActiveDeload();
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const deloadActive =
+    !!activeDeload &&
+    activeDeload.status === "accepted" &&
+    !!activeDeload.weekStart &&
+    !!activeDeload.weekEnd &&
+    todayIso >= activeDeload.weekStart &&
+    todayIso <= activeDeload.weekEnd;
+  const deloadPlanByExId = useMemo(() => {
+    const m = new Map<string, { weight: number; reps: number; sets: number }>();
+    if (deloadActive && activeDeload?.plan) {
+      for (const p of activeDeload.plan) m.set(p.exerciseId, { weight: p.weight, reps: p.reps, sets: p.sets });
+    }
+    return m;
+  }, [deloadActive, activeDeload]);
   /** Apply an accepted progression suggestion to the current set logs. */
   const applyProgressionToSetLogs = useCallback((exId: string, weight: number, repsLow: number, repsHigh: number) => {
     setSetLogs(prev => {
