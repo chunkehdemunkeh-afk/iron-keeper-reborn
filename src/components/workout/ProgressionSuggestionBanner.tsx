@@ -37,8 +37,14 @@ export default function ProgressionSuggestionBanner({ progression, onApplied }: 
         <TrendingUp className="h-4 w-4 text-success mt-0.5 shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-success">
-            Progress: {sug.prevWeight}kg → {sug.suggestedWeight}kg
+            Progress: {sug.prevWeight}kg → {sug.suggestedWeight}kg × {sug.suggestedRepsLow}-{sug.suggestedRepsHigh}
           </div>
+          {sug.triggerWeight ? (
+            <div className="text-xs text-foreground/80">
+              You hit {sug.triggerReps} reps @ {sug.triggerWeight}kg
+              {sug.repsOver > 0 ? ` (${sug.repsOver} over the ${sug.suggestedRepsHigh} cap)` : ""}
+            </div>
+          ) : null}
           <div className="text-xs text-muted-foreground">{sug.reason}</div>
         </div>
         <button
