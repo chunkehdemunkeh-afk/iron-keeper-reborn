@@ -64,7 +64,7 @@ export const WORKOUTS: WorkoutDay[] = [
     focus: "Diving Power · Vertical Jump · Shot Stopping",
     color: "from-amber-500/20 to-orange-500/10",
     exercises: [
-      { id: "pw1", name: "Box Jumps", sets: 3, reps: "8-10", targetMuscle: "Explosive Power", notes: "Max height, soft landing, reset between reps", trackWeight: false, repLabel: "Reps" },
+      { id: "pw1", name: "Box Jumps", sets: 3, reps: "8-10", targetMuscle: "Explosive Power", notes: "Max height, soft landing, reset between reps. Log box height in cm.", trackWeight: true, repLabel: "Reps", weightLabel: "Height (cm)" },
       { id: "pw2", name: "Depth Jumps", sets: 3, reps: "8-10", targetMuscle: "Reactive Power", notes: "Step off box, minimise ground contact time", trackWeight: false, repLabel: "Reps" },
       { id: "pw3", name: "Med Ball Slam", sets: 3, reps: "8-10", targetMuscle: "Core Power", notes: "Full extension overhead, slam hard" },
       { id: "pw4", name: "Single-Leg Broad Jump", sets: 3, reps: "8-10 each", targetMuscle: "Unilateral Power", notes: "Mimic diving push-off, stick the landing", trackWeight: false, repLabel: "Reps" },
