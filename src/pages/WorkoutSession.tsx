@@ -1687,7 +1687,7 @@ export default function WorkoutSession() {
                                     {/* Light/Heavy toggle — standalone cable exercises only (no benches, lat pulldowns, seated rows, machines) */}
                                     {(() => {
                                       const dn = displayName.toLowerCase();
-                                      const isCableType = ["cable", "pushdown", "push down", "face pull", "facepull", "pallof", "crossover", "straight-arm", "rope"].some(kw => dn.includes(kw));
+                                      const isCableType = ["cable", "pushdown", "push down", "face pull", "facepull", "pallof", "crossover", "straight-arm", "rope", "bayesian"].some(kw => dn.includes(kw));
                                       const isBenchOrMachine = ["lat pull", "pulldown", "pull down", "seated row", "machine row", "machine fly", "pec deck", "t-bar", "t bar", "leg"].some(kw => dn.includes(kw));
                                       return isCableType && !isBenchOrMachine;
                                     })() && (
