@@ -64,7 +64,7 @@ export const WORKOUTS: WorkoutDay[] = [
     focus: "Diving Power · Vertical Jump · Shot Stopping",
     color: "from-amber-500/20 to-orange-500/10",
     exercises: [
-      { id: "pw1", name: "Box Jumps", sets: 3, reps: "8-10", targetMuscle: "Explosive Power", notes: "Max height, soft landing, reset between reps", trackWeight: false, repLabel: "Reps" },
+      { id: "pw1", name: "Box Jumps", sets: 3, reps: "8-10", targetMuscle: "Explosive Power", notes: "Max height, soft landing, reset between reps. Log box height in cm.", trackWeight: true, repLabel: "Reps", weightLabel: "Height (cm)" },
       { id: "pw2", name: "Depth Jumps", sets: 3, reps: "8-10", targetMuscle: "Reactive Power", notes: "Step off box, minimise ground contact time", trackWeight: false, repLabel: "Reps" },
       { id: "pw3", name: "Med Ball Slam", sets: 3, reps: "8-10", targetMuscle: "Core Power", notes: "Full extension overhead, slam hard" },
       { id: "pw4", name: "Single-Leg Broad Jump", sets: 3, reps: "8-10 each", targetMuscle: "Unilateral Power", notes: "Mimic diving push-off, stick the landing", trackWeight: false, repLabel: "Reps" },
@@ -414,7 +414,7 @@ export const WORKOUTS: WorkoutDay[] = [
     targetRir: "1-2",
     exercises: [
       { id: "lib-65", name: "Hex Bar Squat Jumps",     sets: 3, reps: "4",     targetMuscle: "Quads/Power",       notes: "EXPLOSIVE BLOCK — do first. Moderate hex bar load. Explosive drive from floor, full hip extension, soft landing, fully reset before next rep. 90s rest. Quality over speed." },
-      { id: "lib-66", name: "Box Jumps with Drop Jump", sets: 3, reps: "5",     targetMuscle: "Power/Reactive",    notes: "EXPLOSIVE BLOCK. Jump onto box, step off (do NOT jump off), land softly, immediately jump again from landing. The reactive landing is the stimulus. 90s rest." },
+      { id: "lib-66", name: "Box Jumps with Drop Jump", sets: 3, reps: "5",     targetMuscle: "Power/Reactive",    notes: "EXPLOSIVE BLOCK. Jump onto box, step off (do NOT jump off), land softly, immediately jump again from landing. The reactive landing is the stimulus. 90s rest. Log box height in cm.", trackWeight: true, weightLabel: "Height (cm)" },
       { id: "lib-67", name: "Broad Jumps",              sets: 3, reps: "4",     targetMuscle: "Power/Horizontal",  notes: "EXPLOSIVE BLOCK. Maximum horizontal distance — two-foot takeoff, swing arms, land soft with knees bent. Walk back between reps. 90s rest." },
       { id: "lg4", name: "Pendulum Squat",              sets: 3, reps: "8-10",  targetMuscle: "Quads",             targetRir: "0-1", notes: "STRENGTH BLOCK. Reduced to 3 sets — higher reps to account for pre-fatigue from explosive block. Deep ROM, drive through midfoot. 2.5–3 min rest" },
       { id: "lg3", name: "Bulgarian Split Squats",      sets: 2, reps: "10",    targetMuscle: "Quads/Glutes",      targetRir: "0-1", notes: "Each side. Rear foot elevated, control the descent. Weights will be lower than usual due to pre-fatigue — that's expected. Son: bodyweight or 5kg max. 2 min rest" },
