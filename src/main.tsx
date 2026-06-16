@@ -65,9 +65,12 @@ if (!isInIframe && !isPreviewHost) {
         updateViaCache: "none",
       })
       .then((reg) => {
-        // Check for an updated sw.js now and every 60 s
+        // Check for an updated sw.js now and every 5 min — only when visible
         void reg.update();
-        setInterval(() => void reg.update(), 60_000);
+        setInterval(() => {
+          if (document.visibilityState !== "visible") return;
+          void reg.update();
+        }, 5 * 60_000);
       })
       .catch(() => {/* SW unsupported — app works without it */});
 
