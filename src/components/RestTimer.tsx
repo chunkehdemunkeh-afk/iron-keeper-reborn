@@ -80,7 +80,7 @@ export default function RestTimer({ isActive, initialSeconds, reason, onClose, o
       setRemaining(left);
     };
     tick();
-    const interval = setInterval(tick, 250);
+    const interval = setInterval(tick, 1000);
     // Also tick on visibility change (returning from background)
     const onVisibility = () => {
       if (document.visibilityState === "visible") tick();

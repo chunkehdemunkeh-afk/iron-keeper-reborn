@@ -33,7 +33,9 @@ function GoldAvatar({ entry }: { entry: LeaderboardEntry }) {
   return (
     <div className="relative flex-shrink-0">
       <motion.div
-        animate={{ opacity: [0.6, 1, 0.6] }}
+        initial={{ opacity: 0.6 }}
+        whileInView={{ opacity: [0.6, 1, 0.6] }}
+        viewport={{ once: false, amount: 0.2 }}
         transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
         className="absolute inset-0 rounded-full"
         style={{ boxShadow: `0 0 20px 6px ${GOLD}50`, borderRadius: "50%" }}
@@ -91,7 +93,9 @@ export default function LeaderboardPodium({ entries, valueLabel, getRankDelta, i
       >
         {/* Ambient glow */}
         <motion.div
-          animate={{ opacity: [0.2, 0.5, 0.2] }}
+          initial={{ opacity: 0.2 }}
+          whileInView={{ opacity: [0.2, 0.5, 0.2] }}
+          viewport={{ once: false, amount: 0.2 }}
           transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
           className="absolute inset-0 pointer-events-none"
           style={{ background: `radial-gradient(ellipse at 30% 50%, ${GOLD}25 0%, transparent 65%)` }}

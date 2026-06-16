@@ -23,7 +23,7 @@ export default function ExerciseTimer({ targetSeconds, onComplete }: ExerciseTim
       setSeconds(left);
     };
     tick();
-    const interval = setInterval(tick, 250);
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, [running, done]);
 

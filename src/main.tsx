@@ -65,9 +65,12 @@ if (!isInIframe && !isPreviewHost) {
         updateViaCache: "none",
       })
       .then((reg) => {
-        // Check for an updated sw.js now and every 60 s
+        // Check for an updated sw.js now and every 5 min — only when visible
         void reg.update();
-        setInterval(() => void reg.update(), 60_000);
+        setInterval(() => {
+          if (document.visibilityState !== "visible") return;
+          void reg.update();
+        }, 5 * 60_000);
       })
       .catch(() => {/* SW unsupported — app works without it */});
 
@@ -135,31 +138,19 @@ if (!isInIframe && !isPreviewHost) {
   };
 
   void pollVersion();
-  setInterval(() => void pollVersion(), 60_000);
+  setInterval(() => {
+    if (document.visibilityState !== "visible") return;
+    void pollVersion();
+  }, 5 * 60_000);
 
   // iOS PWAs freeze when backgrounded and often skip setInterval.
-  // Check immediately when the app comes back to the foreground, AND
-  // re-run the pre-React version.json guard so a new deploy triggers a
-  // hard-reload-with-cache-bust without waiting for the next cold start.
+  // Check once when the app comes back to the foreground.
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") return;
     void pollVersion();
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.ready.then((reg) => reg.update());
     }
-    // Cross-check live deploy version
-    fetch(`/version.json?_=${Date.now()}`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!data?.version) return;
-        const stored = localStorage.getItem(STORAGE_KEYS.liveVersion);
-        if (stored && stored !== data.version) {
-          // Allow the pre-React guard to handle the actual reload on next boot
-          sessionStorage.removeItem("ik-version-checked");
-          applyUpdate();
-        }
-      })
-      .catch(() => {});
   });
 }
 
