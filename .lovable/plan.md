@@ -1,56 +1,43 @@
-# Battery-life improvements
+# Plan
 
-Goal: cut passive power draw when the app is open but idle, and reduce CPU work during workouts. No feature changes, no UX regressions.
+Edit only `src/lib/workout-data.ts`, scoped to the four DUP workouts: `upper_a`, `lower_a`, `upper_b`, `lower_b`.
 
-## 1. Stop polling when the app isn't visible — `src/main.tsx`
+## 1. Upper B — add One-Arm Incline Lateral Raise
 
-Today: every 60 s the app fetches `/?_v=...` and calls `reg.update()`, regardless of whether the tab is in the foreground. On every `visibilitychange → visible` it also fires an extra `pollVersion()`, `reg.update()`, and `fetch('/version.json')`.
+Insert after `dl5` Dumbbell Row (mirroring its position in Upper A), using the same library exercise:
 
-Change:
-- Wrap both `setInterval` callbacks so they early-return when `document.visibilityState !== 'visible'`.
-- Increase the interval from 60 s to 5 min. Update detection still works — the visibility handler catches you the moment you re-open the app.
-- Remove the extra `fetch('/version.json')` burst inside `visibilitychange`; keep only the single `pollVersion()` + `reg.update()` call there.
+```
+{ id: "lib-db-One-Arm_Incline_Lateral_Raise", name: "One-Arm Incline Lateral Raise",
+  sets: 2, reps: "12-15", targetMuscle: "Side Delts", targetRir: "0-1",
+  notes: "Lie sideways on an incline bench, dumbbell in top hand. Raise to shoulder height, full stretch at bottom. Each side." }
+```
 
-Verify: with DevTools → Network throttled and the tab hidden, no `/?_v=` or `sw.js` requests fire. When the tab becomes visible again, exactly one of each fires.
+## 2. Apply "2 sets · RIR 0-1" rule to Upper A, Lower A, Upper B, Lower B
 
-## 2. Slow down in-workout timer ticks — `src/components/RestTimer.tsx`, `src/components/ExerciseTimer.tsx`
+For every exercise in these four workouts, set `sets: 2` and `targetRir: "0-1"`, **except** the explosive block — leave these untouched:
 
-Today: both use `setInterval(tick, 250)` — 4 re-renders/sec for the full duration of every rest period.
+- Lower A: `lib-65` Hex Bar Squat Jumps, `lib-66` Box Jumps w/ Drop Jump, `lib-67` Broad Jumps
+- Lower B: `lib-54` Lateral Bound, `lib-29` Nordic Hamstring Curl
 
-Change:
-- Switch to `setInterval(tick, 1000)`. Both timers display whole seconds, so 250 ms granularity isn't visible.
-- Leave `WorkoutSession`'s 1 s session clock and 30 s autosave as-is.
+Reps, notes, muscle targets, ids, order — all unchanged.
 
-Verify: timers still count down smoothly to 0; rest-complete haptic still fires on time.
+### Exercises being changed (sets → 2, targetRir → "0-1")
 
-## 3. Pause infinite Framer Motion loops when offscreen
+**Upper A:** lib-1, lib-64, pu1, pl3, lib-db-Smith_Machine_Overhead_Shoulder_Press, lib-db-One-Arm_Incline_Lateral_Raise, lib-62, pu5
 
-Today:
-- `src/components/leaderboard/LeaderboardPodium.tsx` runs two `repeat: Infinity` tweens (2.5 s and 3.5 s).
-- `src/components/gamification/SeasonFinaleSheet.tsx` runs an infinite pulse.
+**Lower A:** lg4, lg3, lg5, lg6, la6, lib-db-Machine_Preacher_Curls, lib-61
 
-Change: gate each `motion.*` with `whileInView` + `viewport={{ once: false }}` so the animation only runs while the element is on screen, and stop it when the parent sheet/page unmounts (already handled by React, but the leaderboard scroll case isn't).
+**Upper B:** pu3, pl1, up4, lib-18, lib-13, dl5, lib-db-One-Arm_Incline_Lateral_Raise (new), ub6, sub-up5a, lib-19
 
-Verify: scrolling past the podium in the Leaderboard page stops the animation (check DevTools → Performance, no ongoing compositor work).
-
-## 4. Remove unused always-on CSS animation — `src/App.css`
-
-`logo-spin 20s infinite linear` is the default Vite logo spin; the `.logo` class isn't used anywhere. Delete the keyframes + `.logo` rules. Leaves `index.css` `shimmer-sweep` alone (it's used by skeletons that only mount while loading).
-
-## 5. Debounce non-essential haptics — `src/lib/haptics.ts`
-
-Today: every tap on a set row, segmented tab, swipe, etc. calls `navigator.vibrate`. The vibration motor is a meaningful drain over a long session.
-
-Change: add a 50 ms cooldown inside `hapticLight`/`hapticMedium` (ignore calls that arrive within 50 ms of the previous one). Leave `hapticSuccess` and the custom workout-complete pattern untouched — those are intentional one-shots.
-
-Verify: rapid taps no longer queue overlapping vibrations; single taps still feel responsive.
+**Lower B:** lg1, fb2, lib-db-Hack_Squat, lib-db-Hyperextensions_Back_Extensions, lg6, la6
 
 ## Out of scope
-- Service worker rewrite (`public/sw.js` NetworkFirst behaviour). The polling fix above already removes most of its work.
-- Replacing `setInterval` with `requestAnimationFrame` in timers — overkill for 1 Hz updates.
-- Touching Supabase queries, React Query stale times, or any feature logic.
 
-## Technical notes
-- Files touched: `src/main.tsx`, `src/components/RestTimer.tsx`, `src/components/ExerciseTimer.tsx`, `src/components/leaderboard/LeaderboardPodium.tsx`, `src/components/gamification/SeasonFinaleSheet.tsx`, `src/App.css`, `src/lib/haptics.ts`.
-- No DB migrations, no dependency changes.
-- Existing update-detection flow (`IK_UPDATE_AVAILABLE` message, `applyUpdate()` reload) is preserved end-to-end.
+- Other workouts (PPL, GK, Full Body, Arnold, 5/3/1, accessory routines) are untouched.
+- No notes rewrites — only `sets` and `targetRir` fields change. Notes mentioning "3 sets" or older rest/load context stay as-is unless you want a follow-up pass.
+- No database/backfill changes. New rule affects future sessions only.
+
+## Notes / heads-up
+
+- Big compounds (Bench, RDL, Hack Squat) dropping from 3 → 2 sets at RIR 0-1 will substantially reduce weekly volume on chest, back, quads, and hamstrings. If that's intentional (e.g. peaking / time-crunched block), proceed. If not, say so and I'll adjust.
+- Pendulum Squat (`lg4`) currently 3 sets — drops to 2 — Lower A quad volume will be quite low afterwards.
