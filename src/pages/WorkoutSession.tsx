@@ -600,18 +600,37 @@ export default function WorkoutSession() {
     if (Object.keys(initial).length > 0) {
       setSetLogs(prev => ({ ...prev, ...initial }));
     }
-    // Refresh targetRir on EXISTING setLogs (e.g. restored from localStorage)
-    // so changes to workout-data take effect immediately.
+    // Refresh targetRir/targetReps/targetWeight on EXISTING setLogs (e.g. restored
+    // from localStorage before lastSessionData arrived) so they persist on save.
     setSetLogs(prev => {
       let changed = false;
       const next = { ...prev };
       workout.exercises.forEach(ex => {
-        const desired = ex.targetRir ?? workout.targetRir ?? targetRirForReps(ex.reps, sessionTargetRir);
         const arr = prev[ex.id];
-        if (!arr || !desired) return;
-        if (arr.some(s => s.targetRir !== desired)) {
+        if (!arr) return;
+        const desired = ex.targetRir ?? workout.targetRir ?? targetRirForReps(ex.reps, sessionTargetRir);
+        const m = ex.reps.match(/(\d+)/);
+        const parsedTargetReps = m ? parseInt(m[1], 10) : undefined;
+        const dl = deloadPlanByExId.get(ex.id);
+        const prog = progressionsByExId[ex.id];
+        const progTargetWeight = prog && prog.targetWeight > 0 ? prog.targetWeight : undefined;
+        const progTargetReps = prog?.targetRepsLow || undefined;
+        const lastData = lastSessionData[ex.id] ?? [];
+        const wantedRepsFor = () => dl?.reps ?? progTargetReps ?? parsedTargetReps;
+        const wantedWeightFor = (si: number) => dl?.weight ?? progTargetWeight ?? lastData[si]?.weight ?? lastData[0]?.weight;
+        const needsUpdate = arr.some((s, si) => (
+          (desired && s.targetRir !== desired) ||
+          (s.targetReps == null && wantedRepsFor() != null) ||
+          (s.targetWeight == null && wantedWeightFor(si) != null)
+        ));
+        if (needsUpdate) {
           changed = true;
-          next[ex.id] = arr.map(s => ({ ...s, targetRir: desired }));
+          next[ex.id] = arr.map((s, si) => ({
+            ...s,
+            targetRir: desired ?? s.targetRir,
+            targetReps: s.targetReps ?? wantedRepsFor(),
+            targetWeight: s.targetWeight ?? wantedWeightFor(si),
+          }));
         }
       });
       return changed ? next : prev;
