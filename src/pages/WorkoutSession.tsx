@@ -1171,19 +1171,28 @@ export default function WorkoutSession() {
       }
     }
     
-    saveWorkoutToCloud(completed).then(() => {
-      // Refresh only after the workout + sets + strain recompute have finished saving.
-      queryClient.invalidateQueries({ queryKey: queryKeys.dailyScores(user!.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.workoutHistory(user!.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.workoutVolume(user!.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.personalRecords(user!.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.recentSets(user!.id) });
-    });
-    
-    clearAutoSave();
+    saveWorkoutToCloud(completed)
+      .then(() => {
+        // Only clear autosave + show success AFTER the cloud save resolves.
+        queryClient.invalidateQueries({ queryKey: queryKeys.dailyScores(user!.id) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.workoutHistory(user!.id) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.workoutVolume(user!.id) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.personalRecords(user!.id) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.recentSets(user!.id) });
+        clearAutoSave();
+        hapticSuccess();
+        toast.success("Workout saved! 💪");
+      })
+      .catch((err) => {
+        console.error("[WorkoutSession] saveWorkoutToCloud failed", err, completed);
+        // Keep autosave intact so the user can retry on next open.
+        toast.error("Couldn't save workout to cloud", {
+          description: "Your session is still saved on this device — reopen the workout and tap Finish again to retry.",
+          duration: 10000,
+        });
+      });
+
     setFinished(true);
-    hapticSuccess();
-    toast.success("Workout saved! 💪");
   };
 
   const hasLastSession = Object.keys(lastSessionData).length > 0;
