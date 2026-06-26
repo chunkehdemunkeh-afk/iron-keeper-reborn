@@ -434,7 +434,7 @@ export async function fetchVolumeData(): Promise<{ date: string; volume: number;
   }));
 }
 
-export async function fetchLastSessionData(workoutId: string): Promise<Record<string, { reps: number; weight: number }[]>> {
+export async function fetchLastSessionData(workoutId: string): Promise<Record<string, { reps: number; weight: number; rir: number | null }[]>> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return {};
 
@@ -447,12 +447,12 @@ export async function fetchLastSessionData(workoutId: string): Promise<Record<st
     .limit(1)
     .single();
 
-  const result: Record<string, { reps: number; weight: number }[]> = {};
+  const result: Record<string, { reps: number; weight: number; rir: number | null }[]> = {};
 
   if (lastWorkout) {
     const { data: sets } = await supabase
       .from("workout_sets")
-      .select("exercise_id, reps, weight, set_type, set_index, created_at, id")
+      .select("exercise_id, reps, weight, rir, set_type, set_index, created_at, id")
       .eq("workout_history_id", lastWorkout.id)
       .order("set_index", { ascending: true, nullsFirst: true })
       .order("created_at", { ascending: true })
@@ -462,14 +462,19 @@ export async function fetchLastSessionData(workoutId: string): Promise<Record<st
       const st = (s as { set_type?: string }).set_type ?? "working";
       if (st === "warmup") return;
       if (!result[s.exercise_id]) result[s.exercise_id] = [];
-      result[s.exercise_id].push({ reps: s.reps, weight: Number(s.weight) });
+      const rirVal = (s as { rir?: number | null }).rir;
+      result[s.exercise_id].push({
+        reps: s.reps,
+        weight: Number(s.weight),
+        rir: rirVal === undefined || rirVal === null ? null : Number(rirVal),
+      });
     });
   }
 
   return result;
 }
 
-export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps: number; weight: number }[]> {
+export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps: number; weight: number; rir: number | null }[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
@@ -487,7 +492,7 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
 
   const { data: sets } = await supabase
     .from("workout_sets")
-    .select("reps, weight, set_type, set_index, created_at, id")
+    .select("reps, weight, rir, set_type, set_index, created_at, id")
     .eq("workout_history_id", latestSet.workout_history_id)
     .eq("exercise_id", exerciseId)
     .neq("set_type", "warmup")
@@ -495,15 +500,21 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
     .order("created_at", { ascending: true })
     .order("id", { ascending: true });
 
-  return (sets || []).map(s => ({ reps: s.reps, weight: Number(s.weight) }));
+  return (sets || []).map(s => {
+    const rirVal = (s as { rir?: number | null }).rir;
+    return {
+      reps: s.reps,
+      weight: Number(s.weight),
+      rir: rirVal === undefined || rirVal === null ? null : Number(rirVal),
+    };
+  });
 }
 
-export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerciseId: string; sets: { reps: number; weight: number }[] } | null> {
+
+export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerciseId: string; sets: { reps: number; weight: number; rir: number | null }[] } | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // Run two filtered queries (exact match + LIKE prefix) and pick the most recent.
-  // Avoids a fragile .or() chain that broke at runtime in some supabase-js builds.
   const [{ data: exactRows }, { data: likeRows }] = await Promise.all([
     supabase
       .from("workout_sets")
@@ -534,7 +545,7 @@ export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerc
 
   const { data: sets } = await supabase
     .from("workout_sets")
-    .select("reps, weight, set_type, set_index, created_at, id")
+    .select("reps, weight, rir, set_type, set_index, created_at, id")
     .eq("workout_history_id", latestSet.workout_history_id)
     .eq("exercise_id", latestSet.exercise_id)
     .neq("set_type", "warmup")
@@ -544,9 +555,17 @@ export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerc
 
   return {
     exerciseId: latestSet.exercise_id as string,
-    sets: (sets || []).map(s => ({ reps: s.reps, weight: Number(s.weight) })),
+    sets: (sets || []).map(s => {
+      const rirVal = (s as { rir?: number | null }).rir;
+      return {
+        reps: s.reps,
+        weight: Number(s.weight),
+        rir: rirVal === undefined || rirVal === null ? null : Number(rirVal),
+      };
+    }),
   };
 }
+
 
 export async function fetchStrengthProfile(): Promise<{
   bodyweight: number | null;
