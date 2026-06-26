@@ -330,45 +330,50 @@ export async function fetchPersonalRecords(): Promise<Record<string, PersonalRec
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return {};
 
-  const { data: sets } = await supabase
-    .from("workout_sets")
-    .select("id, exercise_id, exercise_name, reps, weight, created_at, set_type")
-    .eq("user_id", user.id)
-    .order("weight", { ascending: false });
-
-  if (!sets) return {};
-
+  // Page through — Supabase default cap of 1000 rows would silently truncate
+  // a heavy user's history and hide PRs from older sessions.
+  const PAGE = 1000;
   const prs: Record<string, PersonalRecord> = {};
-  sets.forEach(s => {
-    const w = Number(s.weight);
-    const r = Number(s.reps);
-    const setType = (s as { set_type?: string }).set_type ?? "working";
-    if (setType === "warmup") return;
-    const existing = prs[s.exercise_id];
-    if (!existing) {
-      prs[s.exercise_id] = {
-        weight: w,
-        reps: r,
-        date: s.created_at,
-        name: s.exercise_name,
-        setId: s.id,
-        bestReps: r,
-        bestTrue1RM: setType === "1rm_test" ? w : undefined,
-      };
-    } else {
-      if (w > existing.weight) {
-        existing.weight = w;
-        existing.reps = r;
-        existing.date = s.created_at;
-        existing.name = s.exercise_name;
-        existing.setId = s.id;
+  for (let from = 0; ; from += PAGE) {
+    const { data: sets, error } = await supabase
+      .from("workout_sets")
+      .select("id, exercise_id, exercise_name, reps, weight, created_at, set_type")
+      .eq("user_id", user.id)
+      .order("weight", { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (error || !sets || sets.length === 0) break;
+    sets.forEach(s => {
+      const w = Number(s.weight);
+      const r = Number(s.reps);
+      const setType = (s as { set_type?: string }).set_type ?? "working";
+      if (setType === "warmup") return;
+      const existing = prs[s.exercise_id];
+      if (!existing) {
+        prs[s.exercise_id] = {
+          weight: w,
+          reps: r,
+          date: s.created_at,
+          name: s.exercise_name,
+          setId: s.id,
+          bestReps: r,
+          bestTrue1RM: setType === "1rm_test" ? w : undefined,
+        };
+      } else {
+        if (w > existing.weight) {
+          existing.weight = w;
+          existing.reps = r;
+          existing.date = s.created_at;
+          existing.name = s.exercise_name;
+          existing.setId = s.id;
+        }
+        if (r > existing.bestReps) existing.bestReps = r;
+        if (setType === "1rm_test" && (existing.bestTrue1RM === undefined || w > existing.bestTrue1RM)) {
+          existing.bestTrue1RM = w;
+        }
       }
-      if (r > existing.bestReps) existing.bestReps = r;
-      if (setType === "1rm_test" && (existing.bestTrue1RM === undefined || w > existing.bestTrue1RM)) {
-        existing.bestTrue1RM = w;
-      }
-    }
-  });
+    });
+    if (sets.length < PAGE) break;
+  }
 
   return prs;
 }
@@ -445,7 +450,7 @@ export async function fetchLastSessionData(workoutId: string): Promise<Record<st
     .eq("workout_id", workoutId)
     .order("date", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   const result: Record<string, { reps: number; weight: number; rir: number | null }[]> = {};
 
@@ -486,7 +491,7 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
     .neq("set_type", "warmup")
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!latestSet) return [];
 
@@ -691,14 +696,22 @@ export async function fetchExercisePRHistory(): Promise<ExercisePRTrend[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data: sets } = await supabase
-    .from("workout_sets")
-    .select("exercise_id, exercise_name, weight, reps, created_at")
-    .eq("user_id", user.id)
-    .gt("weight", 0)
-    .order("created_at", { ascending: true });
-
-  if (!sets || sets.length === 0) return [];
+  // Page through — Supabase default cap of 1000 rows would silently truncate.
+  const PAGE = 1000;
+  const sets: { exercise_id: string; exercise_name: string; weight: number | string; reps: number; created_at: string }[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data: page, error } = await supabase
+      .from("workout_sets")
+      .select("exercise_id, exercise_name, weight, reps, created_at")
+      .eq("user_id", user.id)
+      .gt("weight", 0)
+      .order("created_at", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error || !page || page.length === 0) break;
+    sets.push(...(page as typeof sets));
+    if (page.length < PAGE) break;
+  }
+  if (sets.length === 0) return [];
 
   const nameMap: Record<string, string> = {};
   WORKOUTS.forEach((w) => w.exercises.forEach((ex: any) => {
@@ -771,13 +784,22 @@ export async function exportSetsCSV(): Promise<string> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return "";
 
-  const { data: sets } = await supabase
-    .from("workout_sets")
-    .select("exercise_name, reps, weight, created_at, set_type, rir, target_rir, target_reps, target_weight, is_pr")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (!sets) return "";
+  // Page through — Supabase default cap of 1000 rows would silently truncate
+  // the CSV export and hide older sets from the user.
+  const PAGE = 1000;
+  const sets: Record<string, unknown>[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data: page, error } = await supabase
+      .from("workout_sets")
+      .select("exercise_name, reps, weight, created_at, set_type, rir, target_rir, target_reps, target_weight, is_pr")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (error || !page || page.length === 0) break;
+    sets.push(...(page as Record<string, unknown>[]));
+    if (page.length < PAGE) break;
+  }
+  if (sets.length === 0) return "";
 
   const headers = ["Date", "Exercise", "Set Type", "Reps", "Weight (kg)", "Target Reps", "Target Weight (kg)", "RIR", "Target RIR", "PR"];
   const rows = (sets as any[]).map(s => [

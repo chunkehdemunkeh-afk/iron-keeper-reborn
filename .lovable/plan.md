@@ -1,25 +1,51 @@
-## Goal
-Show RIR from the previous session alongside weight/reps when logging a new session, so set-by-set effort context isn't lost.
+# Full Codebase Audit Plan
 
-## Changes
+Goal: systematically find and fix latent bugs across the app, not just react to symptoms. I'll do this in passes so you can review findings before I touch large surfaces.
 
-### 1. `src/lib/data/workout-queries.ts`
-Add `rir` to the three previous-session fetchers:
-- `fetchLastSessionData` — return `Record<string, { reps; weight; rir: number | null }[]>`
-- `fetchExerciseLastData` — return `{ reps; weight; rir }[]`
-- `fetchExerciseLastDataLike` — same shape inside `sets`
+## Pass 1 — Static analysis (read-only, no code changes yet)
 
-Select `rir` from `workout_sets` (already a column) and map it through. `null` when not logged.
+1. **Type & lint sweep** — run `tsgo` + `eslint` across `src/`, collect every error/warning.
+2. **Dead code / orphaned IDs** — cross-check `workout-data.ts`, `exercise-library.ts`, `exercise-substitutions.ts`, and `accessory-routines.ts` for:
+   - IDs referenced in workouts but missing from library/substitutions
+   - Substitution keys that no longer match any workout ID
+   - Duplicate exercise IDs across workouts (PR/history conflation)
+3. **Data layer audit** (`src/lib/data/*.ts`)
+   - Queries missing `.order('set_index')` after the recent fix
+   - Queries hitting the 1000-row Supabase default limit silently
+   - `workout_sets.user_id` access without joining via `workout_history` (NULLs on old rows)
+   - Missing `set_type` / `rir` filters where they matter (volume, PR, progression)
+4. **React Query keys** — find inline string keys that should use `queryKeys.*`, and stale-data risks from missing `invalidateQueries` after mutations.
+5. **localStorage** — find raw string keys that should use `STORAGE_KEYS.*`, and any place autosave can be silently wiped (we already fixed one in `WorkoutSession`).
+6. **Realtime / effects** — `supabase.channel(...)` outside `useEffect`, missing cleanup, intervals without clear, event listeners without removal (battery + leak risk).
+7. **Auth / RLS edge cases** — cross-user reads that should be SECURITY DEFINER RPCs, places assuming `profiles` row exists.
 
-### 2. `src/pages/WorkoutSession.tsx`
-- Update `lastSessionData` state type and all `{reps,weight}` consumers (`getLastDataForExercise`, sibling preload, fallback gap-fill, `groupLastDataById`) to carry `rir`.
-- "Last:" summary line (line ~1470): render each entry as `50kg×8 @1 RIR` when `rir != null`, else fall back to current `50kg×8`.
-- Per-set input row: add a small muted chip next to the weight/reps inputs showing `RIR <n>` from `lastExerciseData?.[si]?.rir` when present (both the regular block at ~1934/1941 and the grouped/superset block at ~2289). Doesn't affect placeholders — purely a visual reference.
+## Pass 2 — Runtime spot-checks
 
-### 3. No DB, no other surfaces
-RIR already persists. History page / CSV export already include it. This is purely a read-side display improvement during a live session.
+8. Drive the live app with Playwright on key flows: start session → log sets → finish → review history → progression banner → CSV export. Capture console + network errors.
+9. Verify the recent fixes still hold: `set_index` ordering, RIR display from history, autosave preservation on save failure, progression auto-fill, deload acceptance gating.
 
-## Verification
-- Open a workout that was logged last week → "Last:" line shows `@X RIR` for sets where RIR was recorded.
-- Each set row shows a `RIR n` chip referencing last session's value.
-- Sets logged before RIR tracking gracefully omit the chip (no "RIR null").
+## Pass 3 — Triage & fix
+
+10. Produce a categorized list (Critical / High / Medium / Low / Cosmetic) with file:line refs.
+11. **Fix Critical + High automatically** in this same task. These are bugs that cause data loss, wrong numbers shown to you, crashes, or silent failures.
+12. **List Medium / Low / Cosmetic** for your approval before touching — many "bugs" at that level are actually intentional behavior, and I don't want to churn code you didn't ask to change.
+
+## What I will NOT do without asking
+
+- Refactor working code for style/cleanliness
+- Change workout content, RIR targets, set counts, or exercise selection
+- Restructure folders or rename files
+- Touch gamification balancing, deload thresholds, or progression increments
+
+## Deliverable
+
+A short report in chat: what was found, what I fixed, what's left for you to decide on, with file:line references so you can verify.
+
+## Question before I start
+
+Audit scope — which do you want?
+- **A. Everything** (workout, food, recovery, gamification, community, coach, demo mode) — most thorough, longest
+- **B. Workout-only** (session logging, history, progression, deload, volume, PRs) — where you've been hitting bugs
+- **C. Workout + recovery/biometrics** — skips food, gamification, community
+
+I'd recommend **B** based on the recent issues, then a second pass on the rest if needed.
