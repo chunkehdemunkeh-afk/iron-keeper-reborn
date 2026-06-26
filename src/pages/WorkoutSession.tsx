@@ -1990,23 +1990,31 @@ export default function WorkoutSession() {
                                     </div>
                                   </div>
                                 ) : (
-                                  set.rir !== undefined && (
-                                    <div className="flex items-center gap-2 px-1 pb-1 -mt-0.5">
-                                      <button
-                                        onClick={() => updateSetLogField(ex.id, si, { showRirPicker: true })}
-                                        className="inline-flex items-center gap-1 rounded-md bg-primary/15 px-2 py-1 text-[10px] font-bold text-primary ring-1 ring-primary/30 active:scale-95 transition-all"
-                                      >
-                                        RIR {set.rir === 3 ? "3+" : set.rir}
-                                        <span className="text-[8px] text-primary/70 font-normal">tap to edit</span>
-                                      </button>
-                                      {set.targetRir && (
-                                        <span className="text-[10px] text-muted-foreground">
-                                          target {set.targetRir}
-                                        </span>
-                                      )}
-                                    </div>
-                                  )
+                                  <div className="flex items-center gap-2 px-1 pb-1 -mt-0.5">
+                                    {set.rir !== undefined && (
+                                      <>
+                                        <button
+                                          onClick={() => updateSetLogField(ex.id, si, { showRirPicker: true })}
+                                          className="inline-flex items-center gap-1 rounded-md bg-primary/15 px-2 py-1 text-[10px] font-bold text-primary ring-1 ring-primary/30 active:scale-95 transition-all"
+                                        >
+                                          RIR {set.rir === 3 ? "3+" : set.rir}
+                                          <span className="text-[8px] text-primary/70 font-normal">tap to edit</span>
+                                        </button>
+                                        {set.targetRir && (
+                                          <span className="text-[10px] text-muted-foreground">
+                                            target {set.targetRir}
+                                          </span>
+                                        )}
+                                      </>
+                                    )}
+                                    {set.rir === undefined && lastExerciseData?.[si]?.rir != null && !isWarmup && !is1RM && (
+                                      <span className="inline-flex items-center gap-1 rounded-md bg-muted/40 px-2 py-0.5 text-[10px] text-muted-foreground ring-1 ring-border/50">
+                                        Last RIR <span className="font-semibold text-foreground/80">{lastExerciseData[si].rir === 3 ? "3+" : lastExerciseData[si].rir}</span>
+                                      </span>
+                                    )}
+                                  </div>
                                 )}
+
                                 </React.Fragment>
                               );});})()}
                               {/* Add Set + Warm-up + 1RM Test buttons */}
