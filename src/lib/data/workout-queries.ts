@@ -277,7 +277,10 @@ export async function fetchWorkoutHistory(): Promise<CompletedWorkout[]> {
   const { data: allSets } = await supabase
     .from("workout_sets")
     .select("*")
-    .in("workout_history_id", historyIds);
+    .in("workout_history_id", historyIds)
+    .order("set_index", { ascending: true, nullsFirst: true })
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
 
   const setsMap: Record<string, typeof allSets> = {};
   allSets?.forEach(s => {
