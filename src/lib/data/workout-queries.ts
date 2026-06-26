@@ -696,14 +696,22 @@ export async function fetchExercisePRHistory(): Promise<ExercisePRTrend[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data: sets } = await supabase
-    .from("workout_sets")
-    .select("exercise_id, exercise_name, weight, reps, created_at")
-    .eq("user_id", user.id)
-    .gt("weight", 0)
-    .order("created_at", { ascending: true });
-
-  if (!sets || sets.length === 0) return [];
+  // Page through — Supabase default cap of 1000 rows would silently truncate.
+  const PAGE = 1000;
+  const sets: { exercise_id: string; exercise_name: string; weight: number | string; reps: number; created_at: string }[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data: page, error } = await supabase
+      .from("workout_sets")
+      .select("exercise_id, exercise_name, weight, reps, created_at")
+      .eq("user_id", user.id)
+      .gt("weight", 0)
+      .order("created_at", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error || !page || page.length === 0) break;
+    sets.push(...(page as typeof sets));
+    if (page.length < PAGE) break;
+  }
+  if (sets.length === 0) return [];
 
   const nameMap: Record<string, string> = {};
   WORKOUTS.forEach((w) => w.exercises.forEach((ex: any) => {
