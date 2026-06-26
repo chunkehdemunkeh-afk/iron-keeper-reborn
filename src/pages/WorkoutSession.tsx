@@ -1467,7 +1467,7 @@ export default function WorkoutSession() {
                   </p>
                   {getLastDataForExercise(ex.id) && (
                     <p className="text-[10px] text-success/80 mt-0.5">
-                      Last: {getLastDataForExercise(ex.id)!.map(s => `${s.weight}kg×${s.reps}`).join(", ")}
+                      Last: {getLastDataForExercise(ex.id)!.map(s => `${s.weight}kg×${s.reps}${s.rir != null ? ` @${s.rir === 3 ? "3+" : s.rir} RIR` : ""}`).join(", ")}
                     </p>
                   )}
                 </div>
