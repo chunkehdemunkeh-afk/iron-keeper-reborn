@@ -511,12 +511,10 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
 }
 
 
-export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerciseId: string; sets: { reps: number; weight: number }[] } | null> {
+export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerciseId: string; sets: { reps: number; weight: number; rir: number | null }[] } | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // Run two filtered queries (exact match + LIKE prefix) and pick the most recent.
-  // Avoids a fragile .or() chain that broke at runtime in some supabase-js builds.
   const [{ data: exactRows }, { data: likeRows }] = await Promise.all([
     supabase
       .from("workout_sets")
@@ -547,7 +545,7 @@ export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerc
 
   const { data: sets } = await supabase
     .from("workout_sets")
-    .select("reps, weight, set_type, set_index, created_at, id")
+    .select("reps, weight, rir, set_type, set_index, created_at, id")
     .eq("workout_history_id", latestSet.workout_history_id)
     .eq("exercise_id", latestSet.exercise_id)
     .neq("set_type", "warmup")
@@ -557,9 +555,17 @@ export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerc
 
   return {
     exerciseId: latestSet.exercise_id as string,
-    sets: (sets || []).map(s => ({ reps: s.reps, weight: Number(s.weight) })),
+    sets: (sets || []).map(s => {
+      const rirVal = (s as { rir?: number | null }).rir;
+      return {
+        reps: s.reps,
+        weight: Number(s.weight),
+        rir: rirVal === undefined || rirVal === null ? null : Number(rirVal),
+      };
+    }),
   };
 }
+
 
 export async function fetchStrengthProfile(): Promise<{
   bodyweight: number | null;
