@@ -226,6 +226,75 @@ type EvalSet = {
 };
 
 /**
+ * Pure helper — exposed for unit testing. Given the prescribed range, prior
+ * stored target, and the working sets the user just completed, decide what
+ * the new effective target weight should be and whether to fire a suggestion.
+ */
+export function computeProgressionDecision(args: {
+  exerciseName: string;
+  exerciseId: string;
+  workingSets: { weight: number; reps: number }[];
+  repsLow: number;
+  repsHigh: number;
+  storedTarget: number; // 0 if no prior row
+  hasPrev: boolean;
+}): {
+  currentTarget: number;
+  suggestion: ProgressionSuggestion | null;
+} {
+  const { exerciseName, exerciseId, workingSets, repsLow, repsHigh, storedTarget, hasPrev } = args;
+  if (workingSets.length === 0) return { currentTarget: storedTarget, suggestion: null };
+
+  const heaviest = Math.max(...workingSets.map(s => s.weight));
+  const allMetRepsLowAtHeaviest =
+    workingSets.every(s => s.weight >= heaviest && s.reps >= repsLow);
+  const promotedTarget =
+    storedTarget > 0 && heaviest > storedTarget && allMetRepsLowAtHeaviest
+      ? heaviest
+      : storedTarget;
+  const currentTarget = hasPrev ? promotedTarget : heaviest;
+
+  const qualifying = workingSets
+    .filter(s => currentTarget <= 0 || s.weight >= currentTarget)
+    .map(s => ({ ...s, overflow: s.reps - repsHigh }));
+
+  const hitTopOnAll =
+    qualifying.length === workingSets.length &&
+    qualifying.length > 0 &&
+    qualifying.every(s => s.overflow >= 0);
+  const anyOver = qualifying.some(s => s.overflow >= 1);
+  const shouldFire = currentTarget > 0 && (hitTopOnAll || anyOver);
+
+  if (!shouldFire) return { currentTarget, suggestion: null };
+
+  const trigger = qualifying
+    .slice()
+    .sort((a, b) => b.overflow - a.overflow || b.weight - a.weight)[0];
+  const repsOver = Math.max(0, trigger.overflow);
+  const cls = exerciseClass(exerciseName, exerciseId);
+  const inc = suggestIncrement({ exerciseName, exerciseId, currentTarget, repsOver });
+  const suggestedWeight = snapToPlate(currentTarget + inc, cls);
+  const reason =
+    repsOver >= 1
+      ? `You hit ${trigger.reps} reps at ${trigger.weight}kg (${repsOver} over the ${repsHigh} cap) — time to add weight.`
+      : `Hit top of range on every set — bump to ${suggestedWeight}kg.`;
+  return {
+    currentTarget,
+    suggestion: {
+      type: "increase",
+      suggestedWeight,
+      suggestedRepsLow: repsLow,
+      suggestedRepsHigh: repsHigh,
+      prevWeight: currentTarget,
+      triggerWeight: trigger.weight,
+      triggerReps: trigger.reps,
+      repsOver,
+      reason,
+    },
+  };
+}
+
+/**
  * Evaluate a just-completed session and write progression rows / suggestions.
  *
  * For each exercise in the payload:
@@ -285,52 +354,17 @@ export async function evaluateAndStoreProgression(sets: EvalSet[]): Promise<void
       Math.max(1, repsHigh - 2);
 
     const heaviest = Math.max(...exSets.map(s => s.weight));
-    const currentTarget = prev ? Number(prev.target_weight) || 0 : heaviest;
+    const storedTarget = prev ? Number(prev.target_weight) || 0 : 0;
 
-    // Find qualifying sets: weight >= current target (so partial-weight sets
-    // don't fake-trigger a bump). Track each set's overflow above the cap.
-    const qualifying = exSets
-      .filter(s => currentTarget <= 0 || s.weight >= currentTarget)
-      .map(s => ({ ...s, overflow: s.reps - repsHigh }));
-
-    const hitTopOnAll =
-      qualifying.length === exSets.length &&
-      qualifying.length > 0 &&
-      qualifying.every(s => s.overflow >= 0);
-    const anyOver = qualifying.some(s => s.overflow >= 1);
-    const shouldFire = currentTarget > 0 && (hitTopOnAll || anyOver);
-
-    let pendingSuggestion: ProgressionSuggestion | null = null;
-    if (shouldFire) {
-      // Trigger set: most overflow, tiebreak heaviest weight.
-      const trigger = qualifying
-        .slice()
-        .sort((a, b) => b.overflow - a.overflow || b.weight - a.weight)[0];
-      const repsOver = Math.max(0, trigger.overflow);
-      const cls = exerciseClass(exName, exId);
-      const inc = suggestIncrement({
-        exerciseName: exName,
-        exerciseId: exId,
-        currentTarget,
-        repsOver,
-      });
-      const suggestedWeight = snapToPlate(currentTarget + inc, cls);
-      const reason =
-        repsOver >= 1
-          ? `You hit ${trigger.reps} reps at ${trigger.weight}kg (${repsOver} over the ${repsHigh} cap) — time to add weight.`
-          : `Hit top of range on every set — bump to ${suggestedWeight}kg.`;
-      pendingSuggestion = {
-        type: "increase",
-        suggestedWeight,
-        suggestedRepsLow: repsLow,
-        suggestedRepsHigh: repsHigh,
-        prevWeight: currentTarget,
-        triggerWeight: trigger.weight,
-        triggerReps: trigger.reps,
-        repsOver,
-        reason,
-      };
-    }
+    const { currentTarget, suggestion: pendingSuggestion } = computeProgressionDecision({
+      exerciseName: exName,
+      exerciseId: exId,
+      workingSets: exSets.map(s => ({ weight: s.weight, reps: s.reps })),
+      repsLow,
+      repsHigh,
+      storedTarget,
+      hasPrev: !!prev,
+    });
 
     // Staleness guard: clear an old pending suggestion the user already
     // surpassed (heaviest this session ≥ both old target and old suggestion).

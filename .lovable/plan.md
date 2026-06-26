@@ -1,51 +1,39 @@
-# Full Codebase Audit Plan
+## The bug
 
-Goal: systematically find and fix latent bugs across the app, not just react to symptoms. I'll do this in passes so you can review findings before I touch large surfaces.
+In `evaluateAndStoreProgression` (`src/lib/data/progression-queries.ts`):
 
-## Pass 1 — Static analysis (read-only, no code changes yet)
+```ts
+const currentTarget = prev ? Number(prev.target_weight) || 0 : heaviest;
+```
 
-1. **Type & lint sweep** — run `tsgo` + `eslint` across `src/`, collect every error/warning.
-2. **Dead code / orphaned IDs** — cross-check `workout-data.ts`, `exercise-library.ts`, `exercise-substitutions.ts`, and `accessory-routines.ts` for:
-   - IDs referenced in workouts but missing from library/substitutions
-   - Substitution keys that no longer match any workout ID
-   - Duplicate exercise IDs across workouts (PR/history conflation)
-3. **Data layer audit** (`src/lib/data/*.ts`)
-   - Queries missing `.order('set_index')` after the recent fix
-   - Queries hitting the 1000-row Supabase default limit silently
-   - `workout_sets.user_id` access without joining via `workout_history` (NULLs on old rows)
-   - Missing `set_type` / `rir` filters where they matter (volume, PR, progression)
-4. **React Query keys** — find inline string keys that should use `queryKeys.*`, and stale-data risks from missing `invalidateQueries` after mutations.
-5. **localStorage** — find raw string keys that should use `STORAGE_KEYS.*`, and any place autosave can be silently wiped (we already fixed one in `WorkoutSession`).
-6. **Realtime / effects** — `supabase.channel(...)` outside `useEffect`, missing cleanup, intervals without clear, event listeners without removal (battery + leak risk).
-7. **Auth / RLS edge cases** — cross-user reads that should be SECURITY DEFINER RPCs, places assuming `profiles` row exists.
+Once an `exercise_progression` row exists, `currentTarget` is **locked to the stored `target_weight`** forever — it's only ever updated when the user explicitly taps "Apply" on a suggestion. If the row was first seeded back when you were lifting 50 kg, it stays at 50 kg even after you've moved to 60 kg organically.
 
-## Pass 2 — Runtime spot-checks
+Consequences:
+- The qualifying-set filter (`weight >= currentTarget`) lets a 60 kg × 10 set through.
+- The suggestion is then computed as `snapToPlate(50 + 2.5)` → always "50 → 52.5 kg", regardless of what you actually just lifted.
+- `prevWeight: currentTarget` (50) is what the banner shows on the left side of the arrow.
+- The carried-over staleness guard doesn't help here because a *new* suggestion is being generated this session, so it overwrites instead of being cleared.
 
-8. Drive the live app with Playwright on key flows: start session → log sets → finish → review history → progression banner → CSV export. Capture console + network errors.
-9. Verify the recent fixes still hold: `set_index` ordering, RIR display from history, autosave preservation on save failure, progression auto-fill, deload acceptance gating.
+The upsert at the bottom (`target_weight: currentTarget || heaviest`) also never advances the stored target organically, so the bug is self-perpetuating until you tap Apply.
 
-## Pass 3 — Triage & fix
+## Fix
 
-10. Produce a categorized list (Critical / High / Medium / Low / Cosmetic) with file:line refs.
-11. **Fix Critical + High automatically** in this same task. These are bugs that cause data loss, wrong numbers shown to you, crashes, or silent failures.
-12. **List Medium / Low / Cosmetic** for your approval before touching — many "bugs" at that level are actually intentional behavior, and I don't want to churn code you didn't ask to change.
+1. **Treat `prev.target_weight` as a floor, not a ceiling.** Compute the effective current target as `max(prev.target_weight, heaviestQualifyingWeight)` where "qualifying" means a working set that also met the rep low. This way, if you're already lifting 60 kg × 8+ on every set, the system recognises 60 kg as your real working weight and suggests 60 → 62.5, not 50 → 52.5.
 
-## What I will NOT do without asking
+2. **Persist the advanced target.** Change the upsert's `target_weight` to that same effective value so the row catches up automatically and the bug can't reappear next session.
 
-- Refactor working code for style/cleanliness
-- Change workout content, RIR targets, set counts, or exercise selection
-- Restructure folders or rename files
-- Touch gamification balancing, deload thresholds, or progression increments
+3. **Guard against partial-rep sessions:** only advance the target if every working set hit at least `repsLow` at the new heavier weight — otherwise we'd promote a single fluke heavy single into the new baseline. If the criterion isn't met, leave `target_weight` at `prev.target_weight` (current behaviour).
 
-## Deliverable
+4. **Verify with a unit test.** Add a small test in `src/test/` that feeds `evaluateAndStoreProgression`-style inputs through a pure helper (extract the suggestion-math into a pure function if needed) covering:
+   - Stale prev=50, user lifted 60×10 on a 6–8 range → suggests 60 → 62.5.
+   - Prev=50, user lifted 50×8 (top of 6–8) → suggests 50 → 52.5 (existing behaviour preserved).
+   - Prev=50, user lifted 60×5 (below repsLow) → no advance, no suggestion.
 
-A short report in chat: what was found, what I fixed, what's left for you to decide on, with file:line references so you can verify.
+5. **No DB migration needed** — existing stale `target_weight` rows will self-heal on the next session where the user lifts above them with adequate reps.
 
-## Question before I start
+## Files touched
 
-Audit scope — which do you want?
-- **A. Everything** (workout, food, recovery, gamification, community, coach, demo mode) — most thorough, longest
-- **B. Workout-only** (session logging, history, progression, deload, volume, PRs) — where you've been hitting bugs
-- **C. Workout + recovery/biometrics** — skips food, gamification, community
+- `src/lib/data/progression-queries.ts` — adjust `currentTarget` derivation + upsert payload; optionally extract pure helper for testability.
+- `src/test/progression.test.ts` (new) — cases above.
 
-I'd recommend **B** based on the recent issues, then a second pass on the rest if needed.
+No UI changes; the banner already renders whatever values the backend writes.
