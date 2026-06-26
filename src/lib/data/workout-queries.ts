@@ -374,7 +374,6 @@ export async function fetchPersonalRecords(): Promise<Record<string, PersonalRec
     });
     if (sets.length < PAGE) break;
   }
-  });
 
   return prs;
 }
