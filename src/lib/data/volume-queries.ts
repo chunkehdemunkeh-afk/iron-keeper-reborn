@@ -150,10 +150,10 @@ export async function fetchWeeklyMuscleData(weeksBack = 4): Promise<WeeklyMuscle
       if (isStr) weekData[muscle].strengthSets += 1;
       if (s.rir !== null && s.rir !== undefined) weekData[muscle].rirLoggedSets += 1;
     }
-    for (const muscle of secondary) {
-      weekData[muscle].sets += 0.5;
-      weekData[muscle].load += load * 0.5;
-    }
+    // Secondary muscles intentionally NOT counted toward sets/load — only
+    // tracked for diagram coverage. Counting them inflates weekly volume
+    // (e.g. triceps in bench, glutes in squat) above MEV/MAV/MRV targets.
+    void secondary;
   }
 
   return weekStarts.map(weekStart => ({
