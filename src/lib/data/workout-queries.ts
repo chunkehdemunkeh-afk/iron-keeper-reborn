@@ -141,24 +141,35 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
   };
 
   if (workout.sets.length > 0) {
+    // Per-exercise counter so each row carries a deterministic set ordinal.
+    // A bulk INSERT gives every row the same created_at timestamp, so without
+    // set_index the read-back order is undefined and prefill/history can show
+    // sets in the wrong order (e.g. a back-off set masquerading as set 1).
+    const setIndexByExercise: Record<string, number> = {};
     const { error: setsError } = await supabase
       .from("workout_sets")
       .insert(
-        workout.sets.map(s => ({
-          workout_history_id: historyRow.id,
-          user_id: user.id,
-          exercise_id: s.exerciseId,
-          original_exercise_id: s.originalExerciseId ?? null,
-          exercise_name: resolveName(s.exerciseId, s.exerciseName),
-          reps: s.reps,
-          weight: s.weight,
-          set_type: s.setType ?? "working",
-          rir: s.rir ?? null,
-          target_rir: s.targetRir ?? null,
-          target_reps: s.targetReps ?? null,
-          target_weight: s.targetWeight ?? null,
-          is_pr: s.isPr ?? false,
-        } as never))
+        workout.sets.map(s => {
+          const key = s.exerciseId;
+          const idx = setIndexByExercise[key] ?? 0;
+          setIndexByExercise[key] = idx + 1;
+          return {
+            workout_history_id: historyRow.id,
+            user_id: user.id,
+            exercise_id: s.exerciseId,
+            original_exercise_id: s.originalExerciseId ?? null,
+            exercise_name: resolveName(s.exerciseId, s.exerciseName),
+            reps: s.reps,
+            weight: s.weight,
+            set_type: s.setType ?? "working",
+            rir: s.rir ?? null,
+            target_rir: s.targetRir ?? null,
+            target_reps: s.targetReps ?? null,
+            target_weight: s.targetWeight ?? null,
+            is_pr: s.isPr ?? false,
+            set_index: idx,
+          } as never;
+        })
       );
 
     if (setsError) {

@@ -1434,6 +1434,7 @@ export type Database = {
           original_exercise_id: string | null
           reps: number
           rir: number | null
+          set_index: number | null
           set_type: string
           target_reps: number | null
           target_rir: string | null
@@ -1451,6 +1452,7 @@ export type Database = {
           original_exercise_id?: string | null
           reps?: number
           rir?: number | null
+          set_index?: number | null
           set_type?: string
           target_reps?: number | null
           target_rir?: string | null
@@ -1468,6 +1470,7 @@ export type Database = {
           original_exercise_id?: string | null
           reps?: number
           rir?: number | null
+          set_index?: number | null
           set_type?: string
           target_reps?: number | null
           target_rir?: string | null
