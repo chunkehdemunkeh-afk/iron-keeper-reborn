@@ -180,7 +180,7 @@ export default function WorkoutSession() {
   const [restDuration, setRestDuration] = useState(workout?.id === "power" ? 45 : 60);
   const [restReason, setRestReason] = useState("");
   const [videoExercise, setVideoExercise] = useState<{ name: string; id: string } | null>(null);
-  const [lastSessionData, setLastSessionData] = useState<Record<string, { reps: number; weight: number }[]>>({});
+  const [lastSessionData, setLastSessionData] = useState<Record<string, { reps: number; weight: number; rir: number | null }[]>>({});
   const [weightUpSuggestions, setWeightUpSuggestions] = useState<Record<string, number[]>>({});
   const [weightDownSuggestions, setWeightDownSuggestions] = useState<Record<string, number[]>>({});
   const [addedAccessories, setAddedAccessories] = useState<string[]>([]);
