@@ -2304,6 +2304,11 @@ export default function WorkoutSession() {
                                           </button>
                                         </div>
                                       </SwipeableSetRow>
+                                      {groupLastDataById[gExId]?.[si]?.rir != null && (
+                                        <span className="inline-flex items-center gap-1 rounded-md bg-muted/40 px-2 py-0.5 text-[10px] text-muted-foreground ring-1 ring-border/50 mt-0.5">
+                                          Last RIR <span className="font-semibold text-foreground/80">{groupLastDataById[gExId]![si].rir === 3 ? "3+" : groupLastDataById[gExId]![si].rir}</span>
+                                        </span>
+                                      )}
                                     </div>
                                   );
                                 })}
