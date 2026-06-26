@@ -784,13 +784,22 @@ export async function exportSetsCSV(): Promise<string> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return "";
 
-  const { data: sets } = await supabase
-    .from("workout_sets")
-    .select("exercise_name, reps, weight, created_at, set_type, rir, target_rir, target_reps, target_weight, is_pr")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (!sets) return "";
+  // Page through — Supabase default cap of 1000 rows would silently truncate
+  // the CSV export and hide older sets from the user.
+  const PAGE = 1000;
+  const sets: Record<string, unknown>[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data: page, error } = await supabase
+      .from("workout_sets")
+      .select("exercise_name, reps, weight, created_at, set_type, rir, target_rir, target_reps, target_weight, is_pr")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (error || !page || page.length === 0) break;
+    sets.push(...(page as Record<string, unknown>[]));
+    if (page.length < PAGE) break;
+  }
+  if (sets.length === 0) return "";
 
   const headers = ["Date", "Exercise", "Set Type", "Reps", "Weight (kg)", "Target Reps", "Target Weight (kg)", "RIR", "Target RIR", "PR"];
   const rows = (sets as any[]).map(s => [
