@@ -450,7 +450,7 @@ export async function fetchLastSessionData(workoutId: string): Promise<Record<st
     .eq("workout_id", workoutId)
     .order("date", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   const result: Record<string, { reps: number; weight: number; rir: number | null }[]> = {};
 
