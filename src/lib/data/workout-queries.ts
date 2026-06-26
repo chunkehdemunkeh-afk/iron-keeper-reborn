@@ -534,11 +534,13 @@ export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerc
 
   const { data: sets } = await supabase
     .from("workout_sets")
-    .select("reps, weight, set_type")
+    .select("reps, weight, set_type, set_index, created_at, id")
     .eq("workout_history_id", latestSet.workout_history_id)
     .eq("exercise_id", latestSet.exercise_id)
     .neq("set_type", "warmup")
-    .order("created_at", { ascending: true });
+    .order("set_index", { ascending: true, nullsFirst: true })
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
 
   return {
     exerciseId: latestSet.exercise_id as string,
