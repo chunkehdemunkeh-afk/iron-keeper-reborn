@@ -285,7 +285,21 @@ export async function evaluateAndStoreProgression(sets: EvalSet[]): Promise<void
       Math.max(1, repsHigh - 2);
 
     const heaviest = Math.max(...exSets.map(s => s.weight));
-    const currentTarget = prev ? Number(prev.target_weight) || 0 : heaviest;
+    const storedTarget = prev ? Number(prev.target_weight) || 0 : 0;
+
+    // Treat stored target as a FLOOR, not a ceiling. If the user is already
+    // working organically above it (heaviest set ≥ stored AND every working
+    // set met at least repsLow at that weight), promote the heaviest weight
+    // to the new current target. Otherwise the suggestion would always be
+    // computed off the stale stored value (e.g. forever "50 → 52.5kg").
+    const allMetRepsLowAtHeaviest =
+      exSets.length > 0 &&
+      exSets.every(s => s.weight >= heaviest && s.reps >= repsLow);
+    const promotedTarget =
+      storedTarget > 0 && heaviest > storedTarget && allMetRepsLowAtHeaviest
+        ? heaviest
+        : storedTarget;
+    const currentTarget = prev ? promotedTarget : heaviest;
 
     // Find qualifying sets: weight >= current target (so partial-weight sets
     // don't fake-trigger a bump). Track each set's overflow above the cap.
