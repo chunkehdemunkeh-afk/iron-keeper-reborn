@@ -84,21 +84,26 @@ export async function fetchWeeklyMuscleData(weeksBack = 4): Promise<WeeklyMuscle
     muscleGroupMap[ex.id] = ex.muscleGroup;
   });
 
-  // Build PR map for strength-set detection
+  // Build PR map for strength-set detection.
+  // Page through results — Supabase default cap is 1000 rows per request,
+  // so a single .select() silently truncates for users with more history.
   const prMap: Record<string, number> = {};
-  const { data: allUserSets } = await supabase
-    .from("workout_sets")
-    .select("exercise_id, weight")
-    .eq("user_id", user.id)
-    .gt("weight", 0);
-
-  if (allUserSets) {
-    for (const row of allUserSets as any[]) {
+  const PAGE = 1000;
+  for (let from = 0; ; from += PAGE) {
+    const { data: pageRows, error } = await supabase
+      .from("workout_sets")
+      .select("exercise_id, weight")
+      .eq("user_id", user.id)
+      .gt("weight", 0)
+      .range(from, from + PAGE - 1);
+    if (error || !pageRows || pageRows.length === 0) break;
+    for (const row of pageRows as { exercise_id: string; weight: number | string }[]) {
       const base = stripExerciseSuffixes(row.exercise_id);
       const w = Number(row.weight);
       if (!w || Number.isNaN(w)) continue;
       if (!prMap[base] || w > prMap[base]) prMap[base] = w;
     }
+    if (pageRows.length < PAGE) break;
   }
 
   const weekStarts = recentMondays(weeksBack);
