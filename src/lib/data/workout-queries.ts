@@ -452,9 +452,11 @@ export async function fetchLastSessionData(workoutId: string): Promise<Record<st
   if (lastWorkout) {
     const { data: sets } = await supabase
       .from("workout_sets")
-      .select("exercise_id, reps, weight, set_type")
+      .select("exercise_id, reps, weight, set_type, set_index, created_at, id")
       .eq("workout_history_id", lastWorkout.id)
-      .order("created_at", { ascending: true });
+      .order("set_index", { ascending: true, nullsFirst: true })
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true });
 
     sets?.forEach(s => {
       const st = (s as { set_type?: string }).set_type ?? "working";
