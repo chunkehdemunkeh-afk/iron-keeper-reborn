@@ -491,7 +491,7 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
     .neq("set_type", "warmup")
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!latestSet) return [];
 
