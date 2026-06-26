@@ -141,24 +141,35 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
   };
 
   if (workout.sets.length > 0) {
+    // Per-exercise counter so each row carries a deterministic set ordinal.
+    // A bulk INSERT gives every row the same created_at timestamp, so without
+    // set_index the read-back order is undefined and prefill/history can show
+    // sets in the wrong order (e.g. a back-off set masquerading as set 1).
+    const setIndexByExercise: Record<string, number> = {};
     const { error: setsError } = await supabase
       .from("workout_sets")
       .insert(
-        workout.sets.map(s => ({
-          workout_history_id: historyRow.id,
-          user_id: user.id,
-          exercise_id: s.exerciseId,
-          original_exercise_id: s.originalExerciseId ?? null,
-          exercise_name: resolveName(s.exerciseId, s.exerciseName),
-          reps: s.reps,
-          weight: s.weight,
-          set_type: s.setType ?? "working",
-          rir: s.rir ?? null,
-          target_rir: s.targetRir ?? null,
-          target_reps: s.targetReps ?? null,
-          target_weight: s.targetWeight ?? null,
-          is_pr: s.isPr ?? false,
-        } as never))
+        workout.sets.map(s => {
+          const key = s.exerciseId;
+          const idx = setIndexByExercise[key] ?? 0;
+          setIndexByExercise[key] = idx + 1;
+          return {
+            workout_history_id: historyRow.id,
+            user_id: user.id,
+            exercise_id: s.exerciseId,
+            original_exercise_id: s.originalExerciseId ?? null,
+            exercise_name: resolveName(s.exerciseId, s.exerciseName),
+            reps: s.reps,
+            weight: s.weight,
+            set_type: s.setType ?? "working",
+            rir: s.rir ?? null,
+            target_rir: s.targetRir ?? null,
+            target_reps: s.targetReps ?? null,
+            target_weight: s.targetWeight ?? null,
+            is_pr: s.isPr ?? false,
+            set_index: idx,
+          } as never;
+        })
       );
 
     if (setsError) {
@@ -266,7 +277,10 @@ export async function fetchWorkoutHistory(): Promise<CompletedWorkout[]> {
   const { data: allSets } = await supabase
     .from("workout_sets")
     .select("*")
-    .in("workout_history_id", historyIds);
+    .in("workout_history_id", historyIds)
+    .order("set_index", { ascending: true, nullsFirst: true })
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
 
   const setsMap: Record<string, typeof allSets> = {};
   allSets?.forEach(s => {
@@ -438,9 +452,11 @@ export async function fetchLastSessionData(workoutId: string): Promise<Record<st
   if (lastWorkout) {
     const { data: sets } = await supabase
       .from("workout_sets")
-      .select("exercise_id, reps, weight, set_type")
+      .select("exercise_id, reps, weight, set_type, set_index, created_at, id")
       .eq("workout_history_id", lastWorkout.id)
-      .order("created_at", { ascending: true });
+      .order("set_index", { ascending: true, nullsFirst: true })
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true });
 
     sets?.forEach(s => {
       const st = (s as { set_type?: string }).set_type ?? "working";
@@ -471,11 +487,13 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
 
   const { data: sets } = await supabase
     .from("workout_sets")
-    .select("reps, weight, set_type")
+    .select("reps, weight, set_type, set_index, created_at, id")
     .eq("workout_history_id", latestSet.workout_history_id)
     .eq("exercise_id", exerciseId)
     .neq("set_type", "warmup")
-    .order("created_at", { ascending: true });
+    .order("set_index", { ascending: true, nullsFirst: true })
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
 
   return (sets || []).map(s => ({ reps: s.reps, weight: Number(s.weight) }));
 }
@@ -516,11 +534,13 @@ export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerc
 
   const { data: sets } = await supabase
     .from("workout_sets")
-    .select("reps, weight, set_type")
+    .select("reps, weight, set_type, set_index, created_at, id")
     .eq("workout_history_id", latestSet.workout_history_id)
     .eq("exercise_id", latestSet.exercise_id)
     .neq("set_type", "warmup")
-    .order("created_at", { ascending: true });
+    .order("set_index", { ascending: true, nullsFirst: true })
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
 
   return {
     exerciseId: latestSet.exercise_id as string,
