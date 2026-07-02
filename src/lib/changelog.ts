@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.126",
+    version: "1.6.127",
     date: "2026-07-02",
     title: "Updates & Fixes",
     changes: [
-      "WorkoutBuilder: expose target RIR, bodyweight toggle, and unit labels",
+      "Add real superset grouping to custom workouts",
     ],
   },
   {
