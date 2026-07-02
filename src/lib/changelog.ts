@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.127",
+    version: "1.6.128",
     date: "2026-07-02",
     title: "Updates & Fixes",
     changes: [
-      "Add real superset grouping to custom workouts",
+      "Replace window.confirm/window.location with AlertDialog/router navigate",
     ],
   },
   {
