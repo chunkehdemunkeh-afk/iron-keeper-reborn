@@ -12,6 +12,7 @@ export type Exercise = {
   repLabel?: string;      // e.g. "Reps", "Sec", "Metres", "Rounds" (default "Reps")
   weightLabel?: string;   // e.g. "Kg", "Height (in)" (default "Kg")
   targetRir?: string;     // e.g. "0-1" — per-exercise RIR override (highest precedence)
+  supersetGroup?: string; // e.g. "A" — exercises sharing a group letter within the same workout are a superset chain
 };
 
 export type WorkoutDay = {

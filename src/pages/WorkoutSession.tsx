@@ -858,8 +858,27 @@ export default function WorkoutSession() {
 
     if (!wasCompleted) {
       hapticMedium();
-      setRestTimerActive(true);
-      setRestTimerKey(k => k + 1);
+
+      // Superset chain: rest only starts once the LAST exercise sharing this
+      // group letter finishes its set — earlier members go straight into the
+      // next paired exercise instead of waiting.
+      const exMetaForGroup = allExercises.find(e => e.id === exerciseId);
+      const group = exMetaForGroup?.supersetGroup;
+      let startRest = true;
+      if (group) {
+        const groupMembers = exerciseOrder.filter(id => allExercises.find(e => e.id === id)?.supersetGroup === group);
+        const posInGroup = groupMembers.indexOf(exerciseId);
+        startRest = posInGroup === groupMembers.length - 1;
+        if (!startRest && posInGroup >= 0) {
+          const nextId = groupMembers[posInGroup + 1];
+          const nextName = allExercises.find(e => e.id === nextId)?.name;
+          if (nextName) toast(`Superset ${group} — next: ${nextName}`);
+        }
+      }
+      if (startRest) {
+        setRestTimerActive(true);
+        setRestTimerKey(k => k + 1);
+      }
 
       const currentWeight = newSets[setIdx].weight;
       const currentReps = newSets[setIdx].reps;
@@ -1620,6 +1639,7 @@ export default function WorkoutSession() {
                 sets={setLogs[ex.id]?.length || ex.sets}
                 reps={ex.reps}
                 targetRir={ex.targetRir ?? workout?.targetRir ?? targetRirForReps(ex.reps, sessionTargetRir)}
+                supersetGroup={ex.supersetGroup}
                 onToggleExpand={() => setExpandedExercise(isExpanded ? null : ex.id)}
                 onPlayVideo={() => setVideoExercise({ name: displayName, id: ex.id })}
                 onSwap={() => setSwapExerciseId(ex.id)}

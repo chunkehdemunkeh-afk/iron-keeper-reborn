@@ -25,6 +25,7 @@ const EMOJIS = ["🧤", "⚡", "🏃", "🦵", "💪", "🎯", "🛡️", "🔥"
 
 const REP_LABELS = ["Reps", "Sec", "Metres", "Rounds"];
 const WEIGHT_LABELS = ["Kg", "Height (in)"];
+const SUPERSET_GROUPS = ["A", "B", "C", "D"];
 
 const STORAGE_KEY = "ironkeeper_custom_workouts";
 
@@ -223,6 +224,11 @@ function ExerciseItem({
                 onUpdate(ex.id, "targetMuscle", muscleGroup);
               }}
             />
+            {ex.supersetGroup && (
+              <span className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-foreground" title={`Superset ${ex.supersetGroup}`}>
+                {ex.supersetGroup}
+              </span>
+            )}
           </div>
 
           <div className="grid grid-cols-3 gap-2 pl-8">
@@ -327,6 +333,27 @@ function ExerciseItem({
               >
                 {tracksWeight ? "Tracks weight" : "Bodyweight / no load"}
               </button>
+
+              <div>
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                  Superset group (exercises sharing a letter are done back-to-back)
+                </label>
+                <div className="flex gap-1.5 mt-1">
+                  {SUPERSET_GROUPS.map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => onUpdate(ex.id, "supersetGroup", ex.supersetGroup === g ? "" : g)}
+                      className={`flex-1 h-7 rounded-md text-xs font-bold transition-colors ${
+                        ex.supersetGroup === g
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted/50 text-muted-foreground border border-border/50"
+                      }`}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -397,6 +424,13 @@ export default function WorkoutBuilder() {
     if (!name.trim()) { toast.error("Give your workout a name"); return; }
     if (exercises.length === 0) { toast.error("Add at least one exercise"); return; }
     if (exercises.some((ex) => !ex.name.trim())) { toast.error("Fill in all exercise names"); return; }
+
+    const groupCounts: Record<string, number> = {};
+    exercises.forEach((ex) => { if (ex.supersetGroup) groupCounts[ex.supersetGroup] = (groupCounts[ex.supersetGroup] || 0) + 1; });
+    const lonelyGroups = Object.entries(groupCounts).filter(([, count]) => count === 1).map(([g]) => g);
+    if (lonelyGroups.length > 0) {
+      toast.warning(`Superset ${lonelyGroups.join(", ")} only has one exercise — add another or clear it`);
+    }
 
     const existing = getCustomWorkouts();
     const trimmedRir = workoutTargetRir.trim() || undefined;

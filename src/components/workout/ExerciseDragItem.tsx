@@ -10,6 +10,7 @@ interface ExerciseDragItemProps {
   sets: number;
   reps: string;
   targetRir?: string;
+  supersetGroup?: string;
   onToggleExpand: () => void;
   onPlayVideo: () => void;
   onSwap: () => void;
@@ -20,7 +21,7 @@ interface ExerciseDragItemProps {
 }
 
 export default function ExerciseDragItem({
-  exId, isExpanded, allDone, index, name, sets, reps, targetRir, onToggleExpand, onPlayVideo, onSwap, hasSubs,
+  exId, isExpanded, allDone, index, name, sets, reps, targetRir, supersetGroup, onToggleExpand, onPlayVideo, onSwap, hasSubs,
   lastSub, onDelete, children,
 }: ExerciseDragItemProps) {
   const dragControls = useDragControls();
@@ -81,6 +82,11 @@ export default function ExerciseDragItem({
                 {targetRir && (
                   <span className="ml-1.5 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold bg-primary/15 text-primary">
                     RIR {targetRir}
+                  </span>
+                )}
+                {supersetGroup && (
+                  <span className="ml-1.5 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-foreground">
+                    Superset {supersetGroup}
                   </span>
                 )}
               </p>
