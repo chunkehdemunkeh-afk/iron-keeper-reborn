@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.124",
+    version: "1.6.125",
     date: "2026-07-02",
     title: "Updates & Fixes",
     changes: [
-      "Restrict coach_messages UPDATE to the read column only",
+      "Fix mid-session exercise add defaulting to hardcoded 3x10",
     ],
   },
   {
