@@ -18,6 +18,10 @@ import { EXERCISE_SUBSTITUTIONS } from "@/lib/exercise-substitutions";
 import { EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "@/lib/accessory-routines";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import SwipeableSetRow from "@/components/workout/SwipeableSetRow";
 import ExerciseDragItem from "@/components/workout/ExerciseDragItem";
 import { warmupRamp, roundToPlate, formatWorkoutTime, attachmentKey, isCableAttachmentExercise } from "@/lib/workout-session-utils";
@@ -193,6 +197,7 @@ export default function WorkoutSession() {
   const [pendingReps, setPendingReps] = useState("10");
   const [bodyweightExercises, setBodyweightExercises] = useState<Set<string>>(new Set());
   const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const [pendingFinishWorkout, setPendingFinishWorkout] = useState<CompletedWorkout | null>(null);
   const [celebrationPR, setCelebrationPR] = useState<{ name: string; weight: number; reps: number; tierUp?: { tier: Tier; liftName: string } | null; isTrue1RM?: boolean } | null>(null);
 
   // Fetch historical PRs at session start for in-session comparison
@@ -1206,11 +1211,14 @@ export default function WorkoutSession() {
     };
     
     if (!hasCompletedAny) {
-      if (!window.confirm("You haven't completed any exercises in this session. Finish anyway?")) {
-        return;
-      }
+      setPendingFinishWorkout(completed);
+      return;
     }
-    
+
+    finalizeWorkout(completed);
+  };
+
+  const finalizeWorkout = useCallback((completed: CompletedWorkout) => {
     saveWorkoutToCloud(completed)
       .then(() => {
         // Only clear autosave + show success AFTER the cloud save resolves.
@@ -1233,7 +1241,7 @@ export default function WorkoutSession() {
       });
 
     setFinished(true);
-  };
+  }, [queryClient, user, clearAutoSave]);
 
   const hasLastSession = Object.keys(lastSessionData).length > 0;
 
@@ -2698,6 +2706,28 @@ export default function WorkoutSession() {
       </div>
 
       <PRCelebration pr={celebrationPR} onDismiss={() => setCelebrationPR(null)} />
+
+      <AlertDialog open={!!pendingFinishWorkout} onOpenChange={(open) => !open && setPendingFinishWorkout(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Finish without completing any exercises?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You haven't marked any sets complete in this session. You can finish anyway or go back and log your sets.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go back</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingFinishWorkout) finalizeWorkout(pendingFinishWorkout);
+                setPendingFinishWorkout(null);
+              }}
+            >
+              Finish anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

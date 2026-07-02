@@ -5,10 +5,11 @@ import logo from "@/assets/iron-warrior-logo.png";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import EmailAuthForm from "@/components/auth/EmailAuthForm";
-import { enterDemo } from "@/lib/demo-mode";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { enterDemoSession } = useAuth();
 
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -19,9 +20,8 @@ export default function Login() {
   };
 
   const handleDemo = () => {
-    enterDemo();
-    // Hard reload so the auth provider re-mounts and picks up the demo flag
-    window.location.href = "/";
+    enterDemoSession();
+    navigate("/", { replace: true });
   };
 
   const features = [

@@ -1,19 +1,23 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { isDemoMode, exitDemo } from "@/lib/demo-mode";
 import { resetDemoStore } from "@/lib/demo-data";
 
 export default function DemoBanner() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   if (!isDemoMode()) return null;
 
   const handleExit = () => {
     exitDemo();
     resetDemoStore();
-    // Hard reload so all in-memory state and React Query caches are cleared
-    window.location.href = "/login";
+    // Explicitly clear the React Query cache (previously relied on a hard
+    // reload to do this, which also breaks routing on a native Capacitor origin).
+    queryClient.clear();
+    navigate("/login", { replace: true });
   };
 
   return (

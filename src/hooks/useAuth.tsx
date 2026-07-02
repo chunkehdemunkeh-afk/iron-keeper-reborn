@@ -1,7 +1,20 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
-import { isDemoMode, exitDemo, DEMO_USER_ID, DEMO_USER_EMAIL, DEMO_DISPLAY_NAME } from "@/lib/demo-mode";
+import { isDemoMode, enterDemo, exitDemo, DEMO_USER_ID, DEMO_USER_EMAIL, DEMO_DISPLAY_NAME } from "@/lib/demo-mode";
+
+function buildDemoUserAndSession(): { user: User; session: Session } {
+  const demoUser = {
+    id: DEMO_USER_ID,
+    email: DEMO_USER_EMAIL,
+    aud: "authenticated",
+    app_metadata: {},
+    user_metadata: { display_name: DEMO_DISPLAY_NAME },
+    created_at: new Date().toISOString(),
+  } as unknown as User;
+  return { user: demoUser, session: { user: demoUser } as unknown as Session };
+}
 
 type AuthContextType = {
   user: User | null;
@@ -12,6 +25,7 @@ type AuthContextType = {
   updateDisplayName: (name: string) => Promise<{ error: string | null }>;
   updateAvatar: (file: File) => Promise<{ error: string | null }>;
   removeAvatar: () => Promise<{ error: string | null }>;
+  enterDemoSession: () => void;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -23,11 +37,13 @@ const AuthContext = createContext<AuthContextType>({
   updateDisplayName: async () => ({ error: null }),
   updateAvatar: async () => ({ error: null }),
   removeAvatar: async () => ({ error: null }),
+  enterDemoSession: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,16 +52,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // ── Demo Mode short-circuit ──
     if (isDemoMode()) {
-      const demoUser = {
-        id: DEMO_USER_ID,
-        email: DEMO_USER_EMAIL,
-        aud: "authenticated",
-        app_metadata: {},
-        user_metadata: { display_name: DEMO_DISPLAY_NAME },
-        created_at: new Date().toISOString(),
-      } as unknown as User;
+      const { user: demoUser, session: demoSession } = buildDemoUserAndSession();
       setUser(demoUser);
-      setSession({ user: demoUser } as unknown as Session);
+      setSession(demoSession);
       setProfile({ display_name: DEMO_DISPLAY_NAME, avatar_url: null });
       setLoading(false);
       return;
@@ -102,10 +111,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setSession(null);
       setProfile(null);
-      window.location.href = "/login";
+      navigate("/login", { replace: true });
       return;
     }
     await supabase.auth.signOut();
+  };
+
+  // Sets the demo session directly rather than relying on a page reload to
+  // re-run the mount-time isDemoMode() check above (AuthProvider itself
+  // doesn't remount on route change).
+  const enterDemoSession = () => {
+    enterDemo();
+    const { user: demoUser, session: demoSession } = buildDemoUserAndSession();
+    setUser(demoUser);
+    setSession(demoSession);
+    setProfile({ display_name: DEMO_DISPLAY_NAME, avatar_url: null });
+    setLoading(false);
   };
 
   const updateDisplayName = async (name: string) => {
@@ -169,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, profile, signOut, updateDisplayName, updateAvatar, removeAvatar }}>
+    <AuthContext.Provider value={{ user, session, loading, profile, signOut, updateDisplayName, updateAvatar, removeAvatar, enterDemoSession }}>
       {children}
     </AuthContext.Provider>
   );
