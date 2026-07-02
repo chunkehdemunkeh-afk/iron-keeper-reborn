@@ -47,3 +47,9 @@ CREATE POLICY "Recipient can mark messages read"
     (auth.uid() = coach_user_id AND sender_id != auth.uid())
     OR (auth.uid() = athlete_user_id AND sender_id != auth.uid())
   );
+
+-- RLS alone doesn't restrict which columns an UPDATE can touch — without this,
+-- a recipient could rewrite `body`/`sender_id` on someone else's message while
+-- only intending to flip `read`. Column-level privileges close that gap.
+REVOKE UPDATE ON public.coach_messages FROM authenticated;
+GRANT UPDATE (read) ON public.coach_messages TO authenticated;
