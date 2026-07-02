@@ -4,7 +4,31 @@
 
 ## Current Status
 
-All migrations applied. No pending manual actions.
+**⚠️ Pending manual action (2026-07-02):** Three new SQL migrations need to be pasted into the Supabase dashboard SQL editor, in order:
+1. `20260702162749_workout_history_update_policy.sql`
+2. `20260702163500_coach_athlete_roster.sql`
+3. `20260702163609_coach_read_biometrics_scores.sql`
+4. `20260702164633_coach_athlete_messages.sql` (includes a follow-up column-privilege restriction — if an earlier version without it was already run, also execute: `REVOKE UPDATE ON public.coach_messages FROM authenticated; GRANT UPDATE (read) ON public.coach_messages TO authenticated;`)
+
+**Pre-launch audit + coach rebuild + workout builder parity complete** (2026-07-02):
+- Found `PRELAUNCH_AUDIT.md` (45 findings, written ~May, never actioned) — fixed the highest-priority items:
+  - Calorie formula: client `estimateStrengthBurn` synced to the SQL function's `0.0035` constant (was still `0.001`, drifted after a later migration updated the SQL side only).
+  - `fetchWorkoutHistory` now rehydrates `avg_hr`/`max_hr` (were saved but never read back).
+  - Added missing `workout_history` UPDATE RLS policy (`WITH CHECK` included after a security-review catch on the first version).
+  - `fetchPersonalRecords` filters out `reps < 1` so an abandoned/empty set can't register as a PR.
+  - Replaced `window.confirm` (WorkoutSession finish-anyway) with the existing `AlertDialog` pattern.
+  - Replaced `window.location.href` navigation in `useAuth` signOut, `DemoBanner`, and `Login`'s demo entry with router `navigate()` — added `enterDemoSession()` to `AuthContext` so demo mode no longer needs a hard reload to re-trigger `AuthProvider`'s mount-time check.
+  - Remaining audit items (storage/data-loss risks, calc-correctness batch, PWA-to-native device-testing checklist, polish triage) are documented but not yet started — see the plan file referenced below for the full sequencing.
+- **Coach experience rebuilt** — was a single flat all-users activity feed with no real coach-athlete relationship (one hardcoded coach account saw literally everyone via blanket RLS). Added:
+  - `coach_athletes` roster + `coach_profiles` invite-code system. Self-serve: any user can become a coach from Profile (`become_coach()` RPC), generates an invite code from the Coach Dashboard, athletes join via code (`join_coach_by_code()` RPC) in Profile.
+  - Rescoped ~18 tables' + storage's "coach sees everyone" RLS policies to require roster membership (`EXISTS` against `coach_athletes`) instead of the role alone. One-time backfill preserves the existing coach's visibility into current users.
+  - New per-athlete drill-down page `/coach/athlete/:userId` (`CoachAthleteDetail.tsx`): recovery snapshot, personal records, expandable workout history.
+  - Activity feed filtering by athlete + exercise/workout search on `CoachDashboard.tsx`.
+  - Roster removal (AlertDialog confirm, not `window.confirm`).
+  - Coach↔athlete messaging: `coach_messages` table scoped to an existing roster link, shared `MessageThread` component (`src/components/coach/MessageThread.tsx`) used on both the coach's athlete-detail page and the athlete's Profile sheet.
+- **WorkoutSession `addSingleExercise` bug fixed** — mid-session "Add Exercise" always inserted a hardcoded 3×10 with no `targetRir`. Now opens a small confirm step pre-filled from the last exercise added in the session, editable before confirming.
+- **WorkoutBuilder parity** — the custom workout builder only captured name/sets/reps/muscle/notes/order despite `Exercise`/`WorkoutDay` already supporting more. Added: per-exercise target RIR + workout-level RIR override, bodyweight/no-load toggle, rep/weight unit labels, and a new `supersetGroup` field (letter-tag UI in the builder) that `WorkoutSession` uses to suppress the rest timer until the last exercise in a superset chain finishes its set. Cable-attachment and single-arm toggles needed no builder changes — both are keyword-matched against the exercise name generically at session time regardless of source.
+- Full plan (phased fix list + Capacitor wrap sequencing) at `C:\Users\chunk\.claude\plans\melodic-dancing-stroustrup.md`.
 
 **MEV programme update complete** (2026-06-13):
 - Upper A: all compounds 4→3 sets; DB Shoulder Press (`sub-up5a`) replaced by Smith Machine Seated Military Press (`lib-db-Smith_Machine_Overhead_Shoulder_Press`, 3×6-8 RIR 0-1); Cable Lateral Raises + Tricep Extensions → 2 sets
