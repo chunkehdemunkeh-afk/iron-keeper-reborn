@@ -114,7 +114,7 @@ export function estimateStrengthBurn(input: StrengthInput): number | null {
 
   const workKcal = sets.reduce((sum, s) => {
     if (s.setType === "warmup") return sum;
-    if (s.weight > 0) return sum + s.weight * s.reps * 0.001;
+    if (s.weight > 0) return sum + s.weight * s.reps * 0.0035;
     // Bodyweight movement — cost scales with the lifter's mass.
     return sum + weightKg * s.reps * 0.0025;
   }, 0);

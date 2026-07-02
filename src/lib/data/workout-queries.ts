@@ -297,6 +297,8 @@ export async function fetchWorkoutHistory(): Promise<CompletedWorkout[]> {
     exercisesCompleted: h.exercises_completed,
     totalExercises: h.total_exercises,
     caloriesBurned: (h as { calories_burned?: number | null }).calories_burned ?? null,
+    avgHr: (h as { avg_hr?: number | null }).avg_hr ?? null,
+    maxHr: (h as { max_hr?: number | null }).max_hr ?? null,
     sets: (setsMap[h.id] || []).map(s => ({
       exerciseId: s.exercise_id,
       exerciseName: (s as { exercise_name?: string }).exercise_name ?? undefined,
@@ -347,6 +349,10 @@ export async function fetchPersonalRecords(): Promise<Record<string, PersonalRec
       const r = Number(s.reps);
       const setType = (s as { set_type?: string }).set_type ?? "working";
       if (setType === "warmup") return;
+      // reps < 1 means the set was never actually completed — don't let an
+      // abandoned/empty "working" row register as a PR (weight can legitimately
+      // be 0 for bodyweight exercises, so only reps is filtered here).
+      if (r < 1) return;
       const existing = prs[s.exercise_id];
       if (!existing) {
         prs[s.exercise_id] = {

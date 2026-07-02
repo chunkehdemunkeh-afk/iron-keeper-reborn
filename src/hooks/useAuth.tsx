@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .single(),
               supabase
                 .from("profiles")
-                .update({ last_seen_at: new Date().toISOString() } as any)
+                .update({ last_seen_at: new Date().toISOString() })
                 .eq("user_id", session.user.id),
             ]);
             setProfile(data);
