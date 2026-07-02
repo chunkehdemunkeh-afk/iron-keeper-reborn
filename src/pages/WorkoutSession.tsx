@@ -188,6 +188,9 @@ export default function WorkoutSession() {
   const [addExerciseOpen, setAddExerciseOpen] = useState(false);
   const [addExerciseSearch, setAddExerciseSearch] = useState("");
   const [addExerciseMuscle, setAddExerciseMuscle] = useState<string | null>(null);
+  const [pendingAddExercise, setPendingAddExercise] = useState<{ id: string; name: string; muscleGroup: string } | null>(null);
+  const [pendingSets, setPendingSets] = useState(3);
+  const [pendingReps, setPendingReps] = useState("10");
   const [bodyweightExercises, setBodyweightExercises] = useState<Set<string>>(new Set());
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [celebrationPR, setCelebrationPR] = useState<{ name: string; weight: number; reps: number; tierUp?: { tier: Tier; liftName: string } | null; isTrue1RM?: boolean } | null>(null);
@@ -747,12 +750,29 @@ export default function WorkoutSession() {
     toast.success(`Added ${routine.name} accessory`);
   }, [addedAccessories, applyHistoricalVariantSelections, getLastDataForExercise, sessionTargetRir]);
 
-  const addSingleExercise = useCallback((entry: { id: string; name: string; muscleGroup: string }) => {
+  // Default sets/reps for a newly added exercise mirror whatever the athlete's
+  // most-recently-added exercise in this session is using, rather than a fixed
+  // 3x10 — falls back to 3x10 only when the session has nothing to copy from.
+  const defaultSetsRepsForNewExercise = useCallback((): { sets: number; reps: string } => {
+    const lastId = exerciseOrder[exerciseOrder.length - 1];
+    const lastEx = lastId ? allExercises.find(e => e.id === lastId) : undefined;
+    return { sets: lastEx?.sets ?? 3, reps: lastEx?.reps ?? "10" };
+  }, [exerciseOrder, allExercises]);
+
+  const openAddExercisePicker = useCallback((entry: { id: string; name: string; muscleGroup: string }) => {
+    const { sets, reps } = defaultSetsRepsForNewExercise();
+    setPendingAddExercise(entry);
+    setPendingSets(sets);
+    setPendingReps(reps);
+  }, [defaultSetsRepsForNewExercise]);
+
+  const addSingleExercise = useCallback((entry: { id: string; name: string; muscleGroup: string }, sets: number, reps: string) => {
     const alreadyExists = allExercises.some(e => e.id === entry.id);
     const newId = alreadyExists ? `${entry.id}-added-${Date.now()}` : entry.id;
-    const ex: Exercise = { id: newId, name: entry.name, sets: 3, reps: "10", targetMuscle: entry.muscleGroup };
+    const targetRir = targetRirForReps(reps, sessionTargetRir);
+    const ex: Exercise = { id: newId, name: entry.name, sets, reps, targetMuscle: entry.muscleGroup, targetRir };
     setAddedExercises(prev => [...prev, ex]);
-    setSetLogs(prev => ({ ...prev, [newId]: Array.from({ length: 3 }, () => ({ reps: 0, weight: 0, completed: false })) }));
+    setSetLogs(prev => ({ ...prev, [newId]: Array.from({ length: sets }, () => ({ reps: 0, weight: 0, completed: false })) }));
     setExerciseOrder(prev => [...prev, newId]);
     fetchExerciseLastDataLike(entry.id).then(r => {
       if (!r || r.sets.length === 0) return;
@@ -761,9 +781,10 @@ export default function WorkoutSession() {
     });
     setAddExerciseOpen(false);
     setAddExerciseSearch("");
+    setPendingAddExercise(null);
     hapticMedium();
     toast.success(`Added ${entry.name}`);
-  }, [allExercises, applyHistoricalVariantSelections]);
+  }, [allExercises, applyHistoricalVariantSelections, sessionTargetRir]);
 
   // Wall-clock derived elapsed — survives backgrounding, throttling, and route nav.
   // Counts the FULL gym session (working sets + rests + screen-off time).
@@ -2536,14 +2557,57 @@ export default function WorkoutSession() {
       </Sheet>
 
       {/* Add Exercise Sheet */}
-      <Sheet open={addExerciseOpen} onOpenChange={(open) => { if (!open) { setAddExerciseOpen(false); setAddExerciseSearch(""); setAddExerciseMuscle(null); } }}>
+      <Sheet open={addExerciseOpen} onOpenChange={(open) => { if (!open) { setAddExerciseOpen(false); setAddExerciseSearch(""); setAddExerciseMuscle(null); setPendingAddExercise(null); } }}>
         <SheetContent side="bottom" className="rounded-t-2xl bg-card border-border/50 max-h-[80vh]">
           <SheetHeader>
             <SheetTitle className="font-display text-lg text-foreground flex items-center gap-2">
               <Dumbbell className="h-4 w-4 text-primary" />
-              Add Exercise
+              {pendingAddExercise ? pendingAddExercise.name : "Add Exercise"}
             </SheetTitle>
           </SheetHeader>
+          {pendingAddExercise ? (
+            <div className="flex flex-col gap-4 mt-4">
+              <p className="text-xs text-muted-foreground">
+                Set the scheme for this exercise — pre-filled from the last exercise in this session.
+              </p>
+              <div className="flex gap-3">
+                <label className="flex-1 space-y-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">Sets</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={pendingSets}
+                    onChange={(e) => setPendingSets(Math.max(1, Math.min(10, Number(e.target.value) || 1)))}
+                    className="w-full h-10 rounded-xl bg-muted/50 border border-border/50 px-3 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/50"
+                  />
+                </label>
+                <label className="flex-1 space-y-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">Reps</span>
+                  <input
+                    value={pendingReps}
+                    onChange={(e) => setPendingReps(e.target.value)}
+                    placeholder="e.g. 8-10"
+                    className="w-full h-10 rounded-xl bg-muted/50 border border-border/50 px-3 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/50"
+                  />
+                </label>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPendingAddExercise(null)}
+                  className="flex-1 h-11 rounded-xl bg-muted/50 border border-border/50 text-sm font-medium text-foreground"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={() => addSingleExercise(pendingAddExercise, pendingSets, pendingReps.trim() || "10")}
+                  className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
+                >
+                  Add to workout
+                </button>
+              </div>
+            </div>
+          ) : (
           <div className="flex flex-col gap-3 mt-4 h-[calc(80vh-80px)]">
             {/* Search */}
             <div className="relative shrink-0">
@@ -2588,7 +2652,7 @@ export default function WorkoutSession() {
                 return results.length > 0 ? results.map(ex => (
                   <button
                     key={ex.id}
-                    onClick={() => addSingleExercise(ex)}
+                    onClick={() => openAddExercisePicker(ex)}
                     className="w-full text-left rounded-xl p-3 bg-secondary/50 border border-border/30 hover:bg-secondary/70 transition-colors"
                   >
                     <p className="text-sm font-medium text-foreground">{ex.name}</p>
@@ -2601,6 +2665,7 @@ export default function WorkoutSession() {
               })()}
             </div>
           </div>
+          )}
         </SheetContent>
       </Sheet>
 
