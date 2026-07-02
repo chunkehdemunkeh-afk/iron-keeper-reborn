@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.122",
+    version: "1.6.123",
     date: "2026-07-02",
     title: "Updates & Fixes",
     changes: [
-      "Add WITH CHECK to workout_history UPDATE RLS policy",
+      "Rebuild coach experience: roster, athlete drill-down, messaging",
     ],
   },
   {
