@@ -12,6 +12,14 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.6.121",
+    date: "2026-07-02",
+    title: "Updates & Fixes",
+    changes: [
+      "Fix calorie formula drift, PR/HR data-integrity bugs (Phase 1)",
+    ],
+  },
+  {
     version: "1.6.120",
     date: "2026-06-13",
     title: "Updates & Fixes",
