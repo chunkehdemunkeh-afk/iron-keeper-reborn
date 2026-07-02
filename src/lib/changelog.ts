@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.123",
+    version: "1.6.124",
     date: "2026-07-02",
     title: "Updates & Fixes",
     changes: [
-      "Rebuild coach experience: roster, athlete drill-down, messaging",
+      "Restrict coach_messages UPDATE to the read column only",
     ],
   },
   {
