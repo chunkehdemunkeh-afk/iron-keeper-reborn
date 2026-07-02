@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2, GripVertical, Save, Play, Dumbbell, Edit2, X } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Save, Play, Dumbbell, Edit2, X, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, Reorder, useMotionValue, animate, useDragControls } from "framer-motion";
 import type { PanInfo } from "framer-motion";
 import { toast } from "sonner";
@@ -22,6 +22,9 @@ const COLORS = [
 ];
 
 const EMOJIS = ["🧤", "⚡", "🏃", "🦵", "💪", "🎯", "🛡️", "🔥"];
+
+const REP_LABELS = ["Reps", "Sec", "Metres", "Rounds"];
+const WEIGHT_LABELS = ["Kg", "Height (in)"];
 
 const STORAGE_KEY = "ironkeeper_custom_workouts";
 
@@ -186,10 +189,12 @@ function ExerciseItem({
 }: {
   ex: Exercise;
   index: number;
-  onUpdate: (id: string, field: keyof Exercise, value: string | number) => void;
+  onUpdate: (id: string, field: keyof Exercise, value: string | number | boolean) => void;
   onDelete: (id: string) => void;
 }) {
   const dragControls = useDragControls();
+  const [showMore, setShowMore] = useState(false);
+  const tracksWeight = ex.trackWeight !== false;
 
   return (
     <Reorder.Item
@@ -263,6 +268,67 @@ function ExerciseItem({
               className="w-full h-7 rounded-md bg-muted/50 border border-border/50 px-2 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary/50"
             />
           </div>
+
+          <div className="pl-8">
+            <button
+              onClick={() => setShowMore((v) => !v)}
+              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showMore ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              More options (RIR, bodyweight, units)
+            </button>
+          </div>
+
+          {showMore && (
+            <div className="pl-8 space-y-2">
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-[10px] text-muted-foreground uppercase tracking-wide">Target RIR</label>
+                  <input
+                    value={ex.targetRir || ""}
+                    onChange={(e) => onUpdate(ex.id, "targetRir", e.target.value)}
+                    placeholder="e.g. 0-1"
+                    className="w-full h-7 rounded-md bg-muted/50 border border-border/50 px-2 text-xs text-center text-foreground outline-none focus:ring-1 focus:ring-primary/50"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground uppercase tracking-wide">Rep unit</label>
+                  <select
+                    value={ex.repLabel || "Reps"}
+                    onChange={(e) => onUpdate(ex.id, "repLabel", e.target.value)}
+                    className="w-full h-7 rounded-md bg-muted/50 border border-border/50 px-1 text-[10px] text-foreground outline-none"
+                  >
+                    {REP_LABELS.map((l) => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground uppercase tracking-wide">Weight unit</label>
+                  <select
+                    value={ex.weightLabel || "Kg"}
+                    onChange={(e) => onUpdate(ex.id, "weightLabel", e.target.value)}
+                    disabled={!tracksWeight}
+                    className="w-full h-7 rounded-md bg-muted/50 border border-border/50 px-1 text-[10px] text-foreground outline-none disabled:opacity-40"
+                  >
+                    {WEIGHT_LABELS.map((l) => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <button
+                onClick={() => onUpdate(ex.id, "trackWeight", !tracksWeight)}
+                className={`w-full h-7 rounded-md text-[11px] font-medium border transition-colors ${
+                  tracksWeight
+                    ? "bg-muted/50 border-border/50 text-muted-foreground"
+                    : "bg-primary/10 border-primary/40 text-primary"
+                }`}
+              >
+                {tracksWeight ? "Tracks weight" : "Bodyweight / no load"}
+              </button>
+            </div>
+          )}
         </div>
       </SwipeToDeleteRow>
     </Reorder.Item>
@@ -276,6 +342,7 @@ export default function WorkoutBuilder() {
   const [emoji, setEmoji] = useState("🧤");
   const [focus, setFocus] = useState("");
   const [color, setColor] = useState(COLORS[0]);
+  const [workoutTargetRir, setWorkoutTargetRir] = useState("");
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [savedWorkouts, setSavedWorkouts] = useState<WorkoutDay[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -299,7 +366,7 @@ export default function WorkoutBuilder() {
     ]);
   };
 
-  const updateExercise = (id: string, field: keyof Exercise, value: string | number) => {
+  const updateExercise = (id: string, field: keyof Exercise, value: string | number | boolean) => {
     setExercises((prev) => prev.map((ex) => (ex.id === id ? { ...ex, [field]: value } : ex)));
   };
 
@@ -313,6 +380,7 @@ export default function WorkoutBuilder() {
     setName(workout.name);
     setFocus(workout.focus);
     setColor(workout.color);
+    setWorkoutTargetRir(workout.targetRir || "");
     setExercises(workout.exercises.map((e) => ({ ...e })));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -321,6 +389,7 @@ export default function WorkoutBuilder() {
     setEditingId(null);
     setName("");
     setFocus("");
+    setWorkoutTargetRir("");
     setExercises([]);
   };
 
@@ -330,11 +399,12 @@ export default function WorkoutBuilder() {
     if (exercises.some((ex) => !ex.name.trim())) { toast.error("Fill in all exercise names"); return; }
 
     const existing = getCustomWorkouts();
+    const trimmedRir = workoutTargetRir.trim() || undefined;
 
     if (editingId) {
       const updated = existing.map((w) =>
         w.id === editingId
-          ? { ...w, name: name.trim(), focus: focus.trim() || "Custom Workout", color, exercises }
+          ? { ...w, name: name.trim(), focus: focus.trim() || "Custom Workout", color, exercises, targetRir: trimmedRir }
           : w
       );
       saveCustomWorkouts(updated);
@@ -350,6 +420,7 @@ export default function WorkoutBuilder() {
         focus: focus.trim() || "Custom Workout",
         exercises,
         color,
+        targetRir: trimmedRir,
       };
       existing.push(workout);
       saveCustomWorkouts(existing);
@@ -360,6 +431,7 @@ export default function WorkoutBuilder() {
     hapticSuccess();
     setName("");
     setFocus("");
+    setWorkoutTargetRir("");
     setExercises([]);
   };
 
@@ -420,6 +492,12 @@ export default function WorkoutBuilder() {
                 value={focus}
                 onChange={(e) => setFocus(e.target.value)}
                 placeholder="Focus area (e.g., Chest · Shoulders)"
+                className="w-full h-9 rounded-lg bg-muted/50 border border-border/50 px-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary/50"
+              />
+              <input
+                value={workoutTargetRir}
+                onChange={(e) => setWorkoutTargetRir(e.target.value)}
+                placeholder="Workout target RIR (optional, e.g. 1-2)"
                 className="w-full h-9 rounded-lg bg-muted/50 border border-border/50 px-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary/50"
               />
             </div>
