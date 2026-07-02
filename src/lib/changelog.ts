@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.125",
+    version: "1.6.126",
     date: "2026-07-02",
     title: "Updates & Fixes",
     changes: [
-      "Fix mid-session exercise add defaulting to hardcoded 3x10",
+      "WorkoutBuilder: expose target RIR, bodyweight toggle, and unit labels",
     ],
   },
   {
