@@ -2,13 +2,21 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { WORKOUTS } from "@/lib/workout-data";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronDown, ChevronUp, Dumbbell, Clock, Calendar, User, LogOut,
   CheckCircle2, XCircle, Activity, Trophy, Bell, X, Star, MessageSquare, Users,
+  UserPlus, Copy, UserMinus,
 } from "lucide-react";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
+import { getOrCreateCoachInviteCode, removeAthleteFromRoster } from "@/lib/data/coach-queries";
+import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type WorkoutRow = {
   id: string;
@@ -57,6 +65,7 @@ type PBNotification = {
 
 export default function CoachDashboard() {
   const { signOut } = useAuth();
+  const navigate = useNavigate();
   const [workouts, setWorkouts] = useState<WorkoutRow[]>([]);
   const [sets, setSets] = useState<SetRow[]>([]);
   const [athletes, setAthletes] = useState<Record<string, AthleteInfo>>({});
@@ -64,6 +73,12 @@ export default function CoachDashboard() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [loadingCode, setLoadingCode] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState<{ userId: string; name: string } | null>(null);
+  const [filterAthlete, setFilterAthlete] = useState<string>("all");
+  const [exerciseSearch, setExerciseSearch] = useState("");
 
   useEffect(() => {
     loadData();
@@ -113,6 +128,38 @@ export default function CoachDashboard() {
     setLoading(false);
   }
 
+  async function handleToggleInvite() {
+    setShowInvite((prev) => !prev);
+    if (!inviteCode) {
+      setLoadingCode(true);
+      const { code, error } = await getOrCreateCoachInviteCode();
+      setLoadingCode(false);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+      setInviteCode(code);
+    }
+  }
+
+  async function copyInviteCode() {
+    if (!inviteCode) return;
+    await navigator.clipboard.writeText(inviteCode);
+    toast.success("Invite code copied");
+  }
+
+  async function confirmRemoveAthlete() {
+    if (!removeTarget) return;
+    const { error } = await removeAthleteFromRoster(removeTarget.userId);
+    if (error) {
+      toast.error(error);
+    } else {
+      toast.success(`${removeTarget.name} removed from your roster`);
+      loadData();
+    }
+    setRemoveTarget(null);
+  }
+
   const allExercises = WORKOUTS.flatMap((w) => w.exercises);
   const getExerciseMeta = (id: string) => allExercises.find((e) => e.id === id);
 
@@ -154,6 +201,14 @@ export default function CoachDashboard() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }
 
+  const searchLower = exerciseSearch.trim().toLowerCase();
+  const filteredWorkouts = workouts.filter((w) => {
+    if (filterAthlete !== "all" && w.user_id !== filterAthlete) return false;
+    if (!searchLower) return true;
+    if (w.workout_name.toLowerCase().includes(searchLower)) return true;
+    return setsForWorkout(w.id).some((s) => (s.exercise_name || "").toLowerCase().includes(searchLower));
+  });
+
   const uniqueAthletes = Object.values(athletes)
     .filter((a) => a.profile.user_id)
     .sort((a, b) => {
@@ -181,6 +236,13 @@ export default function CoachDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleToggleInvite}
+            className="flex items-center justify-center h-9 w-9 rounded-xl bg-card text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Invite an athlete"
+          >
+            <UserPlus className="h-4 w-4" />
+          </button>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative flex items-center justify-center h-9 w-9 rounded-xl bg-card text-muted-foreground hover:text-foreground transition-colors"
@@ -264,6 +326,46 @@ export default function CoachDashboard() {
         )}
       </AnimatePresence>
 
+      {/* Invite panel */}
+      <AnimatePresence>
+        {showInvite && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="border-b border-border bg-card/50 overflow-hidden"
+          >
+            <div className="px-4 py-3">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Invite an athlete
+              </h3>
+              {loadingCode ? (
+                <p className="text-xs text-muted-foreground">Generating code…</p>
+              ) : inviteCode ? (
+                <div className="flex items-center gap-2">
+                  <span className="flex-1 rounded-lg bg-muted/40 border border-border/40 px-3 py-2 text-sm font-mono tracking-widest text-center">
+                    {inviteCode}
+                  </span>
+                  <button
+                    onClick={copyInviteCode}
+                    className="flex items-center justify-center h-9 w-9 rounded-lg bg-primary/10 text-primary shrink-0"
+                    aria-label="Copy invite code"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Couldn't load an invite code.</p>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-2">
+                Share this code — athletes enter it in their Profile to join your roster.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Athletes summary strip */}
       <div className="px-4 pt-4 pb-2">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Athletes Today</h2>
@@ -271,8 +373,19 @@ export default function CoachDashboard() {
           {uniqueAthletes.map((a) => (
             <div
               key={a.profile.user_id}
-              className="shrink-0 rounded-xl bg-card border border-border/40 px-3 py-2.5 min-w-[140px]"
+              onClick={() => navigate(`/coach/athlete/${a.profile.user_id}`)}
+              className="relative shrink-0 rounded-xl bg-card border border-border/40 px-3 py-2.5 min-w-[140px] cursor-pointer hover:border-primary/40 transition-colors"
             >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setRemoveTarget({ userId: a.profile.user_id, name: a.profile.display_name || "This athlete" });
+                }}
+                className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive/90 text-destructive-foreground"
+                aria-label="Remove athlete"
+              >
+                <UserMinus className="h-2.5 w-2.5" />
+              </button>
               <p className="text-xs font-semibold truncate">{a.profile.display_name || "Unknown"}</p>
               <div className="flex items-center gap-1 mt-1.5">
                 {a.todayStretched ? (
@@ -302,6 +415,29 @@ export default function CoachDashboard() {
       <div className="px-4 py-2 pb-8 mx-auto md:max-w-5xl">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Recent Workouts</h2>
 
+        {workouts.length > 0 && (
+          <div className="flex flex-col sm:flex-row gap-2 mb-3">
+            <select
+              value={filterAthlete}
+              onChange={(e) => setFilterAthlete(e.target.value)}
+              className="rounded-lg bg-card border border-border/40 px-3 py-2 text-xs"
+            >
+              <option value="all">All athletes</option>
+              {uniqueAthletes.map((a) => (
+                <option key={a.profile.user_id} value={a.profile.user_id}>
+                  {a.profile.display_name || "Unknown"}
+                </option>
+              ))}
+            </select>
+            <input
+              value={exerciseSearch}
+              onChange={(e) => setExerciseSearch(e.target.value)}
+              placeholder="Search exercise or workout name…"
+              className="flex-1 rounded-lg bg-card border border-border/40 px-3 py-2 text-xs"
+            />
+          </div>
+        )}
+
         {workouts.length === 0 && (
           <EmptyState
             icon={Users}
@@ -310,9 +446,13 @@ export default function CoachDashboard() {
           />
         )}
 
+        {workouts.length > 0 && filteredWorkouts.length === 0 && (
+          <p className="text-xs text-muted-foreground italic py-4 text-center">No workouts match this filter.</p>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
-        {workouts.map((w, i) => {
+        {filteredWorkouts.map((w, i) => {
           const expanded = expandedId === w.id;
           const wSets = setsForWorkout(w.id);
 
@@ -406,6 +546,21 @@ export default function CoachDashboard() {
         })}
         </div>
       </div>
+
+      <AlertDialog open={!!removeTarget} onOpenChange={(open) => !open && setRemoveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove {removeTarget?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              They'll be removed from your roster and you'll no longer see their workouts, recovery, or nutrition data. They can rejoin later with your invite code.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveAthlete}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

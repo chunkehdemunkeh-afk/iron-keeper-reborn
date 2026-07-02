@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchActivityLogs, fetchWeeklyBurn, mondayOfWeek, fetchLeaderboardVisibility, updateLeaderboardVisibility } from "@/lib/cloud-data";
 import { backfillStrainScores } from "@/lib/data/biometric-queries";
@@ -37,6 +37,11 @@ const SPLIT_META: Record<string, { intensity: string; intensityColor: string; fo
 };
 
 import { changelog } from "@/lib/changelog";
+import { useUserRole } from "@/hooks/useUserRole";
+import { becomeCoach, joinCoachByCode, fetchMyCoach } from "@/lib/data/coach-queries";
+import { Users2 } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import MessageThread from "@/components/coach/MessageThread";
 
 /** The current version is always dynamically read from the top of the changelog */
 const APP_VERSION = changelog[0]?.version || "1.0.0";
@@ -549,6 +554,9 @@ export default function Profile() {
           <ChevronRight className="h-4 w-4 text-primary flex-shrink-0" />
         </button>
 
+        {/* Coaching */}
+        <CoachLinkCard />
+
         {/* Leaderboard privacy */}
         <div className="glass-card rounded-xl p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -591,6 +599,130 @@ export default function Profile() {
           v{APP_VERSION}
         </p>
       </div>
+    </div>
+  );
+}
+
+function CoachLinkCard() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isCoach, roleLoading } = useUserRole();
+  const [becoming, setBecoming] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [myCoach, setMyCoach] = useState<{ coachUserId: string; displayName: string | null } | null>(null);
+  const [showThread, setShowThread] = useState(false);
+
+  useEffect(() => {
+    if (!isCoach && !roleLoading) {
+      fetchMyCoach().then(setMyCoach);
+    }
+  }, [isCoach, roleLoading]);
+
+  const handleBecomeCoach = async () => {
+    setBecoming(true);
+    const { error } = await becomeCoach();
+    setBecoming(false);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    hapticSuccess();
+    toast.success("You're now a coach");
+    navigate("/coach");
+  };
+
+  const handleJoinCoach = async () => {
+    if (!codeInput.trim()) return;
+    setJoining(true);
+    const { coachName, error } = await joinCoachByCode(codeInput.trim());
+    setJoining(false);
+    if (error) {
+      toast.error(error === "Invalid invite code" ? "That code doesn't match a coach" : error);
+      return;
+    }
+    hapticSuccess();
+    toast.success(`Joined ${coachName}'s roster`);
+    setCodeInput("");
+    fetchMyCoach().then(setMyCoach);
+  };
+
+  if (roleLoading) return null;
+
+  return (
+    <div className="glass-card rounded-xl p-4 space-y-3">
+      <div className="flex items-center gap-3">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 flex-shrink-0">
+          <Users2 className="h-4 w-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-foreground">Coaching</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            {isCoach ? "Manage your athlete roster" : "Join a coach or become one yourself"}
+          </p>
+        </div>
+      </div>
+
+      {isCoach ? (
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => navigate("/coach")}
+          className="w-full flex items-center justify-between rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 text-left hover:bg-primary/15 transition-colors"
+        >
+          <p className="text-sm font-semibold text-foreground">Open Coach Dashboard</p>
+          <ChevronRight className="h-4 w-4 text-primary flex-shrink-0" />
+        </motion.button>
+      ) : myCoach ? (
+        <div className="space-y-2">
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setShowThread(true)}
+            className="w-full flex items-center justify-between rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 text-left hover:bg-primary/15 transition-colors"
+          >
+            <p className="text-sm font-semibold text-foreground">Message {myCoach.displayName || "your coach"}</p>
+            <ChevronRight className="h-4 w-4 text-primary flex-shrink-0" />
+          </motion.button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <input
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+              placeholder="Enter coach's invite code"
+              maxLength={6}
+              className="flex-1 min-w-0 rounded-lg bg-muted/40 border border-border/40 px-3 py-2 text-sm uppercase tracking-widest"
+            />
+            <button
+              onClick={handleJoinCoach}
+              disabled={joining || !codeInput.trim()}
+              className="shrink-0 rounded-lg bg-primary text-primary-foreground px-3 py-2 text-xs font-semibold disabled:opacity-50"
+            >
+              Join
+            </button>
+          </div>
+          <button
+            onClick={handleBecomeCoach}
+            disabled={becoming}
+            className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors py-1 disabled:opacity-50"
+          >
+            {becoming ? "Setting up…" : "I'm a coach — set up my own roster"}
+          </button>
+        </div>
+      )}
+
+      {myCoach && user && (
+        <Sheet open={showThread} onOpenChange={setShowThread}>
+          <SheetContent side="bottom" className="h-[80vh] flex flex-col">
+            <SheetHeader>
+              <SheetTitle>{myCoach.displayName || "Your coach"}</SheetTitle>
+            </SheetHeader>
+            <div className="flex-1 min-h-0 mt-2">
+              <MessageThread coachUserId={myCoach.coachUserId} athleteUserId={user.id} currentUserId={user.id} />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 }
