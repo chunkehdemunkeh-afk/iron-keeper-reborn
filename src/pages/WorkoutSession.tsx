@@ -1089,36 +1089,39 @@ export default function WorkoutSession() {
     hapticMedium();
   }, []);
 
-  /** Add a warm-up set. If no warm-ups exist yet, seeds 2 (50% × 5, 75% × 5).
-   *  Subsequent presses add one more, capped at 3 total (40 / 60 / 80%). */
-  const addWarmupSet = useCallback((exerciseId: string) => {
-    setSetLogs((prev) => {
-      const updated = { ...prev };
-      const sets = [...(updated[exerciseId] || [])];
-      const existingWarmups = sets.filter((s) => s.setType === "warmup").length;
-      if (existingWarmups >= 3) return prev;
-      const toAdd = existingWarmups === 0 ? 2 : 1;
-      const firstWorkingIdx = sets.findIndex((s) => s.setType !== "warmup");
-      const insertAt = firstWorkingIdx === -1 ? sets.length : firstWorkingIdx;
-      const newWarmups: SetLog[] = Array.from({ length: toAdd }, () => ({
-        reps: 0, weight: 0, completed: false, setType: "warmup",
-      }));
-      sets.splice(insertAt, 0, ...newWarmups);
-      updated[exerciseId] = sets;
-      return updated;
-    });
-    hapticMedium();
-  }, []);
-
-  /** Toggle a single set between working ↔ warmup. */
+  /** Toggle a single set between working ↔ warmup.
+   *  Flipping working → warmup auto-appends a fresh working set to preserve the planned count.
+   *  Flipping warmup → working trims a trailing untouched working set (if present). */
   const toggleWarmup = useCallback((exerciseId: string, setIdx: number) => {
     setSetLogs((prev) => {
       const updated = { ...prev };
       const sets = [...(updated[exerciseId] || [])];
       if (!sets[setIdx]) return prev;
       const current = sets[setIdx].setType;
+      if (current === "1rm_test") return prev;
       const next: SetType = current === "warmup" ? "working" : "warmup";
       sets[setIdx] = { ...sets[setIdx], setType: next };
+
+      if (next === "warmup") {
+        // Auto-append a compensating working set at the end.
+        sets.push({ reps: 0, weight: 0, completed: false, setType: "working" });
+      } else {
+        // Trim a trailing untouched working set if there is one.
+        const lastIdx = sets.length - 1;
+        if (lastIdx > setIdx) {
+          const last = sets[lastIdx];
+          if (
+            last.setType !== "warmup" &&
+            last.setType !== "1rm_test" &&
+            !last.completed &&
+            !last.reps &&
+            !last.weight
+          ) {
+            sets.splice(lastIdx, 1);
+          }
+        }
+      }
+
       updated[exerciseId] = sets;
       return updated;
     });
@@ -1996,9 +1999,16 @@ export default function WorkoutSession() {
                                   onDelete={() => deleteSet(ex.id, si)}
                                 >
                                   <div className={`grid ${isTimeBased ? "grid-cols-[28px_1fr_36px]" : showWeight ? "grid-cols-[28px_1fr_1fr_36px]" : "grid-cols-[28px_1fr_36px]"} gap-x-1.5 items-center bg-background ${is1RM ? "rounded-lg ring-1 ring-amber-400/50 bg-amber-400/5 px-1 py-0.5" : isWarmup ? "rounded-lg bg-orange-400/5 px-1 py-0.5" : ""}`}>
-                                    <span className={`text-xs font-bold text-center ${set.completed ? "text-success" : is1RM ? "text-amber-400" : isWarmup ? "text-orange-400/80" : "text-muted-foreground"}`}>
+                                    <button
+                                      type="button"
+                                      onClick={() => { if (!is1RM) toggleWarmup(ex.id, si); }}
+                                      disabled={is1RM}
+                                      title={is1RM ? "1RM test set" : isWarmup ? "Tap to mark as working set" : "Tap to mark as warm-up"}
+                                      aria-label={isWarmup ? "Warm-up set, tap to convert to working" : "Working set, tap to convert to warm-up"}
+                                      className={`text-xs font-bold text-center rounded transition-colors ${is1RM ? "cursor-default" : "hover:bg-muted/40 active:bg-muted/60"} ${set.completed ? "text-success" : is1RM ? "text-amber-400" : isWarmup ? "text-orange-400/80" : "text-muted-foreground"}`}
+                                    >
                                       {is1RM ? <Target className="h-3 w-3 inline" /> : isWarmup ? <Flame className="h-3 w-3 inline" /> : si + 1}
-                                    </span>
+                                    </button>
                                     {isTimeBased ? (
                                       <ExerciseTimer
                                         targetSeconds={targetSec}
@@ -2116,17 +2126,8 @@ export default function WorkoutSession() {
                                   <Plus className="h-3 w-3" />
                                   Add Set
                                 </button>
-                                {!isTimeBased && (
-                                  <button
-                                    onClick={() => addWarmupSet(ex.id)}
-                                    className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-dashed border-muted-foreground/40 text-xs text-muted-foreground hover:bg-muted/40 transition-colors"
-                                    title="Add a warm-up set (excluded from PRs and burn calc)"
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                    Warm-up
-                                  </button>
-                                )}
                                 {!isTimeBased && showWeight && (
+
                                   <button
                                     onClick={() => add1RMTestSet(ex.id)}
                                     className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-dashed border-amber-400/40 text-xs text-amber-400 hover:bg-amber-400/10 transition-colors"
