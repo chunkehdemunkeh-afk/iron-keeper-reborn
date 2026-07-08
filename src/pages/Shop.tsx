@@ -17,7 +17,7 @@ import { useCosmetics, useOwnedCosmetics, useEquippedCosmetics } from "@/hooks/q
 import { useCurrentSeason } from "@/hooks/queries/useCurrentSeason";
 import { purchaseCosmetic, equipCosmetic, unequipCosmetic, type Cosmetic, type CosmeticKind, type Rarity } from "@/lib/data/cosmetics-queries";
 import { tierFromRp, TIERS } from "@/lib/gamification/tiers";
-import { AnimatedNumber } from "@/components/AnimatedNumber";
+import AnimatedNumber from "@/components/AnimatedNumber";
 
 const KIND_LABELS: Record<CosmeticKind, string> = {
   frame: "Frames",
