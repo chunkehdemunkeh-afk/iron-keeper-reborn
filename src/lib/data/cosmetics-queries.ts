@@ -17,6 +17,8 @@ export interface Cosmetic {
   required_tier: string | null;
   payload: Record<string, unknown>;
   available: boolean;
+  season_release?: number | null;
+  discount_pct?: number;
 }
 
 export interface OwnedCosmetic {
