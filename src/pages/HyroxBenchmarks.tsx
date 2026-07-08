@@ -1,16 +1,27 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Flame, TrendingDown, TrendingUp, Sparkles } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceDot } from "recharts";
+import { ArrowLeft, Flame, TrendingDown, TrendingUp, Sparkles, Target, Trophy } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceDot, ReferenceLine } from "recharts";
+import { toast } from "sonner";
 import { useHyroxBenchmarks } from "@/hooks/queries/useHyroxBenchmarks";
+import { useAuth } from "@/hooks/useAuth";
 import {
   formatSeconds,
   formatPace,
   type HyroxBenchmarkSeries,
 } from "@/lib/data/hyrox-benchmark-queries";
+import {
+  consumeGoalAchievement,
+  getGoals,
+  goalProgress,
+  isGoalAchieved,
+  type HyroxGoal,
+} from "@/lib/hyrox-goals";
+import { HyroxGoalSheet } from "@/components/hyrox/HyroxGoalSheet";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
+import { hapticSuccess } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
@@ -24,16 +35,46 @@ const CATEGORIES = [
 
 export default function HyroxBenchmarks() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const userId = user?.id ?? "";
   const { data: series = [], isLoading } = useHyroxBenchmarks();
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]["id"]>("all");
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const [goalSheetFor, setGoalSheetFor] = useState<HyroxBenchmarkSeries | null>(null);
+  const [goalsVersion, setGoalsVersion] = useState(0);
+
+  const goals = useMemo<Record<string, HyroxGoal>>(
+    () => (userId ? getGoals(userId) : {}),
+    [userId, goalsVersion],
+  );
+
+  // Fire one-shot toast + haptic when a goal is newly hit.
+  const alertedRef = useRef(false);
+  useEffect(() => {
+    if (!userId || alertedRef.current || series.length === 0) return;
+    for (const s of series) {
+      const goal = goals[s.def.key];
+      if (!goal) continue;
+      const achieved = isGoalAchieved(s.best, goal.target, s.def.metric === "time");
+      if (consumeGoalAchievement(userId, s.def.key, achieved)) {
+        hapticSuccess();
+        toast.success(`🎯 Goal hit: ${s.def.label}`, {
+          description:
+            s.def.metric === "time"
+              ? `You beat ${formatSeconds(goal.target)}`
+              : `You lifted ${goal.target} kg or more`,
+          duration: 6000,
+        });
+      }
+    }
+    alertedRef.current = true;
+  }, [series, goals, userId]);
 
   const filtered = useMemo(
     () =>
       series
         .filter((s) => category === "all" || s.def.category === category)
         .sort((a, b) => {
-          // Populated series first, then by category order
           const aHas = a.points.length > 0 ? 0 : 1;
           const bHas = b.points.length > 0 ? 0 : 1;
           return aHas - bHas;
@@ -42,6 +83,11 @@ export default function HyroxBenchmarks() {
   );
 
   const hasAny = series.some((s) => s.points.length > 0);
+  const goalCount = Object.keys(goals).length;
+  const achievedCount = series.filter((s) => {
+    const g = goals[s.def.key];
+    return g && isGoalAchieved(s.best, g.target, s.def.metric === "time");
+  }).length;
 
   return (
     <div className="min-h-screen bg-background safe-bottom">
@@ -63,10 +109,27 @@ export default function HyroxBenchmarks() {
               <h1 className="font-display text-xl font-bold">Hyrox Benchmarks</h1>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Track erg splits, run pace and station strength.
+              Track splits, pace, station strength — and hit your targets.
             </p>
           </div>
         </div>
+
+        {/* Goal summary */}
+        {goalCount > 0 && (
+          <div className="glass-card-elevated rounded-2xl p-3 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/15">
+              <Trophy className="h-4 w-4 text-emerald-500" />
+            </div>
+            <div className="flex-1">
+              <p className="font-display text-sm font-bold">
+                {achievedCount} / {goalCount} goals hit
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Alerts fire the moment you beat a target.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Category filter */}
         <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
@@ -100,25 +163,43 @@ export default function HyroxBenchmarks() {
               <BenchmarkCard
                 key={s.def.key}
                 series={s}
+                goal={goals[s.def.key] ?? null}
                 expanded={expandedKey === s.def.key}
                 onToggle={() => setExpandedKey(expandedKey === s.def.key ? null : s.def.key)}
+                onSetGoal={() => setGoalSheetFor(s)}
               />
             ))}
           </div>
         )}
       </div>
+
+      <HyroxGoalSheet
+        open={!!goalSheetFor}
+        onOpenChange={(v) => !v && setGoalSheetFor(null)}
+        userId={userId}
+        series={goalSheetFor}
+        currentGoal={goalSheetFor ? goals[goalSheetFor.def.key]?.target ?? null : null}
+        onChanged={() => {
+          setGoalsVersion((v) => v + 1);
+          alertedRef.current = false;
+        }}
+      />
     </div>
   );
 }
 
 function BenchmarkCard({
   series,
+  goal,
   expanded,
   onToggle,
+  onSetGoal,
 }: {
   series: HyroxBenchmarkSeries;
+  goal: HyroxGoal | null;
   expanded: boolean;
   onToggle: () => void;
+  onSetGoal: () => void;
 }) {
   const { def, best, latest, delta, points } = series;
   const isTime = def.metric === "time";
@@ -149,6 +230,22 @@ function BenchmarkCard({
       : `+${delta.toFixed(1).replace(/\.0$/, "")} kg`
     : null;
 
+  const firstValue = points.length ? points[0].value : null;
+  const achieved = goal ? isGoalAchieved(best, goal.target, isTime) : false;
+  const progress = goal ? goalProgress(best, firstValue, goal.target, isTime) : 0;
+
+  const goalDisplay = goal
+    ? isTime
+      ? formatSeconds(goal.target)
+      : `${goal.target} kg`
+    : null;
+
+  const remaining = goal && best !== null
+    ? isTime
+      ? Math.max(0, best - goal.target)
+      : Math.max(0, goal.target - best)
+    : null;
+
   const chartData = useMemo(
     () =>
       points.map((p, i) => ({
@@ -169,6 +266,7 @@ function BenchmarkCard({
       className={cn(
         "glass-card-elevated rounded-2xl overflow-hidden",
         empty && "opacity-60",
+        achieved && "ring-1 ring-emerald-500/40",
       )}
     >
       <button
@@ -183,6 +281,11 @@ function BenchmarkCard({
               <span className="text-[9px] font-bold uppercase tracking-wide text-orange-500 bg-orange-500/15 rounded-full px-1.5 py-0.5">
                 {def.category}
               </span>
+              {achieved && (
+                <span className="text-[9px] font-bold uppercase tracking-wide text-emerald-500 bg-emerald-500/15 rounded-full px-1.5 py-0.5">
+                  Goal hit
+                </span>
+              )}
             </div>
             <div className="flex items-baseline gap-3 mt-1">
               <div>
@@ -218,6 +321,60 @@ function BenchmarkCard({
             )}
           </div>
         </div>
+
+        {/* Goal row */}
+        {goal ? (
+          <div className="mt-3 space-y-1.5">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <Target className="h-3 w-3 text-orange-500" />
+                Target <span className="text-foreground font-semibold tabular-nums">{goalDisplay}</span>
+              </span>
+              <span className={cn(
+                "tabular-nums font-semibold",
+                achieved ? "text-emerald-500" : "text-muted-foreground",
+              )}>
+                {achieved
+                  ? "Achieved ✓"
+                  : remaining !== null
+                    ? isTime
+                      ? `−${formatSeconds(remaining)} to go`
+                      : `+${remaining.toFixed(1).replace(/\.0$/, "")} kg to go`
+                    : `${Math.round(progress * 100)}%`}
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-muted/50 overflow-hidden">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  achieved ? "bg-emerald-500" : "bg-orange-500",
+                )}
+                style={{ width: `${Math.round(progress * 100)}%` }}
+              />
+            </div>
+          </div>
+        ) : !empty ? (
+          <div className="mt-3">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSetGoal();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.stopPropagation();
+                  onSetGoal();
+                }
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 text-[11px] font-semibold px-2.5 py-1 transition-colors"
+            >
+              <Target className="h-3 w-3" />
+              Set target
+            </div>
+          </div>
+        ) : null}
 
         {!empty && expanded && (
           <div className="mt-3 -mx-1">
@@ -261,6 +418,20 @@ function BenchmarkCard({
                   strokeWidth={2}
                   fill={`url(#grad-${def.key})`}
                 />
+                {goal && (
+                  <ReferenceLine
+                    y={goal.target}
+                    stroke="hsl(142 71% 45%)"
+                    strokeDasharray="4 4"
+                    strokeWidth={1.5}
+                    label={{
+                      value: "Target",
+                      position: "insideTopRight",
+                      fill: "hsl(142 71% 45%)",
+                      fontSize: 10,
+                    }}
+                  />
+                )}
                 {chartData.map((p) =>
                   p.isPr ? (
                     <ReferenceDot
@@ -276,9 +447,29 @@ function BenchmarkCard({
                 )}
               </AreaChart>
             </ResponsiveContainer>
-            <p className="text-[10px] text-muted-foreground mt-1 text-center">
-              {points.length} {points.length === 1 ? "entry" : "entries"} · PRs marked
-            </p>
+            <div className="flex items-center justify-between mt-1 px-1">
+              <p className="text-[10px] text-muted-foreground">
+                {points.length} {points.length === 1 ? "entry" : "entries"} · PRs marked
+              </p>
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSetGoal();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    onSetGoal();
+                  }
+                }}
+                className="inline-flex items-center gap-1 text-[10px] font-semibold text-orange-500 hover:text-orange-400"
+              >
+                <Target className="h-3 w-3" />
+                {goal ? "Edit target" : "Set target"}
+              </div>
+            </div>
           </div>
         )}
       </button>
