@@ -350,6 +350,7 @@ export type Database = {
           code: string
           created_at: string
           description: string
+          discount_pct: number
           id: string
           kind: string
           name: string
@@ -358,12 +359,14 @@ export type Database = {
           rarity: string
           required_tier: string | null
           season_exclusive_id: string | null
+          season_release: number | null
         }
         Insert: {
           available?: boolean
           code: string
           created_at?: string
           description: string
+          discount_pct?: number
           id?: string
           kind: string
           name: string
@@ -372,12 +375,14 @@ export type Database = {
           rarity?: string
           required_tier?: string | null
           season_exclusive_id?: string | null
+          season_release?: number | null
         }
         Update: {
           available?: boolean
           code?: string
           created_at?: string
           description?: string
+          discount_pct?: number
           id?: string
           kind?: string
           name?: string
@@ -386,6 +391,7 @@ export type Database = {
           rarity?: string
           required_tier?: string | null
           season_exclusive_id?: string | null
+          season_release?: number | null
         }
         Relationships: []
       }
@@ -1034,6 +1040,7 @@ export type Database = {
           criteria: Json
           description: string
           id: string
+          scope: string
           title: string
           type: string
           xp_reward: number
@@ -1047,6 +1054,7 @@ export type Database = {
           criteria: Json
           description: string
           id?: string
+          scope?: string
           title: string
           type: string
           xp_reward?: number
@@ -1060,6 +1068,7 @@ export type Database = {
           criteria?: Json
           description?: string
           id?: string
+          scope?: string
           title?: string
           type?: string
           xp_reward?: number
@@ -1112,6 +1121,8 @@ export type Database = {
           number: number
           starts_at: string
           status: string
+          theme: string | null
+          theme_gradient: string | null
         }
         Insert: {
           created_at?: string
@@ -1120,6 +1131,8 @@ export type Database = {
           number: number
           starts_at: string
           status?: string
+          theme?: string | null
+          theme_gradient?: string | null
         }
         Update: {
           created_at?: string
@@ -1128,6 +1141,8 @@ export type Database = {
           number?: number
           starts_at?: string
           status?: string
+          theme?: string | null
+          theme_gradient?: string | null
         }
         Relationships: []
       }
@@ -1341,6 +1356,7 @@ export type Database = {
           id: string
           progress: number
           quest_id: string
+          season_id: string | null
           updated_at: string
           user_id: string
         }
@@ -1350,6 +1366,7 @@ export type Database = {
           id?: string
           progress?: number
           quest_id: string
+          season_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1359,6 +1376,7 @@ export type Database = {
           id?: string
           progress?: number
           quest_id?: string
+          season_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1368,6 +1386,13 @@ export type Database = {
             columns: ["quest_id"]
             isOneToOne: false
             referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_quests_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
             referencedColumns: ["id"]
           },
         ]
