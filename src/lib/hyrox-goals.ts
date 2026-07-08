@@ -2,6 +2,7 @@
 
 const GOAL_KEY = (userId: string) => `ik-hyrox-goals-${userId}`;
 const ALERT_KEY = (userId: string) => `ik-hyrox-goal-alerts-${userId}`;
+const HISTORY_KEY = (userId: string) => `ik-hyrox-goal-history-${userId}`;
 
 export type HyroxGoal = {
   /** Target value: seconds for time metric, kg for weight metric. */
@@ -10,8 +11,18 @@ export type HyroxGoal = {
   setAt: string;
 };
 
+export type HyroxGoalHistoryEntry = {
+  target: number;
+  setAt: string;
+  achievedAt?: string;
+  clearedAt?: string;
+  /** "achieved" | "replaced" | "cleared" | "active" */
+  status: "achieved" | "replaced" | "cleared" | "active";
+};
+
 type GoalMap = Record<string, HyroxGoal>;
 type AlertMap = Record<string, string>; // benchmarkKey -> ISO date achieved
+type HistoryMap = Record<string, HyroxGoalHistoryEntry[]>;
 
 function safeRead<T>(key: string): T {
   try {
@@ -38,20 +49,54 @@ export function getGoal(userId: string, benchmarkKey: string): HyroxGoal | null 
   return getGoals(userId)[benchmarkKey] ?? null;
 }
 
+/** Returns history newest first. */
+export function getGoalHistory(userId: string, benchmarkKey: string): HyroxGoalHistoryEntry[] {
+  const map = safeRead<HistoryMap>(HISTORY_KEY(userId));
+  const entries = map[benchmarkKey] ?? [];
+  return [...entries].sort((a, b) => b.setAt.localeCompare(a.setAt));
+}
+
+function updateHistory(
+  userId: string,
+  benchmarkKey: string,
+  mutator: (entries: HyroxGoalHistoryEntry[]) => HyroxGoalHistoryEntry[],
+) {
+  const map = safeRead<HistoryMap>(HISTORY_KEY(userId));
+  map[benchmarkKey] = mutator(map[benchmarkKey] ?? []);
+  safeWrite(HISTORY_KEY(userId), map);
+}
+
+function closeActive(
+  entries: HyroxGoalHistoryEntry[],
+  status: "replaced" | "cleared",
+): HyroxGoalHistoryEntry[] {
+  const now = new Date().toISOString();
+  return entries.map((e) =>
+    e.status === "active" ? { ...e, status, clearedAt: now } : e,
+  );
+}
+
 export function setGoal(userId: string, benchmarkKey: string, target: number): void {
   const goals = getGoals(userId);
-  goals[benchmarkKey] = { target, setAt: new Date().toISOString() };
+  const now = new Date().toISOString();
+  goals[benchmarkKey] = { target, setAt: now };
   safeWrite(GOAL_KEY(userId), goals);
   // Reset alert state so achieving the new goal triggers a fresh alert
   const alerts = safeRead<AlertMap>(ALERT_KEY(userId));
   delete alerts[benchmarkKey];
   safeWrite(ALERT_KEY(userId), alerts);
+  // Record in history: close any active, push new active entry
+  updateHistory(userId, benchmarkKey, (entries) => [
+    ...closeActive(entries, "replaced"),
+    { target, setAt: now, status: "active" },
+  ]);
 }
 
 export function clearGoal(userId: string, benchmarkKey: string): void {
   const goals = getGoals(userId);
   delete goals[benchmarkKey];
   safeWrite(GOAL_KEY(userId), goals);
+  updateHistory(userId, benchmarkKey, (entries) => closeActive(entries, "cleared"));
 }
 
 /** Fraction of goal achieved, 0..1. */
@@ -92,8 +137,15 @@ export function consumeGoalAchievement(
   const alerts = safeRead<AlertMap>(ALERT_KEY(userId));
   const already = !!alerts[benchmarkKey];
   if (achieved && !already) {
-    alerts[benchmarkKey] = new Date().toISOString();
+    const now = new Date().toISOString();
+    alerts[benchmarkKey] = now;
     safeWrite(ALERT_KEY(userId), alerts);
+    // Stamp the active history entry as achieved
+    updateHistory(userId, benchmarkKey, (entries) =>
+      entries.map((e) =>
+        e.status === "active" ? { ...e, status: "achieved", achievedAt: now } : e,
+      ),
+    );
     return true;
   }
   if (!achieved && already) {
