@@ -1,5 +1,5 @@
 import { Flame, Activity, Zap, Wind, Trophy } from "lucide-react";
-import type { WorkoutDay } from "./workout-data";
+import type { WorkoutDay, Exercise } from "./workout-data";
 
 /**
  * Hyrox training session library.
@@ -8,7 +8,29 @@ import type { WorkoutDay } from "./workout-data";
  * **elapsed seconds** for that interval (weightLabel: "Sec"). This lets the
  * benchmark tracker chart pace improvement without changing the DB schema.
  * `reps` still stores metres (distance is fixed per set).
+ *
+ * Interval sessions (CR / Erg / Race Sim) are expanded round-by-round so the
+ * user works straight down the list — round 1 (run → ski → rest), round 2,
+ * etc. — rather than logging all sets of one movement before switching.
  */
+
+/** Expand a set of "round exercises" over N rounds with per-round unique IDs. */
+function rounds(count: number, template: Omit<Exercise, "sets">[], group = "A"): Exercise[] {
+  const out: Exercise[] = [];
+  for (let r = 1; r <= count; r++) {
+    for (const ex of template) {
+      out.push({
+        ...ex,
+        id: `${ex.id}-r${r}`,
+        name: `${ex.name} · Rd ${r}`,
+        sets: 1,
+        supersetGroup: group,
+      });
+    }
+  }
+  return out;
+}
+
 export const HYROX_WORKOUTS: WorkoutDay[] = [
   // ── Compromised Running ────────────────────────────────────────────
   {
@@ -16,32 +38,32 @@ export const HYROX_WORKOUTS: WorkoutDay[] = [
     name: "Hyrox · CR Ski Intro",
     icon: Wind,
     day: "Compromised Run",
-    focus: "Compromised Running · Ski + Run Coupling",
+    focus: "4 rounds · Run 400m + Ski 250m + Rest 90s",
     color: "from-orange-500/25 to-red-500/10",
     targetRir: "0-1",
-    exercises: [
-      { id: "hx-run-400",  name: "Run 400m",         sets: 4, reps: "400",  targetMuscle: "Aerobic Capacity", notes: "Target 10km pace. Log elapsed seconds as the weight — lower is better.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
-      { id: "hx-ski-250",  name: "Ski Erg 250m",     sets: 4, reps: "250",  targetMuscle: "Upper Aerobic",    notes: "Hard but sustainable. Log seconds. Sub with rower if no ski.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
-      { id: "hx-rest-90",  name: "Rest 90s",         sets: 4, reps: "90",   targetMuscle: "Recovery",         notes: "Walk, breathe deep, reset posture.", trackWeight: false, repLabel: "Sec" },
-    ],
+    exercises: rounds(4, [
+      { id: "hx-run-400", name: "Run 400m",     reps: "400", targetMuscle: "Aerobic Capacity", notes: "Target 10km pace. Log elapsed seconds — lower is better.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres" },
+      { id: "hx-ski-250", name: "Ski Erg 250m", reps: "250", targetMuscle: "Upper Aerobic",    notes: "Hard but sustainable. Sub with rower if no ski.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres" },
+      { id: "hx-rest-90", name: "Rest 90s",     reps: "90",  targetMuscle: "Recovery",         notes: "Walk, breathe deep, reset posture.", trackWeight: false, repLabel: "Sec" },
+    ]),
   },
   {
     id: "hyrox-cr-full",
     name: "Hyrox · CR 1km Loop",
     icon: Activity,
     day: "Compromised Run",
-    focus: "Race-pace 1km + rotating station",
+    focus: "4 rounds · 1km Run + rotating station",
     color: "from-orange-500/25 to-red-500/10",
     targetRir: "0-1",
     exercises: [
-      { id: "hx-run-1k-a", name: "Run 1000m",             sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "Target race pace. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
-      { id: "hx-ski-1k",   name: "Ski Erg 1000m",         sets: 1, reps: "1000", targetMuscle: "Upper Aerobic", notes: "Straight off run — no rest. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
-      { id: "hx-run-1k-b", name: "Run 1000m",             sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "Recover pace on run legs.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "B" },
-      { id: "hx-sled-50",  name: "Sled Push 50m",         sets: 1, reps: "50",   targetMuscle: "Legs/Power",    notes: "Heavy — Hyrox race weight (men 152kg / women 102kg incl. sled). Log kg on sled.", repLabel: "Metres", supersetGroup: "B" },
-      { id: "hx-run-1k-c", name: "Run 1000m",             sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "C" },
-      { id: "hx-row-1k",   name: "Row 1000m",             sets: 1, reps: "1000", targetMuscle: "Full Body",     notes: "Strong legs, drive with hips. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "C" },
-      { id: "hx-run-1k-d", name: "Run 1000m",             sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "D" },
-      { id: "hx-farm-200", name: "Farmers Carry 200m",    sets: 1, reps: "200",  targetMuscle: "Grip/Traps",    notes: "2× 24kg (men) / 16kg (women). Log seconds elapsed.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "D" },
+      { id: "hx-run-1k-a", name: "Run 1000m · Rd 1",     sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "Target race pace. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
+      { id: "hx-ski-1k",   name: "Ski Erg 1000m · Rd 1", sets: 1, reps: "1000", targetMuscle: "Upper Aerobic", notes: "Straight off the run — no rest.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
+      { id: "hx-run-1k-b", name: "Run 1000m · Rd 2",     sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "Recover pace on run legs.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "B" },
+      { id: "hx-sled-50",  name: "Sled Push 50m · Rd 2", sets: 1, reps: "50",   targetMuscle: "Legs/Power",    notes: "Heavy — Hyrox race weight (men 152kg / women 102kg incl. sled). Log kg on sled.", repLabel: "Metres", supersetGroup: "B" },
+      { id: "hx-run-1k-c", name: "Run 1000m · Rd 3",     sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "C" },
+      { id: "hx-row-1k",   name: "Row 1000m · Rd 3",     sets: 1, reps: "1000", targetMuscle: "Full Body",     notes: "Strong legs, drive with hips.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "C" },
+      { id: "hx-run-1k-d", name: "Run 1000m · Rd 4",     sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "D" },
+      { id: "hx-farm-200", name: "Farmers Carry 200m · Rd 4", sets: 1, reps: "200", targetMuscle: "Grip/Traps", notes: "2× 24kg (men) / 16kg (women). Log seconds elapsed.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "D" },
     ],
   },
   {
@@ -49,16 +71,16 @@ export const HYROX_WORKOUTS: WorkoutDay[] = [
     name: "Hyrox · CR Wall Ball Sprint",
     icon: Zap,
     day: "Compromised Run",
-    focus: "Short interval CR · Wall Balls",
+    focus: "8 rounds · Run 200m + 20 Wall Balls + Rest 60s",
     color: "from-orange-500/25 to-red-500/10",
     targetRir: "0-1",
-    exercises: [
-      { id: "hx-run-200",  name: "Run 200m",       sets: 8, reps: "200", targetMuscle: "Aerobic",    notes: "Faster than race pace. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
-      { id: "hx-wb-20",    name: "Wall Balls",     sets: 8, reps: "20",  targetMuscle: "Full Body",  notes: "6kg to 10ft (men) / 4kg to 9ft (women). Log ball weight in kg.", trackWeight: true, weightLabel: "Kg", repLabel: "Reps", supersetGroup: "A" },
-      { id: "hx-rest-60",  name: "Rest 60s",       sets: 8, reps: "60",  targetMuscle: "Recovery",   notes: "Walk between rounds.", trackWeight: false, repLabel: "Sec" },
-    ],
+    exercises: rounds(8, [
+      { id: "hx-run-200", name: "Run 200m",   reps: "200", targetMuscle: "Aerobic",   notes: "Faster than race pace. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres" },
+      { id: "hx-wb-20",   name: "Wall Balls", reps: "20",  targetMuscle: "Full Body", notes: "6kg to 10ft (men) / 4kg to 9ft (women). Log ball weight in kg.", trackWeight: true, weightLabel: "Kg", repLabel: "Reps" },
+      { id: "hx-rest-60", name: "Rest 60s",   reps: "60",  targetMuscle: "Recovery",  notes: "Walk between rounds.", trackWeight: false, repLabel: "Sec" },
+    ]),
   },
-  // ── Station Strength ───────────────────────────────────────────────
+  // ── Station Strength (straight sets, no rounds) ────────────────────
   {
     id: "hyrox-strength-posterior",
     name: "Hyrox · Posterior Strength",
@@ -96,30 +118,30 @@ export const HYROX_WORKOUTS: WorkoutDay[] = [
     name: "Hyrox · Erg Threshold",
     icon: Activity,
     day: "Conditioning",
-    focus: "Row + Ski threshold intervals",
+    focus: "6 rounds · Row 500m + Ski 500m + Rest 90s",
     color: "from-red-500/25 to-orange-500/10",
     targetRir: "0-1",
-    exercises: [
-      { id: "hx-row-500",  name: "Row 500m",   sets: 6, reps: "500", targetMuscle: "Full Body Aerobic", notes: "Threshold pace — hard but repeatable. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
-      { id: "hx-ski-500",  name: "Ski Erg 500m", sets: 6, reps: "500", targetMuscle: "Upper Aerobic",    notes: "Straight from rower. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
-      { id: "hx-rest-90b", name: "Rest 90s",   sets: 6, reps: "90",  targetMuscle: "Recovery",         notes: "", trackWeight: false, repLabel: "Sec" },
-    ],
+    exercises: rounds(6, [
+      { id: "hx-row-500",  name: "Row 500m",     reps: "500", targetMuscle: "Full Body Aerobic", notes: "Threshold pace — hard but repeatable. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres" },
+      { id: "hx-ski-500",  name: "Ski Erg 500m", reps: "500", targetMuscle: "Upper Aerobic",    notes: "Straight from rower. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres" },
+      { id: "hx-rest-90b", name: "Rest 90s",     reps: "90",  targetMuscle: "Recovery",         notes: "", trackWeight: false, repLabel: "Sec" },
+    ]),
   },
   {
     id: "hyrox-erg-vo2",
     name: "Hyrox · Erg VO2",
     icon: Zap,
     day: "Conditioning",
-    focus: "Short Row/Ski VO2 intervals",
+    focus: "10 rounds · Row 250m + Ski 250m + Rest 45s",
     color: "from-red-500/25 to-orange-500/10",
     targetRir: "0-1",
-    exercises: [
-      { id: "hx-row-250",  name: "Row 250m",     sets: 10, reps: "250", targetMuscle: "VO2 Max",         notes: "All-out. Under 60s target. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
-      { id: "hx-ski-250b", name: "Ski Erg 250m", sets: 10, reps: "250", targetMuscle: "VO2 Max",         notes: "All-out. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
-      { id: "hx-rest-45",  name: "Rest 45s",     sets: 10, reps: "45",  targetMuscle: "Recovery",        notes: "Minimal — this is the point.", trackWeight: false, repLabel: "Sec" },
-    ],
+    exercises: rounds(10, [
+      { id: "hx-row-250",  name: "Row 250m",     reps: "250", targetMuscle: "VO2 Max",  notes: "All-out. Under 60s target.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres" },
+      { id: "hx-ski-250b", name: "Ski Erg 250m", reps: "250", targetMuscle: "VO2 Max",  notes: "All-out.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres" },
+      { id: "hx-rest-45",  name: "Rest 45s",     reps: "45",  targetMuscle: "Recovery", notes: "Minimal — this is the point.", trackWeight: false, repLabel: "Sec" },
+    ]),
   },
-  // ── Simulation ─────────────────────────────────────────────────────
+  // ── Simulation (already 1-set per round; kept as-is) ───────────────
   {
     id: "hyrox-halfrox",
     name: "Hyrox · HalfRox Simulation",
@@ -129,14 +151,14 @@ export const HYROX_WORKOUTS: WorkoutDay[] = [
     color: "from-yellow-500/25 to-orange-500/10",
     targetRir: "0-1",
     exercises: [
-      { id: "hx-sim-r1",   name: "Run 1000m",           sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "Race pace. Full simulation — no stopping. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
-      { id: "hx-sim-ski",  name: "Ski Erg 1000m",       sets: 1, reps: "1000", targetMuscle: "Upper Aerobic", notes: "Station 1. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
-      { id: "hx-sim-r2",   name: "Run 1000m",           sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "B" },
-      { id: "hx-sim-push", name: "Sled Push 50m",       sets: 1, reps: "50",   targetMuscle: "Legs/Power",    notes: "Station 2. Race weight. Log kg.", repLabel: "Metres", supersetGroup: "B" },
-      { id: "hx-sim-r3",   name: "Run 1000m",           sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "C" },
-      { id: "hx-sim-pull", name: "Sled Pull 50m",       sets: 1, reps: "50",   targetMuscle: "Back/Posterior", notes: "Station 3. Race weight. Log kg.", repLabel: "Metres", supersetGroup: "C" },
-      { id: "hx-sim-r4",   name: "Run 1000m",           sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "D" },
-      { id: "hx-sim-bbj",  name: "Burpee Broad Jumps 80m", sets: 1, reps: "80", targetMuscle: "Full Body Power", notes: "Station 4. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "D" },
+      { id: "hx-sim-r1",   name: "Run 1000m · Rd 1",      sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "Race pace. Full simulation — no stopping.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
+      { id: "hx-sim-ski",  name: "Ski Erg 1000m · Rd 1",  sets: 1, reps: "1000", targetMuscle: "Upper Aerobic", notes: "Station 1.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "A" },
+      { id: "hx-sim-r2",   name: "Run 1000m · Rd 2",      sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "B" },
+      { id: "hx-sim-push", name: "Sled Push 50m · Rd 2",  sets: 1, reps: "50",   targetMuscle: "Legs/Power",    notes: "Station 2. Race weight. Log kg.", repLabel: "Metres", supersetGroup: "B" },
+      { id: "hx-sim-r3",   name: "Run 1000m · Rd 3",      sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "C" },
+      { id: "hx-sim-pull", name: "Sled Pull 50m · Rd 3",  sets: 1, reps: "50",   targetMuscle: "Back/Posterior", notes: "Station 3. Race weight. Log kg.", repLabel: "Metres", supersetGroup: "C" },
+      { id: "hx-sim-r4",   name: "Run 1000m · Rd 4",      sets: 1, reps: "1000", targetMuscle: "Aerobic",       notes: "", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "D" },
+      { id: "hx-sim-bbj",  name: "Burpee Broad Jumps 80m · Rd 4", sets: 1, reps: "80", targetMuscle: "Full Body Power", notes: "Station 4. Log seconds.", trackWeight: true, weightLabel: "Sec", repLabel: "Metres", supersetGroup: "D" },
     ],
   },
 ];
@@ -180,7 +202,8 @@ export type HyroxBenchmarkDef = {
   metric: "time" | "weight" | "reps";
   /** Fixed distance in metres, for pace calculation on time-based benchmarks. */
   distance?: number;
-  /** Exercise IDs whose sets should be aggregated into this benchmark. */
+  /** Exercise ID prefixes whose sets should be aggregated into this benchmark.
+   *  Rounds append `-r{n}` suffixes; matching is done via startsWith on the base ID. */
   exerciseIds: string[];
 };
 
