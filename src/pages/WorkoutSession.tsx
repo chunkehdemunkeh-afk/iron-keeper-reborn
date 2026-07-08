@@ -1753,6 +1753,37 @@ export default function WorkoutSession() {
             const hasSubs = true; // library search available for all exercises
             const ssInfo = supersetMap[ex.id];
 
+            // Hyrox round grouping: emit a "Round N" header before the first
+            // exercise of each round, and hide the exercise card when the round
+            // is collapsed.
+            const round = hyroxRoundOf(ex.id, ex.supersetGroup);
+            const prevEx = i > 0 ? orderedExercises[i - 1] : null;
+            const prevRound = prevEx ? hyroxRoundOf(prevEx.id, prevEx.supersetGroup) : null;
+            const showRoundHeader = round != null && round !== prevRound;
+            const isRoundCollapsed = round != null && collapsedHyroxRounds.has(round);
+            let roundHeader: JSX.Element | null = null;
+            if (showRoundHeader && round != null) {
+              const roundExs = orderedExercises.filter(e => hyroxRoundOf(e.id, e.supersetGroup) === round);
+              const roundTotal = roundExs.length;
+              const roundDone = roundExs.filter(e => setLogs[e.id]?.every(s => s.completed)).length;
+              const allRoundDone = roundTotal > 0 && roundDone === roundTotal;
+              roundHeader = (
+                <button
+                  key={`round-header-${round}`}
+                  type="button"
+                  onClick={() => toggleHyroxRound(round)}
+                  className={`w-full flex items-center gap-2 mt-3 mb-1 px-2.5 py-1.5 rounded-lg transition-colors ${allRoundDone ? "bg-success/10 hover:bg-success/15" : "bg-muted/40 hover:bg-muted/60"}`}
+                >
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${allRoundDone ? "text-success" : "text-muted-foreground"}`}>Round {round}</span>
+                  <span className="text-[10px] text-muted-foreground">{roundDone}/{roundTotal}</span>
+                  <div className="flex-1 h-px bg-border/40" />
+                  <span className="text-muted-foreground">
+                    {isRoundCollapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+                  </span>
+                </button>
+              );
+            }
+
             const exerciseCard = (
               <ExerciseDragItem
                 key={ex.id}
