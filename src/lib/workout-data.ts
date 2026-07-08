@@ -1,4 +1,5 @@
 import { Zap, Wind, Dumbbell, Shield, ArrowUp, ArrowDown, Footprints, User, Flame, Target, Trophy, Layers, Activity } from "lucide-react";
+import { HYROX_WORKOUTS } from "./hyrox-workouts";
 import type { LucideIcon } from "lucide-react";
 
 export type Exercise = {
