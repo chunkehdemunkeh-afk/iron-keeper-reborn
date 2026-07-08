@@ -467,6 +467,7 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "la6",              name: "Core Finisher",            sets: 2, reps: "12-15", targetMuscle: "Core",              targetRir: "0-1", notes: "Pick a variant from the dropdown — 60s rest" },
     ],
   },
+  ...HYROX_WORKOUTS,
 ];
 
 export function getTodaySchedule() {
