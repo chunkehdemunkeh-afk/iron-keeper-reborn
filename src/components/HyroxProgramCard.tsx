@@ -183,6 +183,15 @@ export default function HyroxProgramCard() {
             );
           })}
         </div>
+
+        {/* Benchmarks link */}
+        <button
+          onClick={() => navigate("/hyrox")}
+          className="mt-3 w-full flex items-center justify-between rounded-lg bg-background/40 hover:bg-background/60 border border-border/50 px-3 py-2 text-xs font-medium text-foreground active:scale-[0.98] transition-all"
+        >
+          <span>View Hyrox benchmarks & pace charts</span>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
       </div>
     </motion.div>
   );
