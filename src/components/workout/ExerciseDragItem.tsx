@@ -12,7 +12,7 @@ interface ExerciseDragItemProps {
   targetRir?: string;
   supersetGroup?: string;
   onToggleExpand: () => void;
-  onPlayVideo: () => void;
+  onPlayVideo?: () => void;
   onSwap: () => void;
   hasSubs: boolean;
   lastSub?: { subName: string; subId: string };
@@ -100,12 +100,14 @@ export default function ExerciseDragItem({
               )}
             </div>
           </button>
-          <button
-            onClick={onPlayVideo}
-            className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary mr-1"
-          >
-            <Play className="h-3 w-3" />
-          </button>
+          {onPlayVideo && (
+            <button
+              onClick={onPlayVideo}
+              className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary mr-1"
+            >
+              <Play className="h-3 w-3" />
+            </button>
+          )}
           {hasSubs && (
             <button
               onClick={onSwap}
