@@ -18,15 +18,15 @@ export function useUserRole() {
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .then(({ data }) => {
-        setIsCoach(data?.some((r) => r.role === "coach") ?? false);
-        setRoleLoading(false);
-      })
-      .catch(() => {
-        // A rejected promise here would otherwise leave roleLoading stuck
-        // true forever, since nothing else would clear it.
-        setRoleLoading(false);
-      });
+      .then(
+        ({ data }) => {
+          setIsCoach(data?.some((r) => r.role === "coach") ?? false);
+          setRoleLoading(false);
+        },
+        () => {
+          setRoleLoading(false);
+        },
+      );
   }, [user]);
 
   return { isCoach, roleLoading };
