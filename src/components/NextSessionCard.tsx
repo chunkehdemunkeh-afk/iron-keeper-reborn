@@ -1,18 +1,21 @@
 import { WORKOUTS } from "@/lib/workout-data";
 import { getAllCustomWorkouts } from "@/pages/WorkoutBuilder";
 import { useNavigate } from "react-router-dom";
-import { Play, Repeat2, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
+import { Play, Repeat2, ChevronDown, ChevronUp, ChevronRight, Flame } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserPreferences, getNextSplitDay, isNoWorkoutMode } from "@/lib/user-preferences";
 import { useState, useMemo } from "react";
 import { useWorkoutHistory } from "@/hooks/queries/useWorkoutHistory";
+import HyroxSwapSheet from "@/components/HyroxSwapSheet";
+import { HYROX_WORKOUT_IDS } from "@/lib/hyrox-workouts";
 
 export default function NextSessionCard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [showAll, setShowAll] = useState(false);
   const [overrideWorkoutId, setOverrideWorkoutId] = useState<string | null>(null);
+  const [hyroxOpen, setHyroxOpen] = useState(false);
 
   const prefs = user ? getUserPreferences(user.id) : null;
   const noWorkout = user ? isNoWorkoutMode(user.id) : false;
