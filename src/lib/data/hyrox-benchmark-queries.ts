@@ -32,6 +32,11 @@ export async function fetchHyroxBenchmarks(): Promise<HyroxBenchmarkSeries[]> {
   const allIds = HYROX_BENCHMARKS.flatMap((b) => b.exerciseIds);
   if (allIds.length === 0) return [];
 
+  // Match both exact base IDs and their round-suffixed variants (e.g. "hx-run-400-r3").
+  const orFilter = allIds
+    .flatMap((id) => [`exercise_id.eq.${id}`, `exercise_id.like.${id}-r%`])
+    .join(",");
+
   // Page through — Supabase caps at 1000 rows.
   const PAGE = 1000;
   type Row = { exercise_id: string; weight: number | string; reps: number; created_at: string };
@@ -41,7 +46,7 @@ export async function fetchHyroxBenchmarks(): Promise<HyroxBenchmarkSeries[]> {
       .from("workout_sets")
       .select("exercise_id, weight, reps, created_at")
       .eq("user_id", user.id)
-      .in("exercise_id", allIds)
+      .or(orFilter)
       .gt("weight", 0)
       .order("created_at", { ascending: true })
       .range(from, from + PAGE - 1);
@@ -50,13 +55,23 @@ export async function fetchHyroxBenchmarks(): Promise<HyroxBenchmarkSeries[]> {
     if (page.length < PAGE) break;
   }
 
-  // Group by benchmark key
-  const idToKey: Record<string, string> = {};
-  HYROX_BENCHMARKS.forEach((b) => b.exerciseIds.forEach((id) => (idToKey[id] = b.key)));
+  // Map each exercise_id (possibly with -r{n} suffix) back to a benchmark key.
+  // Longer base IDs win so "hx-run-1k-a" beats "hx-run-1" if both existed.
+  const baseIdToKey: Array<{ base: string; key: string }> = [];
+  HYROX_BENCHMARKS.forEach((b) =>
+    b.exerciseIds.forEach((id) => baseIdToKey.push({ base: id, key: b.key })),
+  );
+  baseIdToKey.sort((a, b) => b.base.length - a.base.length);
+  function keyFor(exerciseId: string): string | null {
+    for (const { base, key } of baseIdToKey) {
+      if (exerciseId === base || exerciseId.startsWith(`${base}-r`)) return key;
+    }
+    return null;
+  }
 
   const grouped: Record<string, HyroxBenchmarkPoint[]> = {};
   for (const r of rows) {
-    const key = idToKey[r.exercise_id];
+    const key = keyFor(r.exercise_id);
     if (!key) continue;
     const v = Number(r.weight);
     if (!v || Number.isNaN(v)) continue;
