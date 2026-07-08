@@ -495,3 +495,86 @@ function BenchmarkCard({
     </motion.div>
   );
 }
+
+function GoalHistoryTimeline({
+  history,
+  isTime,
+}: {
+  history: HyroxGoalHistoryEntry[];
+  isTime: boolean;
+}) {
+  const fmtTarget = (t: number) =>
+    isTime ? formatSeconds(t) : `${t.toFixed(1).replace(/\.0$/, "")} kg`;
+
+  const fmtDateTime = (iso: string) =>
+    new Date(iso).toLocaleString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  const statusMeta = (status: HyroxGoalHistoryEntry["status"]) => {
+    switch (status) {
+      case "achieved":
+        return { label: "Achieved", dot: "bg-emerald-500", text: "text-emerald-500" };
+      case "active":
+        return { label: "In progress", dot: "bg-orange-500", text: "text-orange-500" };
+      case "replaced":
+        return { label: "Replaced", dot: "bg-muted-foreground", text: "text-muted-foreground" };
+      case "cleared":
+        return { label: "Cleared", dot: "bg-muted-foreground", text: "text-muted-foreground" };
+    }
+  };
+
+  return (
+    <div className="mt-3 pt-3 border-t border-border/40">
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 px-1">
+        Goal history
+      </p>
+      <ol className="relative pl-4">
+        <span className="absolute left-[7px] top-1 bottom-1 w-px bg-border/60" aria-hidden />
+        {history.map((entry, i) => {
+          const meta = statusMeta(entry.status);
+          return (
+            <li key={`${entry.setAt}-${i}`} className="relative pb-2.5 last:pb-0">
+              <span
+                className={cn(
+                  "absolute -left-[13px] top-1 h-2 w-2 rounded-full ring-2 ring-background",
+                  meta.dot,
+                )}
+                aria-hidden
+              />
+              <div className="flex items-baseline justify-between gap-2">
+                <div className="flex items-baseline gap-2 min-w-0">
+                  <span className="font-display text-sm font-bold tabular-nums text-foreground">
+                    {fmtTarget(entry.target)}
+                  </span>
+                  <span className={cn("text-[10px] font-semibold uppercase tracking-wide", meta.text)}>
+                    {meta.label}
+                  </span>
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-0.5 tabular-nums">
+                Set {fmtDateTime(entry.setAt)}
+                {entry.achievedAt && (
+                  <>
+                    {" · "}
+                    <span className="text-emerald-500">Hit {fmtDateTime(entry.achievedAt)}</span>
+                  </>
+                )}
+                {!entry.achievedAt && entry.clearedAt && (
+                  <>
+                    {" · "}
+                    {entry.status === "replaced" ? "Replaced" : "Cleared"} {fmtDateTime(entry.clearedAt)}
+                  </>
+                )}
+              </p>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
