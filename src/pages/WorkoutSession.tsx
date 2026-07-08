@@ -325,6 +325,13 @@ export default function WorkoutSession() {
     return () => clearInterval(interval);
   }, [started, finished, showFeedback, saveSessionToStorage]);
 
+  // Snapshot immediately when auto-advance moves the expanded card, so a
+  // force-killed tab can still resume at the last opened exercise.
+  useEffect(() => {
+    if (!started || finished || showFeedback) return;
+    saveSessionToStorage();
+  }, [expandedExercise]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Clear auto-save on finish
   const clearAutoSave = useCallback(() => {
     if (autoSaveKey) {
