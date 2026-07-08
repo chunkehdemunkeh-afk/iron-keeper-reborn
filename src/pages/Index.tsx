@@ -144,6 +144,10 @@ const Index = () => {
         {/* Next session — only show on today and when user has a workout plan */}
         {isCurrentDay && !noWorkoutMode && <NextSessionCard />}
 
+        {/* Hyrox program card — visible for hyrox-split users */}
+        {isCurrentDay && hyroxMode && <HyroxProgramCard />}
+
+
         {/* Home session launcher — always available on today */}
         {isCurrentDay && <HomeSessionCard />}
 
