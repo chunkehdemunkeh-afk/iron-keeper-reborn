@@ -228,7 +228,10 @@ export default function CoachDashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b border-border px-4 py-4 flex items-center justify-between">
+      <div
+        className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b border-border px-4 py-4 flex items-center justify-between"
+        style={{ paddingTop: "calc(1rem + env(safe-area-inset-top, 0px))" }}
+      >
         <div>
           <h1 className="font-display text-xl font-bold tracking-tight">Coach Dashboard</h1>
           <p className="text-xs text-muted-foreground mt-0.5">

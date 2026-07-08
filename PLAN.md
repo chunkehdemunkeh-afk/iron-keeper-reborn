@@ -4,9 +4,11 @@
 
 ## Current Status
 
+**PRELAUNCH_AUDIT.md #29-30 complete (2026-07-08):** Viewport meta tag switched from `maximum-scale=1.0, user-scalable=no` to `viewport-fit=cover` (removes pinch-zoom block, #30) and enables safe-area insets (#29). Applied `env(safe-area-inset-top)` padding to every full-bleed sticky/fixed top element that wasn't already covered: `UpdateBanner.tsx`, and the page-header bars in `CoachAthleteDetail.tsx`, `CoachDashboard.tsx`, `Community.tsx`, `Duels.tsx`, `Quests.tsx`, `Shop.tsx`. (`BottomNav.tsx` already had bottom-inset handling from an earlier pass.) Sheet-based sticky headers (`PhotoCompareSheet`, `ProgressPhotoGrid`, `WeeklyReviewSheet`) were left alone — they're modal sheets with margin, not flush against the device edge. Not yet verified on a real notched device (no local build/lint — see Gotchas); should be sanity-checked once a Capacitor/Android build exists.
+
 **Session end 2026-07-03:** Worked through PRELAUNCH_AUDIT.md systematically — calc-correctness, storage/data-loss, and error-handling batches all complete this session (details below). All SQL migrations from this session are applied and confirmed. Nothing left mid-flight; safe to resume from a clean state.
 
-**Next up when resuming:** Two items don't need Capacitor or a device and could be picked up immediately — audit #29 (safe-area/notch CSS: `viewport-fit=cover` + `env(safe-area-inset-*)`) and #30 (remove `user-scalable=no` from the viewport meta tag for zoom accessibility). Everything else remaining in the audit needs either a real Android device/Capacitor build (#1, #2, #7, #8, #26, #27, #28) or an answer to the open Phase 0 questions (Android Studio/JDK/SDK setup status, SW gating vs delete, push notification strategy, OAuth deep-link scheme). See `project_native_launch_todo` memory / `C:\Users\chunk\.claude\plans\melodic-dancing-stroustrup.md` for the full phased plan.
+**Next up when resuming:** Everything remaining in PRELAUNCH_AUDIT.md needs either a real Android device/Capacitor build (#1, #2, #7, #8, #26, #27, #28) or an answer to the open Phase 0 questions (Android Studio/JDK/SDK setup status, SW gating vs delete, push notification strategy, OAuth deep-link scheme). See `project_native_launch_todo` memory / `C:\Users\chunk\.claude\plans\melodic-dancing-stroustrup.md` for the full phased plan.
 
 **PRELAUNCH_AUDIT.md error-handling batch complete** (2026-07-03, #23-25, no SQL to run):
 - **#23** — already fixed in an earlier pass (`finalizeWorkout` in `WorkoutSession.tsx` has a proper `.catch` + retry toast).

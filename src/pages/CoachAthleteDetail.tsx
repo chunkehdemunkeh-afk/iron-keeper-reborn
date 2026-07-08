@@ -130,7 +130,10 @@ export default function CoachAthleteDetail() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b border-border px-4 py-4 flex items-center gap-3">
+      <div
+        className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b border-border px-4 py-4 flex items-center gap-3"
+        style={{ paddingTop: "calc(1rem + env(safe-area-inset-top, 0px))" }}
+      >
         <button onClick={() => navigate("/coach")} className="flex h-9 w-9 items-center justify-center rounded-xl bg-card text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />
         </button>
