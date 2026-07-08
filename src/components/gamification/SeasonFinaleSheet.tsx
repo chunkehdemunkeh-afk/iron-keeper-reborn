@@ -1,25 +1,33 @@
 /**
  * Animated season finale recap.
- * Triggered manually from the Quests page; calls settle_season RPC then
- * shows the user's final rank, tier, badges, and rewards.
+ * Auto-opens when a pending finale exists; settles via RPC then shows the
+ * user's rank, tier, coin reward, and unlocked cosmetics.
  */
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Crown, Sparkles, Coins, Trophy } from "lucide-react";
+import { Crown, Sparkles, Coins, Trophy, Gift, ShoppingBag } from "lucide-react";
 import { TierBadge } from "./TierBadge";
 import { tierFromRp } from "@/lib/gamification/tiers";
 import { settleSeason } from "@/lib/data/season-queries";
-import { usePendingSeasonFinale, useMyLatestSeasonResult } from "@/hooks/queries/useSeasonFinale";
+import {
+  usePendingSeasonFinale,
+  useMyLatestSeasonResult,
+  useCosmeticsUnlockedInSeason,
+} from "@/hooks/queries/useSeasonFinale";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export default function SeasonFinaleSheet() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [settling, setSettling] = useState(false);
+  const [settled, setSettled] = useState(false);
   const { data: pending } = usePendingSeasonFinale();
   const { data: result, refetch: refetchResult } = useMyLatestSeasonResult();
+  const { data: unlocked = [] } = useCosmeticsUnlockedInSeason(pending?.starts_at);
   const qc = useQueryClient();
 
   useEffect(() => {
@@ -31,21 +39,39 @@ export default function SeasonFinaleSheet() {
     setSettling(true);
     try {
       await settleSeason(pending.id);
+      // Force-refresh caches. Note: after RPC completes, the pending season
+      // becomes `completed` — so the sheet's `pending` query returns null.
+      // We latch a local `settled` flag so the result view stays visible.
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["season-finale-pending"] }),
         qc.invalidateQueries({ queryKey: ["current-season"] }),
         qc.invalidateQueries({ queryKey: ["user-progress"] }),
+        qc.invalidateQueries({ queryKey: ["cosmetics-unlocked-season"] }),
       ]);
       await refetchResult();
-      toast.success("Season settled!");
+      setSettled(true);
+      toast.success("Season settled — new season live!");
     } catch (e) {
-      toast.error("Could not settle season");
+      console.error("[SeasonFinale] settleSeason failed:", e);
+      const msg = (e as Error).message ?? "Could not settle season";
+      toast.error(msg);
     } finally {
       setSettling(false);
     }
   };
 
-  const showResult = result && pending && result.season_id === pending.id;
+  const showResult = settled && result;
+
+  const handleContinue = () => {
+    setOpen(false);
+    setSettled(false);
+  };
+
+  const handleGoToShop = () => {
+    setOpen(false);
+    setSettled(false);
+    navigate("/shop");
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -62,7 +88,7 @@ export default function SeasonFinaleSheet() {
               <motion.div
                 animate={{ rotate: [0, -8, 8, 0], scale: [1, 1.08, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-fuchsia-500"
+                className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-fuchsia-500 shadow-2xl shadow-fuchsia-500/30"
               >
                 <Crown className="h-10 w-10 text-white" />
               </motion.div>
@@ -70,13 +96,13 @@ export default function SeasonFinaleSheet() {
                 <h2 className="font-display text-2xl font-black uppercase tracking-wider">
                   Season {pending?.number} Finale
                 </h2>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Lock in your final rank, claim your rewards, and prepare for next season.
+                <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
+                  Lock in your final rank, claim your rewards, and step into next season.
                 </p>
               </div>
               <Button onClick={handleSettle} disabled={settling} size="lg" className="w-full">
                 <Sparkles className="h-4 w-4 mr-2" />
-                {settling ? "Settling..." : "Claim Season Rewards"}
+                {settling ? "Settling…" : "Claim Season Rewards"}
               </Button>
             </motion.div>
           ) : (
@@ -84,11 +110,11 @@ export default function SeasonFinaleSheet() {
               key="result"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="py-6 space-y-5"
+              className="py-6 space-y-5 max-h-[80vh] overflow-y-auto"
             >
               <div className="text-center">
                 <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
-                  Season {pending?.number} Result
+                  Season {pending?.number ?? ""} Result
                 </p>
                 <h2 className="font-display text-3xl font-black mt-1">
                   Rank #{result.final_rank ?? "—"}
@@ -113,13 +139,40 @@ export default function SeasonFinaleSheet() {
                 </div>
               </div>
 
+              {unlocked.length > 0 && (
+                <div className="rounded-xl bg-gradient-to-br from-primary/10 to-fuchsia-500/10 border border-primary/30 p-3 space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <Gift className="h-3.5 w-3.5 text-primary" />
+                    <h4 className="text-[11px] uppercase tracking-widest font-bold">
+                      Unlocked This Season
+                    </h4>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {unlocked.map((u) => (
+                      <span
+                        key={u.code}
+                        className="text-[10px] font-semibold rounded-full bg-background/60 px-2 py-1 border border-border/40"
+                      >
+                        {u.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <p className="text-[11px] text-center text-muted-foreground">
-                RP soft-reset to your tier floor. New season starts immediately.
+                RP soft-reset to your tier floor. A new season is now live.
               </p>
 
-              <Button onClick={() => setOpen(false)} className="w-full" variant="outline">
-                Continue
-              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                <Button onClick={handleContinue} variant="outline" className="w-full">
+                  Continue
+                </Button>
+                <Button onClick={handleGoToShop} className="w-full">
+                  <ShoppingBag className="h-4 w-4 mr-1.5" />
+                  Spend Coins
+                </Button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -131,10 +184,10 @@ export default function SeasonFinaleSheet() {
 function coinRewardForTier(tier: string): number {
   switch (tier) {
     case "champion": return 5000;
-    case "diamond": return 2500;
+    case "diamond":  return 2500;
     case "platinum": return 1500;
-    case "gold": return 800;
-    case "silver": return 400;
-    default: return 150;
+    case "gold":     return 800;
+    case "silver":   return 400;
+    default:         return 150;
   }
 }
