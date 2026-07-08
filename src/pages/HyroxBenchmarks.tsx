@@ -266,6 +266,13 @@ function BenchmarkCard({
     [points, isTime],
   );
 
+  const history = useMemo<HyroxGoalHistoryEntry[]>(
+    () => (userId ? getGoalHistory(userId, def.key) : []),
+    // goalsVersion bumps whenever set/clear happens; achievedAt updates via consumeGoalAchievement
+    // which fires on mount effect — series identity changes when data reloads.
+    [userId, def.key, goalsVersion, series],
+  );
+
   return (
     <motion.div
       layout
