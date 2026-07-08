@@ -156,6 +156,21 @@ export const TRAINING_SPLITS: TrainingSplit[] = [
     ],
   },
   {
+    id: "hyrox",
+    name: "Hyrox Race Prep",
+    recommendedDays: [4, 5],
+    description: "Training built around the 8 Hyrox race stations: compromised running, sled/wall ball strength, erg conditioning and race simulation. Add a race date to run the 8-week program.",
+    tag: "Hyrox 🔥",
+    targetRir: "0-1",
+    schedule: [
+      { label: "CR 1km Loop",   workoutId: "hyrox-cr-full",             color: "from-orange-500/25 to-red-500/10", icon: Activity },
+      { label: "Posterior",     workoutId: "hyrox-strength-posterior",  color: "from-amber-500/25 to-orange-500/10", icon: Trophy },
+      { label: "Erg Threshold", workoutId: "hyrox-erg-threshold",       color: "from-red-500/25 to-orange-500/10", icon: Flame },
+      { label: "Power & WB",    workoutId: "hyrox-strength-power",      color: "from-amber-500/25 to-orange-500/10", icon: Zap },
+      { label: "HalfRox",       workoutId: "hyrox-halfrox",             color: "from-yellow-500/25 to-orange-500/10", icon: Trophy },
+    ],
+  },
+  {
     id: "custom",
     name: "Custom Split",
     recommendedDays: [2, 3, 4, 5, 6],
