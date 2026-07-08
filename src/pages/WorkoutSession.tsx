@@ -1034,7 +1034,7 @@ export default function WorkoutSession() {
       // Skip when a RIR picker was just opened — collapsing now would hide it.
       // The picker's pick/skip handlers will trigger the auto-expand instead.
       const allSetsNowDone = newSets.every(s => s.completed);
-      const justOpenedRirPicker = newSets[setIdx]?.setType !== "warmup";
+      const justOpenedRirPicker = newSets[setIdx]?.setType !== "warmup" && !isHyroxSession;
       if (allSetsNowDone && !justOpenedRirPicker) {
         const currentOrderIdx = exerciseOrder.indexOf(exerciseId);
         if (currentOrderIdx >= 0 && currentOrderIdx < exerciseOrder.length - 1) {
