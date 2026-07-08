@@ -36,6 +36,7 @@ const Index = () => {
   const displayName = profile?.display_name?.split(" ")[0] || "Athlete";
   const gkMode = user ? isGKSplit(user.id) : false;
   const noWorkoutMode = user ? isNoWorkoutMode(user.id) : false;
+  const hyroxMode = user ? getUserPreferences(user.id)?.splitId === "hyrox" : false;
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [slideDir, setSlideDir] = useState(0); // -1 left, 1 right
