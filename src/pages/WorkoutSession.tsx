@@ -155,6 +155,17 @@ export default function WorkoutSession() {
   const [heavyStackExercises, setHeavyStackExercises] = useState<Set<string>>(new Set());
   const [singleArmExercises, setSingleArmExercises] = useState<Set<string>>(() => new Set(DEFAULT_SINGLE_ARM_IDS));
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
+  const [collapsedHyroxRounds, setCollapsedHyroxRounds] = useState<Set<number>>(new Set());
+
+  // Derive the round number for a Hyrox exercise from either its `-r{N}` id
+  // suffix (interleaved sessions) or its supersetGroup letter (CR full).
+  const hyroxRoundOf = useCallback((exId: string, group?: string): number | null => {
+    if (!isHyroxSession) return null;
+    const m = /-r(\d+)$/.exec(exId);
+    if (m) return parseInt(m[1], 10);
+    if (group && /^[A-Z]$/.test(group)) return group.charCodeAt(0) - 64;
+    return null;
+  }, [isHyroxSession]);
   const [exerciseOrder, setExerciseOrder] = useState<string[]>([]);
   const [setLogs, setSetLogs] = useState<Record<string, SetLog[]>>({});
   const [exerciseNotes, setExerciseNotes] = useState<Record<string, string>>({});
@@ -1168,6 +1179,32 @@ export default function WorkoutSession() {
     ? exerciseOrder.map(id => allExercises.find(ex => ex.id === id)!).filter(Boolean)
     : [];
 
+  // Hyrox: collapse all rounds except the one containing the currently-expanded
+  // exercise. Keeps the round list scannable instead of an overwhelming flat wall.
+  useEffect(() => {
+    if (!isHyroxSession || !workout) return;
+    const rounds = new Set<number>();
+    workout.exercises.forEach(e => {
+      const r = hyroxRoundOf(e.id, e.supersetGroup);
+      if (r != null) rounds.add(r);
+    });
+    if (rounds.size === 0) return;
+    const currentEx = workout.exercises.find(e => e.id === expandedExercise);
+    const activeRound = currentEx ? hyroxRoundOf(currentEx.id, currentEx.supersetGroup) : null;
+    const keepOpen = activeRound ?? Math.min(...rounds);
+    setCollapsedHyroxRounds(new Set([...rounds].filter(r => r !== keepOpen)));
+  }, [isHyroxSession, workout, expandedExercise, hyroxRoundOf]);
+
+  const toggleHyroxRound = useCallback((round: number) => {
+    setCollapsedHyroxRounds(prev => {
+      const next = new Set(prev);
+      if (next.has(round)) next.delete(round);
+      else next.add(round);
+      return next;
+    });
+  }, []);
+
+
   const completedExercises = allExercises.filter((ex) => setLogs[ex.id]?.every((s) => s.completed)).length;
   const totalExercises = allExercises.length;
 
@@ -1715,6 +1752,37 @@ export default function WorkoutSession() {
             const allSubs = { ...EXERCISE_SUBSTITUTIONS, ...ACCESSORY_SUBSTITUTIONS };
             const hasSubs = true; // library search available for all exercises
             const ssInfo = supersetMap[ex.id];
+
+            // Hyrox round grouping: emit a "Round N" header before the first
+            // exercise of each round, and hide the exercise card when the round
+            // is collapsed.
+            const round = hyroxRoundOf(ex.id, ex.supersetGroup);
+            const prevEx = i > 0 ? orderedExercises[i - 1] : null;
+            const prevRound = prevEx ? hyroxRoundOf(prevEx.id, prevEx.supersetGroup) : null;
+            const showRoundHeader = round != null && round !== prevRound;
+            const isRoundCollapsed = round != null && collapsedHyroxRounds.has(round);
+            let roundHeader: JSX.Element | null = null;
+            if (showRoundHeader && round != null) {
+              const roundExs = orderedExercises.filter(e => hyroxRoundOf(e.id, e.supersetGroup) === round);
+              const roundTotal = roundExs.length;
+              const roundDone = roundExs.filter(e => setLogs[e.id]?.every(s => s.completed)).length;
+              const allRoundDone = roundTotal > 0 && roundDone === roundTotal;
+              roundHeader = (
+                <button
+                  key={`round-header-${round}`}
+                  type="button"
+                  onClick={() => toggleHyroxRound(round)}
+                  className={`w-full flex items-center gap-2 mt-3 mb-1 px-2.5 py-1.5 rounded-lg transition-colors ${allRoundDone ? "bg-success/10 hover:bg-success/15" : "bg-muted/40 hover:bg-muted/60"}`}
+                >
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${allRoundDone ? "text-success" : "text-muted-foreground"}`}>Round {round}</span>
+                  <span className="text-[10px] text-muted-foreground">{roundDone}/{roundTotal}</span>
+                  <div className="flex-1 h-px bg-border/40" />
+                  <span className="text-muted-foreground">
+                    {isRoundCollapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+                  </span>
+                </button>
+              );
+            }
 
             const exerciseCard = (
               <ExerciseDragItem
@@ -2459,6 +2527,17 @@ export default function WorkoutSession() {
               );
             }
 
+            if (round != null) {
+              if (isRoundCollapsed) {
+                return roundHeader; // only rendered on the first ex of the round; null otherwise
+              }
+              return (
+                <React.Fragment key={`hx-${ex.id}`}>
+                  {roundHeader}
+                  {exerciseCard}
+                </React.Fragment>
+              );
+            }
             return exerciseCard;
           })}
         </Reorder.Group>
