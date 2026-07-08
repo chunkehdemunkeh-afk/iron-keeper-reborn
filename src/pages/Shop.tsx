@@ -288,7 +288,7 @@ function ShopItemCard({
       {item.rarity === "legendary" && (
         <Crown className="absolute top-1.5 left-1.5 h-3 w-3 text-amber-300" />
       )}
-      <div className={`rounded-lg bg-gradient-to-br from-secondary/60 to-background/40 ${item.rarity === "legendary" ? "animate-pulse-soft" : ""}`}>
+      <div className={`rounded-lg bg-gradient-to-br from-secondary/60 to-background/40 ${item.rarity === "legendary" ? "animate-pulse" : ""}`}>
         <CosmeticPreview item={item} />
       </div>
       <div>
