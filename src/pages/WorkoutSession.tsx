@@ -155,6 +155,17 @@ export default function WorkoutSession() {
   const [heavyStackExercises, setHeavyStackExercises] = useState<Set<string>>(new Set());
   const [singleArmExercises, setSingleArmExercises] = useState<Set<string>>(() => new Set(DEFAULT_SINGLE_ARM_IDS));
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
+  const [collapsedHyroxRounds, setCollapsedHyroxRounds] = useState<Set<number>>(new Set());
+
+  // Derive the round number for a Hyrox exercise from either its `-r{N}` id
+  // suffix (interleaved sessions) or its supersetGroup letter (CR full).
+  const hyroxRoundOf = useCallback((exId: string, group?: string): number | null => {
+    if (!isHyroxSession) return null;
+    const m = /-r(\d+)$/.exec(exId);
+    if (m) return parseInt(m[1], 10);
+    if (group && /^[A-Z]$/.test(group)) return group.charCodeAt(0) - 64;
+    return null;
+  }, [isHyroxSession]);
   const [exerciseOrder, setExerciseOrder] = useState<string[]>([]);
   const [setLogs, setSetLogs] = useState<Record<string, SetLog[]>>({});
   const [exerciseNotes, setExerciseNotes] = useState<Record<string, string>>({});
