@@ -485,6 +485,10 @@ function BenchmarkCard({
                 {goal ? "Edit target" : "Set target"}
               </div>
             </div>
+
+            {history.length > 0 && (
+              <GoalHistoryTimeline history={history} isTime={isTime} />
+            )}
           </div>
         )}
       </button>
