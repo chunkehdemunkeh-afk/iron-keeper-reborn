@@ -12,11 +12,11 @@ export interface ChangelogEntry {
  */
 export const changelog: ChangelogEntry[] = [
   {
-    version: "1.6.131",
+    version: "1.6.132",
     date: "2026-07-08",
     title: "Updates & Fixes",
     changes: [
-      "Prelaunch audit #29-30: safe-area/notch CSS and remove pinch-zoom block",
+      "Fix wrong exercise demo images across programme mappings",
     ],
   },
   {
