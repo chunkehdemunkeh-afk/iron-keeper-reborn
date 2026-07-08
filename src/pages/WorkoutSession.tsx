@@ -891,8 +891,10 @@ export default function WorkoutSession() {
     // Pure state update
     setSetLogs(prev => ({ ...prev, [exerciseId]: newSets }));
 
-    // Show RIR picker for non-warmup sets that were just completed
-    if (!wasCompleted && newSets[setIdx]?.setType !== "warmup") {
+    // Show RIR picker for non-warmup sets that were just completed.
+    // Hyrox sessions are cardio/time-based and skip the RIR picker so the
+    // next round card can auto-open immediately.
+    if (!wasCompleted && newSets[setIdx]?.setType !== "warmup" && !isHyroxSession) {
       setSetLogs(prev => {
         const s = prev[exerciseId] ? [...prev[exerciseId]] : [];
         if (!s[setIdx]) return prev;
