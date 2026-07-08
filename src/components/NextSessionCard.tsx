@@ -152,7 +152,23 @@ export default function NextSessionCard() {
         })}
       </div>
 
-      {/* Switch it out — workouts not in the split */}
+      {/* Hyrox one-off swap */}
+      <button
+        onClick={() => setHyroxOpen(true)}
+        className="w-full flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500/15 to-red-500/10 hover:from-orange-500/25 hover:to-red-500/15 border border-orange-500/20 px-3 py-2 mb-3 text-left active:scale-[0.98] transition-all"
+      >
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-500/20 flex-shrink-0">
+          <Flame className="h-3.5 w-3.5 text-orange-500" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-foreground">Swap for Hyrox session</p>
+          <p className="text-[10px] text-muted-foreground">CR · Strength · Erg · Simulation</p>
+        </div>
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+      </button>
+
+      <HyroxSwapSheet open={hyroxOpen} onOpenChange={setHyroxOpen} />
+
       {otherWorkouts.length > 0 && (
         <>
           <button
