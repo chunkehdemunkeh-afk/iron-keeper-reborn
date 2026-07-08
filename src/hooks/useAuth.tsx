@@ -86,6 +86,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const { awardXpAndNotify } = await import("@/lib/gamification/notify");
               void awardXpAndNotify({ source: "daily_open" });
             } catch {}
+            // Reinstall/app-data-clear recovery (#21): localStorage is the
+            // primary copy, so only pull from the cloud backup when local is
+            // missing entirely — never clobber a locally-made change.
+            try {
+              const { getUserPreferences, saveUserPreferences } = await import("@/lib/user-preferences");
+              if (!getUserPreferences(session.user.id)) {
+                const { fetchUserPreferencesFromCloud } = await import("@/lib/cloud-data");
+                const cloud = await fetchUserPreferencesFromCloud(session.user.id);
+                if (cloud) saveUserPreferences(session.user.id, cloud);
+              }
+            } catch {}
           }, 0);
         } else {
           setProfile(null);
@@ -100,6 +111,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (!session) setLoading(false);
+    }).catch(() => {
+      // A rejection here (e.g. corrupted storage) would otherwise leave the
+      // whole app stuck behind the loading screen forever.
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

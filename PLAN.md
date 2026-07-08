@@ -4,11 +4,27 @@
 
 ## Current Status
 
-**⚠️ Pending manual action (2026-07-02):** Three new SQL migrations need to be pasted into the Supabase dashboard SQL editor, in order:
-1. `20260702162749_workout_history_update_policy.sql`
-2. `20260702163500_coach_athlete_roster.sql`
-3. `20260702163609_coach_read_biometrics_scores.sql`
-4. `20260702164633_coach_athlete_messages.sql` (includes a follow-up column-privilege restriction — if an earlier version without it was already run, also execute: `REVOKE UPDATE ON public.coach_messages FROM authenticated; GRANT UPDATE (read) ON public.coach_messages TO authenticated;`)
+**Session end 2026-07-03:** Worked through PRELAUNCH_AUDIT.md systematically — calc-correctness, storage/data-loss, and error-handling batches all complete this session (details below). All SQL migrations from this session are applied and confirmed. Nothing left mid-flight; safe to resume from a clean state.
+
+**Next up when resuming:** Two items don't need Capacitor or a device and could be picked up immediately — audit #29 (safe-area/notch CSS: `viewport-fit=cover` + `env(safe-area-inset-*)`) and #30 (remove `user-scalable=no` from the viewport meta tag for zoom accessibility). Everything else remaining in the audit needs either a real Android device/Capacitor build (#1, #2, #7, #8, #26, #27, #28) or an answer to the open Phase 0 questions (Android Studio/JDK/SDK setup status, SW gating vs delete, push notification strategy, OAuth deep-link scheme). See `project_native_launch_todo` memory / `C:\Users\chunk\.claude\plans\melodic-dancing-stroustrup.md` for the full phased plan.
+
+**PRELAUNCH_AUDIT.md error-handling batch complete** (2026-07-03, #23-25, no SQL to run):
+- **#23** — already fixed in an earlier pass (`finalizeWorkout` in `WorkoutSession.tsx` has a proper `.catch` + retry toast).
+- **#24** — found and fixed a real data-loss bug while auditing: `saveWorkoutToCloud` silently `return`ed (instead of throwing) on a failed `workout_history`/`workout_sets` insert, so the caller's `.then()` fired "Workout saved! 💪" and cleared the autosave even though the save had failed. Now throws in both places. Also fixed: `BiometricCheckIn.tsx` discarded the boolean returns of `upsertDailyBiometrics`/`upsertSleepLog`/`upsertDailyScore` and always showed "Morning check-in saved" regardless — now checks each and throws into the existing catch/toast. `uploadProgressPhoto` was missing a toast on the metadata-insert failure path. Progression accept/dismiss and deload accept/dismiss mutations always fired their success toast because the underlying functions swallowed errors instead of throwing — fixed both the query functions (now throw) and added `onError` toasts to the mutation hooks. `useDuelMutations` had no `onError` at all on 5 of 6 mutations — added a shared default.
+- **#25** — swept ~15 bare `.then()` call sites with no `.catch`. Most are cosmetic (silences unhandled-rejection console spam), but two were real bugs: `useUserRole`'s role fetch and `useAuth`'s `getSession()` call could leave `roleLoading`/`loading` stuck `true` forever on a rejection, hanging the UI behind a loading state indefinitely.
+
+**`20260703120000_storage_offload_tables.sql` applied** (2026-07-03) — `custom_workouts`, `user_preferences`, `workout_drafts` tables confirmed live in Supabase Table Editor.
+
+**PRELAUNCH_AUDIT.md calc-correctness + storage/data-loss batches complete** (2026-07-03):
+- Calc-correctness (#10,11,12,13,14,15,17,18): elapsed timer capped at 6h and frozen once the feedback screen is reached (`WorkoutSession.tsx`); `computeStrainScore` sanity-bounds manual HR entries before TRIMP; `maxHr` save rejects out-of-range input; `computeSleepFactor` guards `totalSleepMin = 0`; `fetchVolumeData` switched from `limit(30)` (which was actually keeping the *oldest* 30 sessions) to a 90-day date window; `epley1RM` caps reps fed into the formula at 12; `saveWorkoutToCloud` now uses the already-computed `workout.duration` instead of recomputing from `Date.now() - startedAt` at save time (was inflating kcal if save happened minutes after the workout ended); `awardXp.ts`'s `todayStr()`/`mondayStr()` and `computeWeekStats`'s week boundaries switched from `toISOString()` (UTC date) to local date, fixing streak/weekly-stats breakage near midnight for non-UTC users.
+  - Scope note: the same UTC-vs-local-date pattern (`toISOString().split("T")[0]`) exists in ~18 other files (daily biometric check-ins, sleep logs, activity logs, etc.) — not touched, out of scope for the narrow streak/week-stats bug fixed here.
+- Storage/data-loss (#19, #20, #21 — #22 auth-storage deferred to Capacitor/Phase 5): new tables `custom_workouts`, `user_preferences`, `workout_drafts`, all localStorage-primary/Supabase-backup (never overwrites local data, only recovers when local is missing entirely):
+  - `WorkoutBuilder.tsx` — custom workouts write through to Supabase on save/delete; on mount, cloud-only workouts get pulled into the local cache, local-only workouts get pushed up.
+  - `Onboarding.tsx` writes preferences through to Supabase; `useAuth.tsx` hydrates from the cloud backup on sign-in only when localStorage has nothing.
+  - `WorkoutSession.tsx` — the existing 30s/visibility/beforeunload autosave now also mirrors to `workout_drafts`; on session mount, falls back to the cloud draft (if <4h old) when there's no usable local one; `clearAutoSave` deletes the cloud row on finish/discard.
+  - New data modules: `src/lib/data/custom-workout-queries.ts`, `user-preferences-queries.ts`, `workout-draft-queries.ts`.
+
+**All 4 pending SQL migrations applied** (2026-07-03): `20260702162749_workout_history_update_policy.sql`, `20260702163500_coach_athlete_roster.sql`, `20260702163609_coach_read_biometrics_scores.sql`, `20260702164633_coach_athlete_messages.sql` — coach roster/RLS rescoping and messaging are now live in Supabase.
 
 **Pre-launch audit + coach rebuild + workout builder parity complete** (2026-07-02):
 - Found `PRELAUNCH_AUDIT.md` (45 findings, written ~May, never actioned) — fixed the highest-priority items:

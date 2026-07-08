@@ -54,6 +54,9 @@ export function useProgressionActions() {
       toast.success("Progression applied 💪");
       invalidate();
     },
+    onError: () => {
+      toast.error("Couldn't apply progression — try again");
+    },
   });
 
   const dismiss = useMutation({
@@ -61,6 +64,9 @@ export function useProgressionActions() {
     onSuccess: () => {
       toast("Suggestion dismissed");
       invalidate();
+    },
+    onError: () => {
+      toast.error("Couldn't dismiss suggestion — try again");
     },
   });
 

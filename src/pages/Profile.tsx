@@ -615,7 +615,7 @@ function CoachLinkCard() {
 
   useEffect(() => {
     if (!isCoach && !roleLoading) {
-      fetchMyCoach().then(setMyCoach);
+      fetchMyCoach().then(setMyCoach).catch(() => {});
     }
   }, [isCoach, roleLoading]);
 
@@ -644,7 +644,7 @@ function CoachLinkCard() {
     hapticSuccess();
     toast.success(`Joined ${coachName}'s roster`);
     setCodeInput("");
-    fetchMyCoach().then(setMyCoach);
+    fetchMyCoach().then(setMyCoach).catch(() => {});
   };
 
   if (roleLoading) return null;

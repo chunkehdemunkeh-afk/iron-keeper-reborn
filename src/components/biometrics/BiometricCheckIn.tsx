@@ -162,20 +162,21 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
 
     try {
       // 1. Save biometrics
-      await upsertDailyBiometrics({
+      const biometricsSaved = await upsertDailyBiometrics({
         date,
         samsungStressScore: stress,
         restingHr: rhr,
         spo2Pct: spo2,
         respiratoryRate: respRate,
       });
+      if (!biometricsSaved) throw new Error("Failed to save biometrics");
 
       // 2. Always upsert sleep log (fixes sleep score = 0 bug)
       const deepVal  = resolveStageMinutes(deepMin,  prefillDeepMin);
       const remVal   = resolveStageMinutes(remMin,   prefillRemMin);
       const lightVal = resolveStageMinutes(lightMin, prefillLightMin);
       const awakeVal = resolveStageMinutes(awakeMin, prefillAwakeMin);
-      await upsertSleepLog({
+      const sleepSaved = await upsertSleepLog({
         date,
         hours: sleepHours,
         quality: sleepQuality,
@@ -185,6 +186,7 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
         lightSleepMin: lightVal,
         awakeMin:      awakeVal,
       });
+      if (!sleepSaved) throw new Error("Failed to save sleep log");
 
       // 3. Compute scores from history + new biometrics
       const [history, scores28d] = await Promise.all([
@@ -240,13 +242,14 @@ export default function BiometricCheckIn({ open, date, onClose, onSaved, prefill
       );
 
       // 4. Save scores immediately (without AI yet)
-      await upsertDailyScore({
+      const scoresSaved = await upsertDailyScore({
         date,
         recoveryScore: Math.round(computed.recoveryScore * 10) / 10,
         strainScore: computed.strainScore,
         stressLevel: Math.round(computed.stressLevel * 10) / 10,
         sleepPerformance: Math.round(computed.sleepPerformance * 10) / 10,
       });
+      if (!scoresSaved) throw new Error("Failed to save recovery scores");
 
       // 5. Fire edge function async for AI insight (don't wait — scores show immediately)
       generateAIInsight(date, computed, biometricHistory, sleepFull, prevStrain, spo2, queryClient);

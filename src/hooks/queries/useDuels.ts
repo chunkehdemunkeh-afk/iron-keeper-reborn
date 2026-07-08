@@ -4,6 +4,7 @@ import {
   recomputeMyDuelProgress, settleDuel,
   type Duel,
 } from "@/lib/data/duel-queries";
+import { toast } from "sonner";
 
 export function useMyDuels() {
   return useQuery({
@@ -24,12 +25,17 @@ export function useChallengeableUsers() {
 export function useDuelMutations() {
   const qc = useQueryClient();
   const invalidate = () => qc.invalidateQueries({ queryKey: ["duels"] });
+  // duel-queries.ts throws on Supabase errors, but with no onError anywhere
+  // these mutations previously failed silently — the button click just did
+  // nothing visible. Callers can still layer a more specific onError/onSuccess
+  // via mutate()'s second argument; TanStack Query runs both.
+  const onError = () => toast.error("That didn't go through — try again");
   return {
-    create: useMutation({ mutationFn: createDuel, onSuccess: invalidate }),
-    accept: useMutation({ mutationFn: (id: string) => acceptDuel(id), onSuccess: invalidate }),
-    decline: useMutation({ mutationFn: (id: string) => declineDuel(id), onSuccess: invalidate }),
-    cancel: useMutation({ mutationFn: (id: string) => cancelDuel(id), onSuccess: invalidate }),
-    refresh: useMutation({ mutationFn: (d: Duel) => recomputeMyDuelProgress(d), onSuccess: invalidate }),
-    settle: useMutation({ mutationFn: (id: string) => settleDuel(id), onSuccess: invalidate }),
+    create: useMutation({ mutationFn: createDuel, onSuccess: invalidate, onError }),
+    accept: useMutation({ mutationFn: (id: string) => acceptDuel(id), onSuccess: invalidate, onError }),
+    decline: useMutation({ mutationFn: (id: string) => declineDuel(id), onSuccess: invalidate, onError }),
+    cancel: useMutation({ mutationFn: (id: string) => cancelDuel(id), onSuccess: invalidate, onError }),
+    refresh: useMutation({ mutationFn: (d: Duel) => recomputeMyDuelProgress(d), onSuccess: invalidate, onError }),
+    settle: useMutation({ mutationFn: (id: string) => settleDuel(id), onSuccess: invalidate, onError }),
   };
 }

@@ -339,7 +339,11 @@ const STANDARDS_TABLE: Record<LiftId, Record<Sex, TableRow[]>> = (() => {
 export function epley1RM(weight: number, reps: number): number {
   if (weight <= 0 || reps <= 0) return 0;
   if (reps === 1) return weight;
-  return weight * (1 + reps / 30);
+  // Epley's linear extrapolation gets unreliable past ~12 reps (a 60kg x 30
+  // set would otherwise "estimate" a wildly inflated 1RM) — cap the rep count
+  // fed into the formula rather than the reps themselves.
+  const cappedReps = Math.min(reps, 12);
+  return weight * (1 + cappedReps / 30);
 }
 
 export function inferLiftId(exerciseId: string, exerciseName: string): LiftId | null {

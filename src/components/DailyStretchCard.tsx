@@ -44,7 +44,8 @@ export default function DailyStretchCard() {
       .eq("user_id", user.id)
       .eq("date", todayStr)
       .maybeSingle()
-      .then(({ data }) => setCompletedToday(!!data));
+      .then(({ data }) => setCompletedToday(!!data))
+      .catch(() => {});
   }, [user, todayStr]);
 
   const markComplete = useCallback(async () => {

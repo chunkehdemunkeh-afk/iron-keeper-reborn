@@ -93,7 +93,10 @@ async function lastAcceptedAt(userId: string): Promise<string | null> {
 
 export async function dismissDeload(id: string) {
   const { error } = await tbl().update({ status: "dismissed" }).eq("id", id);
-  if (error) console.error("dismissDeload failed:", error);
+  if (error) {
+    console.error("dismissDeload failed:", error);
+    throw error;
+  }
 }
 
 export async function expireOldPending(): Promise<void> {
@@ -160,7 +163,7 @@ export async function acceptDeload(id: string): Promise<DeloadRecommendation | n
     .maybeSingle();
   if (error) {
     console.error("acceptDeload failed:", error);
-    return null;
+    throw error;
   }
   return data ? rowToRec(data) : null;
 }

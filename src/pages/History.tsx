@@ -44,7 +44,7 @@ export default function History() {
     Promise.all([fetchAllWeeklyReviews(), fetchProgressPhotos()]).then(([r, p]) => {
       setReviews(r);
       setPhotos(p);
-    });
+    }).catch(() => {});
   };
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export default function History() {
       setReviews(r);
       setPhotos(p);
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   const photoById = useMemo(() => {

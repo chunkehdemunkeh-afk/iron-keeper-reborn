@@ -51,7 +51,8 @@ export default function NutritionSettings({ open, onClose, onSaved }: Props) {
           }
         }
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, [user, open]);
 
   // Ensure percentages always sum to 100

@@ -109,7 +109,7 @@ export default function WeekStrip() {
         }
       });
       setCompletedDays(dayMap);
-    });
+    }).catch(() => {});
 
     fetchActivityLogs().then((logs) => {
       const dayMap: Record<number, ActivityLog[]> = {};
@@ -122,7 +122,7 @@ export default function WeekStrip() {
         }
       });
       setActivityDays(dayMap);
-    });
+    }).catch(() => {});
   }, [refreshKey]);
 
   const allExercises = WORKOUTS.flatMap((w) => w.exercises);

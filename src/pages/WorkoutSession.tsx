@@ -4,7 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { WORKOUTS, type CompletedWorkout, type Exercise } from "@/lib/workout-data";
 import { getAllCustomWorkouts } from "@/pages/WorkoutBuilder";
 import { HOME_WORKOUTS } from "@/lib/home-workouts";
-import { saveWorkoutToCloud, fetchLastSessionData, fetchExerciseLastData, fetchExerciseLastDataLike } from "@/lib/cloud-data";
+import { saveWorkoutToCloud, fetchLastSessionData, fetchExerciseLastData, fetchExerciseLastDataLike, upsertWorkoutDraftToCloud, deleteWorkoutDraftFromCloud, fetchWorkoutDraftFromCloud } from "@/lib/cloud-data";
+import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Check, Timer, ChevronDown, ChevronUp, Trophy, Play, RotateCcw, TrendingUp, TrendingDown, Shuffle, Star, MessageSquare, Plus, Flame, History, Search, Hand, Zap, Dumbbell, Target, HelpCircle, Trash2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -42,6 +43,8 @@ import { useProgressions, progressionMap } from "@/hooks/queries/useProgressions
 import { useActiveDeload } from "@/hooks/queries/useDeload";
 import ProgressionSuggestionBanner from "@/components/workout/ProgressionSuggestionBanner";
 import { isSingleArmEligible, DEFAULT_SINGLE_ARM_IDS } from "@/lib/single-arm-variants";
+
+const MAX_SESSION_SECONDS = 6 * 60 * 60;
 
 type SetType = "working" | "warmup" | "1rm_test";
 type SetLog = {
@@ -286,7 +289,17 @@ export default function WorkoutSession() {
     } catch (e) {
       console.warn("Failed to auto-save workout:", e);
     }
-  }, [autoSaveKey, started, finished, showFeedback, setLogs, exerciseNotes, exerciseOrder, exerciseOverrides, addedAccessories, addedExercises, bodyweightExercises, twoHandedExercises, heavyStackExercises, singleArmExercises, cableAttachments, elapsed, expandedExercise, weightUpSuggestions, weightDownSuggestions]);
+    // Best-effort cloud backup (#19) — localStorage stays the primary/fast
+    // copy; this just means an Android app-data clear mid-session doesn't
+    // lose the whole workout. Skipped silently in demo mode (no real session).
+    if (workout) {
+      const workoutId = workout.id;
+      (async () => {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) void upsertWorkoutDraftToCloud(authUser.id, workoutId, sessionState);
+      })();
+    }
+  }, [autoSaveKey, workout, started, finished, showFeedback, setLogs, exerciseNotes, exerciseOrder, exerciseOverrides, addedAccessories, addedExercises, bodyweightExercises, twoHandedExercises, heavyStackExercises, singleArmExercises, cableAttachments, elapsed, expandedExercise, weightUpSuggestions, weightDownSuggestions]);
 
   // Save on visibility change (user switching apps / leaving)
   useEffect(() => {
@@ -315,11 +328,18 @@ export default function WorkoutSession() {
     if (autoSaveKey) {
       localStorage.removeItem(autoSaveKey);
     }
-  }, [autoSaveKey]);
+    if (workout) {
+      const workoutId = workout.id;
+      (async () => {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) void deleteWorkoutDraftFromCloud(authUser.id, workoutId);
+      })();
+    }
+  }, [autoSaveKey, workout]);
 
   // Check for saved session on mount
   useEffect(() => {
-    if (!autoSaveKey) return;
+    if (!autoSaveKey || !workout) return;
     try {
       const saved = localStorage.getItem(autoSaveKey);
       if (saved) {
@@ -327,14 +347,27 @@ export default function WorkoutSession() {
         // Only offer resume if saved less than 4 hours ago
         if (parsed.savedAt && Date.now() - parsed.savedAt < 4 * 60 * 60 * 1000) {
           setShowResumePrompt(true);
-        } else {
-          localStorage.removeItem(autoSaveKey);
+          return;
         }
+        localStorage.removeItem(autoSaveKey);
       }
     } catch {
       localStorage.removeItem(autoSaveKey);
     }
-  }, [autoSaveKey]);
+    // No usable local draft — fall back to the cloud backup (#19), e.g. after
+    // an Android app-data clear mid-session. Hydrate it into localStorage so
+    // the existing resume/discard flow works unchanged.
+    const workoutId = workout.id;
+    (async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const draft = await fetchWorkoutDraftFromCloud(authUser.id, workoutId);
+      if (draft && Date.now() - new Date(draft.updatedAt).getTime() < 4 * 60 * 60 * 1000) {
+        localStorage.setItem(autoSaveKey, JSON.stringify(draft.payload));
+        setShowResumePrompt(true);
+      }
+    })();
+  }, [autoSaveKey, workout]);
 
   const resumeSavedSession = useCallback(() => {
     if (!autoSaveKey) return;
@@ -509,7 +542,7 @@ export default function WorkoutSession() {
         });
       }
       applyHistoricalVariantSelections(historicalSelections);
-    });
+    }).catch((e) => console.error("Failed to load last-session data:", e));
     try {
       const saved = localStorage.getItem(`exercise-notes-${workout.id}`);
       if (saved) setLastExerciseNotes(JSON.parse(saved));
@@ -550,7 +583,7 @@ export default function WorkoutSession() {
       fetchExerciseLastData(eff).then(sets => {
         if (sets.length === 0) return;
         setLastSessionData(prev => prev[eff] ? prev : { ...prev, [eff]: sets });
-      });
+      }).catch(() => {});
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workout, addedAccessories.length, addedExercises.length, heavyStackExercises, twoHandedExercises, singleArmExercises, cableAttachments, exerciseOverrides, lastSessionData]);
@@ -750,7 +783,7 @@ export default function WorkoutSession() {
         return next;
       });
       applyHistoricalVariantSelections(found.map(({ ex, r }) => ({ ex, historicalId: r.exerciseId })));
-    });
+    }).catch(() => {});
     hapticMedium();
     toast.success(`Added ${routine.name} accessory`);
   }, [addedAccessories, applyHistoricalVariantSelections, getLastDataForExercise, sessionTargetRir]);
@@ -783,7 +816,7 @@ export default function WorkoutSession() {
       if (!r || r.sets.length === 0) return;
       setLastSessionData(prev => ({ ...prev, [r.exerciseId]: r.sets }));
       applyHistoricalVariantSelections([{ ex, historicalId: r.exerciseId }]);
-    });
+    }).catch(() => {});
     setAddExerciseOpen(false);
     setAddExerciseSearch("");
     setPendingAddExercise(null);
@@ -793,12 +826,17 @@ export default function WorkoutSession() {
 
   // Wall-clock derived elapsed — survives backgrounding, throttling, and route nav.
   // Counts the FULL gym session (working sets + rests + screen-off time).
+  // Capped at 6h so a session left running for days doesn't inflate saved
+  // duration/kcal/strain to absurd values.
   useEffect(() => {
-    if (!started || finished) return;
+    // Stop ticking once the user reaches the post-workout feedback screen —
+    // otherwise time spent entering HR/effort/notes there (or just leaving
+    // it open) keeps inflating the saved duration/kcal/strain.
+    if (!started || finished || showFeedback) return;
     if (!startedAtRef.current) startedAtRef.current = new Date().toISOString();
     const tick = () => {
       const startMs = new Date(startedAtRef.current!).getTime();
-      setElapsed(Math.max(0, Math.floor((Date.now() - startMs) / 1000)));
+      setElapsed(Math.min(MAX_SESSION_SECONDS, Math.max(0, Math.floor((Date.now() - startMs) / 1000))));
     };
     tick();
     const interval = setInterval(tick, 1000);
@@ -808,7 +846,7 @@ export default function WorkoutSession() {
       clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [started, finished]);
+  }, [started, finished, showFeedback]);
 
   const toggleSet = useCallback((exerciseId: string, setIdx: number) => {
     const currentSets = setLogs[exerciseId] || [];
@@ -1201,7 +1239,10 @@ export default function WorkoutSession() {
       sessionNotes: sessionNotes.trim() || undefined,
       startedAt: startedAtRef.current ?? undefined,
       avgHr: null,
-      maxHr: maxHrInput ? Math.round(Number(maxHrInput)) || null : null,
+      maxHr: (() => {
+        const n = Math.round(Number(maxHrInput));
+        return maxHrInput && Number.isFinite(n) && n >= 30 && n <= 240 ? n : null;
+      })(),
       hrZones: (() => {
         const z = zoneInputs.map(s => Math.max(0, Math.round(Number(s) || 0))) as [number, number, number, number, number];
         return z.some(v => v > 0) ? z : null;

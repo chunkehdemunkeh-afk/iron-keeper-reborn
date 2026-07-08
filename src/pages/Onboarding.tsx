@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, ChevronLeft, Check, Shuffle, Dumbbell, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { getSplitsForDays, type TrainingSplit, type SplitDay } from "@/lib/training-splits";
-import { saveUserPreferences } from "@/lib/user-preferences";
+import { saveUserPreferences, type UserPreferences } from "@/lib/user-preferences";
+import { upsertUserPreferencesToCloud } from "@/lib/cloud-data";
 import { WORKOUTS } from "@/lib/workout-data";
 import { toast } from "sonner";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
@@ -71,13 +72,15 @@ export default function Onboarding() {
 
   const handleNoWorkoutFinish = () => {
     if (!user) return;
-    saveUserPreferences(user.id, {
+    const prefs: UserPreferences = {
       onboardingComplete: true,
       daysPerWeek: 0,
       splitId: "none",
       splitName: "No workout plan",
       schedule: [],
-    });
+    };
+    saveUserPreferences(user.id, prefs);
+    void upsertUserPreferencesToCloud(user.id, prefs);
     toast.success(fromProfile ? "Switched to health tracking only" : "You're all set!");
     continueAfterOnboarding();
   };
@@ -118,13 +121,15 @@ export default function Onboarding() {
     const fullSchedule = selectedSplit.id === "custom" ? customSchedule : selectedSplit.schedule;
     // Strip non-serializable icon functions before saving
     const schedule = fullSchedule.map(({ label, workoutId }) => ({ label, workoutId }));
-    saveUserPreferences(user.id, {
+    const prefs: UserPreferences = {
       onboardingComplete: true,
       daysPerWeek: days,
       splitId: selectedSplit.id,
       splitName: selectedSplit.name,
       schedule,
-    });
+    };
+    saveUserPreferences(user.id, prefs);
+    void upsertUserPreferencesToCloud(user.id, prefs);
     toast.success(fromProfile ? "Training split updated!" : "Programme saved! Let's get to work");
     continueAfterOnboarding();
   };

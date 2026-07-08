@@ -10,3 +10,6 @@ export * from "./sleep-queries";
 export * from "./biometric-queries";
 export * from "./progression-queries";
 export * from "./volume-queries";
+export * from "./custom-workout-queries";
+export * from "./user-preferences-queries";
+export * from "./workout-draft-queries";

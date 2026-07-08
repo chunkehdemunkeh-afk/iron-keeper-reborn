@@ -124,9 +124,9 @@ function computeSleepFactor(sleep: SleepLogFull, sleepNeed: number): number {
 
   if (deep !== null && rem !== null && light !== null) {
     const totalSleepMin = sleep.hours * 60;
-    const awakeFrac = awake !== null ? awake / totalSleepMin : 0.05;
+    const awakeFrac = totalSleepMin > 0 && awake !== null ? awake / totalSleepMin : 0.05;
     const efficiency = clamp(1 - awakeFrac, 0, 1);
-    const restorative = clamp((deep + rem) / totalSleepMin, 0, 1);
+    const restorative = totalSleepMin > 0 ? clamp((deep + rem) / totalSleepMin, 0, 1) : 0;
     return (
       sufficiency   * 0.40 +
       (sleep.quality / 5) * 0.15 +
@@ -384,12 +384,17 @@ export function computeStrainScore(
   // TRIMP = duration × HR-reserve fraction × intensity weight (Banister).
   // Only applied when avgHr + duration are present.
   if (hr?.avgHr && hr.avgHr > 40 && hr.durationMin && hr.durationMin > 0) {
-    const restingHr = hr.restingHr && hr.restingHr > 30 ? hr.restingHr : 60;
-    const maxHr = hr.maxHr && hr.maxHr > hr.avgHr
-      ? hr.maxHr
-      : (hr.age ? 220 - hr.age : 190);
+    // Sanity-bound manual HR entries: 40 ≤ restingHr < avgHr ≤ maxHr ≤ 220.
+    // Garbage inputs (e.g. restingHr > avgHr) fall back to sane defaults
+    // rather than producing a negative/absurd HR reserve.
+    const avgHr = clamp(hr.avgHr, 40, 220);
+    const restingHrValid = hr.restingHr && hr.restingHr >= 40 && hr.restingHr < avgHr;
+    const restingHr = restingHrValid ? hr.restingHr! : 60;
+    const maxHrEstimate = hr.age ? 220 - hr.age : 190;
+    const maxHrValid = hr.maxHr && hr.maxHr >= avgHr && hr.maxHr <= 220;
+    const maxHr = clamp(maxHrValid ? hr.maxHr! : maxHrEstimate, avgHr, 220);
     const reserve = Math.max(1, maxHr - restingHr);
-    const hrr = clamp((hr.avgHr - restingHr) / reserve, 0, 1);
+    const hrr = clamp((avgHr - restingHr) / reserve, 0, 1);
     // Banister exponential weighting (men): y = 0.64 * e^(1.92 * hrr)
     const intensity = 0.64 * Math.exp(1.92 * hrr);
     const trimp = hr.durationMin * hrr * intensity;

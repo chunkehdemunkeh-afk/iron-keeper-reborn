@@ -37,7 +37,8 @@ export default function WaterIntake({ date }: Props) {
       .maybeSingle()
       .then(({ data }) => {
         if (data?.water_goal_ml) setGoalMl(data.water_goal_ml);
-      });
+      })
+      .catch(() => {});
   }, [user]);
 
   const fetchWater = useCallback(async () => {

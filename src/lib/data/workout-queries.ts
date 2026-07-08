@@ -51,24 +51,23 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
     return;
   }
 
+  // Use the duration the client already computed (frozen when the workout was
+  // finished), not a fresh Date.now() - startedAt recompute — the save can
+  // happen minutes later (feedback screen, retry, offline queue), which would
+  // otherwise inflate kcal/duration by however long that gap was.
+  const actualDuration = workout.duration;
+
   let caloriesBurned: number | null = null;
   try {
     const bodyweight = await lookupUserBodyweight(user.id);
-    const burnDuration = workout.startedAt
-      ? Math.max(1, Math.ceil((Date.now() - new Date(workout.startedAt).getTime()) / 60000))
-      : workout.duration;
     caloriesBurned = estimateStrengthBurn({
       sets: workout.sets,
-      durationMin: burnDuration,
+      durationMin: actualDuration,
       weightKg: bodyweight,
     });
   } catch (e) {
     console.error("Burn estimate failed:", e);
   }
-
-  const actualDuration = workout.startedAt
-    ? Math.max(1, Math.ceil((Date.now() - new Date(workout.startedAt).getTime()) / 60000))
-    : workout.duration;
 
   // Derive avgHr from zones (using zone-midpoint %HRR × estimated maxHR) when zones present
   // and the user didn't separately enter avgHr.
@@ -122,7 +121,11 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
 
   if (historyError || !historyRow) {
     console.error("Failed to save workout:", historyError);
-    return;
+    // Must reject, not silently return — WorkoutSession's finalizeWorkout()
+    // shows "Workout saved!" and clears the autosave in its .then(), so a
+    // silent return here would report success and lose the session on a
+    // failed insert.
+    throw historyError ?? new Error("Failed to save workout: no row returned");
   }
 
   const exerciseMap: Record<string, string> = {};
@@ -174,6 +177,10 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
 
     if (setsError) {
       console.error("Failed to save sets:", setsError);
+      // Same reasoning as historyError above — must reject so the caller's
+      // error toast/retry flow fires instead of reporting a save that
+      // actually left the workout with zero logged sets.
+      throw setsError;
     }
   }
 
@@ -412,16 +419,23 @@ export function bestOneRmForLift(
   return bestTrue > 0 ? bestTrue : bestEpley;
 }
 
-export async function fetchVolumeData(): Promise<{ date: string; volume: number; name: string }[]> {
+export async function fetchVolumeData(daysBack = 90): Promise<{ date: string; volume: number; name: string }[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - daysBack);
+
+  // Windowed by date, not row count — a user with many sessions in a short
+  // span shouldn't have older-but-still-recent history cut off (and the old
+  // ascending + limit(30) combo actually kept the OLDEST 30 rows, dropping
+  // the most recent ones entirely).
   const { data: history } = await supabase
     .from("workout_history")
     .select("id, date, workout_name")
     .eq("user_id", user.id)
-    .order("date", { ascending: true })
-    .limit(30);
+    .gte("date", cutoff.toISOString())
+    .order("date", { ascending: true });
 
   if (!history || history.length === 0) return [];
 

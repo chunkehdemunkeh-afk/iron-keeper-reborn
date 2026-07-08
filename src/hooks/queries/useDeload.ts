@@ -35,6 +35,9 @@ export function useDeloadActions() {
       toast.success("Deload week started — targets reduced for the next 7 days");
       invalidate();
     },
+    onError: () => {
+      toast.error("Couldn't start deload — try again");
+    },
   });
 
   const dismiss = useMutation({
@@ -43,6 +46,9 @@ export function useDeloadActions() {
       hapticMedium();
       toast("Deload dismissed");
       invalidate();
+    },
+    onError: () => {
+      toast.error("Couldn't dismiss deload — try again");
     },
   });
 

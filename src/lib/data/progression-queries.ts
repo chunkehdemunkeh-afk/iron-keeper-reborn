@@ -193,7 +193,10 @@ export async function acceptProgression(exerciseId: string): Promise<void> {
     })
     .eq("user_id", user.id)
     .eq("exercise_id", exerciseId);
-  if (error) console.error("acceptProgression failed:", error);
+  if (error) {
+    console.error("acceptProgression failed:", error);
+    throw error;
+  }
 }
 
 /** Dismiss the pending suggestion without changing the target. */
@@ -204,7 +207,10 @@ export async function dismissProgression(exerciseId: string): Promise<void> {
     .update({ pending_suggestion: null })
     .eq("user_id", user.id)
     .eq("exercise_id", exerciseId);
-  if (error) console.error("dismissProgression failed:", error);
+  if (error) {
+    console.error("dismissProgression failed:", error);
+    throw error;
+  }
 }
 
 /** Wipe all progression data for the current user (used by settings). */

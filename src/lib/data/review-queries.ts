@@ -126,11 +126,17 @@ export async function computeWeekStats(weekStart: string): Promise<WeekSummary> 
   end.setDate(end.getDate() + 7);
   const startIso = start.toISOString();
   const endIso = end.toISOString();
+  // Local calendar date, not toISOString()'s UTC date — plain `date`-typed
+  // columns (activity_logs, food_logs, water_intake, sleep_logs) are compared
+  // against these directly, and a UTC round-trip can shift the boundary by a
+  // day depending on the user's offset, dropping/including the wrong day.
+  const localDateStr = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const startDate = weekStart;
   const endDateExclusive = (() => {
     const d = new Date(start);
     d.setDate(d.getDate() + 7);
-    return d.toISOString().split("T")[0];
+    return localDateStr(d);
   })();
 
   const empty: WeekSummary = {
@@ -138,7 +144,7 @@ export async function computeWeekStats(weekStart: string): Promise<WeekSummary> 
     weekEnd: (() => {
       const d = new Date(start);
       d.setDate(d.getDate() + 6);
-      return d.toISOString().split("T")[0];
+      return localDateStr(d);
     })(),
     workouts: { count: 0, totalMinutes: 0 },
     activities: { restDays: 0, otherCount: 0 },

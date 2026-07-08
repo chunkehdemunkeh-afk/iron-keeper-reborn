@@ -149,7 +149,7 @@ if (!isInIframe && !isPreviewHost) {
     if (document.visibilityState !== "visible") return;
     void pollVersion();
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.ready.then((reg) => reg.update());
+      navigator.serviceWorker.ready.then((reg) => reg.update()).catch(() => {});
     }
   });
 }

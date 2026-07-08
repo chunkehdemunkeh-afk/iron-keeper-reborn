@@ -9,6 +9,8 @@ import { WORKOUTS, type Exercise, type WorkoutDay } from "@/lib/workout-data";
 import { ACCESSORY_ROUTINES } from "@/lib/accessory-routines";
 import { EXERCISE_LIBRARY, MUSCLE_GROUPS_ALL } from "@/lib/exercise-library";
 import HelpButton from "@/components/demo/HelpButton";
+import { supabase } from "@/integrations/supabase/client";
+import { fetchCustomWorkoutsFromCloud, upsertCustomWorkoutToCloud, deleteCustomWorkoutFromCloud } from "@/lib/cloud-data";
 
 const MUSCLE_GROUPS = MUSCLE_GROUPS_ALL.filter((g) => g !== "All");
 
@@ -378,6 +380,34 @@ export default function WorkoutBuilder() {
     setSavedWorkouts(getCustomWorkouts());
   }, []);
 
+  // Cloud backup reconciliation (#20 — localStorage stays primary/fast, this
+  // just recovers workouts after a reinstall/app-data clear and pushes any
+  // local-only workouts up so the backup exists going forward).
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return; // demo mode / signed out — localStorage only
+
+      const local = getCustomWorkouts();
+      const cloud = await fetchCustomWorkoutsFromCloud(user.id);
+
+      const localIds = new Set(local.map((w) => w.id));
+      const missingLocally = cloud
+        .filter((w) => !localIds.has(w.id))
+        .map((w) => ({ ...w, icon: Dumbbell }));
+      if (missingLocally.length > 0) {
+        const merged = [...local, ...missingLocally];
+        saveCustomWorkouts(merged);
+        setSavedWorkouts(merged);
+      }
+
+      const cloudIds = new Set(cloud.map((w) => w.id));
+      local
+        .filter((w) => !cloudIds.has(w.id))
+        .forEach((w) => { void upsertCustomWorkoutToCloud(user.id, w); });
+    })();
+  }, []);
+
   const addExercise = () => {
     hapticMedium();
     setExercises((prev) => [
@@ -420,6 +450,11 @@ export default function WorkoutBuilder() {
     setExercises([]);
   };
 
+  const syncWorkoutToCloud = async (workout: WorkoutDay) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) void upsertCustomWorkoutToCloud(user.id, workout);
+  };
+
   const saveWorkout = () => {
     if (!name.trim()) { toast.error("Give your workout a name"); return; }
     if (exercises.length === 0) { toast.error("Add at least one exercise"); return; }
@@ -436,15 +471,17 @@ export default function WorkoutBuilder() {
     const trimmedRir = workoutTargetRir.trim() || undefined;
 
     if (editingId) {
-      const updated = existing.map((w) =>
-        w.id === editingId
-          ? { ...w, name: name.trim(), focus: focus.trim() || "Custom Workout", color, exercises, targetRir: trimmedRir }
-          : w
-      );
+      let savedWorkout: WorkoutDay | undefined;
+      const updated = existing.map((w) => {
+        if (w.id !== editingId) return w;
+        savedWorkout = { ...w, name: name.trim(), focus: focus.trim() || "Custom Workout", color, exercises, targetRir: trimmedRir };
+        return savedWorkout;
+      });
       saveCustomWorkouts(updated);
       setSavedWorkouts(updated);
       setEditingId(null);
       toast.success("Workout updated!");
+      if (savedWorkout) void syncWorkoutToCloud(savedWorkout);
     } else {
       const workout: WorkoutDay = {
         id: `custom-${crypto.randomUUID().slice(0, 8)}`,
@@ -460,6 +497,7 @@ export default function WorkoutBuilder() {
       saveCustomWorkouts(existing);
       setSavedWorkouts(existing);
       toast.success("Workout saved!");
+      void syncWorkoutToCloud(workout);
     }
 
     hapticSuccess();
@@ -475,6 +513,7 @@ export default function WorkoutBuilder() {
     setSavedWorkouts(updated);
     if (editingId === id) cancelEdit();
     toast("Workout deleted");
+    void deleteCustomWorkoutFromCloud(id);
   };
 
   const exerciseIds = exercises.map((e) => e.id);

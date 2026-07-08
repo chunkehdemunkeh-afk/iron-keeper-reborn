@@ -58,15 +58,21 @@ const NULL_RESULT: AwardXpResult = {
   skipped: true,
 };
 
+// Local calendar date, not toISOString()'s UTC date — a user near midnight
+// local time (e.g. UTC+1/-5) would otherwise see "today" flip a day early or
+// late relative to their actual day, breaking streak continuity.
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 function todayStr(): string {
-  return new Date().toISOString().split("T")[0];
+  return localDateStr(new Date());
 }
 function mondayStr(): string {
   const d = new Date();
   const day = d.getDay();
   const diff = day === 0 ? 6 : day - 1;
   d.setDate(d.getDate() - diff);
-  return d.toISOString().split("T")[0];
+  return localDateStr(d);
 }
 
 async function alreadyAwarded(

@@ -59,7 +59,8 @@ export default function WeeklyNutritionChart({ goals }: { goals: Goals | null })
         }
         setData(days);
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, [user]);
 
   if (loading || data.every((d) => d.calories === 0)) return null;

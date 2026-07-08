@@ -88,6 +88,7 @@ export async function uploadProgressPhoto(
   if (insertError || !row) {
     console.error("Failed to save photo metadata:", insertError);
     await supabase.storage.from(PHOTO_BUCKET).remove([storagePath]);
+    toast.error("Failed to save photo");
     return null;
   }
 
