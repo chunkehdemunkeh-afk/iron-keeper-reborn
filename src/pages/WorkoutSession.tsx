@@ -2527,6 +2527,17 @@ export default function WorkoutSession() {
               );
             }
 
+            if (round != null) {
+              if (isRoundCollapsed) {
+                return roundHeader; // only rendered on the first ex of the round; null otherwise
+              }
+              return (
+                <React.Fragment key={`hx-${ex.id}`}>
+                  {roundHeader}
+                  {exerciseCard}
+                </React.Fragment>
+              );
+            }
             return exerciseCard;
           })}
         </Reorder.Group>
