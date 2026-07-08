@@ -543,4 +543,53 @@ export const EXERCISE_SUBSTITUTIONS: Record<string, SubstituteExercise[]> = {
     { id: "sub-la6a", name: "Hanging Knee Raises", targetMuscle: "Core", notes: "Controlled raise — no swinging, pause at top, lower with control", trackWeight: false, repLabel: "Reps", description: "Hanging knee raise for lower abs" },
     { id: "sub-la6b", name: "Ab Wheel Rollouts", targetMuscle: "Core", notes: "Full extension, keep hips tucked, squeeze back to start", trackWeight: false, repLabel: "Reps", description: "Progressive core stability rollout" },
   ],
+  // ── Hyrox substitutions (for commercial gyms without full setup) ──
+  "hx-ski-250": [
+    { id: "sub-hx-row-250", name: "Row 250m", targetMuscle: "Full Body Aerobic", notes: "Rower substitute — same distance", trackWeight: false, repLabel: "Metres", description: "Concept2 rower alternative" },
+    { id: "sub-hx-bike-250", name: "Air Bike 250m", targetMuscle: "Full Body Aerobic", notes: "Assault/Echo bike — same distance", trackWeight: false, repLabel: "Metres", description: "Air bike alternative" },
+  ],
+  "hx-ski-1k": [
+    { id: "sub-hx-row-1k", name: "Row 1000m", targetMuscle: "Full Body Aerobic", notes: "Rower substitute", trackWeight: false, repLabel: "Metres", description: "Concept2 rower alternative" },
+    { id: "sub-hx-bike-1k", name: "Air Bike 1000m", targetMuscle: "Full Body Aerobic", notes: "Assault/Echo bike substitute", trackWeight: false, repLabel: "Metres", description: "Air bike alternative" },
+  ],
+  "hx-ski-500": [
+    { id: "sub-hx-row-500", name: "Row 500m", targetMuscle: "Full Body Aerobic", notes: "Rower substitute", trackWeight: false, repLabel: "Metres", description: "Concept2 rower alternative" },
+    { id: "sub-hx-bike-500", name: "Air Bike 500m", targetMuscle: "Full Body Aerobic", notes: "Air bike substitute", trackWeight: false, repLabel: "Metres", description: "Air bike alternative" },
+  ],
+  "hx-ski-250b": [
+    { id: "sub-hx-row-250b", name: "Row 250m", targetMuscle: "VO2 Max", notes: "Rower substitute — all-out", trackWeight: false, repLabel: "Metres", description: "Concept2 rower alternative" },
+    { id: "sub-hx-bike-250b", name: "Air Bike 250m", targetMuscle: "VO2 Max", notes: "Air bike — all-out", trackWeight: false, repLabel: "Metres", description: "Air bike alternative" },
+  ],
+  "hx-sled-50": [
+    { id: "sub-hx-prowler-50", name: "Heavy Prowler Push 50m", targetMuscle: "Legs/Power", notes: "Any push-sled at heavy load", repLabel: "Metres", description: "Prowler substitute" },
+    { id: "sub-hx-hipbelt-50", name: "Hip Belt March 50m", targetMuscle: "Legs/Power", notes: "Heavy hip belt or backpack — march hard 50m out and back", repLabel: "Metres", description: "Weighted march alternative" },
+  ],
+  "hx-sled-push-20": [
+    { id: "sub-hx-prowler-20", name: "Prowler Push 20m", targetMuscle: "Legs/Power", notes: "Heavy prowler substitute", repLabel: "Metres", description: "Prowler substitute" },
+    { id: "sub-hx-leg-press", name: "Leg Press (heavy)", targetMuscle: "Legs/Power", notes: "8 hard reps as sled substitute — max effort", description: "Machine leg press alternative" },
+  ],
+  "hx-sled-pull-20": [
+    { id: "sub-hx-face-pull", name: "Heavy Cable Row 20 reps", targetMuscle: "Back/Posterior", notes: "Cable row heavy for 20 reps as sled pull substitute", description: "Cable row alternative" },
+    { id: "sub-hx-rope-pull", name: "Rope Pull (seated)", targetMuscle: "Back/Posterior", notes: "Anchor a rope, hand-over-hand for 20m if space allows", repLabel: "Metres", description: "Seated hand-over-hand rope pull" },
+  ],
+  "hx-farm-200": [
+    { id: "sub-hx-farm-db-200", name: "Dumbbell Farmers 200m", targetMuscle: "Grip/Traps", notes: "Heavy DBs instead of KBs", repLabel: "Metres", description: "Dumbbell farmers walk" },
+    { id: "sub-hx-farm-tbar-200", name: "Trap Bar Carry 200m", targetMuscle: "Grip/Traps", notes: "Trap bar loaded heavy", repLabel: "Metres", description: "Trap bar farmers carry" },
+  ],
+  "hx-farm-50": [
+    { id: "sub-hx-farm-db-50", name: "Dumbbell Farmers 50m", targetMuscle: "Grip/Traps", notes: "Heavy DBs", repLabel: "Metres", description: "Dumbbell farmers walk" },
+    { id: "sub-hx-farm-tbar-50", name: "Trap Bar Carry 50m", targetMuscle: "Grip/Traps", notes: "Trap bar loaded heavy", repLabel: "Metres", description: "Trap bar farmers carry" },
+  ],
+  "hx-sb-lunge-20": [
+    { id: "sub-hx-gob-lunge-20", name: "Goblet Lunges 20m", targetMuscle: "Legs/Core", notes: "Heavy dumbbell at chest, walking lunge", repLabel: "Metres", description: "Goblet walking lunge" },
+    { id: "sub-hx-bb-lunge-20", name: "Barbell Lunges 20m", targetMuscle: "Legs/Core", notes: "Bar on back, walking lunge", repLabel: "Metres", description: "Barbell walking lunge" },
+  ],
+  "hx-wb-20": [
+    { id: "sub-hx-thruster-20", name: "Thrusters", targetMuscle: "Full Body", notes: "Dumbbell or barbell thruster — same movement pattern", description: "Thruster substitute" },
+    { id: "sub-hx-db-cluster-20", name: "DB Cluster (Clean + Push Press)", targetMuscle: "Full Body", notes: "Full-body power alternative", description: "Dumbbell cluster" },
+  ],
+  "hx-wb-25": [
+    { id: "sub-hx-thruster-25", name: "Thrusters", targetMuscle: "Full Body", notes: "Dumbbell or barbell thruster", description: "Thruster substitute" },
+    { id: "sub-hx-db-cluster-25", name: "DB Cluster", targetMuscle: "Full Body", notes: "Clean + push press", description: "Dumbbell cluster" },
+  ],
 };
