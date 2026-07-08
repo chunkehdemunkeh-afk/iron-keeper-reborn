@@ -144,18 +144,15 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
   };
 
   if (workout.sets.length > 0) {
-    // Per-exercise counter so each row carries a deterministic set ordinal.
-    // A bulk INSERT gives every row the same created_at timestamp, so without
-    // set_index the read-back order is undefined and prefill/history can show
-    // sets in the wrong order (e.g. a back-off set masquerading as set 1).
-    const setIndexByExercise: Record<string, number> = {};
+    // Global monotonic counter across the whole session so `ORDER BY set_index ASC`
+    // recovers the exact order the user logged rows (exercise-by-exercise AND
+    // set-by-set). A per-exercise counter used to leave every exercise's first
+    // set tied at set_index=0, so on read-back the exercise order collapsed to
+    // random UUID `id` order.
     const { error: setsError } = await supabase
       .from("workout_sets")
       .insert(
-        workout.sets.map(s => {
-          const key = s.exerciseId;
-          const idx = setIndexByExercise[key] ?? 0;
-          setIndexByExercise[key] = idx + 1;
+        workout.sets.map((s, idx) => {
           return {
             workout_history_id: historyRow.id,
             user_id: user.id,
