@@ -1,32 +1,30 @@
-## Warm-up set UX overhaul
+## Fix history: preserve exercise + set order
 
-Turn a set into a warm-up by ticking it — no separate "Add Warm-up" button, and the working-set count is preserved automatically. RIR stays hidden on warm-ups (already the case), and the orange styling stays as-is.
+Two bugs cause the shuffled history:
 
-### Behaviour
+1. **Exercise order is arbitrary.** `saveWorkoutToCloud` writes `set_index` as a *per-exercise* counter (0..n). On read, sets are ordered by `set_index ASC` globally, so all rows with `set_index = 0` (one per exercise) tie on `created_at` (bulk insert = identical timestamps) and fall back to `id ASC` — UUID id is random, so which exercise "wins" the first slot in `WorkoutCard`'s grouping loop is random.
 
-1. **Warm-up tick** — Add a small flame/tick toggle at the far left of each set row (in place of / alongside the set number). Tapping it flips that set between `working` ↔ `warmup`.
-   - Flip → `working` to `warmup`: the row instantly restyles (orange, no RIR picker, auto-fill from ramp on complete — existing behaviour), and a compensating **working set is auto-appended** at the end of the exercise so the planned working-set count is unchanged.
-   - Flip back → `warmup` to `working`: remove the last empty/uncompleted trailing working set that was previously auto-added (only if it's still `completed: false` and untouched). If the trailing working set has been logged, leave it — the user chose to keep it.
-2. **First warm-up seeding** — When flipping the first set to warm-up on an exercise that has zero warm-ups, do NOT seed a second warm-up automatically. The user ticks each set they want as a warm-up individually. This is the "similar to how they look now" the user asked for, minus the surprise seeding.
-3. **RIR** — Warm-ups continue to skip the RIR picker and are excluded from PRs/progression/volume (already implemented via `setType === "warmup"` guards).
-4. **Colour** — Keep the existing orange treatment (`bg-orange-400/5`, `text-orange-400/80`, flame icon). No new colours.
-5. **Remove the "Warm-up" button** in the row of action buttons under each exercise (line 2119–2128). "Add Set" and "1RM" remain. The tickbox on each set replaces its purpose.
-6. **1RM sets** — unaffected; can't be toggled to warm-up.
+2. **Sets within an exercise can swap.** `Object.entries(setLogs).flatMap(...)` in `WorkoutSession.handleSubmitFeedback` iterates by the object's insertion order (which can differ from `exerciseOrder`, especially when a user reorders exercises or accepts substitutions/accessories mid-session). Combined with the per-exercise `set_index` reset above, if an exercise was logged under two effective IDs during the session (attachment change, `-sa` toggle mid-set) the two ID groups each start at `set_index = 0`, and the reader interleaves them.
 
-### Technical notes
+### Fix
 
-- `toggleWarmup` already exists (lines 1114–1126); extend it to also (a) auto-append a working set when flipping to warm-up, and (b) trim a trailing untouched working set when flipping back.
-- Row UI (around line 1999): the set-number span becomes the tap target — tap flips warm-up state. Show flame when `isWarmup`, number otherwise. Add a small hint (aria-label / title) so it's discoverable. No layout shift.
-- `addWarmupSet` (lines 1094–1111) is no longer called from the UI once the button is removed. Keep the function for now (dead code cleanup can be a follow-up) or delete it — I'll delete it to keep things tidy per the surgical-changes rule since the button is the only caller.
-- No DB schema changes. No changes to save/PR/volume/progression logic — they already branch on `setType`.
+**`src/pages/WorkoutSession.tsx`** — build `completed.sets` by iterating `exerciseOrder` (with each superset's follow-on members expanded in the same order the UI shows), not `Object.entries(setLogs)`. This makes `workout.sets` faithfully match on-screen order.
+
+**`src/lib/data/workout-queries.ts` (`saveWorkoutToCloud`)** — replace the per-exercise counter with a **global monotonic counter** for `set_index` across the whole session (row 0, 1, 2, … in the order they appear in `workout.sets`). Reader path already `ORDER BY set_index ASC`, so:
+- Exercise order = order of first appearance in `workout.sets` = `exerciseOrder`.
+- Set order within an exercise = order the user logged them.
+- Backward compatible: `fetchExerciseLastData` / `fetchLastSessionData` filter by `exercise_id` first, then `ORDER BY set_index ASC` — the counter is still monotonically increasing per exercise, so those queries stay correct.
+
+No migration. Old rows keep their per-exercise indices; only new saves use the global counter (mixed-scheme sessions never occur because indices are per-session).
 
 ### Files touched
 
-- `src/pages/WorkoutSession.tsx` — update `toggleWarmup`, remove `addWarmupSet` + its button, make the set-number cell tappable to toggle warm-up.
+- `src/pages/WorkoutSession.tsx` — reorder set-flattening in `handleSubmitFeedback`.
+- `src/lib/data/workout-queries.ts` — swap `setIndexByExercise` for a single running counter.
 
 ### Verification
 
-- Tick a working set → row turns orange, flame icon, RIR picker suppressed on complete, one extra working set appears at the bottom.
-- Untick that warm-up → row reverts, the auto-added trailing working set is removed (only if still untouched).
-- Complete a warm-up → auto-fills from ramp (existing behaviour intact).
-- Save session → warm-ups persist as `set_type = 'warmup'` and are excluded from PRs/volume/progression (existing tests still pass).
+- Log a fresh session with 3 exercises × 3 sets → History expands with exercises in the order performed and sets 1, 2, 3 in the order logged.
+- Reorder exercises mid-session, save → history reflects the final on-screen order.
+- Change a cable attachment mid-exercise, save → both sub-groups appear under the same exercise name in the order logged.
+- `fetchExerciseLastData` prefill still shows the correct "Last" weight × reps per set slot (no regression).
