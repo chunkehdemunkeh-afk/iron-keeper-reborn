@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Flame, Coins, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUserProgress } from "@/hooks/queries/useUserProgress";
+import { useEquippedCosmetics, useCosmetics } from "@/hooks/queries/useCosmetics";
 
 interface Props {
   compact?: boolean;
@@ -10,9 +11,17 @@ interface Props {
 export default function XpBar({ compact = false }: Props) {
   const navigate = useNavigate();
   const { data: progress } = useUserProgress();
+  const { data: equipped } = useEquippedCosmetics();
+  const { data: catalog } = useCosmetics();
   if (!progress) return null;
 
   const { level, levelProgress, xp, coins, currentStreak, streakBadge } = progress;
+  const themePayload = equipped?.xp_theme
+    ? (catalog?.find(c => c.code === equipped.xp_theme)?.payload as { from?: string; to?: string } | undefined)
+    : undefined;
+  const barGradient = themePayload?.from && themePayload?.to
+    ? `linear-gradient(90deg, ${themePayload.from}, ${themePayload.to})`
+    : undefined;
 
   return (
     <button
