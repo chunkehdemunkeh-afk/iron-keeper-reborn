@@ -1,4 +1,5 @@
 import { Zap, Wind, Dumbbell, Shield, ArrowUp, ArrowDown, Footprints, User, Flame, Target, Trophy, Layers, Activity } from "lucide-react";
+import { HYROX_WORKOUTS } from "./hyrox-workouts";
 import type { LucideIcon } from "lucide-react";
 
 export type Exercise = {
@@ -466,6 +467,7 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "la6",              name: "Core Finisher",            sets: 2, reps: "12-15", targetMuscle: "Core",              targetRir: "0-1", notes: "Pick a variant from the dropdown — 60s rest" },
     ],
   },
+  ...HYROX_WORKOUTS,
 ];
 
 export function getTodaySchedule() {

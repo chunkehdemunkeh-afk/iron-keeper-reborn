@@ -12,7 +12,8 @@ import XpBar from "@/components/gamification/XpBar";
 
 import HomeCombinedRecoveryCard from "@/components/HomeCombinedRecoveryCard";
 import MorningCheckInPrompt from "@/components/biometrics/MorningCheckInPrompt";
-import { isGKSplit, isNoWorkoutMode } from "@/lib/user-preferences";
+import { isGKSplit, isNoWorkoutMode, getUserPreferences } from "@/lib/user-preferences";
+import HyroxProgramCard from "@/components/HyroxProgramCard";
 import HomeSessionCard from "@/components/home/HomeSessionCard";
 import PostOnboardingTip from "@/components/PostOnboardingTip";
 import { format, subDays, addDays, isToday } from "date-fns";
@@ -35,6 +36,7 @@ const Index = () => {
   const displayName = profile?.display_name?.split(" ")[0] || "Athlete";
   const gkMode = user ? isGKSplit(user.id) : false;
   const noWorkoutMode = user ? isNoWorkoutMode(user.id) : false;
+  const hyroxMode = user ? getUserPreferences(user.id)?.splitId === "hyrox" : false;
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [slideDir, setSlideDir] = useState(0); // -1 left, 1 right
@@ -141,6 +143,10 @@ const Index = () => {
 
         {/* Next session — only show on today and when user has a workout plan */}
         {isCurrentDay && !noWorkoutMode && <NextSessionCard />}
+
+        {/* Hyrox program card — visible for hyrox-split users */}
+        {isCurrentDay && hyroxMode && <HyroxProgramCard />}
+
 
         {/* Home session launcher — always available on today */}
         {isCurrentDay && <HomeSessionCard />}

@@ -1,18 +1,21 @@
 import { WORKOUTS } from "@/lib/workout-data";
 import { getAllCustomWorkouts } from "@/pages/WorkoutBuilder";
 import { useNavigate } from "react-router-dom";
-import { Play, Repeat2, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
+import { Play, Repeat2, ChevronDown, ChevronUp, ChevronRight, Flame } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserPreferences, getNextSplitDay, isNoWorkoutMode } from "@/lib/user-preferences";
 import { useState, useMemo } from "react";
 import { useWorkoutHistory } from "@/hooks/queries/useWorkoutHistory";
+import HyroxSwapSheet from "@/components/HyroxSwapSheet";
+import { HYROX_WORKOUT_IDS } from "@/lib/hyrox-workouts";
 
 export default function NextSessionCard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [showAll, setShowAll] = useState(false);
   const [overrideWorkoutId, setOverrideWorkoutId] = useState<string | null>(null);
+  const [hyroxOpen, setHyroxOpen] = useState(false);
 
   const prefs = user ? getUserPreferences(user.id) : null;
   const noWorkout = user ? isNoWorkoutMode(user.id) : false;
@@ -36,9 +39,12 @@ export default function NextSessionCard() {
     ? allWorkouts.find((w) => w.id === overrideWorkoutId) ?? splitNextWorkout
     : splitNextWorkout;
 
-  // Workouts not in the split (for the "something different" dropdown)
+  // Workouts not in the split (for the "something different" dropdown).
+  // Hyrox sessions are excluded — they live behind the "Swap for Hyrox" pill.
   const splitWorkoutIds = new Set(prefs?.schedule?.map((d) => d.workoutId) ?? []);
-  const otherWorkouts = allWorkouts.filter((w) => !splitWorkoutIds.has(w.id));
+  const otherWorkouts = allWorkouts.filter(
+    (w) => !splitWorkoutIds.has(w.id) && !HYROX_WORKOUT_IDS.has(w.id),
+  );
 
   // No-workout mode: hide the entire card (defensive — Index.tsx also gates this)
   if (noWorkout) return null;
@@ -146,7 +152,23 @@ export default function NextSessionCard() {
         })}
       </div>
 
-      {/* Switch it out — workouts not in the split */}
+      {/* Hyrox one-off swap */}
+      <button
+        onClick={() => setHyroxOpen(true)}
+        className="w-full flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500/15 to-red-500/10 hover:from-orange-500/25 hover:to-red-500/15 border border-orange-500/20 px-3 py-2 mb-3 text-left active:scale-[0.98] transition-all"
+      >
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-500/20 flex-shrink-0">
+          <Flame className="h-3.5 w-3.5 text-orange-500" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-foreground">Swap for Hyrox session</p>
+          <p className="text-[10px] text-muted-foreground">CR · Strength · Erg · Simulation</p>
+        </div>
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+      </button>
+
+      <HyroxSwapSheet open={hyroxOpen} onOpenChange={setHyroxOpen} />
+
       {otherWorkouts.length > 0 && (
         <>
           <button
