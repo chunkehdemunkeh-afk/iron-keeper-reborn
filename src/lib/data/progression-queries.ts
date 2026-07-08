@@ -320,10 +320,17 @@ export async function evaluateAndStoreProgression(sets: EvalSet[]): Promise<void
   for (const s of sets) {
     if ((s.setType ?? "working") !== "working") continue;
     if (!s.exerciseId) continue;
+    // Skip Hyrox time/erg benchmarks — lower "weight" (== seconds) is better,
+    // and the double-progression heuristic would suggest bumping seconds.
+    if (s.exerciseId.startsWith("hx-run-") || s.exerciseId.startsWith("hx-ski-") ||
+        s.exerciseId.startsWith("hx-row-") || s.exerciseId.startsWith("hx-sim-r") ||
+        s.exerciseId === "hx-sim-ski" || s.exerciseId === "hx-sim-bbj" ||
+        s.exerciseId === "hx-farm-200") continue;
     if (!byEx.has(s.exerciseId)) byEx.set(s.exerciseId, []);
     byEx.get(s.exerciseId)!.push(s);
   }
   if (byEx.size === 0) return;
+
 
   const exIds = Array.from(byEx.keys());
   const { data: existingRows } = await tbl()
