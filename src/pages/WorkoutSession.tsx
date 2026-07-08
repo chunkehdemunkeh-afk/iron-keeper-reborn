@@ -2119,17 +2119,8 @@ export default function WorkoutSession() {
                                   <Plus className="h-3 w-3" />
                                   Add Set
                                 </button>
-                                {!isTimeBased && (
-                                  <button
-                                    onClick={() => addWarmupSet(ex.id)}
-                                    className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-dashed border-muted-foreground/40 text-xs text-muted-foreground hover:bg-muted/40 transition-colors"
-                                    title="Add a warm-up set (excluded from PRs and burn calc)"
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                    Warm-up
-                                  </button>
-                                )}
                                 {!isTimeBased && showWeight && (
+
                                   <button
                                     onClick={() => add1RMTestSet(ex.id)}
                                     className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-dashed border-amber-400/40 text-xs text-amber-400 hover:bg-amber-400/10 transition-colors"
