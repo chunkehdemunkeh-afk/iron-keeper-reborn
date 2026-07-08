@@ -13,10 +13,12 @@ import {
 } from "@/lib/data/hyrox-benchmark-queries";
 import {
   consumeGoalAchievement,
+  getGoalHistory,
   getGoals,
   goalProgress,
   isGoalAchieved,
   type HyroxGoal,
+  type HyroxGoalHistoryEntry,
 } from "@/lib/hyrox-goals";
 import { HyroxGoalSheet } from "@/components/hyrox/HyroxGoalSheet";
 import { LoadingState } from "@/components/ui/loading-state";
