@@ -7,6 +7,8 @@ export interface Season {
   starts_at: string;
   ends_at: string;
   status: string;
+  theme?: string | null;
+  theme_gradient?: string | null;
 }
 
 export function useCurrentSeason() {
