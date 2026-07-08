@@ -1089,36 +1089,39 @@ export default function WorkoutSession() {
     hapticMedium();
   }, []);
 
-  /** Add a warm-up set. If no warm-ups exist yet, seeds 2 (50% × 5, 75% × 5).
-   *  Subsequent presses add one more, capped at 3 total (40 / 60 / 80%). */
-  const addWarmupSet = useCallback((exerciseId: string) => {
-    setSetLogs((prev) => {
-      const updated = { ...prev };
-      const sets = [...(updated[exerciseId] || [])];
-      const existingWarmups = sets.filter((s) => s.setType === "warmup").length;
-      if (existingWarmups >= 3) return prev;
-      const toAdd = existingWarmups === 0 ? 2 : 1;
-      const firstWorkingIdx = sets.findIndex((s) => s.setType !== "warmup");
-      const insertAt = firstWorkingIdx === -1 ? sets.length : firstWorkingIdx;
-      const newWarmups: SetLog[] = Array.from({ length: toAdd }, () => ({
-        reps: 0, weight: 0, completed: false, setType: "warmup",
-      }));
-      sets.splice(insertAt, 0, ...newWarmups);
-      updated[exerciseId] = sets;
-      return updated;
-    });
-    hapticMedium();
-  }, []);
-
-  /** Toggle a single set between working ↔ warmup. */
+  /** Toggle a single set between working ↔ warmup.
+   *  Flipping working → warmup auto-appends a fresh working set to preserve the planned count.
+   *  Flipping warmup → working trims a trailing untouched working set (if present). */
   const toggleWarmup = useCallback((exerciseId: string, setIdx: number) => {
     setSetLogs((prev) => {
       const updated = { ...prev };
       const sets = [...(updated[exerciseId] || [])];
       if (!sets[setIdx]) return prev;
       const current = sets[setIdx].setType;
+      if (current === "1rm_test") return prev;
       const next: SetType = current === "warmup" ? "working" : "warmup";
       sets[setIdx] = { ...sets[setIdx], setType: next };
+
+      if (next === "warmup") {
+        // Auto-append a compensating working set at the end.
+        sets.push({ reps: 0, weight: 0, completed: false, setType: "working" });
+      } else {
+        // Trim a trailing untouched working set if there is one.
+        const lastIdx = sets.length - 1;
+        if (lastIdx > setIdx) {
+          const last = sets[lastIdx];
+          if (
+            last.setType !== "warmup" &&
+            last.setType !== "1rm_test" &&
+            !last.completed &&
+            !last.reps &&
+            !last.weight
+          ) {
+            sets.splice(lastIdx, 1);
+          }
+        }
+      }
+
       updated[exerciseId] = sets;
       return updated;
     });
