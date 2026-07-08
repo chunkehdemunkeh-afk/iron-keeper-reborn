@@ -90,7 +90,7 @@ export default function HyroxBenchmarks() {
           <LoadingState label="Loading benchmarks" />
         ) : !hasAny ? (
           <EmptyState
-            icon={<Sparkles className="h-8 w-8 text-orange-500" />}
+            icon={Sparkles}
             title="No benchmarks yet"
             description="Complete a Hyrox session and log your times/weights — your progress will appear here."
           />
