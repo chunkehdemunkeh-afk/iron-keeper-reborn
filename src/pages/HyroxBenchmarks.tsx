@@ -193,14 +193,18 @@ export default function HyroxBenchmarks() {
 }
 
 function BenchmarkCard({
+  userId,
   series,
   goal,
+  goalsVersion,
   expanded,
   onToggle,
   onSetGoal,
 }: {
+  userId: string;
   series: HyroxBenchmarkSeries;
   goal: HyroxGoal | null;
+  goalsVersion: number;
   expanded: boolean;
   onToggle: () => void;
   onSetGoal: () => void;
