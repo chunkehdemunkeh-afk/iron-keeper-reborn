@@ -176,6 +176,57 @@ export type Database = {
         }
         Relationships: []
       }
+      coach_athletes: {
+        Row: {
+          athlete_user_id: string
+          coach_user_id: string
+          id: string
+          joined_at: string
+        }
+        Insert: {
+          athlete_user_id: string
+          coach_user_id: string
+          id?: string
+          joined_at?: string
+        }
+        Update: {
+          athlete_user_id?: string
+          coach_user_id?: string
+          id?: string
+          joined_at?: string
+        }
+        Relationships: []
+      }
+      coach_messages: {
+        Row: {
+          athlete_user_id: string
+          body: string
+          coach_user_id: string
+          created_at: string
+          id: string
+          read: boolean
+          sender_id: string
+        }
+        Insert: {
+          athlete_user_id: string
+          body: string
+          coach_user_id: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          sender_id: string
+        }
+        Update: {
+          athlete_user_id?: string
+          body?: string
+          coach_user_id?: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          sender_id?: string
+        }
+        Relationships: []
+      }
       coach_notifications: {
         Row: {
           created_at: string
@@ -206,6 +257,24 @@ export type Database = {
           read?: boolean
           reps?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      coach_profiles: {
+        Row: {
+          coach_user_id: string
+          created_at: string
+          invite_code: string
+        }
+        Insert: {
+          coach_user_id: string
+          created_at?: string
+          invite_code: string
+        }
+        Update: {
+          coach_user_id?: string
+          created_at?: string
+          invite_code?: string
         }
         Relationships: []
       }
@@ -317,6 +386,45 @@ export type Database = {
           rarity?: string
           required_tier?: string | null
           season_exclusive_id?: string | null
+        }
+        Relationships: []
+      }
+      custom_workouts: {
+        Row: {
+          color: string
+          created_at: string
+          day: string
+          exercises: Json
+          focus: string
+          id: string
+          name: string
+          target_rir: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          day?: string
+          exercises: Json
+          focus: string
+          id: string
+          name: string
+          target_rir?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          day?: string
+          exercises?: Json
+          focus?: string
+          id?: string
+          name?: string
+          target_rir?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1151,6 +1259,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_preferences: {
+        Row: {
+          days_per_week: number | null
+          onboarding_complete: boolean
+          schedule: Json | null
+          split_id: string | null
+          split_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          days_per_week?: number | null
+          onboarding_complete?: boolean
+          schedule?: Json | null
+          split_id?: string | null
+          split_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          days_per_week?: number | null
+          onboarding_complete?: boolean
+          schedule?: Json | null
+          split_id?: string | null
+          split_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_progress: {
         Row: {
           coins: number
@@ -1322,6 +1460,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workout_drafts: {
+        Row: {
+          payload: Json
+          updated_at: string
+          user_id: string
+          workout_id: string
+        }
+        Insert: {
+          payload: Json
+          updated_at?: string
+          user_id: string
+          workout_id: string
+        }
+        Update: {
+          payload?: Json
+          updated_at?: string
+          user_id?: string
+          workout_id?: string
+        }
+        Relationships: []
       }
       workout_history: {
         Row: {
@@ -1524,6 +1683,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      become_coach: { Args: never; Returns: undefined }
       estimate_cardio_burn: {
         Args: {
           _activity_type: string
@@ -1580,6 +1740,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_or_create_coach_invite_code: { Args: never; Returns: string }
       get_session_volume_leaderboard: {
         Args: { p_session_type?: string; p_time_filter?: string }
         Returns: {
@@ -1606,6 +1767,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      join_coach_by_code: { Args: { _code: string }; Returns: string }
       list_challengeable_users: {
         Args: { p_limit?: number }
         Returns: {
