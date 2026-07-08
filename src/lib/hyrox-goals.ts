@@ -137,8 +137,15 @@ export function consumeGoalAchievement(
   const alerts = safeRead<AlertMap>(ALERT_KEY(userId));
   const already = !!alerts[benchmarkKey];
   if (achieved && !already) {
-    alerts[benchmarkKey] = new Date().toISOString();
+    const now = new Date().toISOString();
+    alerts[benchmarkKey] = now;
     safeWrite(ALERT_KEY(userId), alerts);
+    // Stamp the active history entry as achieved
+    updateHistory(userId, benchmarkKey, (entries) =>
+      entries.map((e) =>
+        e.status === "active" ? { ...e, status: "achieved", achievedAt: now } : e,
+      ),
+    );
     return true;
   }
   if (!achieved && already) {
