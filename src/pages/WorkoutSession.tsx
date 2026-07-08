@@ -43,6 +43,7 @@ import { useProgressions, progressionMap } from "@/hooks/queries/useProgressions
 import { useActiveDeload } from "@/hooks/queries/useDeload";
 import ProgressionSuggestionBanner from "@/components/workout/ProgressionSuggestionBanner";
 import { isSingleArmEligible, DEFAULT_SINGLE_ARM_IDS } from "@/lib/single-arm-variants";
+import { HYROX_WORKOUT_IDS } from "@/lib/hyrox-workouts";
 
 const MAX_SESSION_SECONDS = 6 * 60 * 60;
 
@@ -141,6 +142,7 @@ export default function WorkoutSession() {
   const queryClient = useQueryClient();
 
   const workout = WORKOUTS.find((w) => w.id === id) || getAllCustomWorkouts().find((w) => w.id === id) || HOME_WORKOUTS.find((w) => w.id === id);
+  const isHyroxSession = workout ? HYROX_WORKOUT_IDS.has(workout.id) : false;
 
   const sessionTargetRir = user
     ? getSplitById(getUserPreferences(user.id)?.splitId ?? "")?.targetRir
@@ -1586,12 +1588,14 @@ export default function WorkoutSession() {
                     </p>
                   )}
                 </div>
-                <button
-                  onClick={() => setVideoExercise({ name: ex.name, id: ex.id })}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                >
-                  <Play className="h-3 w-3" />
-                </button>
+                {!isHyroxSession && (
+                  <button
+                    onClick={() => setVideoExercise({ name: ex.name, id: ex.id })}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  >
+                    <Play className="h-3 w-3" />
+                  </button>
+                )}
                 <span className="text-[10px] text-muted-foreground rounded-md bg-muted/50 px-2 py-0.5">
                   {ex.targetMuscle}
                 </span>
@@ -1716,7 +1720,7 @@ export default function WorkoutSession() {
                 targetRir={ex.targetRir ?? workout?.targetRir ?? targetRirForReps(ex.reps, sessionTargetRir)}
                 supersetGroup={ex.supersetGroup}
                 onToggleExpand={() => setExpandedExercise(isExpanded ? null : ex.id)}
-                onPlayVideo={() => setVideoExercise({ name: displayName, id: ex.id })}
+                onPlayVideo={isHyroxSession ? undefined : () => setVideoExercise({ name: displayName, id: ex.id })}
                 onSwap={() => setSwapExerciseId(ex.id)}
                 hasSubs={hasSubs}
                 lastSub={!override ? lastSubstitutions[ex.id] : undefined}
