@@ -891,8 +891,10 @@ export default function WorkoutSession() {
     // Pure state update
     setSetLogs(prev => ({ ...prev, [exerciseId]: newSets }));
 
-    // Show RIR picker for non-warmup sets that were just completed
-    if (!wasCompleted && newSets[setIdx]?.setType !== "warmup") {
+    // Show RIR picker for non-warmup sets that were just completed.
+    // Hyrox sessions are cardio/time-based and skip the RIR picker so the
+    // next round card can auto-open immediately.
+    if (!wasCompleted && newSets[setIdx]?.setType !== "warmup" && !isHyroxSession) {
       setSetLogs(prev => {
         const s = prev[exerciseId] ? [...prev[exerciseId]] : [];
         if (!s[setIdx]) return prev;
@@ -1032,7 +1034,7 @@ export default function WorkoutSession() {
       // Skip when a RIR picker was just opened — collapsing now would hide it.
       // The picker's pick/skip handlers will trigger the auto-expand instead.
       const allSetsNowDone = newSets.every(s => s.completed);
-      const justOpenedRirPicker = newSets[setIdx]?.setType !== "warmup";
+      const justOpenedRirPicker = newSets[setIdx]?.setType !== "warmup" && !isHyroxSession;
       if (allSetsNowDone && !justOpenedRirPicker) {
         const currentOrderIdx = exerciseOrder.indexOf(exerciseId);
         if (currentOrderIdx >= 0 && currentOrderIdx < exerciseOrder.length - 1) {
