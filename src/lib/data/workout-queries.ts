@@ -751,6 +751,14 @@ export async function fetchExercisePRHistory(): Promise<ExercisePRTrend[]> {
     const baseId = stripExerciseSuffixes(s.exercise_id);
     const w = Number(s.weight);
     if (!w || Number.isNaN(w)) continue;
+    // Exclude Hyrox time-based benchmarks — their "weight" column stores
+    // seconds (lower = better), so the generic PR chart would mis-flag slower
+    // times as PRs. Hyrox benchmarks live on the dedicated /hyrox page.
+    if (baseId.startsWith("hx-run-") || baseId.startsWith("hx-ski-") ||
+        baseId.startsWith("hx-row-") || baseId.startsWith("hx-sim-r") ||
+        baseId === "hx-sim-ski" || baseId === "hx-sim-bbj" ||
+        baseId === "hx-farm-200") continue;
+
 
     const realName =
       s.exercise_name && s.exercise_name !== s.exercise_id

@@ -37,7 +37,22 @@ export default function HyroxSwapSheet({ open, onOpenChange }: Props) {
           </div>
         </SheetHeader>
 
+        <button
+          onClick={() => {
+            onOpenChange(false);
+            navigate("/hyrox");
+          }}
+          className="w-full flex items-center justify-between rounded-xl bg-gradient-to-r from-orange-500/15 to-red-500/10 border border-orange-500/20 px-3 py-2 mb-4 text-left active:scale-[0.98] transition-all"
+        >
+          <div>
+            <p className="text-xs font-semibold text-foreground">View benchmarks</p>
+            <p className="text-[10px] text-muted-foreground">Erg splits · run pace · station PRs</p>
+          </div>
+          <span className="text-orange-500 text-xs font-bold">→</span>
+        </button>
+
         <div className="space-y-5 pb-6">
+
           {HYROX_SESSION_GROUPS.map((group) => (
             <div key={group.label}>
               <div className="mb-2">

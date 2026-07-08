@@ -37,6 +37,7 @@ import Quests from "./pages/Quests";
 import Duels from "./pages/Duels";
 import Shop from "./pages/Shop";
 import Community from "./pages/Community";
+import HyroxBenchmarks from "./pages/HyroxBenchmarks";
 import LevelUpSheet from "@/components/gamification/LevelUpSheet";
 import BadgeUnlockSheet from "@/components/gamification/BadgeUnlockSheet";
 import SeasonFinaleSheet from "@/components/gamification/SeasonFinaleSheet";
@@ -114,6 +115,7 @@ const AnimatedRoutes = () => {
         <Route path="/duels" element={<PageWrapper><ProtectedRoute><Duels /></ProtectedRoute></PageWrapper>} />
         <Route path="/shop" element={<PageWrapper><ProtectedRoute><Shop /></ProtectedRoute></PageWrapper>} />
         <Route path="/community" element={<PageWrapper><ProtectedRoute><Community /></ProtectedRoute></PageWrapper>} />
+        <Route path="/hyrox" element={<PageWrapper><ProtectedRoute><HyroxBenchmarks /></ProtectedRoute></PageWrapper>} />
         <Route path="/reset-password" element={<PageWrapper><ResetPassword /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>
