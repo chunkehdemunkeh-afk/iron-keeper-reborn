@@ -37,22 +37,24 @@ export default function NutritionSettings({ open, onClose, onSaved }: Props) {
       .select("calories, protein_g, carbs_g, fat_g, water_goal_ml, adjust_for_activity")
       .eq("user_id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setCalories(data.calories);
-          setWaterGoalMl(data.water_goal_ml);
-          setAdjustForActivity(!!data.adjust_for_activity);
-          // Calculate current percentages from grams
-          const totalCalsFromMacros = data.protein_g * 4 + data.carbs_g * 4 + data.fat_g * 9;
-          if (totalCalsFromMacros > 0) {
-            setProteinPct(Math.round((data.protein_g * 4 / totalCalsFromMacros) * 100));
-            setCarbsPct(Math.round((data.carbs_g * 4 / totalCalsFromMacros) * 100));
-            setFatPct(Math.round((data.fat_g * 9 / totalCalsFromMacros) * 100));
+      .then(
+        ({ data }) => {
+          if (data) {
+            setCalories(data.calories);
+            setWaterGoalMl(data.water_goal_ml);
+            setAdjustForActivity(!!data.adjust_for_activity);
+            // Calculate current percentages from grams
+            const totalCalsFromMacros = data.protein_g * 4 + data.carbs_g * 4 + data.fat_g * 9;
+            if (totalCalsFromMacros > 0) {
+              setProteinPct(Math.round((data.protein_g * 4 / totalCalsFromMacros) * 100));
+              setCarbsPct(Math.round((data.carbs_g * 4 / totalCalsFromMacros) * 100));
+              setFatPct(Math.round((data.fat_g * 9 / totalCalsFromMacros) * 100));
+            }
           }
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+          setLoading(false);
+        },
+        () => setLoading(false),
+      );
   }, [user, open]);
 
   // Ensure percentages always sum to 100

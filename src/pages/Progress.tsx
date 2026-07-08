@@ -371,7 +371,7 @@ export default function Progress() {
 
   const { data: volumeData = [], isLoading: volumeLoading } = useQuery({
     queryKey: queryKeys.workoutVolume(user?.id ?? ""),
-    queryFn: fetchVolumeData,
+    queryFn: () => fetchVolumeData(),
     enabled: !!user,
   });
 

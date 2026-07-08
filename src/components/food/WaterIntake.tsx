@@ -35,10 +35,12 @@ export default function WaterIntake({ date }: Props) {
       .select("water_goal_ml")
       .eq("user_id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
-        if (data?.water_goal_ml) setGoalMl(data.water_goal_ml);
-      })
-      .catch(() => {});
+      .then(
+        ({ data }) => {
+          if (data?.water_goal_ml) setGoalMl(data.water_goal_ml);
+        },
+        () => {},
+      );
   }, [user]);
 
   const fetchWater = useCallback(async () => {

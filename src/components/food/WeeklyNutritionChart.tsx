@@ -41,26 +41,28 @@ export default function WeeklyNutritionChart({ goals }: { goals: Goals | null })
       .eq("user_id", user.id)
       .gte("date", startDate)
       .lte("date", endDate)
-      .then(({ data: logs }) => {
-        // Build Mon-Sun array
-        const days: DayData[] = [];
-        for (let i = 0; i < 7; i++) {
-          const d = addDays(weekStart, i);
-          const dateStr = format(d, "yyyy-MM-dd");
-          const dayLogs = (logs || []).filter((l: any) => l.date === dateStr);
-          days.push({
-            day: format(d, "EEE"),
-            date: dateStr,
-            calories: Math.round(dayLogs.reduce((s: number, l: any) => s + l.calories, 0)),
-            protein: Math.round(dayLogs.reduce((s: number, l: any) => s + l.protein_g, 0)),
-            carbs: Math.round(dayLogs.reduce((s: number, l: any) => s + l.carbs_g, 0)),
-            fat: Math.round(dayLogs.reduce((s: number, l: any) => s + l.fat_g, 0)),
-          });
-        }
-        setData(days);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      .then(
+        ({ data: logs }) => {
+          // Build Mon-Sun array
+          const days: DayData[] = [];
+          for (let i = 0; i < 7; i++) {
+            const d = addDays(weekStart, i);
+            const dateStr = format(d, "yyyy-MM-dd");
+            const dayLogs = (logs || []).filter((l: any) => l.date === dateStr);
+            days.push({
+              day: format(d, "EEE"),
+              date: dateStr,
+              calories: Math.round(dayLogs.reduce((s: number, l: any) => s + l.calories, 0)),
+              protein: Math.round(dayLogs.reduce((s: number, l: any) => s + l.protein_g, 0)),
+              carbs: Math.round(dayLogs.reduce((s: number, l: any) => s + l.carbs_g, 0)),
+              fat: Math.round(dayLogs.reduce((s: number, l: any) => s + l.fat_g, 0)),
+            });
+          }
+          setData(days);
+          setLoading(false);
+        },
+        () => setLoading(false),
+      );
   }, [user]);
 
   if (loading || data.every((d) => d.calories === 0)) return null;
