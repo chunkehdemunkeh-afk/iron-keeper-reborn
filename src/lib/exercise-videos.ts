@@ -473,16 +473,15 @@ const EXERCISE_DB_FOLDERS: Record<string, string> = {
   // ── Programme lib-* exercises — verified folder names from existing mappings ──
   "lib-1":  "Barbell_Bench_Press_-_Medium_Grip",       // Upper A: Barbell Bench Press
   "lib-13": "Face_Pull",                               // Upper B: Face Pulls
-  "lib-18": "Alternate_Incline_Dumbbell_Curl",         // Upper B: Incline Dumbbell Curl
+  "lib-18": "Incline_Dumbbell_Curl",                   // Upper B: Incline Dumbbell Curl
   "lib-19": "Triceps_Pushdown_-_Rope_Attachment",      // Upper B: Tricep Pushdown
   "lib-54": "Lateral_Box_Jump",                        // Lower B: Lateral Bound
-  "lib-62": "Dips_-_Triceps_Version",                  // Upper A: Plate Loaded Dip Machine (closest match)
+  "lib-62": "Dip_Machine",                             // Upper A: Plate Loaded Dip Machine
   "lib-64": "Seated_Cable_Rows",                       // Upper A: Mag Grip Seated Cable Row (closest match)
   "lib-66": "Box_Jump_Multiple_Response",              // Lower A: Box Jumps with Drop Jump
 
   // Power day
-  pw1: "Box_Jump_Multiple_Response",
-  pw2: "Depth_Jump_Leap",
+  pw1: "Front_Box_Jump",
   pw3: "One-Arm_Medicine_Ball_Slam",
   pw5: "One-Arm_Kettlebell_Swings",
   pw6: "Plyo_Kettlebell_Pushups",
@@ -503,12 +502,11 @@ const EXERCISE_DB_FOLDERS: Record<string, string> = {
   rf5: "Dumbbell_Shoulder_Press",
 
   // Push day
-  pu1: "Incline_Dumbbell_Bench_With_Palms_Facing_In",
+  pu1: "Incline_Dumbbell_Press",
   pu2: "Side_Lateral_Raise",
-  pu3: "Incline_Dumbbell_Bench_With_Palms_Facing_In",
+  pu3: "Incline_Dumbbell_Press",
   pu4: "Dumbbell_Flyes",
-  pu5: "Kneeling_Cable_Triceps_Extension",
-  pu6: "Cable_One_Arm_Tricep_Extension",
+  pu6: "Cable_Rope_Overhead_Triceps_Extension",
 
   // Pull day
   pl1: "Seated_Cable_Rows",
@@ -529,15 +527,15 @@ const EXERCISE_DB_FOLDERS: Record<string, string> = {
   up1: "Seated_Cable_Rows",
   up2: "Wide-Grip_Lat_Pulldown",
   up3: "Dumbbell_Bench_Press",
-  up4: "Low_Cable_Crossover",
-  up5: "Dumbbell_Shoulder_Press",
+  up4: "Cable_Crossover",
+  up5: "Leverage_Shoulder_Press",
   up6: "Two-Arm_Dumbbell_Preacher_Curl",
   up7: "Preacher_Hammer_Dumbbell_Curl",
   up8: "Triceps_Pushdown_-_Rope_Attachment",
 
   // Full Body
   fb1: "Barbell_Squat",
-  fb2: "Romanian_Deadlift_from_Deficit",
+  fb2: "Romanian_Deadlift",
   fb3: "Barbell_Bench_Press_-_Medium_Grip",
   fb4: "Bent_Over_Barbell_Row",
   fb5: "Barbell_Shoulder_Press",
@@ -546,7 +544,7 @@ const EXERCISE_DB_FOLDERS: Record<string, string> = {
   // 5/3/1 Squat Day
   sq1: "Barbell_Squat",
   sq2: "Front_Barbell_Squat",
-  sq3: "Narrow_Stance_Leg_Press",
+  sq3: "Leg_Press",
   sq4: "Leg_Extensions",
   sq5: "Bodyweight_Walking_Lunge",
   sq6: "Seated_Leg_Curl",
@@ -554,31 +552,29 @@ const EXERCISE_DB_FOLDERS: Record<string, string> = {
   // 5/3/1 Bench Day
   bn1: "Barbell_Bench_Press_-_Medium_Grip",
   bn2: "Barbell_Incline_Bench_Press_-_Medium_Grip",
-  bn3: "Incline_Dumbbell_Bench_With_Palms_Facing_In",
+  bn3: "Incline_Dumbbell_Press",
   bn4: "Cable_Crossover",
   bn5: "EZ-Bar_Skullcrusher",
-  bn6: "Kneeling_Cable_Triceps_Extension",
 
   // 5/3/1 Deadlift Day
   dl1: "Barbell_Deadlift",
   dl2: "Rack_Pulls",
   dl3: "Bent_Over_Barbell_Row",
   dl4: "Wide-Grip_Lat_Pulldown",
-  dl5: "One-Arm_Dumbbell_Row",
+  dl5: "Bent_Over_Two-Dumbbell_Row",
   dl6: "Face_Pull",
 
   // 5/3/1 Press Day
   pr1: "Barbell_Shoulder_Press",
   pr2: "Arnold_Dumbbell_Press",
   pr3: "Side_Lateral_Raise",
-  pr4: "Front_Incline_Dumbbell_Raise",
   pr5: "Face_Pull",
   pr6: "Upright_Barbell_Row",
 
   // Arnold Split — Chest & Back
   cb1: "Barbell_Bench_Press_-_Medium_Grip",
   cb2: "Bent_Over_Barbell_Row",
-  cb3: "Incline_Dumbbell_Bench_With_Palms_Facing_In",
+  cb3: "Incline_Dumbbell_Press",
   cb4: "Wide-Grip_Lat_Pulldown",
   cb5: "Cable_Crossover",
   cb6: "Seated_Cable_Rows",
@@ -586,7 +582,7 @@ const EXERCISE_DB_FOLDERS: Record<string, string> = {
   // Arnold Split — Shoulders & Arms
   sa1: "Arnold_Dumbbell_Press",
   sa2: "Side_Lateral_Raise",
-  sa3: "Wide-Grip_Standing_Barbell_Curl",
+  sa3: "Barbell_Curl",
   sa4: "EZ-Bar_Skullcrusher",
   sa5: "Preacher_Hammer_Dumbbell_Curl",
   sa6: "Triceps_Pushdown_-_Rope_Attachment",
@@ -594,17 +590,17 @@ const EXERCISE_DB_FOLDERS: Record<string, string> = {
   // Bro Split — Chest Day
   ch1: "Barbell_Bench_Press_-_Medium_Grip",
   ch2: "Barbell_Incline_Bench_Press_-_Medium_Grip",
-  ch3: "Incline_Dumbbell_Bench_With_Palms_Facing_In",
+  ch3: "Incline_Dumbbell_Press",
   ch4: "Dumbbell_Flyes",
   ch5: "Cable_Crossover",
-  ch6: "Dips_-_Triceps_Version",
+  ch6: "Dips_-_Chest_Version",
 
   // Bro Split — Back Day
   bk1: "Barbell_Deadlift",
   bk2: "Bent_Over_Barbell_Row",
   bk3: "Wide-Grip_Lat_Pulldown",
   bk4: "Seated_Cable_Rows",
-  bk5: "One-Arm_Dumbbell_Row",
+  bk5: "Bent_Over_Two-Dumbbell_Row",
   bk6: "Face_Pull",
 
   // Bro Split — Shoulders Day
@@ -612,14 +608,14 @@ const EXERCISE_DB_FOLDERS: Record<string, string> = {
   sh2: "Arnold_Dumbbell_Press",
   sh3: "Side_Lateral_Raise",
   sh4: "Front_Incline_Dumbbell_Raise",
-  sh5: "Dumbbell_Lying_One-Arm_Rear_Lateral_Raise",
+  sh5: "Reverse_Flyes",
   sh6: "Barbell_Shrug",
 
   // Bro Split — Arms Day
-  am1: "Wide-Grip_Standing_Barbell_Curl",
+  am1: "Barbell_Curl",
   am2: "EZ-Bar_Skullcrusher",
   am3: "Alternate_Incline_Dumbbell_Curl",
-  am4: "Close-Grip_Barbell_Bench_Press",
+  am4: "Standing_Dumbbell_Triceps_Extension",
   am5: "Preacher_Hammer_Dumbbell_Curl",
   am6: "Triceps_Pushdown_-_Rope_Attachment",
 };
