@@ -1199,7 +1199,29 @@ export default function WorkoutSession() {
   const handleSubmitFeedback = () => {
     if (!workout) return;
     const hasCompletedAny = completedExercises > 0;
-    
+
+    // Flatten sets in on-screen order so history renders exercises + sets in the
+    // exact sequence the user performed them. `Object.entries(setLogs)` iterates
+    // by insertion order, which drifts from `exerciseOrder` after reorders,
+    // substitutions, and accessory additions. Expand each superset leader to
+    // include its group members (which are tracked in setLogs but not in
+    // `exerciseOrder`).
+    const orderedExIds: string[] = [];
+    const seenExIds = new Set<string>();
+    const pushEx = (id: string) => {
+      if (!seenExIds.has(id) && setLogs[id]) { orderedExIds.push(id); seenExIds.add(id); }
+    };
+    for (const leaderId of exerciseOrder) {
+      pushEx(leaderId);
+      const group = allExercises.find(e => e.id === leaderId)?.supersetGroup;
+      if (group) {
+        for (const ex of allExercises) {
+          if (ex.supersetGroup === group) pushEx(ex.id);
+        }
+      }
+    }
+    for (const exId of Object.keys(setLogs)) pushEx(exId);
+
     const completed: CompletedWorkout = {
       id: crypto.randomUUID(),
       workoutId: workout.id,
@@ -1208,7 +1230,8 @@ export default function WorkoutSession() {
       duration: elapsed > 0 ? Math.max(1, Math.ceil(elapsed / 60)) : 0,
       exercisesCompleted: completedExercises,
       totalExercises,
-      sets: Object.entries(setLogs).flatMap(([exId, sets]) => {
+      sets: orderedExIds.flatMap((exId) => {
+        const sets = setLogs[exId] ?? [];
         const ex = allExercises.find(e => e.id === exId);
         const override = exerciseOverrides[exId];
         const liveName = override?.name ?? ex?.name;
