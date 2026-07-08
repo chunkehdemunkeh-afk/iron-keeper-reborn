@@ -43,7 +43,8 @@ export default function XpBar({ compact = false }: Props) {
         </div>
         <div className="h-2 bg-secondary rounded-full overflow-hidden">
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
+            className={`h-full rounded-full ${barGradient ? "" : "bg-gradient-to-r from-primary to-primary/70"}`}
+            style={barGradient ? { background: barGradient } : undefined}
             initial={{ width: 0 }}
             animate={{ width: `${levelProgress.pct}%` }}
             transition={{ duration: 0.5 }}
