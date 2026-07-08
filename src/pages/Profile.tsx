@@ -54,6 +54,9 @@ export default function Profile() {
   const equippedTitle = equipped?.title
     ? (catalog?.find(c => c.code === equipped.title)?.name ?? null)
     : null;
+  const bannerGradient = equipped?.banner
+    ? ((catalog?.find(c => c.code === equipped.banner)?.payload as { gradient?: string } | undefined)?.gradient ?? null)
+    : null;
 
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
@@ -220,9 +223,16 @@ export default function Profile() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="hero-card p-5"
+          className="hero-card p-5 relative overflow-hidden"
         >
-          <div className="flex flex-col items-center text-center">
+          {bannerGradient && (
+            <div
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-24 opacity-40 pointer-events-none"
+              style={{ background: bannerGradient, maskImage: "linear-gradient(180deg, rgba(0,0,0,0.9), transparent)", WebkitMaskImage: "linear-gradient(180deg, rgba(0,0,0,0.9), transparent)" }}
+            />
+          )}
+          <div className="relative flex flex-col items-center text-center">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
