@@ -1179,6 +1179,32 @@ export default function WorkoutSession() {
     ? exerciseOrder.map(id => allExercises.find(ex => ex.id === id)!).filter(Boolean)
     : [];
 
+  // Hyrox: collapse all rounds except the one containing the currently-expanded
+  // exercise. Keeps the round list scannable instead of an overwhelming flat wall.
+  useEffect(() => {
+    if (!isHyroxSession || !workout) return;
+    const rounds = new Set<number>();
+    workout.exercises.forEach(e => {
+      const r = hyroxRoundOf(e.id, e.supersetGroup);
+      if (r != null) rounds.add(r);
+    });
+    if (rounds.size === 0) return;
+    const currentEx = workout.exercises.find(e => e.id === expandedExercise);
+    const activeRound = currentEx ? hyroxRoundOf(currentEx.id, currentEx.supersetGroup) : null;
+    const keepOpen = activeRound ?? Math.min(...rounds);
+    setCollapsedHyroxRounds(new Set([...rounds].filter(r => r !== keepOpen)));
+  }, [isHyroxSession, workout, expandedExercise, hyroxRoundOf]);
+
+  const toggleHyroxRound = useCallback((round: number) => {
+    setCollapsedHyroxRounds(prev => {
+      const next = new Set(prev);
+      if (next.has(round)) next.delete(round);
+      else next.add(round);
+      return next;
+    });
+  }, []);
+
+
   const completedExercises = allExercises.filter((ex) => setLogs[ex.id]?.every((s) => s.completed)).length;
   const totalExercises = allExercises.length;
 
