@@ -12,7 +12,8 @@ import XpBar from "@/components/gamification/XpBar";
 
 import HomeCombinedRecoveryCard from "@/components/HomeCombinedRecoveryCard";
 import MorningCheckInPrompt from "@/components/biometrics/MorningCheckInPrompt";
-import { isGKSplit, isNoWorkoutMode } from "@/lib/user-preferences";
+import { isGKSplit, isNoWorkoutMode, getUserPreferences } from "@/lib/user-preferences";
+import HyroxProgramCard from "@/components/HyroxProgramCard";
 import HomeSessionCard from "@/components/home/HomeSessionCard";
 import PostOnboardingTip from "@/components/PostOnboardingTip";
 import { format, subDays, addDays, isToday } from "date-fns";
