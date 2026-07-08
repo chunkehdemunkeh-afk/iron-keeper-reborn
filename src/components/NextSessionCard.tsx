@@ -39,9 +39,12 @@ export default function NextSessionCard() {
     ? allWorkouts.find((w) => w.id === overrideWorkoutId) ?? splitNextWorkout
     : splitNextWorkout;
 
-  // Workouts not in the split (for the "something different" dropdown)
+  // Workouts not in the split (for the "something different" dropdown).
+  // Hyrox sessions are excluded — they live behind the "Swap for Hyrox" pill.
   const splitWorkoutIds = new Set(prefs?.schedule?.map((d) => d.workoutId) ?? []);
-  const otherWorkouts = allWorkouts.filter((w) => !splitWorkoutIds.has(w.id));
+  const otherWorkouts = allWorkouts.filter(
+    (w) => !splitWorkoutIds.has(w.id) && !HYROX_WORKOUT_IDS.has(w.id),
+  );
 
   // No-workout mode: hide the entire card (defensive — Index.tsx also gates this)
   if (noWorkout) return null;
