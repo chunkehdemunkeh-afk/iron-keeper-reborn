@@ -1,137 +1,106 @@
-# Seasons + Shop Overhaul
+# Hyrox Training
 
-Three-part plan: (1) fix the broken **Claim Season Rewards** button, (2) make the **Season loop** feel like a real progression system (visible goals, tier rewards, milestone unlocks), and (3) make the **Shop** feel like a place worth spending coins.
+Bring Hyrox-specific training into IronKeeper: a full 8-week program you can select as your split, plus a library of one-off Hyrox days you can drop into any week (e.g. Upper/Legs/Upper/Hyrox).
 
-Inspiration: Duolingo Leagues (tier badges + weekly finale), Apex/Fortnite Battle Pass (visible reward track), Strava challenges (badge milestones), Habitica shop (rarity + featured drops).
+## Hyrox context (research)
 
----
+Hyrox = 8× 1km run alternated with 8 workout stations, in this fixed order:
+1. 1000m Ski Erg
+2. 50m Sled Push (heavy)
+3. 50m Sled Pull (heavy)
+4. 80m Burpee Broad Jumps
+5. 1000m Row
+6. 200m Farmers Carry (2×24kg)
+7. 100m Sandbag Lunges (20kg)
+8. 100 Wall Balls (6kg to 3m target)
 
-## 1. Fix "Claim Season Rewards"
+Elite training is built on four pillars — mirrored in our session types:
 
-Current bug: pressing the button in `SeasonFinaleSheet` calls `settle_season` RPC. If the RPC throws (e.g. `pending.status ≠ 'active'`, RLS, or already-settled), the error is caught but the sheet just goes back to "Settling..." → prompt state with no visible feedback beyond a sonner toast that may be hidden behind the sheet.
+- **Compromised Running** — running under fatigue from a station (the signature Hyrox stimulus)
+- **Strength & Station Technique** — sled, wall ball, lunge, burpee mechanics + posterior chain strength
+- **Erg / Pure Conditioning** — Ski + Row threshold and VO2 intervals
+- **Simulation / HalfRox** — 4- or 8-station race-pace practice
 
-Fixes:
-- Log the RPC error to console and surface `e.message` in the toast so real failures are diagnosable.
-- After a successful `settle_season`, force a small delay + `refetch()` of `pending`, `result`, and `user-progress` and switch to the **Result** state locally (don't rely on `pending` still equalling `result.season_id`, since the RPC flips season status to `completed` and `pending` becomes `null` on refetch — right now that hides the result screen).
-- Add a **Continue to Shop** CTA on the result screen (deep-links to `/shop`) so newly-awarded coins have somewhere to go.
+## What we're building
 
-Also: check `fetchPendingSeasonFinale` — if there's no `seasons` row at all, no finale ever fires. Add a tiny seed check + a one-off migration to make sure there is always an active season (auto-rollover on settle).
+### 1. Session library — 8 one-off Hyrox workouts
 
-**Auto-rollover:** extend `settle_season` RPC so that after completing season N it inserts season N+1 (`starts_at = now()`, `ends_at = now() + 28 days`, `status = 'active'`). Guarantees the loop never stalls.
+New `hyrox-workouts.ts` module with a shared "Hyrox" theme (orange/black gradient, `Flame`/`Activity` icons). Each is a full `WorkoutDay` with distance/time/round-based exercises using the existing `repLabel` system ("Metres", "Sec", "Rounds").
 
----
+**Compromised running (3):**
+- `hyrox-cr-ski` — 4× (400m run + 250m Ski Erg) — beginner CR
+- `hyrox-cr-full` — 6× (1km run + 1 station rotation: ski/row/sled/farmers/lunge/wall balls)
+- `hyrox-cr-sprint` — 8× (200m run + 20 wall balls) — race-pace pyramid
 
-## 2. Season loop — make it feel worth chasing
+**Station strength (2):**
+- `hyrox-strength-posterior` — Sled push 4×20m, Sled pull 4×20m, RDL 4×6, Farmers 4×50m, Sandbag lunges 4×20m
+- `hyrox-strength-power` — Burpee broad jumps 5×10, Wall balls 5×25, KB swings 5×20, Box jumps 5×8
 
-### 2a. Season Objectives (new)
+**Erg conditioning (2):**
+- `hyrox-erg-threshold` — 6× (500m Row / 500m Ski) with 90s rest
+- `hyrox-erg-vo2` — 10× (250m Row @ hard / 250m Ski @ hard) with 45s rest
 
-A small set of **season-long targets** shown on the `SeasonCard` and Quests page. Each objective grants a big RP + coin chunk on completion — separate from the daily/weekly quest churn.
+**Simulation (1):**
+- `hyrox-halfrox` — Half Hyrox: 4× (1km run + station) using stations 1-4 at race pace, tracked as one continuous session
 
-Examples (4-week season):
-- Log **12 workouts** — 150 RP + 300 coins
-- Hit **8 PRs** — 200 RP + 500 coins
-- Complete **all 4 weekly reviews** — 100 RP + 200 coins
-- Reach a new **strength tier** on any lift — 300 RP + 750 coins + exclusive badge
-- Win **3 duels** — 150 RP + 250 coins
+Substitutions map ski→row→air bike, sled→heavy prowler→hip-belt walk, sandbag→goblet, wall ball→thruster.
 
-Stored as rows in existing `quests` table with a new `scope = 'season'` value, tracked in `user_quests` with `season_id`. Reset each season.
+### 2. Hyrox training split
 
-### 2b. Season Reward Track (new UI)
+New `TRAINING_SPLIT` entry `id: "hyrox"`, `name: "Hyrox Race Prep"`, `recommendedDays: [4, 5]`, tag "Hyrox 🔥". Weekly rotation:
+- Day 1: Compromised Running (full)
+- Day 2: Strength — Posterior
+- Day 3: Erg Threshold
+- Day 4: Strength — Power / Wall Ball
+- Day 5 (optional): HalfRox simulation
 
-Add a **Reward Track** panel to `SeasonCard` that visualises what you unlock at each tier as you climb RP. Think Battle-Pass style horizontal scroll:
+### 3. 8-week program (periodized)
 
-```text
-Bronze ── Silver ── Gold ── Platinum ── Diamond ── Champion
-  ✓        ✓       [you]     locked      locked      locked
-100c     250c    exclusive   750c +      1500c +    Champion
-        + frame   title      banner     xp theme    crown +
-                                                    title
-```
+Stored as a program overlay on top of the Hyrox split — same 4-5 sessions per week, but session prescription (volume, intensity, distances) scales week by week. Implemented as a `HYROX_PROGRAM` array of 8 week-blocks; each block overrides the sets/reps/distances of the base sessions.
 
-Each node shows the reward icon + coin bounty + any exclusive cosmetic unlock. Tapping opens a preview sheet. Rewards paid out at season settle (extend `settle_season` to insert into `user_cosmetics` for tier-locked drops).
+Phases:
+- **Weeks 1-2 Base** — Volume, technique, shorter CR intervals (400m runs)
+- **Weeks 3-4 Build** — Full 1km CR intervals, heavier sled
+- **Weeks 5-6 Intensify** — Race-pace HalfRox, VO2 ergs
+- **Week 7 Peak** — Full simulation + top-end intensity
+- **Week 8 Taper** — Reduced volume, sharp intensity, race day
 
-### 2c. Finale recap upgrade
+Progress tracked via a new `hyrox_program_progress` row (localStorage — same pattern as `user-preferences`) storing `startDate`, `currentWeek`, `raceDate` so the home card shows "Hyrox Week 4 · 28 days to race".
 
-When the finale settles, show:
-- Rank + tier badge (existing)
-- Coin reward (existing)
-- **Cosmetics unlocked this season** (new — pulled from user_cosmetics inserted by settle_season)
-- **Best moments** (new — top PR, biggest volume day, longest streak) — one Supabase query pulling season-window stats
-- Confetti + tier-appropriate colour sweep
+### 4. Adding Hyrox as a one-off swap
 
----
+Extend `NextSessionCard`:
+- New pill button "🔥 Swap for Hyrox" opens a bottom sheet listing all 8 Hyrox sessions grouped by type (CR / Strength / Erg / Simulation)
+- Tapping loads that Hyrox workout as `overrideWorkoutId` — user starts it in place of the scheduled day
+- Persists nothing about the split; it's a one-off (matches existing swap pattern)
 
-## 3. Shop revamp
+### 5. Onboarding integration
 
-Current shop is a flat 4-tab grid. Make it feel curated.
+Add "Training for Hyrox?" step in `Onboarding.tsx` after split selection. If yes: prompt for race date → pre-fills the 8-week program starting the appropriate week (auto-backs off to base if <8 weeks remain).
 
-### 3a. Header
+## Technical details
 
-- Replace flat coin pill with **animated coin balance** + a "How to earn coins" tooltip.
-- Add a **Featured** hero card at the top: rotates weekly, highlights one item with a big animated preview, discount tag, and countdown.
+**Files created:**
+- `src/lib/hyrox-workouts.ts` — 8 `WorkoutDay` definitions + substitution map
+- `src/lib/hyrox-program.ts` — `HYROX_PROGRAM: WeekBlock[8]` with overrides + progress helpers (`getCurrentWeek`, `getProgramSession`, `startProgram`, `daysUntilRace`)
+- `src/components/HyroxSwapSheet.tsx` — bottom sheet for the "Swap for Hyrox" action
+- `src/components/HyroxProgramCard.tsx` — home-screen card showing "Week X of 8 · N days to race" when active
 
-### 3b. Sections (before the tabs)
+**Files edited:**
+- `src/lib/workout-data.ts` — merge `HYROX_WORKOUTS` into `WORKOUTS` export so all existing lookups (session start, PR tracking, history, name maps) work unchanged
+- `src/lib/training-splits.ts` — add `hyrox` split entry
+- `src/lib/exercise-substitutions.ts` — add sub lists for new Hyrox exercise IDs
+- `src/components/NextSessionCard.tsx` — add "🔥 Swap for Hyrox" trigger opening `HyroxSwapSheet`
+- `src/pages/Index.tsx` — mount `HyroxProgramCard` when Hyrox program is active
+- `src/pages/Onboarding.tsx` — Hyrox goal question + race date picker
+- `src/lib/user-preferences.ts` — add `hyroxProgram?: { startDate, raceDate }` field
 
-- **New this season** — items with `season_release = current_season.number` (add column).
-- **Tier exclusives** — items with `required_tier` matching or below current tier, gated ones shown locked with a subtle glow.
-- **On sale** — optional `discount_pct` column, price crossed out.
-- Then the existing 4 category tabs below.
+**Reused (no changes needed):**
+- Existing `repLabel: "Metres" | "Sec" | "Rounds"` for distance/time-based sets
+- Existing `supersetGroup` for CR pairs (run+station)
+- Existing swap mechanic in `NextSessionCard` (`overrideWorkoutId`)
+- PR/history/leaderboard pipelines — Hyrox workouts are just `WorkoutDay`s, so they automatically get progress tracking, XP, quests
 
-### 3c. Item card polish
+**Equipment substitutions:** Every Hyrox exercise ID gets a substitution list so commercial-gym users (no sled, no ski erg) can still run the sessions with rower/air bike/prowler alternatives.
 
-- Rarity glow: `common` → none, `rare` → blue ring, `epic` → purple ring, `legendary` → animated amber shimmer.
-- Bigger preview area with hover/tap **live preview** (frame animates, banner parallax, xp theme fills, title text glints).
-- "Preview on my profile" CTA opens a mini sheet mocking the profile header with the item applied.
-- Owned items get a subtle "OWNED" watermark instead of just the Equip button.
-
-### 3d. Bundles (new)
-
-Add a **Bundles** tab: 2–4 curated packs per season (e.g. "Champion Kit" = frame + banner + title for 3000 coins, ~20% cheaper than buying separately). Stored as `cosmetic_bundles` with a join table to catalog items.
-
-### 3e. Coin economy tweaks
-
-Coin sinks currently: cosmetics only. Add:
-- **Streak Freeze** (single-use, 200 coins) — spend to save your streak beyond the automatic freeze tokens.
-- **RP Boost** (24h, 500 coins) — 1.5× season RP on all sources. Limit 1/week.
-
-Kept optional/toggleable — the user can veto these if they want a purely cosmetic shop.
-
----
-
-## 4. Database changes
-
-New migration (single file):
-
-- `ALTER TABLE seasons ADD COLUMN theme text` — for visual theming ("Winter Iron", "Spring Push").
-- `ALTER TABLE cosmetics ADD COLUMN season_release int NULL, ADD COLUMN discount_pct int NOT NULL DEFAULT 0`.
-- `CREATE TABLE cosmetic_bundles(...)` + `cosmetic_bundle_items(...)` with GRANTs + RLS (read-only for authenticated).
-- `ALTER TABLE quests ADD COLUMN scope text NOT NULL DEFAULT 'daily' CHECK (scope IN ('daily','weekly','season'))`.
-- `ALTER TABLE user_quests ADD COLUMN season_id uuid REFERENCES seasons(id)`.
-- Extend `settle_season` RPC: (a) grant tier-exclusive cosmetics into `user_cosmetics`, (b) auto-insert next season.
-- Optional: `consumables` table for streak freezes / RP boosts if we go with 3e.
-
-Seed data migration (data-only, via insert tool): 6 tier-exclusive cosmetics, 3 season objectives, 2 example bundles.
-
----
-
-## 5. Files touched
-
-- `src/components/gamification/SeasonFinaleSheet.tsx` — bug fix, better error handling, cosmetics unlocked section, Continue to Shop CTA.
-- `src/components/gamification/SeasonCard.tsx` — add reward track + season objectives strip.
-- `src/components/gamification/SeasonRewardTrack.tsx` — **new**, horizontal tier reward preview.
-- `src/components/gamification/SeasonObjectives.tsx` — **new**, list of season-scope quests.
-- `src/pages/Shop.tsx` — restructure with featured / sections / bundles / rarity glow.
-- `src/components/shop/FeaturedItem.tsx`, `Bundles.tsx`, `CosmeticPreviewSheet.tsx` — **new** helpers.
-- `src/lib/data/season-queries.ts` — add `fetchSeasonObjectives`, `fetchSeasonRewards`, `fetchCosmeticsUnlockedInSeason`.
-- `src/lib/data/cosmetics-queries.ts` — add bundles + featured queries.
-- `src/hooks/queries/useSeasonFinale.ts`, `useCurrentSeason.ts` — expose new fields.
-- New Supabase migration + seed inserts (see §4).
-
----
-
-## 6. Open questions
-
-1. **Scope for this pass:** all three sections (fix + seasons + shop), or would you rather I split it — e.g. ship the finale fix + tier reward track first, then Shop revamp in a follow-up?
-2. **Coin sinks (3e):** cosmetics-only shop, or add Streak Freeze + RP Boost consumables?
-3. **Season length:** current schema doesn't hard-code this. Stick with 4 weeks or go with 2-week "mini-seasons" like Duolingo?
-4. **Reward-track exclusives:** are you OK with me designing 6 new cosmetics (one per tier), or do you want to hand-pick them?
+**Out of scope for this task:** Custom Hyrox-specific PR types (e.g. "fastest 1km ski"), Hyrox-only leaderboards, watch-only race timer. Ergs already track distance/time via existing set structure.
