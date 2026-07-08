@@ -164,8 +164,10 @@ export default function HyroxBenchmarks() {
             {filtered.map((s) => (
               <BenchmarkCard
                 key={s.def.key}
+                userId={userId}
                 series={s}
                 goal={goals[s.def.key] ?? null}
+                goalsVersion={goalsVersion}
                 expanded={expandedKey === s.def.key}
                 onToggle={() => setExpandedKey(expandedKey === s.def.key ? null : s.def.key)}
                 onSetGoal={() => setGoalSheetFor(s)}
