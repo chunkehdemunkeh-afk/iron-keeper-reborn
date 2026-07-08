@@ -54,6 +54,9 @@ export default function Profile() {
   const equippedTitle = equipped?.title
     ? (catalog?.find(c => c.code === equipped.title)?.name ?? null)
     : null;
+  const bannerGradient = equipped?.banner
+    ? ((catalog?.find(c => c.code === equipped.banner)?.payload as { gradient?: string } | undefined)?.gradient ?? null)
+    : null;
 
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
