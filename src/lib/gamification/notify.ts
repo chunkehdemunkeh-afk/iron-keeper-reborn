@@ -125,7 +125,7 @@ export async function awardXpAndNotify(input: AwardXpInput): Promise<AwardXpResu
 
     // Queue routine XP/coins toast for batching; avoid duplicating badge/level sheets.
     if (result.xp > 0 || result.coins > 0) {
-      queueToast(input.source, result.xp, result.coins);
+      queueToast(result.userId, input.source, result.xp, result.coins);
       batchHaptic = true;
     }
 
