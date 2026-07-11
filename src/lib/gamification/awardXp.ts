@@ -46,6 +46,8 @@ export interface AwardXpResult {
   unlockedBadges: UnlockedBadge[];
   /** True if reward was skipped because of dedupe rule. */
   skipped: boolean;
+  /** User the XP was awarded to (used to read per-user preferences). */
+  userId: string;
 }
 
 const NULL_RESULT: AwardXpResult = {
