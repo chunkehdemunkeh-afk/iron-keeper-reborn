@@ -25,6 +25,13 @@ export default function Login() {
     navigate("/", { replace: true });
   };
 
+  useEffect(() => {
+    const t = setTimeout(() => {
+      toast.success("Workout saved", { description: "+125 XP · +10 coins" });
+    }, 800);
+    return () => clearTimeout(t);
+  }, []);
+
   const features = [
     { icon: Dumbbell, title: "Smart Programming", desc: "PPL, Upper/Lower, 5/3/1 and more" },
     { icon: Activity, title: "Recovery Intelligence", desc: "Strain, sleep & readiness scoring" },
