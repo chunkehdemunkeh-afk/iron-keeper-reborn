@@ -42,6 +42,8 @@ import { becomeCoach, joinCoachByCode, fetchMyCoach } from "@/lib/data/coach-que
 import { Users2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import MessageThread from "@/components/coach/MessageThread";
+import { Switch } from "@/components/ui/switch";
+import { getXpToastMode, setXpToastMode, type XpToastMode } from "@/lib/gamification/preferences";
 
 /** The current version is always dynamically read from the top of the changelog */
 const APP_VERSION = changelog[0]?.version || "1.0.0";
