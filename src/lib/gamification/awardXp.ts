@@ -268,5 +268,6 @@ export async function awardXp(input: AwardXpInput): Promise<AwardXpResult> {
     newLevel,
     unlockedBadges,
     skipped: false,
+    userId: user.id,
   };
 }
