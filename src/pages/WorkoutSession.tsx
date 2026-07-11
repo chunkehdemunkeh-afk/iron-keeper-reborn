@@ -1150,6 +1150,21 @@ export default function WorkoutSession() {
     hapticMedium();
   }, []);
 
+  /** Prepend a warm-up set before the first working set. */
+  const addWarmupSet = useCallback((exerciseId: string) => {
+    setSetLogs((prev) => {
+      const updated = { ...prev };
+      const sets = [...(updated[exerciseId] || [])];
+      // Insert after any existing warm-ups, before the first working set.
+      let insertAt = 0;
+      while (insertAt < sets.length && sets[insertAt].setType === "warmup") insertAt++;
+      sets.splice(insertAt, 0, { reps: 0, weight: 0, completed: false, setType: "warmup" });
+      updated[exerciseId] = sets;
+      return updated;
+    });
+    hapticMedium();
+  }, []);
+
   /** Append a single dedicated 1RM-test set (1 rep, locked, amber styling). */
   const add1RMTestSet = useCallback((exerciseId: string) => {
     setSetLogs((prev) => {
