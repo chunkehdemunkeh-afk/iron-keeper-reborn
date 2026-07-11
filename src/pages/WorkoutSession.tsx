@@ -2100,19 +2100,25 @@ export default function WorkoutSession() {
                                   const wuRamp = isWarmup ? warmupRamp(workingWeight, wuIdx, warmupCount, isDb) : null;
                                   return (
                                 <React.Fragment key={si}>
+                                {isWarmup && (
+                                  <div className="flex items-center gap-1 text-[10px] font-bold text-orange-500 mb-0.5 px-1">
+                                    <Flame className="h-3 w-3" />
+                                    Warm-up
+                                  </div>
+                                )}
                                 <SwipeableSetRow
                                   onDelete={() => deleteSet(ex.id, si)}
                                 >
-                                  <div className={`grid ${isTimeBased ? "grid-cols-[28px_1fr_36px]" : showWeight ? "grid-cols-[28px_1fr_1fr_36px]" : "grid-cols-[28px_1fr_36px]"} gap-x-1.5 items-center bg-background ${is1RM ? "rounded-lg ring-1 ring-amber-400/50 bg-amber-400/5 px-1 py-0.5" : isWarmup ? "rounded-lg bg-orange-400/5 px-1 py-0.5" : ""}`}>
+                                  <div className={`grid ${isTimeBased ? "grid-cols-[28px_1fr_36px]" : showWeight ? "grid-cols-[28px_1fr_1fr_36px]" : "grid-cols-[28px_1fr_36px]"} gap-x-1.5 items-center bg-background ${is1RM ? "rounded-lg ring-1 ring-amber-400/50 bg-amber-400/5 px-1 py-0.5" : isWarmup ? "rounded-lg ring-1 ring-orange-400/40 bg-orange-400/10 px-1 py-0.5" : ""}`}>
                                     <button
                                       type="button"
                                       onClick={() => { if (!is1RM) toggleWarmup(ex.id, si); }}
                                       disabled={is1RM}
                                       title={is1RM ? "1RM test set" : isWarmup ? "Tap to mark as working set" : "Tap to mark as warm-up"}
                                       aria-label={isWarmup ? "Warm-up set, tap to convert to working" : "Working set, tap to convert to warm-up"}
-                                      className={`text-xs font-bold text-center rounded transition-colors ${is1RM ? "cursor-default" : "hover:bg-muted/40 active:bg-muted/60"} ${set.completed ? "text-success" : is1RM ? "text-amber-400" : isWarmup ? "text-orange-400/80" : "text-muted-foreground"}`}
+                                      className={`text-[10px] font-bold text-center rounded transition-colors ${is1RM ? "cursor-default" : "hover:bg-muted/40 active:bg-muted/60"} ${set.completed ? "text-success" : is1RM ? "text-amber-400" : isWarmup ? "text-orange-500" : "text-muted-foreground"}`}
                                     >
-                                      {is1RM ? <Target className="h-3 w-3 inline" /> : isWarmup ? <Flame className="h-3 w-3 inline" /> : si + 1}
+                                      {is1RM ? <Target className="h-3 w-3 inline" /> : isWarmup ? <span className="block leading-none">WU</span> : si + 1}
                                     </button>
                                     {isTimeBased ? (
                                       <ExerciseTimer
