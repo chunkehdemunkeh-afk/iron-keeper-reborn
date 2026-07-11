@@ -59,6 +59,7 @@ interface BatchItem {
 let batch: BatchItem[] = [];
 let batchTimer: ReturnType<typeof setTimeout> | null = null;
 let batchHaptic = false;
+let batchUserId: string | null = null;
 const BATCH_DELAY_MS = 1500;
 
 function flushBatch() {
