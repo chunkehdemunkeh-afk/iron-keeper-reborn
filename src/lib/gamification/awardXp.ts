@@ -58,6 +58,7 @@ const NULL_RESULT: AwardXpResult = {
   newLevel: 1,
   unlockedBadges: [],
   skipped: true,
+  userId: "",
 };
 
 // Local calendar date, not toISOString()'s UTC date — a user near midnight
