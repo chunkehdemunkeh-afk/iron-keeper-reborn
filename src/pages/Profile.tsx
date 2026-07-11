@@ -68,6 +68,19 @@ export default function Profile() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const [backfilling, setBackfilling] = useState(false);
+  const [xpToastMode, setXpToastModeState] = useState<XpToastMode>("toast");
+
+  useEffect(() => {
+    if (user?.id) {
+      setXpToastModeState(getXpToastMode(user.id));
+    }
+  }, [user?.id]);
+
+  const handleXpToastToggle = (checked: boolean) => {
+    const mode: XpToastMode = checked ? "toast" : "silent";
+    setXpToastModeState(mode);
+    if (user?.id) setXpToastMode(user.id, mode);
+  };
 
   const handleBackfill = async () => {
     setBackfilling(true);
