@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Dumbbell, Activity, TrendingUp, ChevronRight, Sparkles } from "lucide-react";
