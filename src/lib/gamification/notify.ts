@@ -1,6 +1,10 @@
 /**
  * Client wrapper around awardXp that surfaces results via toast/sheet
  * and invalidates react-query caches so the XP bar updates instantly.
+ *
+ * XP toasts are batched: multiple awards that fire close together
+ * (e.g. food log + calorie goal + protein goal) collapse into one
+ * summary toast instead of a stack of pop-ups.
  */
 
 import { toast } from "sonner";
@@ -45,6 +49,54 @@ const LABELS: Record<string, string> = {
   first_time_feature: "New feature unlocked",
 };
 
+interface BatchItem {
+  source: string;
+  xp: number;
+  coins: number;
+}
+
+let batch: BatchItem[] = [];
+let batchTimer: ReturnType<typeof setTimeout> | null = null;
+let batchHaptic = false;
+const BATCH_DELAY_MS = 1500;
+
+function flushBatch() {
+  if (batchTimer) {
+    clearTimeout(batchTimer);
+    batchTimer = null;
+  }
+  if (batch.length === 0) return;
+
+  const totalXp = batch.reduce((sum, i) => sum + i.xp, 0);
+  const totalCoins = batch.reduce((sum, i) => sum + i.coins, 0);
+  const labels = Array.from(new Set(batch.map((i) => LABELS[i.source] ?? i.source)));
+
+  const parts: string[] = [];
+  if (totalXp > 0) parts.push(`+${totalXp} XP`);
+  if (totalCoins > 0) parts.push(`+${totalCoins} 🪙`);
+
+  const title = labels.length === 1 ? labels[0] : "Rewards earned";
+  const description = parts.join(" · ");
+
+  toast.success(title, {
+    description,
+    duration: labels.length > 1 ? 3000 : 2500,
+  });
+
+  if (batchHaptic) {
+    hapticSuccess();
+    batchHaptic = false;
+  }
+
+  batch = [];
+}
+
+function queueToast(source: string, xp: number, coins: number) {
+  batch.push({ source, xp, coins });
+  if (batchTimer) clearTimeout(batchTimer);
+  batchTimer = setTimeout(flushBatch, BATCH_DELAY_MS);
+}
+
 /**
  * Award XP and show user feedback.
  * Failures are swallowed — gamification must never block a successful log.
@@ -59,29 +111,20 @@ export async function awardXpAndNotify(input: AwardXpInput): Promise<AwardXpResu
     queryClient.invalidateQueries({ queryKey: ["user-badges"] });
     queryClient.invalidateQueries({ queryKey: ["xp-events"] });
 
-    // Toast for the XP gain
+    // Queue routine XP/coins toast for batching; avoid duplicating badge/level sheets.
     if (result.xp > 0 || result.coins > 0) {
-      const label = LABELS[input.source] ?? "Earned XP";
-      const parts: string[] = [];
-      if (result.xp > 0) parts.push(`+${result.xp} XP`);
-      if (result.coins > 0) parts.push(`+${result.coins} 🪙`);
-      toast.success(label, { description: parts.join(" · "), duration: 2500 });
-      hapticSuccess();
+      queueToast(input.source, result.xp, result.coins);
+      batchHaptic = true;
     }
 
-    // Level up
+    // Level up sheet (milestone — keep as a sheet, not a toast)
     if (result.leveledUp) {
       pendingLevelUp?.(result);
     }
-    // Badge unlocks
+
+    // Badge unlock sheet (milestone — keep as a sheet; skip per-badge toasts)
     if (result.unlockedBadges.length > 0) {
       pendingBadgeUnlock?.(result);
-      for (const b of result.unlockedBadges) {
-        toast.success(`Badge unlocked: ${b.name}`, {
-          description: `+${b.xpReward} XP · +${b.coinReward} 🪙`,
-          duration: 4000,
-        });
-      }
     }
 
     return result;
