@@ -1150,20 +1150,6 @@ export default function WorkoutSession() {
     hapticMedium();
   }, []);
 
-  /** Prepend a warm-up set before the first working set. */
-  const addWarmupSet = useCallback((exerciseId: string) => {
-    setSetLogs((prev) => {
-      const updated = { ...prev };
-      const sets = [...(updated[exerciseId] || [])];
-      // Insert after any existing warm-ups, before the first working set.
-      let insertAt = 0;
-      while (insertAt < sets.length && sets[insertAt].setType === "warmup") insertAt++;
-      sets.splice(insertAt, 0, { reps: 0, weight: 0, completed: false, setType: "warmup" });
-      updated[exerciseId] = sets;
-      return updated;
-    });
-    hapticMedium();
-  }, []);
 
   /** Append a single dedicated 1RM-test set (1 rep, locked, amber styling). */
   const add1RMTestSet = useCallback((exerciseId: string) => {
@@ -2236,7 +2222,7 @@ export default function WorkoutSession() {
 
                                 </React.Fragment>
                               );});})()}
-                              {/* Add Set + Warm-up + 1RM Test buttons */}
+                              {/* Add Set + 1RM Test buttons */}
                               <div className="flex gap-1.5 mt-1">
                                 <button
                                   onClick={() => addSet(ex.id)}
@@ -2245,16 +2231,7 @@ export default function WorkoutSession() {
                                   <Plus className="h-3 w-3" />
                                   Add Set
                                 </button>
-                                <button
-                                  onClick={() => addWarmupSet(ex.id)}
-                                  className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-dashed border-orange-400/40 text-xs text-orange-400 hover:bg-orange-400/10 transition-colors"
-                                  title="Add a warm-up set"
-                                >
-                                  <Flame className="h-3 w-3" />
-                                  Warm-up
-                                </button>
                                 {!isTimeBased && showWeight && (
-
                                   <button
                                     onClick={() => add1RMTestSet(ex.id)}
                                     className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-dashed border-amber-400/40 text-xs text-amber-400 hover:bg-amber-400/10 transition-colors"
@@ -2265,6 +2242,10 @@ export default function WorkoutSession() {
                                   </button>
                                 )}
                               </div>
+                              <p className="text-[10px] text-muted-foreground/70 mt-1.5 px-1">
+                                Tap a set number to toggle working / warm-up
+                              </p>
+
                             </>
                           );
                         })()}
