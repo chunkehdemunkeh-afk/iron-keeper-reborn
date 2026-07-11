@@ -69,6 +69,14 @@ function flushBatch() {
   }
   if (batch.length === 0) return;
 
+  // Respect per-user "silent" preference — discard queued toasts without showing them.
+  if (batchUserId && getXpToastMode(batchUserId) === "silent") {
+    batch = [];
+    batchHaptic = false;
+    batchUserId = null;
+    return;
+  }
+
   const totalXp = batch.reduce((sum, i) => sum + i.xp, 0);
   const totalCoins = batch.reduce((sum, i) => sum + i.coins, 0);
   const labels = Array.from(new Set(batch.map((i) => LABELS[i.source] ?? i.source)));
@@ -91,9 +99,11 @@ function flushBatch() {
   }
 
   batch = [];
+  batchUserId = null;
 }
 
-function queueToast(source: string, xp: number, coins: number) {
+function queueToast(userId: string, source: string, xp: number, coins: number) {
+  batchUserId = userId;
   batch.push({ source, xp, coins });
   if (batchTimer) clearTimeout(batchTimer);
   batchTimer = setTimeout(flushBatch, BATCH_DELAY_MS);
