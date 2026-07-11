@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchActivityLogs, fetchWeeklyBurn, mondayOfWeek, fetchLeaderboardVisibility, updateLeaderboardVisibility } from "@/lib/cloud-data";
 import { backfillStrainScores } from "@/lib/data/biometric-queries";
 import { queryKeys } from "@/lib/query-keys";
-import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy, RefreshCw, Dumbbell } from "lucide-react";
+import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy, RefreshCw, Dumbbell, Bell } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import RecoveryTips from "@/components/RecoveryTips";
@@ -42,6 +42,8 @@ import { becomeCoach, joinCoachByCode, fetchMyCoach } from "@/lib/data/coach-que
 import { Users2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import MessageThread from "@/components/coach/MessageThread";
+import { Switch } from "@/components/ui/switch";
+import { getXpToastMode, setXpToastMode, type XpToastMode } from "@/lib/gamification/preferences";
 
 /** The current version is always dynamically read from the top of the changelog */
 const APP_VERSION = changelog[0]?.version || "1.0.0";
@@ -66,6 +68,19 @@ export default function Profile() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const [backfilling, setBackfilling] = useState(false);
+  const [xpToastMode, setXpToastModeState] = useState<XpToastMode>("toast");
+
+  useEffect(() => {
+    if (user?.id) {
+      setXpToastModeState(getXpToastMode(user.id));
+    }
+  }, [user?.id]);
+
+  const handleXpToastToggle = (checked: boolean) => {
+    const mode: XpToastMode = checked ? "toast" : "silent";
+    setXpToastModeState(mode);
+    if (user?.id) setXpToastMode(user.id, mode);
+  };
 
   const handleBackfill = async () => {
     setBackfilling(true);
@@ -592,6 +607,25 @@ export default function Profile() {
               }`}
             />
           </button>
+        </div>
+
+        {/* XP toast mode */}
+        <div className="glass-card rounded-xl p-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 flex-shrink-0">
+              <Bell className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">XP toasts</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Show a summary toast when you earn XP and coins</p>
+            </div>
+          </div>
+          <Switch
+            id="xp-toasts"
+            checked={xpToastMode === "toast"}
+            onCheckedChange={handleXpToastToggle}
+            aria-label="Toggle XP toasts"
+          />
         </div>
 
         {/* Sign out */}

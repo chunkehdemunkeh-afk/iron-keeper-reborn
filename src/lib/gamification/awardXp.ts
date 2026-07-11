@@ -46,6 +46,8 @@ export interface AwardXpResult {
   unlockedBadges: UnlockedBadge[];
   /** True if reward was skipped because of dedupe rule. */
   skipped: boolean;
+  /** User the XP was awarded to (used to read per-user preferences). */
+  userId: string;
 }
 
 const NULL_RESULT: AwardXpResult = {
@@ -56,6 +58,7 @@ const NULL_RESULT: AwardXpResult = {
   newLevel: 1,
   unlockedBadges: [],
   skipped: true,
+  userId: "",
 };
 
 // Local calendar date, not toISOString()'s UTC date — a user near midnight
@@ -265,5 +268,6 @@ export async function awardXp(input: AwardXpInput): Promise<AwardXpResult> {
     newLevel,
     unlockedBadges,
     skipped: false,
+    userId: user.id,
   };
 }

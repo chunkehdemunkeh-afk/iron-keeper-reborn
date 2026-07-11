@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { queryClient } from "@/lib/query-client";
 import { hapticSuccess } from "@/lib/haptics";
 import { awardXp, type AwardXpInput, type AwardXpResult } from "./awardXp";
+import { getXpToastMode } from "./preferences";
 
 let pendingLevelUp: ((r: AwardXpResult) => void) | null = null;
 let pendingBadgeUnlock: ((r: AwardXpResult) => void) | null = null;
@@ -58,6 +59,7 @@ interface BatchItem {
 let batch: BatchItem[] = [];
 let batchTimer: ReturnType<typeof setTimeout> | null = null;
 let batchHaptic = false;
+let batchUserId: string | null = null;
 const BATCH_DELAY_MS = 1500;
 
 function flushBatch() {
@@ -66,6 +68,14 @@ function flushBatch() {
     batchTimer = null;
   }
   if (batch.length === 0) return;
+
+  // Respect per-user "silent" preference — discard queued toasts without showing them.
+  if (batchUserId && getXpToastMode(batchUserId) === "silent") {
+    batch = [];
+    batchHaptic = false;
+    batchUserId = null;
+    return;
+  }
 
   const totalXp = batch.reduce((sum, i) => sum + i.xp, 0);
   const totalCoins = batch.reduce((sum, i) => sum + i.coins, 0);
@@ -89,9 +99,11 @@ function flushBatch() {
   }
 
   batch = [];
+  batchUserId = null;
 }
 
-function queueToast(source: string, xp: number, coins: number) {
+function queueToast(userId: string, source: string, xp: number, coins: number) {
+  batchUserId = userId;
   batch.push({ source, xp, coins });
   if (batchTimer) clearTimeout(batchTimer);
   batchTimer = setTimeout(flushBatch, BATCH_DELAY_MS);
@@ -113,7 +125,7 @@ export async function awardXpAndNotify(input: AwardXpInput): Promise<AwardXpResu
 
     // Queue routine XP/coins toast for batching; avoid duplicating badge/level sheets.
     if (result.xp > 0 || result.coins > 0) {
-      queueToast(input.source, result.xp, result.coins);
+      queueToast(result.userId, input.source, result.xp, result.coins);
       batchHaptic = true;
     }
 

@@ -11,4 +11,5 @@ export const STORAGE_KEYS = {
   statsBarVolumeWindow: (userId: string) => `ik-statsbar-volwin-${userId}`,
   aiInsightRefreshed: (userId: string, date: string) => `ik-ai-refresh-v3-${userId}-${date}`,
   dialBaseline: (userId: string, date: string) => `ik-dial-baseline-${userId}-${date}`,
+  xpToastMode: (userId: string) => `ik-xp-toast-mode-${userId}`,
 } as const;
