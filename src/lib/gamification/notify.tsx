@@ -10,6 +10,7 @@
 import { toast } from "sonner";
 import { queryClient } from "@/lib/query-client";
 import { hapticSuccess } from "@/lib/haptics";
+import { XpToastContent } from "@/components/gamification/XpToastContent";
 import { awardXp, type AwardXpInput, type AwardXpResult } from "./awardXp";
 import { getXpToastMode } from "./preferences";
 
@@ -81,16 +82,11 @@ function flushBatch() {
   const totalCoins = batch.reduce((sum, i) => sum + i.coins, 0);
   const labels = Array.from(new Set(batch.map((i) => LABELS[i.source] ?? i.source)));
 
-  const parts: string[] = [];
-  if (totalXp > 0) parts.push(`+${totalXp} XP`);
-  if (totalCoins > 0) parts.push(`+${totalCoins} 🪙`);
-
   const title = labels.length === 1 ? labels[0] : "Rewards earned";
-  const description = parts.join(" · ");
+  const duration = labels.length > 1 ? 3000 : 2500;
 
-  toast.success(title, {
-    description,
-    duration: labels.length > 1 ? 3000 : 2500,
+  toast.success(<XpToastContent title={title} totalXp={totalXp} totalCoins={totalCoins} />, {
+    duration,
   });
 
   if (batchHaptic) {
