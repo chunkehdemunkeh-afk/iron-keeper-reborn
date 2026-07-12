@@ -10,6 +10,7 @@
 import { toast } from "sonner";
 import { queryClient } from "@/lib/query-client";
 import { hapticSuccess } from "@/lib/haptics";
+import { XpToastContent } from "@/components/gamification/XpToastContent";
 import { awardXp, type AwardXpInput, type AwardXpResult } from "./awardXp";
 import { getXpToastMode } from "./preferences";
 
