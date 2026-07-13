@@ -2096,6 +2096,7 @@ export default function WorkoutSession() {
                                   ? firstWorking.weight
                                   : lastFirstWeight;
                                 let warmupIdxCounter = 0;
+                                let workingIdxCounter = 0;
                                 const exNameForRamp = override?.name || ex.name || "";
                                 const isDb = isBilateralDumbbell(getEffectiveExId(ex.id), exNameForRamp);
                                 return setsArr.map((set, si) => {
