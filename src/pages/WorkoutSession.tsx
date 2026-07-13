@@ -638,6 +638,7 @@ export default function WorkoutSession() {
     if (!workout) return;
     const initial: Record<string, SetLog[]> = {};
     workout.exercises.forEach((ex) => {
+      if (removedExerciseIds.has(ex.id)) return;
       if (!setLogs[ex.id]) {
         const lastData = lastSessionData[ex.id] ?? [];
         const m = ex.reps.match(/(\d+)/);
