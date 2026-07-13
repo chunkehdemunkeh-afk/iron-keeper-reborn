@@ -766,7 +766,13 @@ export default function WorkoutSession() {
         return;
       }
     }
-    // For regular exercises, remove just that one
+    // For regular exercises, remove just that one.
+    // Track the id so the seed/reconcile effect doesn't re-add it on the next render.
+    setRemovedExerciseIds(prev => {
+      const next = new Set(prev);
+      next.add(exerciseId);
+      return next;
+    });
     setAddedExercises(prev => prev.filter(e => e.id !== exerciseId));
     setExerciseOrder(prev => prev.filter(id => id !== exerciseId));
     setSetLogs(prev => {
