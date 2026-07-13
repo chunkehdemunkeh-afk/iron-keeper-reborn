@@ -704,11 +704,13 @@ export default function WorkoutSession() {
       return changed ? next : prev;
     });
     if (exerciseOrder.length === 0) {
-      setExpandedExercise(workout.exercises[0]?.id ?? null);
-      setExerciseOrder(workout.exercises.map(ex => ex.id));
+      const initialIds = workout.exercises.filter(ex => !removedExerciseIds.has(ex.id)).map(ex => ex.id);
+      setExpandedExercise(initialIds[0] ?? null);
+      setExerciseOrder(initialIds);
     } else {
       // Reconcile persisted order with current workout definition:
       // append any new exercises and drop ones no longer in the workout/accessories/added.
+      // Never re-add exercises the athlete has explicitly removed.
       const validIds = new Set<string>([
         ...workout.exercises.map(e => e.id),
         ...accessoryExercises.map(e => e.id),
@@ -716,7 +718,7 @@ export default function WorkoutSession() {
       ]);
       const workoutIds = workout.exercises.map(e => e.id);
       const filtered = exerciseOrder.filter(id => validIds.has(id));
-      const missingWorkout = workoutIds.filter(id => !filtered.includes(id));
+      const missingWorkout = workoutIds.filter(id => !filtered.includes(id) && !removedExerciseIds.has(id));
       if (missingWorkout.length > 0 || filtered.length !== exerciseOrder.length) {
         // Insert missing workout exercises at their natural position relative to the workout list.
         const next = [...filtered];
