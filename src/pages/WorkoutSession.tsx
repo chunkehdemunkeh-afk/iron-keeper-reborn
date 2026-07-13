@@ -2124,7 +2124,7 @@ export default function WorkoutSession() {
                                       aria-label={isWarmup ? "Warm-up set, tap to convert to working" : "Working set, tap to convert to warm-up"}
                                       className={`text-[10px] font-bold text-center rounded transition-colors ${is1RM ? "cursor-default" : "hover:bg-muted/40 active:bg-muted/60"} ${set.completed ? "text-success" : is1RM ? "text-amber-400" : isWarmup ? "text-orange-500" : "text-muted-foreground"}`}
                                     >
-                                      {is1RM ? <Target className="h-3 w-3 inline" /> : isWarmup ? <span className="block leading-none">WU</span> : si + 1}
+                                      {is1RM ? <Target className="h-3 w-3 inline" /> : isWarmup ? <span className="block leading-none">WU</span> : (++workingIdxCounter)}
                                     </button>
                                     {isTimeBased ? (
                                       <ExerciseTimer
