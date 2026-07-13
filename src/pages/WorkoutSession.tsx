@@ -205,6 +205,10 @@ export default function WorkoutSession() {
   const [weightDownSuggestions, setWeightDownSuggestions] = useState<Record<string, number[]>>({});
   const [addedAccessories, setAddedAccessories] = useState<string[]>([]);
   const [addedExercises, setAddedExercises] = useState<Exercise[]>([]);
+  // IDs of exercises the user has explicitly removed from this session. Prevents
+  // the seed/reconcile effect from re-adding a routine exercise the athlete
+  // deliberately deleted. Persisted with the auto-save payload.
+  const [removedExerciseIds, setRemovedExerciseIds] = useState<Set<string>>(new Set());
   const [addExerciseOpen, setAddExerciseOpen] = useState(false);
   const [addExerciseSearch, setAddExerciseSearch] = useState("");
   const [addExerciseMuscle, setAddExerciseMuscle] = useState<string | null>(null);
