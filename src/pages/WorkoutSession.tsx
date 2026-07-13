@@ -2106,6 +2106,7 @@ export default function WorkoutSession() {
                                   const wuRamp = isWarmup ? warmupRamp(workingWeight, wuIdx, warmupCount, isDb) : null;
                                   const warmupWeight = isWarmup ? (set.weight && set.weight > 0 ? set.weight : wuRamp!.weight) : 0;
                                   const warmupReps = isWarmup ? (set.reps && set.reps > 0 ? set.reps : wuRamp!.reps) : 0;
+                                  const workingDataIdx = !isWarmup && !is1RM ? workingIdxCounter : si;
                                   return (
                                 <React.Fragment key={si}>
                                 {isWarmup && (
@@ -2150,14 +2151,14 @@ export default function WorkoutSession() {
                                     ) : (
                                       <>
                                         {showWeight && (
-                                          <input type="number" inputMode="decimal" placeholder={is1RM ? "1RM" : (lastExerciseData?.[si]?.weight?.toString() || "0")} value={set.weight || ""} onChange={(e) => updateSetField(ex.id, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : is1RM ? "bg-amber-400/10 border border-amber-400/40 text-amber-400 font-semibold placeholder:text-amber-400/50" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                           <input type="number" inputMode="decimal" placeholder={is1RM ? "1RM" : (lastExerciseData?.[workingDataIdx]?.weight?.toString() || "0")} value={set.weight || ""} onChange={(e) => updateSetField(ex.id, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : is1RM ? "bg-amber-400/10 border border-amber-400/40 text-amber-400 font-semibold placeholder:text-amber-400/50" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
                                         )}
                                         {is1RM ? (
                                           <div className={`h-9 w-full rounded-lg px-2 text-sm text-center font-bold flex items-center justify-center ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-amber-400/10 border border-amber-400/40 text-amber-400"}`}>
                                             1
                                           </div>
                                         ) : (
-                                          <input type="number" inputMode="numeric" placeholder={lastExerciseData?.[si]?.reps?.toString() || "0"} value={set.reps || ""} onChange={(e) => updateSetField(ex.id, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                           <input type="number" inputMode="numeric" placeholder={lastExerciseData?.[workingDataIdx]?.reps?.toString() || "0"} value={set.reps || ""} onChange={(e) => updateSetField(ex.id, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
                                         )}
                                       </>
                                     )}
@@ -2226,9 +2227,9 @@ export default function WorkoutSession() {
                                         )}
                                       </>
                                     )}
-                                    {set.rir === undefined && lastExerciseData?.[si]?.rir != null && !isWarmup && !is1RM && (
+                                    {set.rir === undefined && lastExerciseData?.[workingDataIdx]?.rir != null && !isWarmup && !is1RM && (
                                       <span className="inline-flex items-center gap-1 rounded-md bg-muted/40 px-2 py-0.5 text-[10px] text-muted-foreground ring-1 ring-border/50">
-                                        Last RIR <span className="font-semibold text-foreground/80">{lastExerciseData[si].rir === 3 ? "3+" : lastExerciseData[si].rir}</span>
+                                        Last RIR <span className="font-semibold text-foreground/80">{lastExerciseData[workingDataIdx].rir === 3 ? "3+" : lastExerciseData[workingDataIdx].rir}</span>
                                       </span>
                                     )}
                                   </div>
