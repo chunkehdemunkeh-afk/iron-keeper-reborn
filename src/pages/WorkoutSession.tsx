@@ -1672,11 +1672,25 @@ export default function WorkoutSession() {
                     {ex.sets} × {ex.reps}
                     {ex.notes && ` · ${ex.notes}`}
                   </p>
-                  {getLastDataForExercise(ex.id) && (
-                    <p className="text-[10px] text-success/80 mt-0.5">
-                      Last: {getLastDataForExercise(ex.id)!.map(s => `${s.weight}kg×${s.reps}${s.rir != null ? ` @${s.rir === 3 ? "3+" : s.rir} RIR` : ""}`).join(", ")}
-                    </p>
-                  )}
+                   {getLastDataForExercise(ex.id) && (() => {
+                     const exOverride = exerciseOverrides[ex.id];
+                     const exRepLabel = exOverride?.repLabel || ex.repLabel || "Reps";
+                     const exIsTimeBased = exRepLabel === "Sec";
+                     const fmtTime = (sec: number) => {
+                       const s = Math.max(0, Math.round(sec));
+                       const m = Math.floor(s / 60);
+                       const r = s % 60;
+                       return m > 0 ? `${m}:${r.toString().padStart(2, "0")}` : `${r}s`;
+                     };
+                     return (
+                       <p className="text-[10px] text-success/80 mt-0.5">
+                         Last: {getLastDataForExercise(ex.id)!.map(s => {
+                           if (exIsTimeBased) return fmtTime(s.reps);
+                           return `${s.weight}kg×${s.reps}${s.rir != null ? ` @${s.rir === 3 ? "3+" : s.rir} RIR` : ""}`;
+                         }).join(", ")}
+                       </p>
+                     );
+                   })()}
                 </div>
                 {!isHyroxSession && (
                   <button
