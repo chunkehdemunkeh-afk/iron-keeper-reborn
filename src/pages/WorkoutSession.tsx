@@ -2104,6 +2104,8 @@ export default function WorkoutSession() {
                                   const isWarmup = set.setType === "warmup";
                                   const wuIdx = isWarmup ? warmupIdxCounter++ : -1;
                                   const wuRamp = isWarmup ? warmupRamp(workingWeight, wuIdx, warmupCount, isDb) : null;
+                                  const warmupWeight = isWarmup ? (set.weight && set.weight > 0 ? set.weight : wuRamp!.weight) : 0;
+                                  const warmupReps = isWarmup ? (set.reps && set.reps > 0 ? set.reps : wuRamp!.reps) : 0;
                                   return (
                                 <React.Fragment key={si}>
                                 {isWarmup && (
@@ -2138,11 +2140,11 @@ export default function WorkoutSession() {
                                       <>
                                         {showWeight && (
                                           <div className={`h-9 w-full rounded-lg px-2 text-xs flex items-center justify-center font-bold ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-orange-400/10 border border-orange-400/30 text-orange-400/90"}`}>
-                                            {wuRamp!.weight > 0 ? `${wuRamp!.weight} kg` : "—"}
+                                             {warmupWeight > 0 ? `${warmupWeight} kg` : "—"}
                                           </div>
                                         )}
                                         <div className={`h-9 w-full rounded-lg px-2 text-xs flex items-center justify-center font-semibold ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-orange-400/10 border border-orange-400/30 text-orange-400/90"}`}>
-                                          {wuRamp!.reps} reps
+                                           {warmupReps} reps
                                         </div>
                                       </>
                                     ) : (
