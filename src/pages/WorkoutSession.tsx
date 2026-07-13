@@ -823,14 +823,18 @@ export default function WorkoutSession() {
     toast.success(`Added ${routine.name} accessory`);
   }, [addedAccessories, applyHistoricalVariantSelections, getLastDataForExercise, sessionTargetRir]);
 
-  // Default sets/reps for a newly added exercise mirror whatever the athlete's
-  // most-recently-added exercise in this session is using, rather than a fixed
-  // 3x10 — falls back to 3x10 only when the session has nothing to copy from.
+  // Default sets/reps for a newly added exercise inherit from the routine's own
+  // programming (workout.exercises), so an added lift automatically joins the
+  // session's prescribed scheme (e.g. 2×5-10 on this split). Falls back to the
+  // last exercise in the current order, then 3×10, when the workout has no
+  // exercises to copy from.
   const defaultSetsRepsForNewExercise = useCallback((): { sets: number; reps: string } => {
+    const routineEx = workout?.exercises[0];
+    if (routineEx) return { sets: routineEx.sets, reps: routineEx.reps };
     const lastId = exerciseOrder[exerciseOrder.length - 1];
     const lastEx = lastId ? allExercises.find(e => e.id === lastId) : undefined;
     return { sets: lastEx?.sets ?? 3, reps: lastEx?.reps ?? "10" };
-  }, [exerciseOrder, allExercises]);
+  }, [workout, exerciseOrder, allExercises]);
 
   const openAddExercisePicker = useCallback((entry: { id: string; name: string; muscleGroup: string }) => {
     const { sets, reps } = defaultSetsRepsForNewExercise();
