@@ -848,8 +848,27 @@ export default function WorkoutSession() {
     const newId = alreadyExists ? `${entry.id}-added-${Date.now()}` : entry.id;
     const targetRir = targetRirForReps(reps, sessionTargetRir);
     const ex: Exercise = { id: newId, name: entry.name, sets, reps, targetMuscle: entry.muscleGroup, targetRir };
+    const m = reps.match(/(\d+)/);
+    const parsedTargetReps = m ? parseInt(m[1], 10) : undefined;
+    // Clear this id from the removed-set (re-adding after a prior deletion).
+    setRemovedExerciseIds(prev => {
+      if (!prev.has(newId) && !prev.has(entry.id)) return prev;
+      const next = new Set(prev);
+      next.delete(newId);
+      next.delete(entry.id);
+      return next;
+    });
     setAddedExercises(prev => [...prev, ex]);
-    setSetLogs(prev => ({ ...prev, [newId]: Array.from({ length: sets }, () => ({ reps: 0, weight: 0, completed: false })) }));
+    setSetLogs(prev => ({
+      ...prev,
+      [newId]: Array.from({ length: sets }, () => ({
+        reps: 0,
+        weight: 0,
+        completed: false,
+        targetReps: parsedTargetReps,
+        targetRir,
+      })),
+    }));
     setExerciseOrder(prev => [...prev, newId]);
     fetchExerciseLastDataLike(entry.id).then(r => {
       if (!r || r.sets.length === 0) return;
