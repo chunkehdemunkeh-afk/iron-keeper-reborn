@@ -205,6 +205,10 @@ export default function WorkoutSession() {
   const [weightDownSuggestions, setWeightDownSuggestions] = useState<Record<string, number[]>>({});
   const [addedAccessories, setAddedAccessories] = useState<string[]>([]);
   const [addedExercises, setAddedExercises] = useState<Exercise[]>([]);
+  // IDs of exercises the user has explicitly removed from this session. Prevents
+  // the seed/reconcile effect from re-adding a routine exercise the athlete
+  // deliberately deleted. Persisted with the auto-save payload.
+  const [removedExerciseIds, setRemovedExerciseIds] = useState<Set<string>>(new Set());
   const [addExerciseOpen, setAddExerciseOpen] = useState(false);
   const [addExerciseSearch, setAddExerciseSearch] = useState("");
   const [addExerciseMuscle, setAddExerciseMuscle] = useState<string | null>(null);
@@ -285,6 +289,7 @@ export default function WorkoutSession() {
       exerciseOverrides,
       addedAccessories,
       addedExercises,
+      removedExerciseIds: Array.from(removedExerciseIds),
       bodyweightExercises: Array.from(bodyweightExercises),
       twoHandedExercises: Array.from(twoHandedExercises),
       heavyStackExercises: Array.from(heavyStackExercises),
@@ -312,7 +317,7 @@ export default function WorkoutSession() {
         if (authUser) void upsertWorkoutDraftToCloud(authUser.id, workoutId, sessionState);
       })();
     }
-  }, [autoSaveKey, workout, started, finished, showFeedback, setLogs, exerciseNotes, exerciseOrder, exerciseOverrides, addedAccessories, addedExercises, bodyweightExercises, twoHandedExercises, heavyStackExercises, singleArmExercises, cableAttachments, elapsed, expandedExercise, weightUpSuggestions, weightDownSuggestions]);
+  }, [autoSaveKey, workout, started, finished, showFeedback, setLogs, exerciseNotes, exerciseOrder, exerciseOverrides, addedAccessories, addedExercises, removedExerciseIds, bodyweightExercises, twoHandedExercises, heavyStackExercises, singleArmExercises, cableAttachments, elapsed, expandedExercise, weightUpSuggestions, weightDownSuggestions]);
 
   // Save on visibility change (user switching apps / leaving)
   useEffect(() => {
@@ -409,6 +414,7 @@ export default function WorkoutSession() {
         setExerciseOverrides(parsed.exerciseOverrides || {});
         setAddedAccessories(restoredAccessories);
         setAddedExercises(parsed.addedExercises || []);
+        setRemovedExerciseIds(new Set(parsed.removedExerciseIds || []));
         setBodyweightExercises(new Set(parsed.bodyweightExercises || []));
         setTwoHandedExercises(new Set(parsed.twoHandedExercises || []));
         setHeavyStackExercises(new Set(parsed.heavyStackExercises || []));
@@ -632,6 +638,7 @@ export default function WorkoutSession() {
     if (!workout) return;
     const initial: Record<string, SetLog[]> = {};
     workout.exercises.forEach((ex) => {
+      if (removedExerciseIds.has(ex.id)) return;
       if (!setLogs[ex.id]) {
         const lastData = lastSessionData[ex.id] ?? [];
         const m = ex.reps.match(/(\d+)/);
@@ -697,11 +704,13 @@ export default function WorkoutSession() {
       return changed ? next : prev;
     });
     if (exerciseOrder.length === 0) {
-      setExpandedExercise(workout.exercises[0]?.id ?? null);
-      setExerciseOrder(workout.exercises.map(ex => ex.id));
+      const initialIds = workout.exercises.filter(ex => !removedExerciseIds.has(ex.id)).map(ex => ex.id);
+      setExpandedExercise(initialIds[0] ?? null);
+      setExerciseOrder(initialIds);
     } else {
       // Reconcile persisted order with current workout definition:
       // append any new exercises and drop ones no longer in the workout/accessories/added.
+      // Never re-add exercises the athlete has explicitly removed.
       const validIds = new Set<string>([
         ...workout.exercises.map(e => e.id),
         ...accessoryExercises.map(e => e.id),
@@ -709,7 +718,7 @@ export default function WorkoutSession() {
       ]);
       const workoutIds = workout.exercises.map(e => e.id);
       const filtered = exerciseOrder.filter(id => validIds.has(id));
-      const missingWorkout = workoutIds.filter(id => !filtered.includes(id));
+      const missingWorkout = workoutIds.filter(id => !filtered.includes(id) && !removedExerciseIds.has(id));
       if (missingWorkout.length > 0 || filtered.length !== exerciseOrder.length) {
         // Insert missing workout exercises at their natural position relative to the workout list.
         const next = [...filtered];
@@ -727,7 +736,7 @@ export default function WorkoutSession() {
         setExerciseOrder(next);
       }
     }
-  }, [workout, lastSessionData, progressionsByExId, deloadPlanByExId]);
+  }, [workout, lastSessionData, progressionsByExId, deloadPlanByExId, removedExerciseIds]);
 
   // Check if an exercise belongs to an accessory routine
   const getAccessoryForExercise = useCallback((exerciseId: string): string | null => {
@@ -757,7 +766,13 @@ export default function WorkoutSession() {
         return;
       }
     }
-    // For regular exercises, remove just that one
+    // For regular exercises, remove just that one.
+    // Track the id so the seed/reconcile effect doesn't re-add it on the next render.
+    setRemovedExerciseIds(prev => {
+      const next = new Set(prev);
+      next.add(exerciseId);
+      return next;
+    });
     setAddedExercises(prev => prev.filter(e => e.id !== exerciseId));
     setExerciseOrder(prev => prev.filter(id => id !== exerciseId));
     setSetLogs(prev => {
@@ -808,14 +823,18 @@ export default function WorkoutSession() {
     toast.success(`Added ${routine.name} accessory`);
   }, [addedAccessories, applyHistoricalVariantSelections, getLastDataForExercise, sessionTargetRir]);
 
-  // Default sets/reps for a newly added exercise mirror whatever the athlete's
-  // most-recently-added exercise in this session is using, rather than a fixed
-  // 3x10 — falls back to 3x10 only when the session has nothing to copy from.
+  // Default sets/reps for a newly added exercise inherit from the routine's own
+  // programming (workout.exercises), so an added lift automatically joins the
+  // session's prescribed scheme (e.g. 2×5-10 on this split). Falls back to the
+  // last exercise in the current order, then 3×10, when the workout has no
+  // exercises to copy from.
   const defaultSetsRepsForNewExercise = useCallback((): { sets: number; reps: string } => {
+    const routineEx = workout?.exercises[0];
+    if (routineEx) return { sets: routineEx.sets, reps: routineEx.reps };
     const lastId = exerciseOrder[exerciseOrder.length - 1];
     const lastEx = lastId ? allExercises.find(e => e.id === lastId) : undefined;
     return { sets: lastEx?.sets ?? 3, reps: lastEx?.reps ?? "10" };
-  }, [exerciseOrder, allExercises]);
+  }, [workout, exerciseOrder, allExercises]);
 
   const openAddExercisePicker = useCallback((entry: { id: string; name: string; muscleGroup: string }) => {
     const { sets, reps } = defaultSetsRepsForNewExercise();
@@ -829,8 +848,27 @@ export default function WorkoutSession() {
     const newId = alreadyExists ? `${entry.id}-added-${Date.now()}` : entry.id;
     const targetRir = targetRirForReps(reps, sessionTargetRir);
     const ex: Exercise = { id: newId, name: entry.name, sets, reps, targetMuscle: entry.muscleGroup, targetRir };
+    const m = reps.match(/(\d+)/);
+    const parsedTargetReps = m ? parseInt(m[1], 10) : undefined;
+    // Clear this id from the removed-set (re-adding after a prior deletion).
+    setRemovedExerciseIds(prev => {
+      if (!prev.has(newId) && !prev.has(entry.id)) return prev;
+      const next = new Set(prev);
+      next.delete(newId);
+      next.delete(entry.id);
+      return next;
+    });
     setAddedExercises(prev => [...prev, ex]);
-    setSetLogs(prev => ({ ...prev, [newId]: Array.from({ length: sets }, () => ({ reps: 0, weight: 0, completed: false })) }));
+    setSetLogs(prev => ({
+      ...prev,
+      [newId]: Array.from({ length: sets }, () => ({
+        reps: 0,
+        weight: 0,
+        completed: false,
+        targetReps: parsedTargetReps,
+        targetRir,
+      })),
+    }));
     setExerciseOrder(prev => [...prev, newId]);
     fetchExerciseLastDataLike(entry.id).then(r => {
       if (!r || r.sets.length === 0) return;
