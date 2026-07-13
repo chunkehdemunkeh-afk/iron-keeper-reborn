@@ -289,6 +289,7 @@ export default function WorkoutSession() {
       exerciseOverrides,
       addedAccessories,
       addedExercises,
+      removedExerciseIds: Array.from(removedExerciseIds),
       bodyweightExercises: Array.from(bodyweightExercises),
       twoHandedExercises: Array.from(twoHandedExercises),
       heavyStackExercises: Array.from(heavyStackExercises),
