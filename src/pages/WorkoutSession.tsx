@@ -903,7 +903,12 @@ export default function WorkoutSession() {
       const exNameForRamp = exerciseOverrides[exerciseId]?.name || exMeta?.name || "";
       const isDb = isBilateralDumbbell(getEffectiveExId(exerciseId), exNameForRamp);
       const ramp = warmupRamp(workingWeight, wuPos, warmupCount, isDb);
-      newSets[setIdx] = { ...newSets[setIdx], weight: ramp.weight, reps: ramp.reps };
+      const cur = newSets[setIdx];
+      newSets[setIdx] = {
+        ...cur,
+        weight: cur.weight && cur.weight > 0 ? cur.weight : ramp.weight,
+        reps: cur.reps && cur.reps > 0 ? cur.reps : ramp.reps,
+      };
     }
 
     // Pure state update
