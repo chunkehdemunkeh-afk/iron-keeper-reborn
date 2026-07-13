@@ -317,7 +317,7 @@ export default function WorkoutSession() {
         if (authUser) void upsertWorkoutDraftToCloud(authUser.id, workoutId, sessionState);
       })();
     }
-  }, [autoSaveKey, workout, started, finished, showFeedback, setLogs, exerciseNotes, exerciseOrder, exerciseOverrides, addedAccessories, addedExercises, bodyweightExercises, twoHandedExercises, heavyStackExercises, singleArmExercises, cableAttachments, elapsed, expandedExercise, weightUpSuggestions, weightDownSuggestions]);
+  }, [autoSaveKey, workout, started, finished, showFeedback, setLogs, exerciseNotes, exerciseOrder, exerciseOverrides, addedAccessories, addedExercises, removedExerciseIds, bodyweightExercises, twoHandedExercises, heavyStackExercises, singleArmExercises, cableAttachments, elapsed, expandedExercise, weightUpSuggestions, weightDownSuggestions]);
 
   // Save on visibility change (user switching apps / leaving)
   useEffect(() => {
