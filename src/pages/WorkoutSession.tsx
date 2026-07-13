@@ -414,6 +414,7 @@ export default function WorkoutSession() {
         setExerciseOverrides(parsed.exerciseOverrides || {});
         setAddedAccessories(restoredAccessories);
         setAddedExercises(parsed.addedExercises || []);
+        setRemovedExerciseIds(new Set(parsed.removedExerciseIds || []));
         setBodyweightExercises(new Set(parsed.bodyweightExercises || []));
         setTwoHandedExercises(new Set(parsed.twoHandedExercises || []));
         setHeavyStackExercises(new Set(parsed.heavyStackExercises || []));
