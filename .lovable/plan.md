@@ -1,40 +1,29 @@
-## Warm-up fixes in `src/pages/WorkoutSession.tsx`
+## Update Upper A in `src/lib/workout-data.ts`
 
-Two issues, both localized to the warm-up handling.
+Replace the current 8-exercise Upper A block (lines 398–407) with the 9-exercise list below. Every entry: `sets: 2`, `reps: "5-10"`, `targetRir: "0-1"`.
 
-### 1. Stop overwriting weight/reps the user already entered
+### Removals
+- `lib-62` Plate Loaded Dip Machine
+- `pu5` X-Over Cable Tricep Extensions
 
-In `toggleSet` (around line 890) when a warm-up is completed, we currently do:
+### Additions
+- **Skull Crushers** at position 7. I'll reuse the existing `bn5` ID (already named "Skull Crushers" in the Bench Night workout) so PR/history stays consolidated with the other Skull Crusher entries — matches how `pu1`, `pl3`, etc. are shared across sessions.
+- **Machine Preacher Curl** (`lib-db-Machine_Preacher_Curls`) — same entry currently in Lower A, now also in Upper A at position 6.
+- **Bayesian Curl** (`lib-61`) — same entry currently in Lower A, now also in Upper A at position 8.
 
-```ts
-newSets[setIdx] = { ...newSets[setIdx], weight: ramp.weight, reps: ramp.reps };
-```
+Note: Machine Preacher Curl and Bayesian Curl in Lower A are already at `targetRir: "0-1"` — no change needed there. The "fix RIR to 0-1" from the request is satisfied by giving the new Upper A entries explicit `targetRir: "0-1"` (otherwise they'd inherit the workout-level `"1-2"` fallback).
 
-This clobbers whatever the user typed. Change it to only fill blanks:
+### Final Upper A order
+1. `lib-1` Barbell Bench Press — 2 × 5-10, RIR 0-1
+2. `lib-64` Mag Grip Seated Cable Row — 2 × 5-10, RIR 0-1
+3. `pu1` 45° Incline Dumbbell Bench Press — 2 × 5-10, RIR 0-1
+4. `pl3` Lat Pulldown - Pronated Grip — 2 × 5-10, RIR 0-1
+5. `lib-db-Smith_Machine_Overhead_Shoulder_Press` Smith Machine Seated Military Press — 2 × 5-10, RIR 0-1
+6. `lib-db-Machine_Preacher_Curls` Machine Preacher Curl — 2 × 5-10, RIR 0-1
+7. `bn5` Skull Crushers — 2 × 5-10, RIR 0-1
+8. `lib-61` Bayesian Curl — 2 × 5-10, RIR 0-1
+9. `lib-db-One-Arm_Incline_Lateral_Raise` One-Arm Incline Lateral Raise — 2 × 5-10, RIR 0-1 (rep range changed from 12-15)
 
-```ts
-const cur = newSets[setIdx];
-newSets[setIdx] = {
-  ...cur,
-  weight: cur.weight && cur.weight > 0 ? cur.weight : ramp.weight,
-  reps:   cur.reps   && cur.reps   > 0 ? cur.reps   : ramp.reps,
-};
-```
+Existing `notes` strings are preserved for kept exercises; new entries get brief cue notes.
 
-Result: the ramp still auto-fills empty warm-up rows, but any weight/reps the user has entered are preserved.
-
-### 2. Make the compensating working set visibly appear
-
-`toggleWarmup` already appends a fresh working set when a row is flipped to warm-up (line 1129), so the array length is correct — but the row label uses `si + 1` (the raw array index). So converting set 1 to WU makes the remaining working rows read "2, 3, 4", which looks like no new set was added and the first working set is missing.
-
-Fix by numbering working sets independently of warm-ups in the render block around line 2096–2122:
-
-- Track a `workingIdxCounter` alongside the existing `warmupIdxCounter`.
-- For working rows, display `workingIdxCounter++ + 1` instead of `si + 1`.
-- Warm-up rows keep the `WU` glyph; 1RM rows keep the target icon.
-
-After this, converting set 1 to warm-up shows: `WU, 1, 2, 3` — the appended working set is obvious.
-
-### Out of scope
-
-No changes to save logic, ramp math, rest timer, styling, or the setting toggle. Only the two surgical edits above.
+No other files affected.
