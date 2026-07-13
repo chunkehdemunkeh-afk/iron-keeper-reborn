@@ -903,7 +903,12 @@ export default function WorkoutSession() {
       const exNameForRamp = exerciseOverrides[exerciseId]?.name || exMeta?.name || "";
       const isDb = isBilateralDumbbell(getEffectiveExId(exerciseId), exNameForRamp);
       const ramp = warmupRamp(workingWeight, wuPos, warmupCount, isDb);
-      newSets[setIdx] = { ...newSets[setIdx], weight: ramp.weight, reps: ramp.reps };
+      const cur = newSets[setIdx];
+      newSets[setIdx] = {
+        ...cur,
+        weight: cur.weight && cur.weight > 0 ? cur.weight : ramp.weight,
+        reps: cur.reps && cur.reps > 0 ? cur.reps : ramp.reps,
+      };
     }
 
     // Pure state update
@@ -2091,6 +2096,7 @@ export default function WorkoutSession() {
                                   ? firstWorking.weight
                                   : lastFirstWeight;
                                 let warmupIdxCounter = 0;
+                                let workingIdxCounter = 0;
                                 const exNameForRamp = override?.name || ex.name || "";
                                 const isDb = isBilateralDumbbell(getEffectiveExId(ex.id), exNameForRamp);
                                 return setsArr.map((set, si) => {
@@ -2118,7 +2124,7 @@ export default function WorkoutSession() {
                                       aria-label={isWarmup ? "Warm-up set, tap to convert to working" : "Working set, tap to convert to warm-up"}
                                       className={`text-[10px] font-bold text-center rounded transition-colors ${is1RM ? "cursor-default" : "hover:bg-muted/40 active:bg-muted/60"} ${set.completed ? "text-success" : is1RM ? "text-amber-400" : isWarmup ? "text-orange-500" : "text-muted-foreground"}`}
                                     >
-                                      {is1RM ? <Target className="h-3 w-3 inline" /> : isWarmup ? <span className="block leading-none">WU</span> : si + 1}
+                                      {is1RM ? <Target className="h-3 w-3 inline" /> : isWarmup ? <span className="block leading-none">WU</span> : (++workingIdxCounter)}
                                     </button>
                                     {isTimeBased ? (
                                       <ExerciseTimer
