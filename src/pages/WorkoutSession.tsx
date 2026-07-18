@@ -61,6 +61,11 @@ type SetLog = {
   showRirPicker?: boolean;
 };
 
+function areRequiredSetsComplete(sets: SetLog[] | undefined): boolean {
+  const requiredSets = sets?.filter((set) => set.setType !== "warmup") ?? [];
+  return requiredSets.length > 0 && requiredSets.every((set) => set.completed);
+}
+
 // Lazily built on first use — iterating 3 data sources at import time is expensive.
 type SwapExercise = { id: string; name: string; muscleGroup: string; equipment: string; description: string };
 let _swapExercises: SwapExercise[] | null = null;
@@ -1094,7 +1099,7 @@ export default function WorkoutSession() {
       // Auto-expand next exercise if this was the last set.
       // Skip when a RIR picker was just opened — collapsing now would hide it.
       // The picker's pick/skip handlers will trigger the auto-expand instead.
-      const allSetsNowDone = newSets.every(s => s.completed);
+      const allSetsNowDone = areRequiredSetsComplete(newSets);
       const justOpenedRirPicker = newSets[setIdx]?.setType !== "warmup" && !isHyroxSession;
       if (allSetsNowDone && !justOpenedRirPicker) {
         const currentOrderIdx = exerciseOrder.indexOf(exerciseId);
@@ -1130,7 +1135,7 @@ export default function WorkoutSession() {
       if (patch.showRirPicker === false) {
         setSetLogs(latest => {
           const arr = latest[exerciseId] || [];
-          const allDone = arr.length > 0 && arr.every(s => s.completed);
+          const allDone = areRequiredSetsComplete(arr);
           if (allDone) {
             const idx = exerciseOrder.indexOf(exerciseId);
             if (idx >= 0 && idx < exerciseOrder.length - 1) {
@@ -1249,7 +1254,7 @@ export default function WorkoutSession() {
   }, []);
 
 
-  const completedExercises = allExercises.filter((ex) => setLogs[ex.id]?.every((s) => s.completed)).length;
+  const completedExercises = allExercises.filter((ex) => areRequiredSetsComplete(setLogs[ex.id])).length;
   const totalExercises = allExercises.length;
 
   const handleFinish = () => {
@@ -1804,7 +1809,7 @@ export default function WorkoutSession() {
         <Reorder.Group axis="y" values={exerciseOrder} onReorder={setExerciseOrder} className="space-y-2">
           {orderedExercises.map((ex, i) => {
             const isExpanded = expandedExercise === ex.id;
-            const allDone = setLogs[ex.id]?.every((s) => s.completed);
+            const allDone = areRequiredSetsComplete(setLogs[ex.id]);
             const override = exerciseOverrides[ex.id];
             const displayName = override?.name || ex.name;
             const allSubs = { ...EXERCISE_SUBSTITUTIONS, ...ACCESSORY_SUBSTITUTIONS };
@@ -1823,7 +1828,7 @@ export default function WorkoutSession() {
             if (showRoundHeader && round != null) {
               const roundExs = orderedExercises.filter(e => hyroxRoundOf(e.id, e.supersetGroup) === round);
               const roundTotal = roundExs.length;
-              const roundDone = roundExs.filter(e => setLogs[e.id]?.every(s => s.completed)).length;
+              const roundDone = roundExs.filter(e => areRequiredSetsComplete(setLogs[e.id])).length;
               const allRoundDone = roundTotal > 0 && roundDone === roundTotal;
               roundHeader = (
                 <button
@@ -2336,7 +2341,7 @@ export default function WorkoutSession() {
               }).filter(Boolean) as { ex: typeof allExercises[0]; override: typeof exerciseOverrides[string]; displayName: string; exId: string }[];
 
               const maxSets = Math.max(...groupExIds.map(id => setLogs[id]?.length || 0));
-              const allGroupDone = groupExIds.every(id => setLogs[id]?.every(s => s.completed));
+              const allGroupDone = groupExIds.every(id => areRequiredSetsComplete(setLogs[id]));
               const groupLastDataById = Object.fromEntries(groupExIds.map(id => [id, getLastDataForExercise(id)]));
               const isSSExpanded = expandedExercise === `ss-${ex.id}`;
 
