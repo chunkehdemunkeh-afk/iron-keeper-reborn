@@ -460,14 +460,26 @@ export default function Profile() {
         <div className="glass-card rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-display text-sm font-semibold">Training Programme</h3>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate("/onboarding?from=profile")}
-              className="flex items-center gap-1 text-xs text-primary bg-primary/10 rounded-full px-2.5 py-1 hover:bg-primary/20 transition-colors"
-            >
-              <Settings2 className="h-3 w-3" />
-              {prefs ? "Change" : "Set up"}
-            </motion.button>
+            <div className="flex items-center gap-1.5">
+              {prefs && prefs.splitId !== "none" && (
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate("/programme/edit")}
+                  className="flex items-center gap-1 text-xs text-primary bg-primary/10 rounded-full px-2.5 py-1 hover:bg-primary/20 transition-colors"
+                >
+                  <Wand2 className="h-3 w-3" />
+                  Customize
+                </motion.button>
+              )}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/onboarding?from=profile")}
+                className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/40 rounded-full px-2.5 py-1 hover:bg-muted/60 transition-colors"
+              >
+                <Settings2 className="h-3 w-3" />
+                {prefs ? "Change" : "Set up"}
+              </motion.button>
+            </div>
           </div>
 
           {prefs && prefs.splitId === "none" ? (
