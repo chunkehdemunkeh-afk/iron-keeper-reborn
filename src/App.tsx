@@ -17,6 +17,7 @@ import Index from "./pages/Index";
 import Sessions from "./pages/Sessions";
 import WorkoutSession from "./pages/WorkoutSession";
 import WorkoutBuilder from "./pages/WorkoutBuilder";
+import ProgrammeEditor from "./pages/ProgrammeEditor";
 import History from "./pages/History";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
