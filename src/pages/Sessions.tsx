@@ -1,7 +1,7 @@
 import { WORKOUTS } from "@/lib/workout-data";
 import { getAllCustomWorkouts } from "@/pages/WorkoutBuilder";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, ChevronDown, Plus, Dumbbell, Zap, Wind, Shield, Crosshair, ArrowUp, ArrowDown, Footprints, Layers, Flame, Trophy, Activity, Target, History } from "lucide-react";
+import { ChevronRight, ChevronDown, Plus, Dumbbell, Zap, Wind, Shield, Crosshair, ArrowUp, ArrowDown, Footprints, Layers, Flame, Trophy, Activity, Target, History, Wand2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
