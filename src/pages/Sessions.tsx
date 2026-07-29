@@ -219,6 +219,13 @@ export default function Sessions() {
               <History className="h-3.5 w-3.5" /> History
             </button>
             <button
+              onClick={() => navigate("/programme/edit")}
+              className="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 rounded-full px-3 py-1.5 hover:bg-primary/20 transition-colors active:scale-95"
+              title="Customize your programme"
+            >
+              <Wand2 className="h-3.5 w-3.5" /> Customize
+            </button>
+            <button
               onClick={() => navigate("/builder")}
               className="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 rounded-full px-3 py-1.5 hover:bg-primary/20 transition-colors active:scale-95"
             >
