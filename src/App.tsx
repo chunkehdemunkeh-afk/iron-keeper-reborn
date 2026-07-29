@@ -17,6 +17,7 @@ import Index from "./pages/Index";
 import Sessions from "./pages/Sessions";
 import WorkoutSession from "./pages/WorkoutSession";
 import WorkoutBuilder from "./pages/WorkoutBuilder";
+import ProgrammeEditor from "./pages/ProgrammeEditor";
 import History from "./pages/History";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
@@ -102,6 +103,7 @@ const AnimatedRoutes = () => {
         <Route path="/sessions" element={<PageWrapper><ProtectedRoute><Sessions /></ProtectedRoute></PageWrapper>} />
         <Route path="/workout/:id" element={<PageWrapper><ProtectedRoute><WorkoutSession /></ProtectedRoute></PageWrapper>} />
         <Route path="/builder" element={<PageWrapper><ProtectedRoute><WorkoutBuilder /></ProtectedRoute></PageWrapper>} />
+        <Route path="/programme/edit" element={<PageWrapper><ProtectedRoute><ProgrammeEditor /></ProtectedRoute></PageWrapper>} />
         <Route path="/nutrition" element={<PageWrapper><ProtectedRoute><FoodTracker /></ProtectedRoute></PageWrapper>} />
         <Route path="/history" element={<PageWrapper><ProtectedRoute><History /></ProtectedRoute></PageWrapper>} />
         <Route path="/progress" element={<PageWrapper><ProtectedRoute><Progress /></ProtectedRoute></PageWrapper>} />

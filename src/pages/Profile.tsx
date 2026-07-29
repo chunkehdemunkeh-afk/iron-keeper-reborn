@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchActivityLogs, fetchWeeklyBurn, mondayOfWeek, fetchLeaderboardVisibility, updateLeaderboardVisibility } from "@/lib/cloud-data";
 import { backfillStrainScores } from "@/lib/data/biometric-queries";
 import { queryKeys } from "@/lib/query-keys";
-import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy, RefreshCw, Dumbbell, Bell } from "lucide-react";
+import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy, RefreshCw, Dumbbell, Bell, Wand2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import RecoveryTips from "@/components/RecoveryTips";
@@ -460,14 +460,26 @@ export default function Profile() {
         <div className="glass-card rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-display text-sm font-semibold">Training Programme</h3>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate("/onboarding?from=profile")}
-              className="flex items-center gap-1 text-xs text-primary bg-primary/10 rounded-full px-2.5 py-1 hover:bg-primary/20 transition-colors"
-            >
-              <Settings2 className="h-3 w-3" />
-              {prefs ? "Change" : "Set up"}
-            </motion.button>
+            <div className="flex items-center gap-1.5">
+              {prefs && prefs.splitId !== "none" && (
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate("/programme/edit")}
+                  className="flex items-center gap-1 text-xs text-primary bg-primary/10 rounded-full px-2.5 py-1 hover:bg-primary/20 transition-colors"
+                >
+                  <Wand2 className="h-3 w-3" />
+                  Customize
+                </motion.button>
+              )}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/onboarding?from=profile")}
+                className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/40 rounded-full px-2.5 py-1 hover:bg-muted/60 transition-colors"
+              >
+                <Settings2 className="h-3 w-3" />
+                {prefs ? "Change" : "Set up"}
+              </motion.button>
+            </div>
           </div>
 
           {prefs && prefs.splitId === "none" ? (
