@@ -26,7 +26,8 @@ const CUSTOM_WORKOUTS_STORAGE_KEY = "ironkeeper_custom_workouts";
 // Editable snapshot of a workout day — no icon (JSON-safe)
 type EditableDay = Omit<WorkoutDay, "icon">;
 
-const REP_RANGE_OPTIONS = ["3-5", "5-8", "6-10", "8-10", "8-12", "10-15", "12-15", "15-20"];
+const REP_RANGE_OPTIONS = ["3-5", "5-8", "5-10", "6-10", "8-10", "8-12", "10-15", "12-15", "15-20"];
+const RIR_OPTIONS = ["0-1", "1-2", "2-3", "3-4", "4+"];
 
 export default function ProgrammeEditor() {
   const navigate = useNavigate();
@@ -442,6 +443,23 @@ function ExerciseRow({
               ))}
             </select>
           </div>
+        </div>
+      </div>
+
+      {/* RIR picker */}
+      <div className="flex items-center rounded-lg bg-muted/40 px-2">
+        <div className="flex-1">
+          <p className="text-[9px] font-bold uppercase text-muted-foreground leading-none">RIR</p>
+          <select
+            value={exercise.targetRir ?? ""}
+            onChange={(e) => onUpdate({ targetRir: e.target.value || undefined })}
+            className="w-full bg-transparent text-sm font-bold tabular-nums leading-tight outline-none"
+          >
+            <option value="">Day default</option>
+            {RIR_OPTIONS.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
         </div>
       </div>
     </div>
