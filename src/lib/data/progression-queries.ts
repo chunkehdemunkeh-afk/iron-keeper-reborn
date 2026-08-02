@@ -17,6 +17,8 @@ import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "@/lib/accessory-rou
 import { EXERCISE_SUBSTITUTIONS } from "@/lib/exercise-substitutions";
 import { stripExerciseSuffixes } from "@/lib/muscle-mapping";
 import { resolveExerciseName } from "@/lib/exercise-names";
+import { isReverseLoadExercise } from "@/lib/reverse-load-exercises";
+
 
 /** Build base-id → "6-8" lookup once. */
 let _repsMap: Map<string, string> | null = null;
