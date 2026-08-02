@@ -7,6 +7,8 @@ import { stripExerciseSuffixes } from "../muscle-mapping";
 import { looksLikeExerciseName, resolveExerciseName } from "../exercise-names";
 import { estimateStrengthBurn } from "../calorie-burn";
 import { lookupUserBodyweight } from "./nutrition-queries";
+import { isReverseLoadExercise } from "../reverse-load-exercises";
+
 
 export type PersonalRecord = {
   weight: number;
