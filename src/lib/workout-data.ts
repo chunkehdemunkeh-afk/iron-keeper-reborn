@@ -396,9 +396,9 @@ export const WORKOUTS: WorkoutDay[] = [
     color: "from-blue-500/20 to-sky-500/10",
     targetRir: "1-2",
     exercises: [
-      { id: "lib-68",    name: "Plate Loaded Chest Press",                     sets: 2, reps: "5-10",  targetMuscle: "Chest",          targetRir: "0-1", notes: "Top strength lift — chase a heavy top set, controlled eccentric, full stretch at the bottom" },
-      { id: "lib-64",    name: "Mag Grip Seated Cable Row",                    sets: 2, reps: "5-10",  targetMuscle: "Back Thickness", targetRir: "0-1", notes: "Mag (neutral) grip — pull to lower chest, drive elbows back, squeeze shoulder blades, full stretch at extension. Don't chase old T-Bar weights — cable mechanics differ" },
       { id: "pu1",       name: "45° Incline Dumbbell Bench Press",             sets: 2, reps: "5-10",  targetMuscle: "Upper Chest",    targetRir: "0-1", notes: "Strength focus — heavier load, full stretch at bottom, controlled eccentric" },
+      { id: "lib-db-Bent_Over_Barbell_Row", name: "Bent Over Barbell Row",     sets: 2, reps: "5-10",  targetMuscle: "Back Thickness", targetRir: "0-1", notes: "Hinge to ~45°, pronated grip, row to lower chest/upper stomach. Brace hard, no jerking" },
+      { id: "lib-68",    name: "Plate Loaded Chest Press",                     sets: 2, reps: "5-10",  targetMuscle: "Chest",          targetRir: "0-1", notes: "Top strength lift — chase a heavy top set, controlled eccentric, full stretch at the bottom" },
       { id: "lib-69",    name: "Assisted Pull-Up",                             sets: 2, reps: "5-10",  targetMuscle: "Lats",           targetRir: "0-1", notes: "Log the ASSISTANCE weight — lower is better. Aim to reduce assistance over time. Full dead hang, chin over bar" },
 
       { id: "lib-db-Smith_Machine_Overhead_Shoulder_Press", name: "Smith Machine Seated Military Press", sets: 2, reps: "5-10", targetMuscle: "Shoulders", targetRir: "0-1", notes: "Bar to upper chest, push straight up, full lockout. Elbows slightly in front — not flared wide. Fixed bar path allows heavier loading than DB press" },
@@ -406,6 +406,7 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "bn5",       name: "Skull Crushers",                               sets: 2, reps: "5-10",  targetMuscle: "Triceps",        targetRir: "0-1", notes: "Lower bar to forehead, extend slowly, lock out at top" },
       { id: "lib-61",    name: "Bayesian Curl",                                sets: 2, reps: "5-10",  targetMuscle: "Biceps",         targetRir: "0-1", notes: "45° cable behind body. Long head stretch. Slow eccentric" },
       { id: "lib-db-One-Arm_Incline_Lateral_Raise", name: "One-Arm Incline Lateral Raise", sets: 2, reps: "5-10", targetMuscle: "Side Delts", targetRir: "0-1", notes: "Lie sideways on an incline bench, dumbbell in top hand. Raise to shoulder height, full stretch at bottom. Each side." },
+
     ],
   },
   {
