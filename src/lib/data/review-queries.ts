@@ -307,9 +307,8 @@ export async function computeWeekStats(weekStart: string): Promise<WeekSummary> 
       if (w > prior) {
         if (!newMax[base] || w > newMax[base].weight) {
           const resolvedName =
-            s.exercise_name && s.exercise_name !== s.exercise_id
-              ? s.exercise_name
-              : nameMap[s.exercise_id] ?? nameMap[base] ?? s.exercise_name ?? base;
+            nameMap[s.exercise_id] ?? nameMap[base] ??
+            (looksLikeExerciseName(s.exercise_name) ? s.exercise_name : base);
           newMax[base] = { weight: w, name: resolvedName };
         }
       }

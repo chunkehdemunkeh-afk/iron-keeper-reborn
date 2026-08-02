@@ -4,6 +4,7 @@ import { EXERCISE_SUBSTITUTIONS } from "../exercise-substitutions";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "../accessory-routines";
 import { EXERCISE_LIBRARY } from "../exercise-library";
 import { stripExerciseSuffixes } from "../muscle-mapping";
+import { looksLikeExerciseName, resolveExerciseName } from "../exercise-names";
 
 function buildExerciseNameMap(): Record<string, string> {
   const m: Record<string, string> = {};
@@ -50,9 +51,8 @@ export async function fetchTopExercises(timeFilter: TimeFilter = 'all'): Promise
   return (data as any[]).map((r) => {
     const base = stripExerciseSuffixes(r.exercise_id);
     const resolvedName =
-      r.exercise_name && r.exercise_name !== r.exercise_id
-        ? r.exercise_name
-        : nameMap[r.exercise_id] ?? nameMap[base] ?? r.exercise_name ?? r.exercise_id;
+      nameMap[r.exercise_id] ?? nameMap[base] ??
+      (looksLikeExerciseName(r.exercise_name) ? r.exercise_name : base || r.exercise_id);
     return {
       exerciseId: r.exercise_id,
       exerciseName: resolvedName,
