@@ -102,6 +102,9 @@ export const EXERCISE_LIBRARY: LibraryExercise[] = [
   { id: "lib-66", name: "Box Jumps with Drop Jump", muscleGroup: "Plyometric", equipment: "Box", description: "Jump onto box, step off (do not jump off), land softly, immediately jump again from the landing position. The reactive landing is the stimulus." },
   { id: "lib-67", name: "Broad Jumps", muscleGroup: "Plyometric", equipment: "Bodyweight", description: "Maximum horizontal distance each jump. Two-foot takeoff, swing arms, land soft with knees bent. Walk back between reps." },
   { id: "lib-64", name: "Mag Grip Seated Cable Row", muscleGroup: "Back", equipment: "Cable", description: "Seated cable row with mag (neutral) grip. Pull to lower chest, drive elbows back, squeeze shoulder blades, full stretch at extension." },
+  { id: "lib-68", name: "Plate Loaded Chest Press", muscleGroup: "Chest", equipment: "Machine", description: "Plate-loaded seated chest press. Handles at mid-chest, drive forward and slightly in, full stretch on the eccentric, no lockout rest." },
+  { id: "lib-69", name: "Assisted Pull-Up", muscleGroup: "Back", equipment: "Machine", description: "Assisted pull-up machine. The logged weight is the ASSISTANCE used — lower is better. Full dead hang at the bottom, chin over bar, drive elbows down." },
+
 
   // Agility
   { id: "lib-55", name: "Lateral Shuffle", muscleGroup: "Agility", equipment: "None", description: "Low stance, quick shuffle side to side." },

@@ -7,6 +7,8 @@ import { stripExerciseSuffixes } from "../muscle-mapping";
 import { looksLikeExerciseName, resolveExerciseName } from "../exercise-names";
 import { estimateStrengthBurn } from "../calorie-burn";
 import { lookupUserBodyweight } from "./nutrition-queries";
+import { isReverseLoadExercise } from "../reverse-load-exercises";
+
 
 export type PersonalRecord = {
   weight: number;
@@ -353,6 +355,8 @@ export async function fetchPersonalRecords(): Promise<Record<string, PersonalRec
       // abandoned/empty "working" row register as a PR (weight can legitimately
       // be 0 for bodyweight exercises, so only reps is filtered here).
       if (r < 1) return;
+      // Assisted machines log assistance load — lower weight is the better set.
+      const reverse = isReverseLoadExercise(s.exercise_id, s.exercise_name);
       const existing = prs[s.exercise_id];
       if (!existing) {
         prs[s.exercise_id] = {
@@ -365,7 +369,7 @@ export async function fetchPersonalRecords(): Promise<Record<string, PersonalRec
           bestTrue1RM: setType === "1rm_test" ? w : undefined,
         };
       } else {
-        if (w > existing.weight) {
+        if (reverse ? w < existing.weight : w > existing.weight) {
           existing.weight = w;
           existing.reps = r;
           existing.date = s.created_at;
@@ -373,9 +377,10 @@ export async function fetchPersonalRecords(): Promise<Record<string, PersonalRec
           existing.setId = s.id;
         }
         if (r > existing.bestReps) existing.bestReps = r;
-        if (setType === "1rm_test" && (existing.bestTrue1RM === undefined || w > existing.bestTrue1RM)) {
+        if (setType === "1rm_test" && (existing.bestTrue1RM === undefined || (reverse ? w < existing.bestTrue1RM : w > existing.bestTrue1RM))) {
           existing.bestTrue1RM = w;
         }
+
       }
     });
     if (sets.length < PAGE) break;
@@ -759,11 +764,13 @@ export async function fetchExercisePRHistory(): Promise<ExercisePRTrend[]> {
       nameMap[s.exercise_id] ?? nameMap[baseId] ??
       (looksLikeExerciseName(s.exercise_name) ? s.exercise_name : baseId);
 
+    // Assisted machines: the running "best" is the lowest assistance used.
+    const reverse = isReverseLoadExercise(s.exercise_id, realName);
     if (!grouped[baseId]) {
-      grouped[baseId] = { name: realName, running: 0, points: [] };
+      grouped[baseId] = { name: realName, running: reverse ? Infinity : 0, points: [] };
     }
 
-    const isNew = w > grouped[baseId].running;
+    const isNew = reverse ? w < grouped[baseId].running : w > grouped[baseId].running;
     if (isNew) grouped[baseId].running = w;
     grouped[baseId].points.push({
       date: s.created_at,
@@ -771,6 +778,7 @@ export async function fetchExercisePRHistory(): Promise<ExercisePRTrend[]> {
       reps: s.reps,
       isNewPR: isNew,
     });
+
   }
 
   return Object.entries(grouped)

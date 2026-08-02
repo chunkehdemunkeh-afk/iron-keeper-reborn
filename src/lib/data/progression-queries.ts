@@ -17,6 +17,8 @@ import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "@/lib/accessory-rou
 import { EXERCISE_SUBSTITUTIONS } from "@/lib/exercise-substitutions";
 import { stripExerciseSuffixes } from "@/lib/muscle-mapping";
 import { resolveExerciseName } from "@/lib/exercise-names";
+import { isReverseLoadExercise } from "@/lib/reverse-load-exercises";
+
 
 /** Build base-id → "6-8" lookup once. */
 let _repsMap: Map<string, string> | null = null;
@@ -252,17 +254,22 @@ export function computeProgressionDecision(args: {
   const { exerciseName, exerciseId, workingSets, repsLow, repsHigh, storedTarget, hasPrev } = args;
   if (workingSets.length === 0) return { currentTarget: storedTarget, suggestion: null };
 
-  const heaviest = Math.max(...workingSets.map(s => s.weight));
-  const allMetRepsLowAtHeaviest =
-    workingSets.every(s => s.weight >= heaviest && s.reps >= repsLow);
+  // Assisted machines: lower load = better. Everything below inverts.
+  const reverse = isReverseLoadExercise(exerciseId, exerciseName);
+
+  const best = reverse
+    ? Math.min(...workingSets.map(s => s.weight))
+    : Math.max(...workingSets.map(s => s.weight));
+  const allMetRepsLowAtBest = workingSets.every(
+    s => (reverse ? s.weight <= best : s.weight >= best) && s.reps >= repsLow,
+  );
+  const improvedOnStored = reverse ? best < storedTarget : best > storedTarget;
   const promotedTarget =
-    storedTarget > 0 && heaviest > storedTarget && allMetRepsLowAtHeaviest
-      ? heaviest
-      : storedTarget;
-  const currentTarget = hasPrev ? promotedTarget : heaviest;
+    storedTarget > 0 && improvedOnStored && allMetRepsLowAtBest ? best : storedTarget;
+  const currentTarget = hasPrev ? promotedTarget : best;
 
   const qualifying = workingSets
-    .filter(s => currentTarget <= 0 || s.weight >= currentTarget)
+    .filter(s => (reverse ? s.weight <= currentTarget : currentTarget <= 0 || s.weight >= currentTarget))
     .map(s => ({ ...s, overflow: s.reps - repsHigh }));
 
   const hitTopOnAll =
@@ -276,13 +283,18 @@ export function computeProgressionDecision(args: {
 
   const trigger = qualifying
     .slice()
-    .sort((a, b) => b.overflow - a.overflow || b.weight - a.weight)[0];
+    .sort((a, b) => b.overflow - a.overflow || (reverse ? a.weight - b.weight : b.weight - a.weight))[0];
   const repsOver = Math.max(0, trigger.overflow);
   const cls = exerciseClass(exerciseName, exerciseId);
   const inc = suggestIncrement({ exerciseName, exerciseId, currentTarget, repsOver });
-  const suggestedWeight = snapToPlate(currentTarget + inc, cls);
-  const reason =
-    repsOver >= 1
+  const suggestedWeight = reverse
+    ? Math.max(0, snapToPlate(currentTarget - inc, cls))
+    : snapToPlate(currentTarget + inc, cls);
+  const reason = reverse
+    ? repsOver >= 1
+      ? `You hit ${trigger.reps} reps with ${trigger.weight}kg assistance (${repsOver} over the ${repsHigh} cap) — drop the assistance.`
+      : `Hit top of range on every set — cut assistance to ${suggestedWeight}kg.`
+    : repsOver >= 1
       ? `You hit ${trigger.reps} reps at ${trigger.weight}kg (${repsOver} over the ${repsHigh} cap) — time to add weight.`
       : `Hit top of range on every set — bump to ${suggestedWeight}kg.`;
   return {
@@ -300,6 +312,7 @@ export function computeProgressionDecision(args: {
     },
   };
 }
+
 
 /**
  * Evaluate a just-completed session and write progression rows / suggestions.
@@ -367,7 +380,10 @@ export async function evaluateAndStoreProgression(sets: EvalSet[]): Promise<void
       prev?.target_reps_low ||
       Math.max(1, repsHigh - 2);
 
-    const heaviest = Math.max(...exSets.map(s => s.weight));
+    const reverse = isReverseLoadExercise(exId, exName);
+    const bestLoad = reverse
+      ? Math.min(...exSets.map(s => s.weight))
+      : Math.max(...exSets.map(s => s.weight));
     const storedTarget = prev ? Number(prev.target_weight) || 0 : 0;
 
     const { currentTarget, suggestion: pendingSuggestion } = computeProgressionDecision({
@@ -381,12 +397,13 @@ export async function evaluateAndStoreProgression(sets: EvalSet[]): Promise<void
     });
 
     // Staleness guard: clear an old pending suggestion the user already
-    // surpassed (heaviest this session ≥ both old target and old suggestion).
+    // surpassed (best load this session at least as good as old target + suggestion).
     let carriedPrev: ProgressionSuggestion | null = prev?.pending_suggestion ?? null;
     if (carriedPrev && !pendingSuggestion) {
+      const atLeastAsGood = (a: number, b: number) => (reverse ? a <= b : a >= b);
       const surpassed =
-        heaviest >= (Number(prev?.target_weight) || 0) &&
-        heaviest >= (carriedPrev.suggestedWeight ?? 0);
+        atLeastAsGood(bestLoad, Number(prev?.target_weight) || 0) &&
+        atLeastAsGood(bestLoad, carriedPrev.suggestedWeight ?? 0);
       if (surpassed) carriedPrev = null;
     }
 
@@ -394,7 +411,8 @@ export async function evaluateAndStoreProgression(sets: EvalSet[]): Promise<void
       user_id: user.id,
       exercise_id: exId,
       exercise_name: exName,
-      target_weight: currentTarget || heaviest,
+      target_weight: currentTarget || bestLoad,
+
       target_reps_low: repsLow,
       target_reps_high: repsHigh,
       pending_suggestion: pendingSuggestion ?? carriedPrev,
