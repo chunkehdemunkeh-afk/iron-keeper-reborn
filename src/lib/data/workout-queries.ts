@@ -764,11 +764,13 @@ export async function fetchExercisePRHistory(): Promise<ExercisePRTrend[]> {
       nameMap[s.exercise_id] ?? nameMap[baseId] ??
       (looksLikeExerciseName(s.exercise_name) ? s.exercise_name : baseId);
 
+    // Assisted machines: the running "best" is the lowest assistance used.
+    const reverse = isReverseLoadExercise(s.exercise_id, realName);
     if (!grouped[baseId]) {
-      grouped[baseId] = { name: realName, running: 0, points: [] };
+      grouped[baseId] = { name: realName, running: reverse ? Infinity : 0, points: [] };
     }
 
-    const isNew = w > grouped[baseId].running;
+    const isNew = reverse ? w < grouped[baseId].running : w > grouped[baseId].running;
     if (isNew) grouped[baseId].running = w;
     grouped[baseId].points.push({
       date: s.created_at,
@@ -776,6 +778,7 @@ export async function fetchExercisePRHistory(): Promise<ExercisePRTrend[]> {
       reps: s.reps,
       isNewPR: isNew,
     });
+
   }
 
   return Object.entries(grouped)
