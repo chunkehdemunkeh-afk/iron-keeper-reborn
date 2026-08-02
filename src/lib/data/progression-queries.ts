@@ -348,7 +348,7 @@ export async function evaluateAndStoreProgression(sets: EvalSet[]): Promise<void
     // Need at least one set with weight > 0; otherwise it's bodyweight/skip.
     if (!exSets.some(s => s.weight > 0)) continue;
 
-    const exName = exSets[0].exerciseName || exId;
+    const exName = resolveExerciseName(exId, exSets[0].exerciseName);
 
     // Resolve the prescribed rep range: caller-provided first, else static defs.
     const sessionHighRaw = Math.max(0, ...exSets.map(s => s.targetRepsHigh ?? 0));

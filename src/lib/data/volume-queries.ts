@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { WORKOUTS } from "../workout-data";
 import { EXERCISE_SUBSTITUTIONS } from "../exercise-substitutions";
+import { looksLikeExerciseName } from "../exercise-names";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "../accessory-routines";
 import { EXERCISE_LIBRARY } from "../exercise-library";
 import { getMusclesWorked, stripExerciseSuffixes, MUSCLE_REGIONS } from "../muscle-mapping";
@@ -127,9 +128,8 @@ export async function fetchWeeklyMuscleData(weeksBack = 4): Promise<WeeklyMuscle
 
     const baseId = stripExerciseSuffixes(s.exercise_id);
     const realName =
-      s.exercise_name && s.exercise_name !== s.exercise_id
-        ? s.exercise_name
-        : nameMap[baseId] ?? nameMap[s.exercise_id] ?? s.exercise_name ?? "";
+      nameMap[s.exercise_id] ?? nameMap[baseId] ??
+      (looksLikeExerciseName(s.exercise_name) ? s.exercise_name : baseId);
 
     const { primary, secondary } = getMusclesWorked(
       s.exercise_id,
