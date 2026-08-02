@@ -380,7 +380,10 @@ export async function evaluateAndStoreProgression(sets: EvalSet[]): Promise<void
       prev?.target_reps_low ||
       Math.max(1, repsHigh - 2);
 
-    const heaviest = Math.max(...exSets.map(s => s.weight));
+    const reverse = isReverseLoadExercise(exId, exName);
+    const bestLoad = reverse
+      ? Math.min(...exSets.map(s => s.weight))
+      : Math.max(...exSets.map(s => s.weight));
     const storedTarget = prev ? Number(prev.target_weight) || 0 : 0;
 
     const { currentTarget, suggestion: pendingSuggestion } = computeProgressionDecision({
@@ -394,12 +397,13 @@ export async function evaluateAndStoreProgression(sets: EvalSet[]): Promise<void
     });
 
     // Staleness guard: clear an old pending suggestion the user already
-    // surpassed (heaviest this session ≥ both old target and old suggestion).
+    // surpassed (best load this session at least as good as old target + suggestion).
     let carriedPrev: ProgressionSuggestion | null = prev?.pending_suggestion ?? null;
     if (carriedPrev && !pendingSuggestion) {
+      const atLeastAsGood = (a: number, b: number) => (reverse ? a <= b : a >= b);
       const surpassed =
-        heaviest >= (Number(prev?.target_weight) || 0) &&
-        heaviest >= (carriedPrev.suggestedWeight ?? 0);
+        atLeastAsGood(bestLoad, Number(prev?.target_weight) || 0) &&
+        atLeastAsGood(bestLoad, carriedPrev.suggestedWeight ?? 0);
       if (surpassed) carriedPrev = null;
     }
 
@@ -407,7 +411,8 @@ export async function evaluateAndStoreProgression(sets: EvalSet[]): Promise<void
       user_id: user.id,
       exercise_id: exId,
       exercise_name: exName,
-      target_weight: currentTarget || heaviest,
+      target_weight: currentTarget || bestLoad,
+
       target_reps_low: repsLow,
       target_reps_high: repsHigh,
       pending_suggestion: pendingSuggestion ?? carriedPrev,
