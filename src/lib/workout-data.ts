@@ -392,13 +392,13 @@ export const WORKOUTS: WorkoutDay[] = [
     name: "Upper A",
     icon: User,
     day: "Upper A",
-    focus: "Chest · Back · Shoulders · Arms — Strength Bias",
+    focus: "Chest · Back · Shoulders · Arms — Compounds & Isolation",
     color: "from-blue-500/20 to-sky-500/10",
     targetRir: "1-2",
     exercises: [
-      { id: "pu1",       name: "45° Incline Dumbbell Bench Press",             sets: 2, reps: "5-10",  targetMuscle: "Upper Chest",    targetRir: "0-1", notes: "Strength focus — heavier load, full stretch at bottom, controlled eccentric" },
-      { id: "lib-db-Bent_Over_Barbell_Row", name: "Bent Over Barbell Row",     sets: 2, reps: "5-10",  targetMuscle: "Back Thickness", targetRir: "0-1", notes: "Hinge to ~45°, pronated grip, row to lower chest/upper stomach. Brace hard, no jerking" },
-      { id: "lib-68",    name: "Plate Loaded Chest Press",                     sets: 2, reps: "5-10",  targetMuscle: "Chest",          targetRir: "0-1", notes: "Top strength lift — chase a heavy top set, controlled eccentric, full stretch at the bottom" },
+      { id: "pu1",       name: "45° Incline Dumbbell Bench Press",             sets: 2, reps: "5-10",  targetMuscle: "Upper Chest",    targetRir: "0-1", notes: "Compound — heavier load, full stretch at bottom, controlled eccentric" },
+      { id: "lib-db-Bent_Over_Barbell_Row", name: "Bent Over Barbell Row",     sets: 2, reps: "5-10",  targetMuscle: "Back Thickness", targetRir: "0-1", notes: "Compound — hinge to ~45°, pronated grip, row to lower chest/upper stomach. Brace hard, no jerking" },
+      { id: "lib-68",    name: "Plate Loaded Chest Press",                     sets: 2, reps: "5-10",  targetMuscle: "Chest",          targetRir: "0-1", notes: "Compound — chase a heavy top set, controlled eccentric, full stretch at the bottom" },
       { id: "lib-69",    name: "Assisted Pull-Up",                             sets: 2, reps: "5-10",  targetMuscle: "Lats",           targetRir: "0-1", notes: "Log the ASSISTANCE weight — lower is better. Aim to reduce assistance over time. Full dead hang, chin over bar" },
 
       { id: "lib-db-Smith_Machine_Overhead_Shoulder_Press", name: "Smith Machine Seated Military Press", sets: 2, reps: "5-10", targetMuscle: "Shoulders", targetRir: "0-1", notes: "Bar to upper chest, push straight up, full lockout. Elbows slightly in front — not flared wide. Fixed bar path allows heavier loading than DB press" },
