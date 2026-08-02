@@ -3,6 +3,7 @@ import { WORKOUTS, type CompletedWorkout } from "@/lib/workout-data";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "@/lib/accessory-routines";
 import { EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import { EXERCISE_SUBSTITUTIONS } from "@/lib/exercise-substitutions";
+import { resolveExerciseName } from "@/lib/exercise-names";
 import { stripExerciseSuffixes } from "@/lib/muscle-mapping";
 import { Clock, Check, Trash2, ChevronDown, ChevronUp, AlertTriangle, Star, MessageSquare, Dumbbell, Flame } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -87,10 +88,12 @@ export default function WorkoutCard({ workout: w, icon: Icon, onDelete, isDeleti
   };
 
   const resolveName = (s: { exerciseId: string; exerciseName?: string }): string => {
-    // Prefer stored name when it isn't the raw ID (legacy rows saved id == name)
-    if (s.exerciseName && s.exerciseName !== s.exerciseId) return s.exerciseName;
     const base = stripExerciseSuffixes(s.exerciseId);
-    return nameById[s.exerciseId] ?? nameById[base] ?? s.exerciseName ?? s.exerciseId;
+    return (
+      nameById[s.exerciseId] ??
+      nameById[base] ??
+      resolveExerciseName(s.exerciseId, s.exerciseName)
+    );
   };
 
   // Group sets by exercise, preserving order. Each group splits warm-ups from

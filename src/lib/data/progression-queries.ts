@@ -16,6 +16,7 @@ import { EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "@/lib/accessory-routines";
 import { EXERCISE_SUBSTITUTIONS } from "@/lib/exercise-substitutions";
 import { stripExerciseSuffixes } from "@/lib/muscle-mapping";
+import { resolveExerciseName } from "@/lib/exercise-names";
 
 /** Build base-id → "6-8" lookup once. */
 let _repsMap: Map<string, string> | null = null;
@@ -83,7 +84,7 @@ const tbl = () =>
 function rowToProgression(r: DbRow): ProgressionRow {
   return {
     exerciseId: r.exercise_id,
-    exerciseName: r.exercise_name,
+    exerciseName: resolveExerciseName(r.exercise_id, r.exercise_name),
     targetWeight: Number(r.target_weight) || 0,
     targetRepsLow: r.target_reps_low,
     targetRepsHigh: r.target_reps_high,

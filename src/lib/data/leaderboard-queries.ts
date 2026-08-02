@@ -4,7 +4,7 @@ import { EXERCISE_SUBSTITUTIONS } from "../exercise-substitutions";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "../accessory-routines";
 import { EXERCISE_LIBRARY } from "../exercise-library";
 import { stripExerciseSuffixes } from "../muscle-mapping";
-import { looksLikeExerciseName, resolveExerciseName } from "../exercise-names";
+import { looksLikeExerciseName } from "../exercise-names";
 
 function buildExerciseNameMap(): Record<string, string> {
   const m: Record<string, string> = {};

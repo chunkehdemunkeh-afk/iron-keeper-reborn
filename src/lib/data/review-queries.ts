@@ -3,6 +3,7 @@ import { stripExerciseSuffixes } from "../muscle-mapping";
 import { awardXpAndNotify } from "@/lib/gamification/notify";
 import { WORKOUTS } from "../workout-data";
 import { EXERCISE_SUBSTITUTIONS } from "../exercise-substitutions";
+import { looksLikeExerciseName } from "../exercise-names";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "../accessory-routines";
 import { EXERCISE_LIBRARY } from "../exercise-library";
 
