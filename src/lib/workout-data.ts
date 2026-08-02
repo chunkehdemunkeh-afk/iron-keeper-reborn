@@ -435,7 +435,7 @@ export const WORKOUTS: WorkoutDay[] = [
     name: "Upper B",
     icon: Dumbbell,
     day: "Upper B",
-    focus: "Chest · Back · Rear Delts · Arms — Hypertrophy Bias",
+    focus: "Chest · Back · Rear Delts · Arms — Compounds & Isolation",
     color: "from-purple-500/20 to-fuchsia-500/10",
     targetRir: "1-2",
     exercises: [
