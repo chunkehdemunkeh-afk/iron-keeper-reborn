@@ -439,7 +439,7 @@ export const WORKOUTS: WorkoutDay[] = [
     color: "from-purple-500/20 to-fuchsia-500/10",
     targetRir: "1-2",
     exercises: [
-      { id: "pu3",       name: "15° Incline Dumbbell Bench Press", sets: 2, reps: "10-12", targetMuscle: "Upper Chest",       targetRir: "0-1", notes: "Higher reps vs Upper A — different angle, squeeze at top" },
+      { id: "pu3",       name: "15° Incline Dumbbell Bench Press", sets: 2, reps: "10-12", targetMuscle: "Upper Chest",       targetRir: "0-1", notes: "Compound — different angle to Upper A, squeeze at top" },
       { id: "pl1",       name: "Seated Row Machine",               sets: 2, reps: "10-12", targetMuscle: "Mid Back",          targetRir: "0-1", notes: "NEUTRAL GRIP — confirmed superior for lat engagement. Pull to lower chest, squeeze shoulder blades" },
       { id: "up4",       name: "Cable Flies To Thighs",            sets: 2, reps: "12-15", targetMuscle: "Lower Chest",       targetRir: "0-1", notes: "Cables high to low, squeeze at the bottom. Bump to 3 sets if chest volume feels insufficient after 4 weeks" },
       { id: "lib-18",    name: "Incline Dumbbell Curl",            sets: 2, reps: "10-12", targetMuscle: "Biceps",            targetRir: "0-1", notes: "BENCH AT 45 DEGREES — critical. Arms hang behind torso. Long head stretch. No cheating on final rep — log clean reps only" },
