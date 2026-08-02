@@ -3,6 +3,7 @@ import { stripExerciseSuffixes } from "../muscle-mapping";
 import { awardXpAndNotify } from "@/lib/gamification/notify";
 import { WORKOUTS } from "../workout-data";
 import { EXERCISE_SUBSTITUTIONS } from "../exercise-substitutions";
+import { looksLikeExerciseName } from "../exercise-names";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "../accessory-routines";
 import { EXERCISE_LIBRARY } from "../exercise-library";
 
@@ -307,9 +308,8 @@ export async function computeWeekStats(weekStart: string): Promise<WeekSummary> 
       if (w > prior) {
         if (!newMax[base] || w > newMax[base].weight) {
           const resolvedName =
-            s.exercise_name && s.exercise_name !== s.exercise_id
-              ? s.exercise_name
-              : nameMap[s.exercise_id] ?? nameMap[base] ?? s.exercise_name ?? base;
+            nameMap[s.exercise_id] ?? nameMap[base] ??
+            (looksLikeExerciseName(s.exercise_name) ? s.exercise_name : base);
           newMax[base] = { weight: w, name: resolvedName };
         }
       }

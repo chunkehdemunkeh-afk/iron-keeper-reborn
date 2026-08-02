@@ -4,6 +4,7 @@ import { EXERCISE_SUBSTITUTIONS } from "../exercise-substitutions";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "../accessory-routines";
 import { EXERCISE_LIBRARY } from "../exercise-library";
 import { stripExerciseSuffixes } from "../muscle-mapping";
+import { looksLikeExerciseName, resolveExerciseName } from "../exercise-names";
 import { estimateStrengthBurn } from "../calorie-burn";
 import { lookupUserBodyweight } from "./nutrition-queries";
 
@@ -135,13 +136,8 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
   Object.values(ACCESSORY_SUBSTITUTIONS).flat().forEach(sub => { exerciseMap[sub.id] = sub.name; });
   EXERCISE_LIBRARY.forEach(ex => { exerciseMap[ex.id] = ex.name; });
 
-  const resolveName = (id: string, fallback?: string): string => {
-    if (exerciseMap[id]) return exerciseMap[id];
-    const base = stripExerciseSuffixes(id);
-    if (base !== id && exerciseMap[base]) return exerciseMap[base];
-    if (fallback && fallback !== id) return fallback;
-    return exerciseMap[base] ?? id;
-  };
+  const resolveName = (id: string, fallback?: string): string =>
+    resolveExerciseName(id, fallback);
 
   if (workout.sets.length > 0) {
     // Global monotonic counter across the whole session so `ORDER BY set_index ASC`
@@ -693,9 +689,8 @@ export async function fetchRecentSets(daysBack: number = 7): Promise<RecentSetRe
   return sets.map((s: any) => {
     const baseId = stripExerciseSuffixes(s.exercise_id);
     const realName =
-      s.exercise_name && s.exercise_name !== s.exercise_id
-        ? s.exercise_name
-        : nameMap[baseId] ?? nameMap[s.exercise_id] ?? s.exercise_name ?? "";
+      nameMap[s.exercise_id] ?? nameMap[baseId] ??
+      (looksLikeExerciseName(s.exercise_name) ? s.exercise_name : baseId);
     return {
       exerciseId: s.exercise_id,
       exerciseName: realName,
@@ -761,9 +756,8 @@ export async function fetchExercisePRHistory(): Promise<ExercisePRTrend[]> {
 
 
     const realName =
-      s.exercise_name && s.exercise_name !== s.exercise_id
-        ? s.exercise_name
-        : nameMap[baseId] ?? nameMap[s.exercise_id] ?? s.exercise_name ?? baseId;
+      nameMap[s.exercise_id] ?? nameMap[baseId] ??
+      (looksLikeExerciseName(s.exercise_name) ? s.exercise_name : baseId);
 
     if (!grouped[baseId]) {
       grouped[baseId] = { name: realName, running: 0, points: [] };
