@@ -132,9 +132,10 @@ export const WORKOUTS: WorkoutDay[] = [
     color: "from-red-500/20 to-rose-500/10",
     exercises: [
       { id: "pu1", name: "45° Incline Dumbbell Bench Press", sets: 3, reps: "8-10", targetMuscle: "Upper Chest", notes: "Control the negative, full stretch at bottom" },
-      { id: "pu2", name: "Dumbbell Lateral Raises", sets: 3, reps: "8-10", targetMuscle: "Side Delts", notes: "Rest 01 min between sets" },
-      { id: "pu3", name: "15° Incline Dumbbell Bench Press", sets: 3, reps: "8-10", targetMuscle: "Upper Chest", notes: "Slight incline, squeeze at the top" },
-      { id: "pu4", name: "Flat Dumbbell Flies", sets: 3, reps: "8-10", targetMuscle: "Chest", notes: "Keep in line with nipples / just above" },
+      { id: "pu2", name: "Dumbbell Lateral Raises", sets: 3, reps: "8-10", targetMuscle: "Side Delts", notes: "Slight bend in the elbow, lead with the elbows and stop at shoulder height. Lower slowly — no swinging from the hips." },
+      { id: "pu3", name: "15° Incline Dumbbell Bench Press", sets: 3, reps: "8-10", targetMuscle: "Upper Chest", notes: "A shallow incline keeps tension on the upper-mid chest. Deep stretch at the bottom, squeeze at the top." },
+      { id: "pu4", name: "Flat Dumbbell Flies", sets: 3, reps: "8-10", targetMuscle: "Chest", notes: "Wide arc with a fixed slight elbow bend. Lower to chest level for the stretch, then hug the dumbbells back together." },
+
       { id: "pu5", name: "X-Over Cable Tricep Extensions", sets: 3, reps: "8-10", targetMuscle: "Triceps", notes: "Lock elbows in place, full extension" },
       { id: "pu6", name: "Overhead Cable Tricep Extension", sets: 3, reps: "8-10", targetMuscle: "Triceps", notes: "Rope, both arms — full stretch at bottom, lockout overhead. Toggle 1 Arm pill for unilateral version" },
     ],
