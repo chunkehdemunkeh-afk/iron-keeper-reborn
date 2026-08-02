@@ -355,6 +355,8 @@ export async function fetchPersonalRecords(): Promise<Record<string, PersonalRec
       // abandoned/empty "working" row register as a PR (weight can legitimately
       // be 0 for bodyweight exercises, so only reps is filtered here).
       if (r < 1) return;
+      // Assisted machines log assistance load — lower weight is the better set.
+      const reverse = isReverseLoadExercise(s.exercise_id, s.exercise_name);
       const existing = prs[s.exercise_id];
       if (!existing) {
         prs[s.exercise_id] = {
@@ -367,7 +369,7 @@ export async function fetchPersonalRecords(): Promise<Record<string, PersonalRec
           bestTrue1RM: setType === "1rm_test" ? w : undefined,
         };
       } else {
-        if (w > existing.weight) {
+        if (reverse ? w < existing.weight : w > existing.weight) {
           existing.weight = w;
           existing.reps = r;
           existing.date = s.created_at;
@@ -375,9 +377,10 @@ export async function fetchPersonalRecords(): Promise<Record<string, PersonalRec
           existing.setId = s.id;
         }
         if (r > existing.bestReps) existing.bestReps = r;
-        if (setType === "1rm_test" && (existing.bestTrue1RM === undefined || w > existing.bestTrue1RM)) {
+        if (setType === "1rm_test" && (existing.bestTrue1RM === undefined || (reverse ? w < existing.bestTrue1RM : w > existing.bestTrue1RM))) {
           existing.bestTrue1RM = w;
         }
+
       }
     });
     if (sets.length < PAGE) break;
