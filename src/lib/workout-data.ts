@@ -447,7 +447,7 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "dl5",       name: "Dumbbell Row",                     sets: 2, reps: "10-12", targetMuscle: "Lats/Mid Back",     targetRir: "0-1", notes: "Unilateral. Full stretch at bottom, drive elbow back. Toggle 1 Arm pill for single-arm" },
       { id: "lib-db-One-Arm_Incline_Lateral_Raise", name: "One-Arm Incline Lateral Raise", sets: 2, reps: "12-15", targetMuscle: "Side Delts", targetRir: "0-1", notes: "Lie sideways on an incline bench, dumbbell in top hand. Raise to shoulder height, full stretch at bottom. Each side." },
       { id: "ub6",       name: "Rope Hammer Curl (Cable)",         sets: 2, reps: "12-15", targetMuscle: "Biceps/Brachialis", targetRir: "0-1", notes: "Directly after DB Row. Cable constant tension — split rope at bottom" },
-      { id: "sub-up5a",  name: "Dumbbell Shoulder Press",          sets: 2, reps: "10-12", targetMuscle: "Shoulders",         targetRir: "0-1", notes: "Hypertrophy variation — free weight instability is the point. Different stimulus to Smith Machine on Upper A" },
+      { id: "sub-up5a",  name: "Dumbbell Shoulder Press",          sets: 2, reps: "10-12", targetMuscle: "Shoulders",         targetRir: "0-1", notes: "Compound — free weight instability is the point. Different stimulus to Smith Machine on Upper A" },
       { id: "lib-19",    name: "Tricep Pushdown",                  sets: 2, reps: "12-15", targetMuscle: "Triceps",           targetRir: "0-1", notes: "Split the rope at the bottom, squeeze triceps" },
     ],
   },
