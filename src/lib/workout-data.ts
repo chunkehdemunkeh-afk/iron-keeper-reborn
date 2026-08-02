@@ -396,16 +396,17 @@ export const WORKOUTS: WorkoutDay[] = [
     color: "from-blue-500/20 to-sky-500/10",
     targetRir: "1-2",
     exercises: [
-      { id: "pu1",       name: "45° Incline Dumbbell Bench Press",             sets: 2, reps: "5-10",  targetMuscle: "Upper Chest",    targetRir: "0-1", notes: "Compound — heavier load, full stretch at bottom, controlled eccentric" },
-      { id: "lib-db-Bent_Over_Barbell_Row", name: "Bent Over Barbell Row",     sets: 2, reps: "5-10",  targetMuscle: "Back Thickness", targetRir: "0-1", notes: "Compound — hinge to ~45°, pronated grip, row to lower chest/upper stomach. Brace hard, no jerking" },
-      { id: "lib-68",    name: "Plate Loaded Chest Press",                     sets: 2, reps: "5-10",  targetMuscle: "Chest",          targetRir: "0-1", notes: "Compound — chase a heavy top set, controlled eccentric, full stretch at the bottom" },
-      { id: "lib-69",    name: "Assisted Pull-Up",                             sets: 2, reps: "5-10",  targetMuscle: "Lats",           targetRir: "0-1", notes: "Log the ASSISTANCE weight — lower is better. Aim to reduce assistance over time. Full dead hang, chin over bar" },
+      { id: "pu1",       name: "45° Incline Dumbbell Bench Press",             sets: 2, reps: "5-10",  targetMuscle: "Upper Chest",    targetRir: "0-1", notes: "Set the bench near 45°. Lower until you feel a deep stretch across the upper chest, press up and slightly inward without clashing the dumbbells." },
+      { id: "lib-db-Bent_Over_Barbell_Row", name: "Bent Over Barbell Row",     sets: 2, reps: "5-10",  targetMuscle: "Back Thickness", targetRir: "0-1", notes: "Hinge to roughly 45°, brace the core and keep a neutral spine. Row to the lower chest and pause briefly — no jerking or hip bounce." },
+      { id: "lib-68",    name: "Plate Loaded Chest Press",                     sets: 2, reps: "5-10",  targetMuscle: "Chest",          targetRir: "0-1", notes: "Set the seat so the handles line up with mid-chest. Full stretch at the bottom, controlled 2s eccentric, press to a strong lockout." },
+      { id: "lib-69",    name: "Assisted Pull-Up",                             sets: 2, reps: "5-10",  targetMuscle: "Lats",           targetRir: "0-1", notes: "Log the assistance weight — lower is better. Start from a full dead hang, pull the elbows down and back, chin clearly over the bar." },
 
-      { id: "lib-db-Smith_Machine_Overhead_Shoulder_Press", name: "Smith Machine Seated Military Press", sets: 2, reps: "5-10", targetMuscle: "Shoulders", targetRir: "0-1", notes: "Bar to upper chest, push straight up, full lockout. Elbows slightly in front — not flared wide. Fixed bar path allows heavier loading than DB press" },
-      { id: "lib-db-Machine_Preacher_Curls", name: "Machine Preacher Curl", sets: 2, reps: "5-10", targetMuscle: "Biceps", targetRir: "0-1", notes: "Arms locked on pad, controlled out of bottom, full squeeze at top" },
-      { id: "bn5",       name: "Skull Crushers",                               sets: 2, reps: "5-10",  targetMuscle: "Triceps",        targetRir: "0-1", notes: "Lower bar to forehead, extend slowly, lock out at top" },
-      { id: "lib-61",    name: "Bayesian Curl",                                sets: 2, reps: "5-10",  targetMuscle: "Biceps",         targetRir: "0-1", notes: "45° cable behind body. Long head stretch. Slow eccentric" },
-      { id: "lib-db-One-Arm_Incline_Lateral_Raise", name: "One-Arm Incline Lateral Raise", sets: 2, reps: "5-10", targetMuscle: "Side Delts", targetRir: "0-1", notes: "Lie sideways on an incline bench, dumbbell in top hand. Raise to shoulder height, full stretch at bottom. Each side." },
+      { id: "lib-db-Smith_Machine_Overhead_Shoulder_Press", name: "Smith Machine Seated Military Press", sets: 2, reps: "5-10", targetMuscle: "Shoulders", targetRir: "0-1", notes: "Bar to upper chest, elbows slightly in front rather than flared. Press straight up to full lockout without arching the lower back." },
+      { id: "lib-db-Machine_Preacher_Curls", name: "Machine Preacher Curl", sets: 2, reps: "5-10", targetMuscle: "Biceps", targetRir: "0-1", notes: "Chest against the pad, upper arms flat throughout. Control out of the bottom — don't bounce — and squeeze hard at the top." },
+      { id: "bn5",       name: "Skull Crushers",                               sets: 2, reps: "5-10",  targetMuscle: "Triceps",        targetRir: "0-1", notes: "Keep the elbows pointed at the ceiling and fixed. Lower to the forehead or just behind it, then extend slowly to lockout." },
+      { id: "lib-61",    name: "Bayesian Curl",                                sets: 2, reps: "5-10",  targetMuscle: "Biceps",         targetRir: "0-1", notes: "Stand a step in front of a low cable so the arm hangs behind the torso. That stretched start hits the long head — slow eccentric each rep." },
+      { id: "lib-db-One-Arm_Incline_Lateral_Raise", name: "One-Arm Incline Lateral Raise", sets: 2, reps: "5-10", targetMuscle: "Side Delts", targetRir: "0-1", notes: "Lie sideways on an incline bench with the dumbbell in the top hand. Raise to shoulder height, lower fully for the stretch. Both sides." },
+
 
     ],
   },
