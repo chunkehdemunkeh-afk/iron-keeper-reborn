@@ -9,6 +9,8 @@ import { upsertUserPreferencesToCloud } from "@/lib/cloud-data";
 import { WORKOUTS } from "@/lib/workout-data";
 import { toast } from "sonner";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import CoachLinkStep from "@/components/onboarding/CoachLinkStep";
+import { readPendingCoachCode } from "@/lib/coach-invite";
 
 const DAYS_OPTIONS = [2, 3, 4, 5, 6];
 
@@ -40,6 +42,10 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const location = useLocation();
   const fromProfile = new URLSearchParams(location.search).get("from") === "profile";
+
+  const pendingCoachCode = useState(() => readPendingCoachCode() ?? "")[0];
+  // Coach linking happens before the programme wizard (new signups only).
+  const [coachStepDone, setCoachStepDone] = useState(fromProfile);
 
   const [step, setStep] = useState(0); // 0=days, 1=split, 2=custom, 3=summary
   const [days, setDays] = useState<number | null>(null);
@@ -141,6 +147,15 @@ export default function Onboarding() {
     step === 3;
 
   const totalSteps = noWorkout ? 1 : selectedSplit?.id === "custom" ? 4 : 3;
+
+  if (!coachStepDone) {
+    return (
+      <CoachLinkStep
+        initialCode={pendingCoachCode}
+        onDone={() => setCoachStepDone(true)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

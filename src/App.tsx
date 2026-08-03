@@ -122,6 +122,7 @@ const AnimatedRoutes = () => {
         <Route path="/shop" element={<PageWrapper><ProtectedRoute><Shop /></ProtectedRoute></PageWrapper>} />
         <Route path="/community" element={<PageWrapper><ProtectedRoute><Community /></ProtectedRoute></PageWrapper>} />
         <Route path="/hyrox" element={<PageWrapper><ProtectedRoute><HyroxBenchmarks /></ProtectedRoute></PageWrapper>} />
+        <Route path="/join/:code" element={<PageWrapper><JoinCoach /></PageWrapper>} />
         <Route path="/reset-password" element={<PageWrapper><ResetPassword /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>
