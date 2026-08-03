@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity, Users, Inbox as InboxIcon, UserPlus, Copy, LogOut, Bell, Trophy, X,
-  Dumbbell, Filter, CheckCircle2,
-} from "lucide-react";
+  Dumbbell, Filter, CheckCircle2, Share2 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +12,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AsyncBoundary } from "@/components/ui/async-boundary";
 import { getOrCreateCoachInviteCode } from "@/lib/data/coach-queries";
+import { inviteLinkFor } from "@/lib/coach-invite";
 import { useCoachFeed, useRosterStats, useSessionReview } from "@/hooks/queries/useCoachFeed";
 import { useInboxThreads, useUnreadMessages } from "@/hooks/queries/useInbox";
 import CoachFeedCard from "@/components/coach/CoachFeedCard";
@@ -193,26 +193,52 @@ export default function CoachDashboard() {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden hairline border-b bg-card/50"
             >
-              <div className="mx-auto max-w-lg md:max-w-2xl px-4 py-3 flex items-center gap-3">
-                <div className="flex-1">
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Invite code</p>
-                  <p className="font-display text-2xl font-bold tracking-widest">{inviteCode ?? "…"}</p>
+              <div className="mx-auto max-w-lg md:max-w-2xl px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Invite code</p>
+                    <p className="font-display text-2xl font-bold tracking-widest">{inviteCode ?? "…"}</p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (!inviteCode) return;
+                      await navigator.clipboard.writeText(inviteCode);
+                      toast.success("Invite code copied");
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-primary/15 px-3 py-2 text-xs font-semibold text-primary"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    Code
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!inviteCode) return;
+                      const link = inviteLinkFor(inviteCode);
+                      const shareData = {
+                        title: "Join me on Iron Warrior",
+                        text: "Link your training to my coach dashboard:",
+                        url: link,
+                      };
+                      if (navigator.share) {
+                        try { await navigator.share(shareData); return; } catch { /* cancelled */ }
+                      }
+                      await navigator.clipboard.writeText(link);
+                      toast.success("Invite link copied");
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground"
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                    Link
+                  </button>
+                  <button onClick={() => setShowInvite(false)} aria-label="Close invite panel">
+                    <X className="h-4 w-4 text-muted-foreground" />
+                  </button>
                 </div>
-                <button
-                  onClick={async () => {
-                    if (!inviteCode) return;
-                    await navigator.clipboard.writeText(inviteCode);
-                    toast.success("Invite code copied");
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-primary/15 px-3 py-2 text-xs font-semibold text-primary"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                  Copy
-                </button>
-                <button onClick={() => setShowInvite(false)} aria-label="Close invite panel">
-                  <X className="h-4 w-4 text-muted-foreground" />
-                </button>
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  Athletes who open your link are connected automatically — during sign-up or straight away if they already have an account.
+                </p>
               </div>
+
             </motion.div>
           )}
         </AnimatePresence>

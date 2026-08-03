@@ -22,6 +22,7 @@ import History from "./pages/History";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
+import JoinCoach from "./pages/JoinCoach";
 import ExerciseLibrary from "./pages/ExerciseLibrary";
 import BodyMeasurements from "./pages/BodyMeasurements";
 import CoachDashboard from "./pages/CoachDashboard";
@@ -122,6 +123,7 @@ const AnimatedRoutes = () => {
         <Route path="/shop" element={<PageWrapper><ProtectedRoute><Shop /></ProtectedRoute></PageWrapper>} />
         <Route path="/community" element={<PageWrapper><ProtectedRoute><Community /></ProtectedRoute></PageWrapper>} />
         <Route path="/hyrox" element={<PageWrapper><ProtectedRoute><HyroxBenchmarks /></ProtectedRoute></PageWrapper>} />
+        <Route path="/join/:code" element={<PageWrapper><JoinCoach /></PageWrapper>} />
         <Route path="/reset-password" element={<PageWrapper><ResetPassword /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>
