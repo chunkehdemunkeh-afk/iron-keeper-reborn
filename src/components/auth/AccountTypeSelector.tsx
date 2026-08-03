@@ -1,4 +1,3 @@
-import { Dumbbell, Whistle } from "lucide-react";
 import type { AccountType } from "@/lib/signup-intent";
 
 const OPTIONS: { id: AccountType; label: string; desc: string }[] = [
