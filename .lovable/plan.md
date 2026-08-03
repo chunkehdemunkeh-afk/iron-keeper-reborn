@@ -1,106 +1,84 @@
-## Goal
+# Coach experience: inbox + session feed dashboard
 
-Give every user the ability to take a preset split (or build from scratch) and fully customize sets, reps, and exercises per day — with substitutions and a live volume meter to keep each muscle group within MEV/MAV/MRV targets. Today only sets/reps hard-coded in `workout-data.ts` control this, so only the developer can adjust it. This plan makes it self-serve.
+Two goals: a real messaging inbox for both coaches and athletes, and a coach dashboard that surfaces every session their athletes log with enough detail to actually coach from.
 
-## Scope (all three levels supported, per your answer)
+## What exists today
 
-1. **Sets & reps only** — quick edit on an existing preset day.
-2. **Volume-driven auto-fill** — pick weekly volume goal per muscle (or "balanced hypertrophy" preset), app suggests exercise picks per day to hit MAV.
-3. **Full builder from scratch** — day-by-day picker with live per-muscle volume meter.
+- `coach_athletes` links coach to athlete; invite codes work; roster read/remove works.
+- `coach_messages` table + RLS already exist, and `MessageThread` renders a single thread — but it is only reachable inside an athlete detail page and a small card on Profile. There is no inbox, no unread badge, no notification.
+- Coach read access via RLS already exists for roster athletes' `workout_history`, `workout_sets`, `profiles`, `sleep_logs`, `daily_scores`, `food_logs`, `activity_logs`, `coach_notifications`.
+- `CoachDashboard` fetches a flat list of the last 200 workouts and all readable profiles, with a simple expand row. `CoachAthleteDetail` shows last 20 sessions, top PRs, one recovery score, and the message thread.
 
-All three are surfaced from the same editor screen; the mode is a tab at the top.
+So the data access is largely in place; the work is mostly product/UI plus a few DB additions for unread state and message notifications.
 
-## Where it lives (both, per your answer)
+## Part 1 — Inbox (both sides)
 
-- **Onboarding**: after picking split + days, add optional "Customize your programme" step. Skipping = current behaviour (use preset as-is).
-- **Sessions page**: new "Customize this programme" button on the programme card, plus per-session "Edit" affordance. Opens the same editor.
-- **Profile → Programme**: entry point to re-open the editor any time.
+New route `/inbox` (list) and `/inbox/:threadUserId` (conversation), available to everyone.
 
-## Persistence (clone-into-custom, per your answer)
+- **Coach view**: one row per roster athlete — avatar, name, last message preview, timestamp, unread count dot. Sorted by most recent activity. Athletes with no messages yet still appear, so a coach can start a conversation.
+- **Athlete view**: a single conversation with their coach (currently at most one coach). If they have no coach, the inbox shows an empty state with the invite-code join field.
+- **Conversation screen**: full-height thread, sticky composer, auto-scroll to newest, keeps focus after sending, "seen" state, day separators, optimistic send. Reuses/upgrades the existing `MessageThread`.
+- **Unread badges**: a count in the bottom nav / dashboard header and per-thread. Marked read when the conversation is opened.
+- **Quick context in coach threads**: header shows the athlete's last session and recovery score with a "View profile" link, so a coach can reply without losing context.
+- **Attach a session to a message**: from any session card the coach can tap "Comment" — this opens the thread pre-filled with a reference to that session, and the message renders as a small session chip in the thread.
+- **Realtime**: subscribe to `coach_messages` for live delivery and badge updates.
 
-When a user customizes a preset, we clone each day of that split into `custom_workouts` (existing table). The user's schedule is repointed to those cloned workout IDs. Original presets stay pristine and reusable. Existing history/PRs are unaffected — exercise IDs are preserved during clone, so PR/history continuity is maintained.
+## Part 2 — Coach dashboard rebuild
 
-Fully-scratch programmes use the same `custom_workouts` table (already the destination for the current builder).
+`/coach` becomes a three-tab shell: **Feed**, **Athletes**, **Inbox**.
 
-## Volume standards (verified & extended)
+### Feed (default)
+A chronological activity stream of everything the roster logs — the "automatically sent to the dashboard" behaviour. Grouped by day (Today / Yesterday / date).
 
-Existing `src/lib/volume-standards.ts` has RP-based MEV/MAV/MRV for 19 muscle regions. Part of this plan:
+Each card carries:
+- Athlete avatar + name, session name, time of day, duration, effort/RIR rating, completion (e.g. 8/9 exercises).
+- Headline metrics: total volume (kg), set count, new PR count, calories.
+- Expand to see the full set-by-set breakdown — exercise name, each set's reps × weight, warm-up sets marked, PR sets flagged, target vs actual where progression targets exist, and the athlete's session notes.
+- Actions on each card: **Comment** (opens inbox thread with session attached) and **Acknowledge** (marks the session reviewed so it dims and drops out of the "needs review" filter).
 
-1. **Audit pass** — cross-check current values against Renaissance Periodization published tables (Israetel). Flag discrepancies in a code comment; adjust anything materially off (likely `front_delts` MEV, `lower_back` MRV, and `abductors/adductors` — will confirm during implementation, no silent changes without noting in commit).
-2. Add a `WEEKLY_VOLUME_TARGET` helper that returns the recommended per-muscle set count for a given goal (`hypertrophy` → MAV midpoint; `strength` → uses `STRENGTH_STANDARDS` midpoint; `maintenance` → MEV).
+Feed filters: athlete, date range (7/30/all), and "unreviewed only". Non-workout events also appear in the stream as lighter rows: new PRs (already tracked in `coach_notifications`), missed planned session, cardio/activity logs, weekly review submissions.
 
-## New/changed pieces
+### Athletes
+Roster grid/list, each row a compact status card designed for a 5-second scan:
+- Avatar, name, last active.
+- Sessions this week vs their planned frequency (e.g. 3/4) with a small ring.
+- Weekly volume trend arrow vs previous week.
+- Latest recovery score and 7-day average sleep.
+- Compliance chip: On track / Slipping / Inactive (derived from days since last session vs plan).
+- Unread message dot.
 
-### New files
-- `src/lib/programme-customizer.ts` — pure logic:
-  - `cloneSplitToCustomWorkouts(split, userId)` → `WorkoutDay[]`
-  - `computeWeeklyVolume(schedule)` → `Record<MuscleRegion, number>` (sums working sets per primary muscle across all days in the week)
-  - `suggestExercisesForMuscle(muscle, remainingSets, excludeIds, equipmentFilter?)` → picks from `EXERCISE_LIBRARY` weighted by primary-muscle match
-  - `autoFillDay(dayLabel, targetMusclesForDay, remainingWeeklyBudget)` → generated exercise list at target set count
-  - `getSubstitutions(exerciseId)` → merges `EXERCISE_SUBSTITUTIONS` + primary-muscle matches from `EXERCISE_LIBRARY`
-- `src/components/programme/ProgrammeEditor.tsx` — main editor screen (sheet + full page mode), tabbed:
-  - **Quick edit**: current day list, inline sets/reps steppers per exercise, ✕ to remove, "+ Add exercise" with search
-  - **Auto-fill**: goal picker (hypertrophy / strength / maintenance) + per-muscle slider overrides; "Generate" button rebuilds each day from targets
-  - **Full builder**: opens existing `WorkoutBuilder` for a scratch day
-- `src/components/programme/VolumeMeter.tsx` — horizontal bar per muscle (MEV → MAV → MRV bands) with current-week set count marker; reuses colours from `volume-standards.ts` (`VOLUME_STATUS_COLOR`)
-- `src/components/programme/SubstitutionSheet.tsx` — bottom sheet listing alternatives for a selected exercise; grouped by "Same equipment" / "Different equipment"; tap to swap in place
+Tapping opens the upgraded athlete detail page.
 
-### Edited files
-- `src/pages/Onboarding.tsx` — insert optional "Customize" step between split-pick and summary; launches `ProgrammeEditor` in inline mode. Skip button preserves current flow.
-- `src/pages/Sessions.tsx` — "Customize programme" button in the header; per-session "Edit" pencil that opens the editor scoped to that day.
-- `src/pages/Profile.tsx` — add "Programme" row under settings that opens the editor.
-- `src/lib/workout-data.ts` — no data changes; export a helper `getWorkoutById(id)` for the editor (if not already present).
-- `src/lib/user-preferences.ts` — add optional `customizedFromSplitId?: string` to `UserPreferences` so we can show "based on Upper/Lower" in the UI.
+### Athlete detail upgrade
+Tabs inside the athlete page: **Overview**, **Sessions**, **Progress**, **Messages**.
+- Overview: compliance summary, weekly volume chart, recovery/sleep strip, current programme/split, top lifts.
+- Sessions: same expandable session cards as the feed, scoped to that athlete, infinite scroll.
+- Progress: per-muscle weekly volume (reuse `fetchWeeklyMuscleData` shape), PR history, strength standards tier.
+- Messages: the conversation inline.
 
-### Not touched
-- `WorkoutSession.tsx` — already reads the (possibly custom) workout, no change needed.
-- Database schema — `custom_workouts` table already supports everything.
-
-## User flow (Sessions → editor)
-
-```text
-Sessions page
-  └─ [Customize programme]
-        └─ ProgrammeEditor (full page)
-              ├─ Day tabs: Mon Upper │ Tue Lower │ …
-              ├─ For active day:
-              │    ┌─ Exercise row ─────────────────────────────┐
-              │    │ Barbell Bench Press    [Sets−][3][+] [Reps 8-10 ▾]  ⇄  ✕ │
-              │    └───────────────────────────────────────────┘
-              │    [+ Add exercise]
-              ├─ Volume meter (sticky bottom): per-muscle bars for the week
-              └─ [Save & lock in]  → writes custom_workouts, updates prefs
-```
-
-The `⇄` icon opens `SubstitutionSheet`. The volume meter updates live as sets/exercises change; muscles below MEV show amber, over MRV show red.
-
-## Suggestion algorithm (auto-fill / balance)
-
-Given target sets per muscle for the week and a day label (e.g. "Upper"):
-
-1. Determine which muscles the day should hit (label → muscle group map; "Upper" = chest, back, shoulders, arms).
-2. For each target muscle, compute `remainingWeeklySets − alreadyScheduledOtherDays`. Distribute the remainder across days that target that muscle.
-3. Pick exercises from `EXERCISE_LIBRARY` whose primary muscle matches, preferring: (a) already-known compounds first, (b) equipment diversity, (c) not duplicated within the day.
-4. Assign default `sets = 3`, `reps = "8-10"` (hypertrophy) or `sets = 3`, `reps = "3-5"` (strength).
-5. Verify final weekly total lands in `[MEV, MRV]` for each muscle; if any bust, adjust set count first, then swap exercise.
-
-Deterministic seed based on user id so results are stable across regenerations.
-
-## Verification steps
-
-1. `computeWeeklyVolume` unit test with a known schedule (add to `src/test/`).
-2. Manually verify: pick Upper/Lower, customize, ensure all 4 days save and reload correctly; PR history for an unchanged exercise still surfaces.
-3. Visual check: volume meter reflects edits within 100ms; substitution sheet returns ≥3 options for any library exercise.
-
-## Out of scope
-
-- Rearranging day order within the week (existing schedule editor already handles this).
-- Per-exercise RIR override in the editor UI (already exists on workout-level; can be added later).
-- Cross-user sharing of custom programmes.
+### Header
+Roster size, unreviewed session count, unread message count, invite-code button, sign out.
 
 ## Technical notes
 
-- `custom_workouts.exercises` is `jsonb` — cloned exercises retain their original `id` so PR/history joins keep working.
-- Cloned workouts get IDs like `custom-{splitId}-{dayLabel}-{userIdShort}` to avoid collisions.
-- `LucideIcon` values are stripped before persisting (per existing `custom_workouts` gotcha) and re-hydrated with `Dumbbell` on read.
-- The volume meter reuses `getMusclesWorked` from `muscle-mapping.ts` — only `primary` muscles counted, matching existing `volume-queries.ts` behaviour.
+Database changes (one migration):
+- `coach_messages`: add `session_id uuid null` (reference to `workout_history`) so a message can attach a session, and index `(coach_user_id, athlete_user_id, created_at)`.
+- New `coach_session_reviews` table: `(coach_user_id, workout_history_id, athlete_user_id, acknowledged_at, note)` unique on `(coach_user_id, workout_history_id)`, RLS restricted to the coach who owns the roster link, with GRANTs to `authenticated` and `service_role`.
+- Enable realtime on `coach_messages`.
+- Note: coach read policy on `workout_sets` matches `workout_sets.user_id`, and older rows can have a NULL `user_id`. Feed queries will fetch sets by `workout_history_id` from sessions already authorised, and I'll add a coach policy that also authorises via the parent `workout_history` row so legacy sets aren't invisible to coaches.
+
+Frontend:
+- New `src/lib/data/coach-inbox-queries.ts` (thread list, unread counts, send with optional session ref, mark read) and extend `coach-queries.ts` for roster stats.
+- New `src/lib/data/coach-feed-queries.ts`: roster session feed with sets, PR flags, volume aggregation, review state.
+- React Query hooks under `src/hooks/queries/` with keys added to `query-keys.ts`; realtime subscription in a `useCoachInbox` hook with proper channel cleanup.
+- Components: `CoachFeedCard`, `AthleteStatusCard`, `InboxList`, `ConversationView`, `SessionChip`.
+- Routes `/inbox` and `/inbox/:threadUserId` in `App.tsx`; inbox entry point added to the athlete-side Profile card and a nav badge.
+- Existing UX conventions kept: Sheets for overlays, sonner toasts, haptics, `LoadingState`/`EmptyState`/`ErrorBoundary`, `resolveExerciseName` for all exercise labels.
+
+## Build order
+
+1. Migration (session ref, review table, realtime, sets policy fix).
+2. Inbox data layer + `/inbox` routes + conversation screen + unread badges.
+3. Coach feed data layer + Feed tab with expandable session detail, comment/acknowledge.
+4. Athletes tab status cards + athlete detail tabs.
+5. Polish: filters, empty states, realtime badge verification.
