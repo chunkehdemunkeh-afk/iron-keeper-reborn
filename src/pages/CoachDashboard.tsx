@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity, Users, Inbox as InboxIcon, UserPlus, Copy, LogOut, Bell, Trophy, X,
-  Dumbbell, Filter, CheckCircle2,, Share2 } from "lucide-react";
+  Dumbbell, Filter, CheckCircle2, Share2 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
