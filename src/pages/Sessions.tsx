@@ -234,6 +234,23 @@ export default function Sessions() {
           </div>
         </div>
 
+        {/* Half marathon training entry point */}
+        <button
+          onClick={() => navigate("/half-marathon")}
+          className="w-full glass-card rounded-2xl p-4 flex items-center gap-3 text-left bg-gradient-to-br from-emerald-500/20 to-teal-500/5 active:scale-[0.99] transition-all"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20">
+            <Footprints className="h-5 w-5 text-emerald-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-display text-sm font-bold">Half Marathon Training</p>
+            <p className="text-xs text-muted-foreground truncate">8-week plan · 4 runs/week · pace PBs</p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
+
+
+
         {groupedWorkouts.map((group) => {
           const isOpen = expandedGroups.has(group.label);
           return (
