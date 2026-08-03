@@ -751,7 +751,7 @@ function CoachLinkCard() {
         <div className="space-y-2">
           <motion.button
             whileTap={{ scale: 0.97 }}
-            onClick={() => setShowThread(true)}
+            onClick={() => navigate(`/inbox/${myCoach.coachUserId}`)}
             className="w-full flex items-center justify-between rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 text-left hover:bg-primary/15 transition-colors"
           >
             <p className="text-sm font-semibold text-foreground">Message {myCoach.displayName || "your coach"}</p>
@@ -786,18 +786,6 @@ function CoachLinkCard() {
         </div>
       )}
 
-      {myCoach && user && (
-        <Sheet open={showThread} onOpenChange={setShowThread}>
-          <SheetContent side="bottom" className="h-[80vh] flex flex-col">
-            <SheetHeader>
-              <SheetTitle>{myCoach.displayName || "Your coach"}</SheetTitle>
-            </SheetHeader>
-            <div className="flex-1 min-h-0 mt-2">
-              <MessageThread coachUserId={myCoach.coachUserId} athleteUserId={user.id} currentUserId={user.id} />
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
     </div>
   );
 }
