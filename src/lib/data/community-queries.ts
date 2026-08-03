@@ -51,26 +51,16 @@ export async function fetchChallengeStats(challengeId: string, userId: string): 
   return { totalProgress: total, myContribution: Number(mine), contributorCount: rows.length };
 }
 
-export async function contributeToChallenge(userId: string, challengeId: string, addValue: number): Promise<void> {
+export async function contributeToChallenge(_userId: string, challengeId: string, addValue: number): Promise<void> {
   if (addValue <= 0) return;
-  const { data: existing } = await c
-    .from("community_contributions")
-    .select("id, value")
-    .eq("challenge_id", challengeId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (existing) {
-    const cur = Number((existing as { value: number }).value || 0);
-    await c.from("community_contributions").update({
-      value: cur + addValue,
-      updated_at: new Date().toISOString(),
-    }).eq("id", (existing as { id: string }).id);
-  } else {
-    await c.from("community_contributions").insert({
-      challenge_id: challengeId,
-      user_id: userId,
-      value: addValue,
-    });
-  }
+  // Value is written server-side by a SECURITY DEFINER function which validates
+  // the challenge window and clamps the delta — clients cannot set it directly.
+  const { error } = await (supabase as unknown as {
+    rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: unknown }>;
+  }).rpc("record_challenge_contribution", {
+    p_challenge_id: challengeId,
+    p_add: addValue,
+  });
+  if (error) throw error;
 }
+

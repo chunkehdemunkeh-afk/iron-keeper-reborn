@@ -1808,6 +1808,10 @@ export type Database = {
         Args: { _on_date: string; _user_id: string }
         Returns: number
       }
+      record_challenge_contribution: {
+        Args: { p_add: number; p_challenge_id: string }
+        Returns: number
+      }
       settle_duel: { Args: { p_duel_id: string }; Returns: undefined }
       settle_season: { Args: { p_season_id: string }; Returns: undefined }
     }
