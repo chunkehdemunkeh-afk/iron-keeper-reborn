@@ -685,7 +685,6 @@ function CoachLinkCard() {
   const [codeInput, setCodeInput] = useState("");
   const [joining, setJoining] = useState(false);
   const [myCoach, setMyCoach] = useState<{ coachUserId: string; displayName: string | null } | null>(null);
-  const [showThread, setShowThread] = useState(false);
 
   useEffect(() => {
     if (!isCoach && !roleLoading) {
