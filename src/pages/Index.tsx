@@ -14,6 +14,7 @@ import HomeCombinedRecoveryCard from "@/components/HomeCombinedRecoveryCard";
 import MorningCheckInPrompt from "@/components/biometrics/MorningCheckInPrompt";
 import { isGKSplit, isNoWorkoutMode, getUserPreferences } from "@/lib/user-preferences";
 import HyroxProgramCard from "@/components/HyroxProgramCard";
+import HalfMarathonProgramCard from "@/components/HalfMarathonProgramCard";
 import HomeSessionCard from "@/components/home/HomeSessionCard";
 import PostOnboardingTip from "@/components/PostOnboardingTip";
 import { format, subDays, addDays, isToday } from "date-fns";
@@ -146,6 +147,9 @@ const Index = () => {
 
         {/* Hyrox program card — visible for hyrox-split users */}
         {isCurrentDay && hyroxMode && <HyroxProgramCard />}
+
+        {/* Half marathon plan card — runs layer on top of any lifting split */}
+        {isCurrentDay && <HalfMarathonProgramCard />}
 
 
         {/* Home session launcher — always available on today */}
