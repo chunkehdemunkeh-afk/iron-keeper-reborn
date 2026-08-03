@@ -10,6 +10,8 @@
 import { WORKOUTS } from "./workout-data";
 import { HOME_WORKOUTS } from "./home-workouts";
 import { HYROX_WORKOUTS } from "./hyrox-workouts";
+import { RUN_WORKOUTS } from "./run-workouts";
+
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "./accessory-routines";
 import { EXERCISE_SUBSTITUTIONS } from "./exercise-substitutions";
 import { EXERCISE_LIBRARY } from "./exercise-library";
@@ -28,6 +30,8 @@ export function exerciseNameMap(): Record<string, string> {
   EXERCISE_LIBRARY.forEach((ex) => { if (ex.name) m[ex.id] = ex.name; });
   addDays(HOME_WORKOUTS as never);
   addDays(HYROX_WORKOUTS as never);
+  addDays(RUN_WORKOUTS as never);
+
   addDays(ACCESSORY_ROUTINES as never);
   Object.values(ACCESSORY_SUBSTITUTIONS).flat().forEach((s) => { if (s?.name) m[s.id] = s.name; });
   Object.values(EXERCISE_SUBSTITUTIONS).flat().forEach((s) => { if (s?.name) m[s.id] = s.name; });
