@@ -42,7 +42,6 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { becomeCoach, joinCoachByCode, fetchMyCoach } from "@/lib/data/coach-queries";
 import { Users2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import MessageThread from "@/components/coach/MessageThread";
 import { Switch } from "@/components/ui/switch";
 import { getXpToastMode, setXpToastMode, type XpToastMode } from "@/lib/gamification/preferences";
 
