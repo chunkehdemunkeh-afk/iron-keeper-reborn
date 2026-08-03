@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity, Users, Inbox as InboxIcon, UserPlus, Copy, LogOut, Bell, Trophy, X,
-  Dumbbell, Filter, CheckCircle2,
-} from "lucide-react";
+  Dumbbell, Filter, CheckCircle2,, Share2 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +12,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AsyncBoundary } from "@/components/ui/async-boundary";
 import { getOrCreateCoachInviteCode } from "@/lib/data/coach-queries";
+import { inviteLinkFor } from "@/lib/coach-invite";
 import { useCoachFeed, useRosterStats, useSessionReview } from "@/hooks/queries/useCoachFeed";
 import { useInboxThreads, useUnreadMessages } from "@/hooks/queries/useInbox";
 import CoachFeedCard from "@/components/coach/CoachFeedCard";
