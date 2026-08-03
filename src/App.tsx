@@ -22,6 +22,7 @@ import History from "./pages/History";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
+import JoinCoach from "./pages/JoinCoach";
 import ExerciseLibrary from "./pages/ExerciseLibrary";
 import BodyMeasurements from "./pages/BodyMeasurements";
 import CoachDashboard from "./pages/CoachDashboard";
