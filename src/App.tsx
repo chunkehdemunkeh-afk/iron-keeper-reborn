@@ -40,6 +40,8 @@ import Duels from "./pages/Duels";
 import Shop from "./pages/Shop";
 import Community from "./pages/Community";
 import HyroxBenchmarks from "./pages/HyroxBenchmarks";
+import HalfMarathonProgram from "./pages/HalfMarathonProgram";
+import RunBenchmarks from "./pages/RunBenchmarks";
 import Inbox from "./pages/Inbox";
 import Conversation from "./pages/Conversation";
 import LevelUpSheet from "@/components/gamification/LevelUpSheet";
@@ -123,6 +125,8 @@ const AnimatedRoutes = () => {
         <Route path="/shop" element={<PageWrapper><ProtectedRoute><Shop /></ProtectedRoute></PageWrapper>} />
         <Route path="/community" element={<PageWrapper><ProtectedRoute><Community /></ProtectedRoute></PageWrapper>} />
         <Route path="/hyrox" element={<PageWrapper><ProtectedRoute><HyroxBenchmarks /></ProtectedRoute></PageWrapper>} />
+        <Route path="/half-marathon" element={<PageWrapper><ProtectedRoute><HalfMarathonProgram /></ProtectedRoute></PageWrapper>} />
+        <Route path="/run" element={<PageWrapper><ProtectedRoute><RunBenchmarks /></ProtectedRoute></PageWrapper>} />
         <Route path="/join/:code" element={<PageWrapper><JoinCoach /></PageWrapper>} />
         <Route path="/reset-password" element={<PageWrapper><ResetPassword /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
