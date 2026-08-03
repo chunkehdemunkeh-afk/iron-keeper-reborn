@@ -87,6 +87,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const promoted = await applyPendingSignupIntent(session.user.created_at);
               if (promoted) window.dispatchEvent(new Event("ik-role-changed"));
             } catch {}
+            // Apply a coach invite link opened before signing in
+            try {
+              const { readPendingCoachCode, clearPendingCoachCode } = await import("@/lib/coach-invite");
+              const code = readPendingCoachCode();
+              if (code) {
+                const { joinCoachByCode } = await import("@/lib/data/coach-queries");
+                const { coachName, error } = await joinCoachByCode(code);
+                if (!error) {
+                  clearPendingCoachCode();
+                  const { toast } = await import("sonner");
+                  toast.success(`Connected with ${coachName ?? "your coach"}`);
+                }
+              }
+            } catch {}
             // Daily login XP — awardXp dedupes via oncePerDay
             try {
               const { awardXpAndNotify } = await import("@/lib/gamification/notify");
