@@ -52,6 +52,7 @@ const APP_VERSION = changelog[0]?.version || "1.0.0";
 export default function Profile() {
   const { user, profile, signOut, updateDisplayName, updateAvatar, removeAvatar } = useAuth();
   const navigate = useNavigate();
+  const { data: unreadMessages } = useUnreadMessages();
   const { data: equipped } = useEquippedCosmetics(user?.id);
   const { data: catalog } = useCosmetics();
   const equippedTitle = equipped?.title
