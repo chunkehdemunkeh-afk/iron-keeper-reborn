@@ -134,6 +134,9 @@ const Index = () => {
         {/* Sunday/Monday volume summary banner */}
         {isCurrentDay && <VolumeSummaryBanner />}
 
+        {/* Half marathon plan card — runs layer on top of any lifting split */}
+        {isCurrentDay && <HalfMarathonProgramCard />}
+
         {/* Week strip */}
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
@@ -148,8 +151,6 @@ const Index = () => {
         {/* Hyrox program card — visible for hyrox-split users */}
         {isCurrentDay && hyroxMode && <HyroxProgramCard />}
 
-        {/* Half marathon plan card — runs layer on top of any lifting split */}
-        {isCurrentDay && <HalfMarathonProgramCard />}
 
 
         {/* Home session launcher — always available on today */}
