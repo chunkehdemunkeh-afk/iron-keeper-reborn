@@ -39,6 +39,8 @@ import Duels from "./pages/Duels";
 import Shop from "./pages/Shop";
 import Community from "./pages/Community";
 import HyroxBenchmarks from "./pages/HyroxBenchmarks";
+import Inbox from "./pages/Inbox";
+import Conversation from "./pages/Conversation";
 import LevelUpSheet from "@/components/gamification/LevelUpSheet";
 import BadgeUnlockSheet from "@/components/gamification/BadgeUnlockSheet";
 import SeasonFinaleSheet from "@/components/gamification/SeasonFinaleSheet";
@@ -100,6 +102,8 @@ const AnimatedRoutes = () => {
         <Route path="/" element={<PageWrapper><ProtectedRoute><RoleBasedHome /></ProtectedRoute></PageWrapper>} />
         <Route path="/coach" element={<PageWrapper><ProtectedRoute><CoachDashboard /></ProtectedRoute></PageWrapper>} />
         <Route path="/coach/athlete/:userId" element={<PageWrapper><ProtectedRoute><CoachAthleteDetail /></ProtectedRoute></PageWrapper>} />
+        <Route path="/inbox" element={<PageWrapper><ProtectedRoute><Inbox /></ProtectedRoute></PageWrapper>} />
+        <Route path="/inbox/:partnerId" element={<PageWrapper><ProtectedRoute><Conversation /></ProtectedRoute></PageWrapper>} />
         <Route path="/sessions" element={<PageWrapper><ProtectedRoute><Sessions /></ProtectedRoute></PageWrapper>} />
         <Route path="/workout/:id" element={<PageWrapper><ProtectedRoute><WorkoutSession /></ProtectedRoute></PageWrapper>} />
         <Route path="/builder" element={<PageWrapper><ProtectedRoute><WorkoutBuilder /></ProtectedRoute></PageWrapper>} />

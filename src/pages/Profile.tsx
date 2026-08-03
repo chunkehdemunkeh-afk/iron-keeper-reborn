@@ -3,7 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchActivityLogs, fetchWeeklyBurn, mondayOfWeek, fetchLeaderboardVisibility, updateLeaderboardVisibility } from "@/lib/cloud-data";
 import { backfillStrainScores } from "@/lib/data/biometric-queries";
 import { queryKeys } from "@/lib/query-keys";
-import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy, RefreshCw, Dumbbell, Bell, Wand2 } from "lucide-react";
+import { useUnreadMessages } from "@/hooks/queries/useInbox";
+import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy, RefreshCw, Dumbbell, Bell, Wand2, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import RecoveryTips from "@/components/RecoveryTips";
@@ -41,7 +42,6 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { becomeCoach, joinCoachByCode, fetchMyCoach } from "@/lib/data/coach-queries";
 import { Users2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import MessageThread from "@/components/coach/MessageThread";
 import { Switch } from "@/components/ui/switch";
 import { getXpToastMode, setXpToastMode, type XpToastMode } from "@/lib/gamification/preferences";
 
@@ -51,6 +51,7 @@ const APP_VERSION = changelog[0]?.version || "1.0.0";
 export default function Profile() {
   const { user, profile, signOut, updateDisplayName, updateAvatar, removeAvatar } = useAuth();
   const navigate = useNavigate();
+  const { data: unreadMessages } = useUnreadMessages();
   const { data: equipped } = useEquippedCosmetics(user?.id);
   const { data: catalog } = useCosmetics();
   const equippedTitle = equipped?.title
@@ -400,6 +401,23 @@ export default function Profile() {
         <div className="grid grid-cols-2 gap-2">
           <motion.button
             whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/inbox")}
+            className="glass-card rounded-xl p-4 flex items-center gap-3 text-left hover:ring-1 hover:ring-primary/30 transition-all col-span-2"
+          >
+            <MessageSquare className="h-5 w-5 text-primary" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">Inbox</p>
+              <p className="text-[10px] text-muted-foreground">Message your coach or athletes</p>
+            </div>
+            {(unreadMessages ?? 0) > 0 && (
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                {unreadMessages}
+              </span>
+            )}
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             onClick={() => navigate("/sessions")}
             className="glass-card rounded-xl p-4 flex items-center gap-3 text-left hover:ring-1 hover:ring-primary/30 transition-all col-span-2"
           >
@@ -667,7 +685,6 @@ function CoachLinkCard() {
   const [codeInput, setCodeInput] = useState("");
   const [joining, setJoining] = useState(false);
   const [myCoach, setMyCoach] = useState<{ coachUserId: string; displayName: string | null } | null>(null);
-  const [showThread, setShowThread] = useState(false);
 
   useEffect(() => {
     if (!isCoach && !roleLoading) {
@@ -732,7 +749,7 @@ function CoachLinkCard() {
         <div className="space-y-2">
           <motion.button
             whileTap={{ scale: 0.97 }}
-            onClick={() => setShowThread(true)}
+            onClick={() => navigate(`/inbox/${myCoach.coachUserId}`)}
             className="w-full flex items-center justify-between rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 text-left hover:bg-primary/15 transition-colors"
           >
             <p className="text-sm font-semibold text-foreground">Message {myCoach.displayName || "your coach"}</p>
@@ -767,18 +784,6 @@ function CoachLinkCard() {
         </div>
       )}
 
-      {myCoach && user && (
-        <Sheet open={showThread} onOpenChange={setShowThread}>
-          <SheetContent side="bottom" className="h-[80vh] flex flex-col">
-            <SheetHeader>
-              <SheetTitle>{myCoach.displayName || "Your coach"}</SheetTitle>
-            </SheetHeader>
-            <div className="flex-1 min-h-0 mt-2">
-              <MessageThread coachUserId={myCoach.coachUserId} athleteUserId={user.id} currentUserId={user.id} />
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
     </div>
   );
 }

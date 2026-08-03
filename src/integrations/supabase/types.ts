@@ -206,6 +206,7 @@ export type Database = {
           id: string
           read: boolean
           sender_id: string
+          session_id: string | null
         }
         Insert: {
           athlete_user_id: string
@@ -215,6 +216,7 @@ export type Database = {
           id?: string
           read?: boolean
           sender_id: string
+          session_id?: string | null
         }
         Update: {
           athlete_user_id?: string
@@ -224,8 +226,17 @@ export type Database = {
           id?: string
           read?: boolean
           sender_id?: string
+          session_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "coach_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "workout_history"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       coach_notifications: {
         Row: {
@@ -277,6 +288,47 @@ export type Database = {
           invite_code?: string
         }
         Relationships: []
+      }
+      coach_session_reviews: {
+        Row: {
+          acknowledged_at: string
+          athlete_user_id: string
+          coach_user_id: string
+          created_at: string
+          id: string
+          note: string | null
+          updated_at: string
+          workout_history_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          athlete_user_id: string
+          coach_user_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          updated_at?: string
+          workout_history_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          athlete_user_id?: string
+          coach_user_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          updated_at?: string
+          workout_history_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_session_reviews_workout_history_id_fkey"
+            columns: ["workout_history_id"]
+            isOneToOne: false
+            referencedRelation: "workout_history"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       community_challenges: {
         Row: {

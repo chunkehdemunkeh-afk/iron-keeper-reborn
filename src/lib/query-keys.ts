@@ -80,4 +80,19 @@ export const queryKeys = {
 
   // ── Muscle volume ─────────────────────────────────────────────────────────
   muscleVolume: (userId: string, weeksBack: number) => ["muscle-volume", userId, weeksBack] as const,
+
+  // ── Coach inbox ───────────────────────────────────────────────────────────
+  inboxThreads: (userId: string) => ["inbox", "threads", userId] as const,
+  inboxUnread: (userId: string) => ["inbox", "unread", userId] as const,
+  inboxThreadContext: (userId: string, partnerId: string) =>
+    ["inbox", "context", userId, partnerId] as const,
+  inboxMessages: (coachUserId: string, athleteUserId: string) =>
+    ["inbox", "messages", coachUserId, athleteUserId] as const,
+
+  // ── Coach dashboard ───────────────────────────────────────────────────────
+  coachFeed: (userId: string) => ["coach-feed", userId] as const,
+  coachRosterStats: (userId: string) => ["coach-roster-stats", userId] as const,
+  coachAthleteSessions: (userId: string, athleteId: string) =>
+    ["coach-athlete-sessions", userId, athleteId] as const,
 } as const;
+
