@@ -4,10 +4,11 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, User } from "lucide-react
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { hapticMedium, hapticSuccess } from "@/lib/haptics";
+import { setSignupIntent, clearSignupIntent, type AccountType } from "@/lib/signup-intent";
 
 type Mode = "idle" | "signin" | "signup" | "forgot" | "email_sent";
 
-export default function EmailAuthForm() {
+export default function EmailAuthForm({ accountType }: { accountType: AccountType }) {
   const [mode, setMode] = useState<Mode>("idle");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -67,16 +68,18 @@ export default function EmailAuthForm() {
       }
       hapticSuccess();
     } else {
+      setSignupIntent(accountType);
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: { full_name: displayName.trim() },
+          data: { full_name: displayName.trim(), account_type: accountType },
         },
       });
       setLoading(false);
       if (error) {
+        clearSignupIntent();
         if (error.message.includes("already registered")) {
           setEmailError("An account with this email already exists");
         } else {
