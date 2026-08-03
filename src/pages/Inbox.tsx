@@ -4,14 +4,14 @@ import { useInboxThreads } from "@/hooks/queries/useInbox";
 import InboxList from "@/components/coach/InboxList";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ErrorBoundary } from "@/components/ui/async-boundary";
+import { AsyncBoundary } from "@/components/ui/async-boundary";
 
 export default function Inbox() {
   const navigate = useNavigate();
   const { data: threads, isLoading } = useInboxThreads();
 
   return (
-    <ErrorBoundary>
+    <AsyncBoundary>
       <div className="min-h-screen bg-background safe-bottom">
         <div
           className="sticky top-0 z-10 bg-background/85 backdrop-blur-xl hairline border-b px-4 py-4 flex items-center gap-3"
@@ -46,6 +46,6 @@ export default function Inbox() {
           )}
         </div>
       </div>
-    </ErrorBoundary>
+    </AsyncBoundary>
   );
 }
