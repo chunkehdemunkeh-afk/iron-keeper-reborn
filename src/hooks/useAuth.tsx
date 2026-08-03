@@ -81,6 +81,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .eq("user_id", session.user.id),
             ]);
             setProfile(data);
+            // Apply a pending coach signup choice (email confirm / OAuth return)
+            try {
+              const { applyPendingSignupIntent } = await import("@/lib/signup-intent");
+              const promoted = await applyPendingSignupIntent(session.user.created_at);
+              if (promoted) {
+                const { queryClient } = await import("@/lib/query-client");
+                queryClient.invalidateQueries({ queryKey: ["user-role"] });
+              }
+            } catch {}
             // Daily login XP — awardXp dedupes via oncePerDay
             try {
               const { awardXpAndNotify } = await import("@/lib/gamification/notify");

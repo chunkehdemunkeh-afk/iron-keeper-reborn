@@ -33,8 +33,17 @@ export function clearSignupIntent() {
  * Safe to call on every sign-in: it no-ops without a pending coach intent and
  * `become_coach()` is idempotent.
  */
-export async function applyPendingSignupIntent(): Promise<boolean> {
+export async function applyPendingSignupIntent(createdAt?: string): Promise<boolean> {
   const intent = readSignupIntent();
+  // Only promote brand-new accounts: the intent may also be set by an OAuth
+  // sign-in from an existing athlete, which must never change their role.
+  const isNewAccount = createdAt
+    ? Date.now() - new Date(createdAt).getTime() < 5 * 60 * 1000
+    : true;
+  if (!isNewAccount) {
+    clearSignupIntent();
+    return false;
+  }
   if (intent !== "coach") {
     if (intent) clearSignupIntent();
     return false;
