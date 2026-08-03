@@ -85,10 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             try {
               const { applyPendingSignupIntent } = await import("@/lib/signup-intent");
               const promoted = await applyPendingSignupIntent(session.user.created_at);
-              if (promoted) {
-                const { queryClient } = await import("@/lib/query-client");
-                queryClient.invalidateQueries({ queryKey: ["user-role"] });
-              }
+              if (promoted) window.dispatchEvent(new Event("ik-role-changed"));
             } catch {}
             // Daily login XP — awardXp dedupes via oncePerDay
             try {

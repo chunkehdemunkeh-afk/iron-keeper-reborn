@@ -6,6 +6,14 @@ export function useUserRole() {
   const { user } = useAuth();
   const [isCoach, setIsCoach] = useState(false);
   const [roleLoading, setRoleLoading] = useState(true);
+  const [tick, setTick] = useState(0);
+
+  // Fired after a pending coach signup choice is applied post sign-in.
+  useEffect(() => {
+    const onChanged = () => setTick((t) => t + 1);
+    window.addEventListener("ik-role-changed", onChanged);
+    return () => window.removeEventListener("ik-role-changed", onChanged);
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -27,7 +35,7 @@ export function useUserRole() {
           setRoleLoading(false);
         },
       );
-  }, [user]);
+  }, [user, tick]);
 
   return { isCoach, roleLoading };
 }
