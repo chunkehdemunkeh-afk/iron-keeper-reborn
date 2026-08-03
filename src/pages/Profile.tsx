@@ -400,6 +400,23 @@ export default function Profile() {
         <div className="grid grid-cols-2 gap-2">
           <motion.button
             whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/inbox")}
+            className="glass-card rounded-xl p-4 flex items-center gap-3 text-left hover:ring-1 hover:ring-primary/30 transition-all col-span-2"
+          >
+            <MessageSquare className="h-5 w-5 text-primary" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">Inbox</p>
+              <p className="text-[10px] text-muted-foreground">Message your coach or athletes</p>
+            </div>
+            {(unreadMessages ?? 0) > 0 && (
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                {unreadMessages}
+              </span>
+            )}
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             onClick={() => navigate("/sessions")}
             className="glass-card rounded-xl p-4 flex items-center gap-3 text-left hover:ring-1 hover:ring-primary/30 transition-all col-span-2"
           >
