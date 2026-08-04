@@ -399,7 +399,7 @@ export const WORKOUTS: WorkoutDay[] = [
     color: "from-blue-500/20 to-sky-500/10",
     targetRir: "1-2",
     exercises: [
-      { id: "pu1",       name: "45° Incline Dumbbell Bench Press",             sets: 2, reps: "5-10",  targetMuscle: "Upper Chest",    targetRir: "0-1", notes: "Set the bench near 45°. Lower until you feel a deep stretch across the upper chest, press up and slightly inward without clashing the dumbbells." },
+      { id: "lib-db-Smith_Machine_Incline_Bench_Press", name: "Smith Machine Incline Bench Press", sets: 2, reps: "5-10",  targetMuscle: "Upper Chest",    targetRir: "0-1", notes: "Set the bench to roughly 30–45° under the bar. Lower to the upper chest with a controlled eccentric, press to a strong lockout without bouncing." },
       { id: "lib-db-Bent_Over_Barbell_Row", name: "Bent Over Barbell Row",     sets: 2, reps: "5-10",  targetMuscle: "Back Thickness", targetRir: "0-1", notes: "Hinge to roughly 45°, brace the core and keep a neutral spine. Row to the lower chest and pause briefly — no jerking or hip bounce." },
       { id: "lib-68",    name: "Plate Loaded Chest Press",                     sets: 2, reps: "5-10",  targetMuscle: "Chest",          targetRir: "0-1", notes: "Set the seat so the handles line up with mid-chest. Full stretch at the bottom, controlled 2s eccentric, press to a strong lockout." },
       { id: "lib-69",    name: "Assisted Pull-Up",                             sets: 2, reps: "5-10",  targetMuscle: "Lats",           targetRir: "0-1", notes: "Log the assistance weight — lower is better. Start from a full dead hang, pull the elbows down and back, chin clearly over the bar." },
