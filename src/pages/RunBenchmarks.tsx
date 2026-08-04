@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, TrendingDown, Timer, Trophy } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
@@ -11,8 +11,10 @@ import {
   formatDuration,
   DEFAULT_GOAL_SECONDS,
 } from "@/lib/half-marathon-program";
+import RunSessionHistory from "@/components/run/RunSessionHistory";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
+
 
 const CATEGORY_LABEL: Record<string, string> = {
   speed: "Speed & VO2",
