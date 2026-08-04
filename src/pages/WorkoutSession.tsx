@@ -2577,7 +2577,16 @@ export default function WorkoutSession() {
                                           ) : (
                                             <>
                                               {showWeight && (
+                                                weightLabel === "Sec" ? (
+                                                  <DurationInput
+                                                    seconds={set.weight || 0}
+                                                    completed={set.completed}
+                                                    placeholder={groupLastDataById[gExId]?.[si]?.weight ? formatSplit(groupLastDataById[gExId][si].weight) : "m:ss"}
+                                                    onChange={(secs) => updateSetField(gExId, si, "weight", secs)}
+                                                  />
+                                                ) : (
                                                 <input type="number" inputMode="decimal" placeholder={groupLastDataById[gExId]?.[si]?.weight?.toString() || weightLabel} value={set.weight || ""} onChange={(e) => updateSetField(gExId, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                                )
                                               )}
                                               <input type="number" inputMode="numeric" placeholder={groupLastDataById[gExId]?.[si]?.reps?.toString() || repLabel} value={set.reps || ""} onChange={(e) => updateSetField(gExId, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
                                             </>
