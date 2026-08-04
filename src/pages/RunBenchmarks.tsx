@@ -27,6 +27,8 @@ export default function RunBenchmarks() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: series, isLoading } = useRunBenchmarks();
+  const [tab, setTab] = useState<"benchmarks" | "history">("benchmarks");
+
 
   const goalSeconds = useMemo(() => {
     if (!user) return DEFAULT_GOAL_SECONDS;
