@@ -44,6 +44,8 @@ import { useActiveDeload } from "@/hooks/queries/useDeload";
 import ProgressionSuggestionBanner from "@/components/workout/ProgressionSuggestionBanner";
 import { isSingleArmEligible, DEFAULT_SINGLE_ARM_IDS } from "@/lib/single-arm-variants";
 import { HYROX_WORKOUT_IDS } from "@/lib/hyrox-workouts";
+import DurationInput from "@/components/workout/DurationInput";
+import { formatSplit } from "@/lib/run-splits";
 
 const MAX_SESSION_SECONDS = 6 * 60 * 60;
 
@@ -2131,7 +2133,10 @@ export default function WorkoutSession() {
                                 <span className="text-center">Set</span>
                                 {!isTimeBased && showWeight && (
                                   <span className="text-center leading-tight">
-                                    {weightLabel}
+                                    {weightLabel === "Sec" ? "Time" : weightLabel}
+                                    {weightLabel === "Sec" && (
+                                      <span className="block text-[8px] normal-case tracking-normal text-muted-foreground/60">m:ss</span>
+                                    )}
                                     {singleArmExercises.has(ex.id) ? (
                                       <span className="block text-[8px] normal-case tracking-normal text-muted-foreground/60">per arm</span>
                                     ) : isBilateralDumbbell(ex.id, override?.name || ex.name || "") && (
@@ -2208,8 +2213,18 @@ export default function WorkoutSession() {
                                     ) : (
                                       <>
                                         {showWeight && (
+                                          weightLabel === "Sec" ? (
+                                            <DurationInput
+                                              seconds={set.weight || 0}
+                                              completed={set.completed}
+                                              placeholder={lastExerciseData?.[workingDataIdx]?.weight ? formatSplit(lastExerciseData[workingDataIdx].weight) : "m:ss"}
+                                              onChange={(secs) => updateSetField(ex.id, si, "weight", secs)}
+                                            />
+                                          ) : (
                                            <input type="number" inputMode="decimal" placeholder={is1RM ? "1RM" : (lastExerciseData?.[workingDataIdx]?.weight?.toString() || "0")} value={set.weight || ""} onChange={(e) => updateSetField(ex.id, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : is1RM ? "bg-amber-400/10 border border-amber-400/40 text-amber-400 font-semibold placeholder:text-amber-400/50" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                          )
                                         )}
+
                                         {is1RM ? (
                                           <div className={`h-9 w-full rounded-lg px-2 text-sm text-center font-bold flex items-center justify-center ${set.completed ? "bg-success/15 border border-success/40 text-success" : "bg-amber-400/10 border border-amber-400/40 text-amber-400"}`}>
                                             1
@@ -2565,7 +2580,16 @@ export default function WorkoutSession() {
                                           ) : (
                                             <>
                                               {showWeight && (
+                                                weightLabel === "Sec" ? (
+                                                  <DurationInput
+                                                    seconds={set.weight || 0}
+                                                    completed={set.completed}
+                                                    placeholder={groupLastDataById[gExId]?.[si]?.weight ? formatSplit(groupLastDataById[gExId][si].weight) : "m:ss"}
+                                                    onChange={(secs) => updateSetField(gExId, si, "weight", secs)}
+                                                  />
+                                                ) : (
                                                 <input type="number" inputMode="decimal" placeholder={groupLastDataById[gExId]?.[si]?.weight?.toString() || weightLabel} value={set.weight || ""} onChange={(e) => updateSetField(gExId, si, "weight", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
+                                                )
                                               )}
                                               <input type="number" inputMode="numeric" placeholder={groupLastDataById[gExId]?.[si]?.reps?.toString() || repLabel} value={set.reps || ""} onChange={(e) => updateSetField(gExId, si, "reps", Number(e.target.value))} className={`h-9 w-full rounded-lg px-2 text-sm text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${set.completed ? "bg-success/15 border border-success/40 text-success font-semibold ring-1 ring-success/20" : "bg-muted/50 border border-border/50 focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/40"}`} />
                                             </>
