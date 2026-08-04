@@ -2133,7 +2133,10 @@ export default function WorkoutSession() {
                                 <span className="text-center">Set</span>
                                 {!isTimeBased && showWeight && (
                                   <span className="text-center leading-tight">
-                                    {weightLabel}
+                                    {weightLabel === "Sec" ? "Time" : weightLabel}
+                                    {weightLabel === "Sec" && (
+                                      <span className="block text-[8px] normal-case tracking-normal text-muted-foreground/60">m:ss</span>
+                                    )}
                                     {singleArmExercises.has(ex.id) ? (
                                       <span className="block text-[8px] normal-case tracking-normal text-muted-foreground/60">per arm</span>
                                     ) : isBilateralDumbbell(ex.id, override?.name || ex.name || "") && (
