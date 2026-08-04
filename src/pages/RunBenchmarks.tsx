@@ -117,9 +117,10 @@ export default function RunBenchmarks() {
         )}
 
 
-        {(["speed", "tempo", "long", "race"] as const).map((cat) => {
+        {tab === "benchmarks" && (["speed", "tempo", "long", "race"] as const).map((cat) => {
           const items = grouped[cat];
           if (!items?.length) return null;
+
           return (
             <div key={cat} className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
