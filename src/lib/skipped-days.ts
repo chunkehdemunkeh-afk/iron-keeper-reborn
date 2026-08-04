@@ -9,7 +9,7 @@ import { STORAGE_KEYS } from "@/lib/storage-keys";
 type SkipStore = Record<string, string[]>;
 
 function key(userId: string) {
-  return `${STORAGE_KEYS.SKIPPED_DAYS}-${userId}`;
+  return STORAGE_KEYS.skippedDays(userId);
 }
 
 function read(userId: string): SkipStore {

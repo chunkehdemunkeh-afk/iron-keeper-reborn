@@ -14,4 +14,5 @@ export const STORAGE_KEYS = {
   pendingCoachCode: "ik-pending-coach-code",
   signupIntent: "ik-signup-intent",
   xpToastMode: (userId: string) => `ik-xp-toast-mode-${userId}`,
+  skippedDays: (userId: string) => `ik-skipped-days-${userId}`,
 } as const;
