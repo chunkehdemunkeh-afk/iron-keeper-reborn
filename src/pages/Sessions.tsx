@@ -1,11 +1,13 @@
 import { WORKOUTS } from "@/lib/workout-data";
 import { getAllCustomWorkouts } from "@/pages/WorkoutBuilder";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, ChevronDown, Plus, Dumbbell, Zap, Wind, Shield, Crosshair, ArrowUp, ArrowDown, Footprints, Layers, Flame, Trophy, Activity, Target, History, Wand2 } from "lucide-react";
+import { ChevronRight, ChevronDown, Plus, Dumbbell, Zap, Wind, Shield, Crosshair, ArrowUp, ArrowDown, Footprints, Layers, Flame, Trophy, Activity, Target, History, Wand2, EyeOff, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserPreferences } from "@/lib/user-preferences";
+import { getSkippedWorkoutIds, toggleWorkoutSkipped } from "@/lib/skipped-days";
+import { hapticMedium } from "@/lib/haptics";
 import type { LucideIcon } from "lucide-react";
 import HelpButton from "@/components/demo/HelpButton";
 
@@ -130,6 +132,15 @@ export default function Sessions() {
 
   const progInfo = prefs ? (PROGRAMME_INFO[prefs.splitId] ?? DEFAULT_PROGRAMME) : DEFAULT_PROGRAMME;
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [skippedIds, setSkippedIds] = useState<string[]>(() =>
+    user ? getSkippedWorkoutIds(user.id) : []
+  );
+
+  const toggleSkip = (workoutId: string) => {
+    if (!user) return;
+    hapticMedium();
+    setSkippedIds(toggleWorkoutSkipped(user.id, workoutId));
+  };
 
   const toggleGroup = (label: string) =>
     setExpandedGroups(prev => {
@@ -151,26 +162,42 @@ export default function Sessions() {
     const Icon = workout.icon;
     const visibleExercises = workout.exercises.slice(0, 4);
     const overflow = workout.exercises.length - 4;
+    const skipped = skippedIds.includes(workout.id);
     return (
-      <motion.button
+      <motion.div
         key={workout.id}
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: i * 0.04 }}
-        onClick={() => navigate(`/workout/${workout.id}`)}
-        className={`w-full glass-card rounded-2xl p-4 text-left transition-all hover:ring-1 hover:ring-primary/30 active:scale-[0.98] bg-gradient-to-br ${workout.color}`}
+        className={`relative w-full glass-card rounded-2xl p-4 transition-all bg-gradient-to-br ${workout.color} ${
+          skipped ? "opacity-40 grayscale" : "hover:ring-1 hover:ring-primary/30"
+        }`}
       >
+        <button
+          onClick={() => toggleSkip(workout.id)}
+          title={skipped ? "Unskip this day" : "Skip this day this week"}
+          className="absolute top-2 right-2 z-10 flex items-center gap-1 rounded-full bg-background/60 px-2 py-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground active:scale-95 transition-colors"
+        >
+          {skipped ? <RotateCcw className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+          {skipped ? "Unskip" : "Skip"}
+        </button>
+        <button
+          onClick={() => navigate(`/workout/${workout.id}`)}
+          className="w-full text-left active:scale-[0.98] transition-transform"
+        >
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background/40 shrink-0">
             <Icon className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-display text-base font-semibold text-foreground leading-tight">
+            <h3 className={`font-display text-base font-semibold leading-tight ${skipped ? "text-muted-foreground line-through" : "text-foreground"}`}>
               {workout.name}
             </h3>
-            <p className="text-[11px] text-muted-foreground">{workout.day}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {skipped ? "Skipped this week" : workout.day}
+            </p>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 pr-14">
             <span className="text-[11px] font-medium text-muted-foreground">
               {workout.exercises.length} ex
             </span>
@@ -192,7 +219,8 @@ export default function Sessions() {
             </span>
           )}
         </div>
-      </motion.button>
+        </button>
+      </motion.div>
     );
   };
 
