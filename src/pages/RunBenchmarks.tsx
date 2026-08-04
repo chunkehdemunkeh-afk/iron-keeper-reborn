@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, TrendingDown, Timer, Trophy } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
@@ -11,8 +11,10 @@ import {
   formatDuration,
   DEFAULT_GOAL_SECONDS,
 } from "@/lib/half-marathon-program";
+import RunSessionHistory from "@/components/run/RunSessionHistory";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
+
 
 const CATEGORY_LABEL: Record<string, string> = {
   speed: "Speed & VO2",
@@ -25,6 +27,8 @@ export default function RunBenchmarks() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: series, isLoading } = useRunBenchmarks();
+  const [tab, setTab] = useState<"benchmarks" | "history">("benchmarks");
+
 
   const goalSeconds = useMemo(() => {
     if (!user) return DEFAULT_GOAL_SECONDS;
@@ -85,9 +89,26 @@ export default function RunBenchmarks() {
           )}
         </div>
 
-        {isLoading && <LoadingState label="Loading benchmarks" />}
+        {/* Tabs */}
+        <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-card/60 hairline border">
+          {(["benchmarks", "history"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`py-2 rounded-xl text-xs font-semibold capitalize transition-colors ${
+                tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              {t === "benchmarks" ? "Benchmarks" : "Session history"}
+            </button>
+          ))}
+        </div>
 
-        {!isLoading && withData.length === 0 && (
+        {tab === "history" && <RunSessionHistory goalPace={goalPace} />}
+
+        {tab === "benchmarks" && isLoading && <LoadingState label="Loading benchmarks" />}
+
+        {tab === "benchmarks" && !isLoading && withData.length === 0 && (
           <EmptyState
             icon={Timer}
             title="No run data yet"
@@ -95,9 +116,11 @@ export default function RunBenchmarks() {
           />
         )}
 
-        {(["speed", "tempo", "long", "race"] as const).map((cat) => {
+
+        {tab === "benchmarks" && (["speed", "tempo", "long", "race"] as const).map((cat) => {
           const items = grouped[cat];
           if (!items?.length) return null;
+
           return (
             <div key={cat} className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
