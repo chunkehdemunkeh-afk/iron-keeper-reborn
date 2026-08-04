@@ -44,6 +44,8 @@ import { useActiveDeload } from "@/hooks/queries/useDeload";
 import ProgressionSuggestionBanner from "@/components/workout/ProgressionSuggestionBanner";
 import { isSingleArmEligible, DEFAULT_SINGLE_ARM_IDS } from "@/lib/single-arm-variants";
 import { HYROX_WORKOUT_IDS } from "@/lib/hyrox-workouts";
+import DurationInput from "@/components/workout/DurationInput";
+import { formatSplit } from "@/lib/run-splits";
 
 const MAX_SESSION_SECONDS = 6 * 60 * 60;
 
