@@ -89,15 +89,33 @@ export default function RunBenchmarks() {
           )}
         </div>
 
-        {isLoading && <LoadingState label="Loading benchmarks" />}
+        {/* Tabs */}
+        <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-card/60 hairline border">
+          {(["benchmarks", "history"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`py-2 rounded-xl text-xs font-semibold capitalize transition-colors ${
+                tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              {t === "benchmarks" ? "Benchmarks" : "Session history"}
+            </button>
+          ))}
+        </div>
 
-        {!isLoading && withData.length === 0 && (
+        {tab === "history" && <RunSessionHistory goalPace={goalPace} />}
+
+        {tab === "benchmarks" && isLoading && <LoadingState label="Loading benchmarks" />}
+
+        {tab === "benchmarks" && !isLoading && withData.length === 0 && (
           <EmptyState
             icon={Timer}
             title="No run data yet"
             description="Complete a run session from the half marathon plan and your paces will chart here."
           />
         )}
+
 
         {(["speed", "tempo", "long", "race"] as const).map((cat) => {
           const items = grouped[cat];
