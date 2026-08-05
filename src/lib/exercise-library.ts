@@ -49,6 +49,7 @@ export const EXERCISE_LIBRARY: LibraryExercise[] = [
   { id: "lib-59", name: "JM Press", muscleGroup: "Triceps", equipment: "Barbell", description: "Hybrid press-and-skull-crusher — lower bar toward chin with elbows tucked, press back up, stop short of lockout." },
   { id: "lib-62", name: "Plate Loaded Dip Machine", muscleGroup: "Triceps", equipment: "Machine", description: "Plate-loaded seated dip machine — torso upright for triceps emphasis, full lockout at top, controlled stretch at the bottom. Heavier loading and more stability than bodyweight dips." },
   { id: "lib-63", name: "Reverse Wrist Curls", muscleGroup: "Forearms", equipment: "Dumbbell", description: "Forearms on bench, palms facing down — curl wrists up to target extensors and build grip balance." },
+  { id: "lib-64", name: "Single-Arm Cable Reverse Fly", muscleGroup: "Shoulders", equipment: "Cable", description: "Stand side-on to a chest-height pulley and grab the handle with the far hand across the body. Sweep the arm out and back in an arc with a soft elbow, squeezing the rear delt at the end range. One arm at a time for a longer stretch and full range." },
 
   // Quads
   { id: "lib-22", name: "Back Squat", muscleGroup: "Quads", equipment: "Barbell", description: "Bar on traps, squat to parallel or below." },
