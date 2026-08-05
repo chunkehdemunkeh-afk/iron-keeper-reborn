@@ -2051,7 +2051,7 @@ export default function WorkoutSession() {
                                           if (!sub) return;
                                           setExerciseOverrides(prev => ({
                                             ...prev,
-                                            [ex.id]: { name: sub.name, notes: sub.notes, targetMuscle: sub.targetMuscle, trackWeight: sub.trackWeight, repLabel: sub.repLabel, weightLabel: sub.weightLabel, substituteId: sub.id },
+                                            [ex.id]: buildSubstitutionOverride(ex, sub),
                                           }));
                                           let effId = sub.id;
                                           if (heavyStackExercises.has(ex.id)) effId += "-heavy";
