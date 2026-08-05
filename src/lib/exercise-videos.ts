@@ -655,5 +655,3 @@ export function hasVerifiedDemo(exerciseId: string): boolean {
   if (!exerciseId) return false;
   return !!getExerciseImages(exerciseId) || !!getExerciseVideoUrl(exerciseId);
 }
-
-}
