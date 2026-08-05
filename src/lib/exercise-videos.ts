@@ -456,15 +456,17 @@ export const EXERCISE_VIDEOS: Record<string, string> = {
   "sub-am6b": "https://www.youtube.com/shorts/nVo7WCDSNqQ", // Skull Crushers
 };
 
-// Get YouTube Short URL for an exercise, with fallback to search
-export function getExerciseVideoUrl(exerciseId: string, exerciseName: string): string {
-  if (EXERCISE_VIDEOS[exerciseId]) {
-    return EXERCISE_VIDEOS[exerciseId];
-  }
-  // Fallback for custom exercises: YouTube search
-  const query = encodeURIComponent(`${exerciseName} exercise form tutorial short`);
-  return `https://www.youtube.com/results?search_query=${query}&sp=EgIYAQ%253D%253D`;
+// Curated video links are only trusted when explicitly opted in here.
+// Everything else falls through to the form-image library, or shows no demo at all.
+const VERIFIED_VIDEO_IDS = new Set<string>([]);
+
+// Returns a verified YouTube URL for an exercise, or null when we have no trusted clip.
+export function getExerciseVideoUrl(exerciseId: string): string | null {
+  const id = demoBaseId(exerciseId);
+  if (VERIFIED_VIDEO_IDS.has(id) && EXERCISE_VIDEOS[id]) return EXERCISE_VIDEOS[id];
+  return null;
 }
+
 
 const GITHUB_BASE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises";
 
@@ -620,17 +622,36 @@ const EXERCISE_DB_FOLDERS: Record<string, string> = {
   am6: "Triceps_Pushdown_-_Rope_Attachment",
 };
 
+// Strips runtime suffixes (variant/attachment/added markers) so demos resolve to the base movement
+export function demoBaseId(exerciseId: string): string {
+  let id = (exerciseId || "").replace(/-added-\d+$/, "").replace(/-copy$/, "");
+  id = id.replace(/-(2h|heavy|sa)$/g, "");
+  return id;
+}
+
 // Returns start/end form images for lib-db-* exercises and mapped custom exercises
 export function getExerciseImages(exerciseId: string): { frame0: string; frame1: string } | null {
+  const base = demoBaseId(exerciseId);
   let folder: string | null = null;
-  if (exerciseId.startsWith("lib-db-")) {
-    folder = exerciseId.replace("lib-db-", "");
+  if (base.startsWith("lib-db-")) {
+    folder = base.replace("lib-db-", "");
   } else {
-    folder = EXERCISE_DB_FOLDERS[exerciseId] ?? null;
+    folder = EXERCISE_DB_FOLDERS[base] ?? null;
+  }
+  if (!folder) {
+    // Cable attachment suffix (e.g. "-rope"): retry against the un-suffixed id
+    const trimmed = base.replace(/-[a-z0-9]+$/, "");
+    if (trimmed !== base) folder = EXERCISE_DB_FOLDERS[trimmed] ?? null;
   }
   if (!folder) return null;
   return {
     frame0: `${GITHUB_BASE}/${folder}/0.jpg`,
     frame1: `${GITHUB_BASE}/${folder}/1.jpg`,
   };
+}
+
+// True only when we have an exercise-specific demo (form images or a verified clip)
+export function hasVerifiedDemo(exerciseId: string): boolean {
+  if (!exerciseId) return false;
+  return !!getExerciseImages(exerciseId) || !!getExerciseVideoUrl(exerciseId);
 }

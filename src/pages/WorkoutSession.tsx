@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import RestTimer from "@/components/RestTimer";
 import ExerciseTimer from "@/components/ExerciseTimer";
 import ExerciseVideoSheet from "@/components/ExerciseVideoSheet";
+import { hasVerifiedDemo } from "@/lib/exercise-videos";
+
 import PRCelebration from "@/components/PRCelebration";
 import { hapticMedium, hapticSuccess } from "@/lib/haptics";
 import { EXERCISE_SUBSTITUTIONS } from "@/lib/exercise-substitutions";
@@ -1701,14 +1703,15 @@ export default function WorkoutSession() {
                      );
                    })()}
                 </div>
-                {!isHyroxSession && (
+                {!isHyroxSession && hasVerifiedDemo(getEffectiveExId(ex.id)) && (
                   <button
-                    onClick={() => setVideoExercise({ name: ex.name, id: ex.id })}
+                    onClick={() => setVideoExercise({ name: exerciseOverrides[ex.id]?.name || ex.name, id: getEffectiveExId(ex.id) })}
                     className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                   >
                     <Play className="h-3 w-3" />
                   </button>
                 )}
+
                 <span className="text-[10px] text-muted-foreground rounded-md bg-muted/50 px-2 py-0.5">
                   {ex.targetMuscle}
                 </span>
@@ -1864,7 +1867,7 @@ export default function WorkoutSession() {
                 targetRir={ex.targetRir ?? workout?.targetRir ?? targetRirForReps(ex.reps, sessionTargetRir)}
                 supersetGroup={ex.supersetGroup}
                 onToggleExpand={() => setExpandedExercise(isExpanded ? null : ex.id)}
-                onPlayVideo={isHyroxSession ? undefined : () => setVideoExercise({ name: displayName, id: ex.id })}
+                onPlayVideo={isHyroxSession || !hasVerifiedDemo(getEffectiveExId(ex.id)) ? undefined : () => setVideoExercise({ name: displayName, id: getEffectiveExId(ex.id) })}
                 onSwap={() => setSwapExerciseId(ex.id)}
                 hasSubs={hasSubs}
                 lastSub={!override ? lastSubstitutions[ex.id] : undefined}
