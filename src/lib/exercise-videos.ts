@@ -456,15 +456,17 @@ export const EXERCISE_VIDEOS: Record<string, string> = {
   "sub-am6b": "https://www.youtube.com/shorts/nVo7WCDSNqQ", // Skull Crushers
 };
 
-// Get YouTube Short URL for an exercise, with fallback to search
-export function getExerciseVideoUrl(exerciseId: string, exerciseName: string): string {
-  if (EXERCISE_VIDEOS[exerciseId]) {
-    return EXERCISE_VIDEOS[exerciseId];
-  }
-  // Fallback for custom exercises: YouTube search
-  const query = encodeURIComponent(`${exerciseName} exercise form tutorial short`);
-  return `https://www.youtube.com/results?search_query=${query}&sp=EgIYAQ%253D%253D`;
+// Curated video links are only trusted when explicitly opted in here.
+// Everything else falls through to the form-image library, or shows no demo at all.
+const VERIFIED_VIDEO_IDS = new Set<string>([]);
+
+// Returns a verified YouTube URL for an exercise, or null when we have no trusted clip.
+export function getExerciseVideoUrl(exerciseId: string): string | null {
+  const id = demoBaseId(exerciseId);
+  if (VERIFIED_VIDEO_IDS.has(id) && EXERCISE_VIDEOS[id]) return EXERCISE_VIDEOS[id];
+  return null;
 }
+
 
 const GITHUB_BASE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises";
 
