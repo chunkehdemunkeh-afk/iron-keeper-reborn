@@ -1,0 +1,1 @@
+UPDATE public.workout_sets SET exercise_name = 'Chest Supported Dumbbell Row' WHERE (exercise_id = 'dl5' OR exercise_id LIKE 'dl5-%') AND (exercise_name IS NULL OR exercise_name <> 'Chest Supported Dumbbell Row');
