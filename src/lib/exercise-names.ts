@@ -57,9 +57,33 @@ export function looksLikeExerciseName(value?: string | null): boolean {
  */
 export function resolveExerciseName(exerciseId: string, storedName?: string | null): string {
   const m = exerciseNameMap();
-  const base = stripExerciseSuffixes(exerciseId);
-  const hit = m[exerciseId] ?? m[base];
-  if (hit) return hit;
+  const candidates: string[] = [];
+  const push = (v: string) => { if (v && !candidates.includes(v)) candidates.push(v); };
+
+  push(exerciseId);
+  push(stripExerciseSuffixes(exerciseId));
+  // Custom/duplicated exercises get ids like `acc-wrist1-added-1783069500255`.
+  const withoutAdded = exerciseId.replace(/-added-\d+$/i, "").replace(/-copy(-\d+)?$/i, "");
+  push(withoutAdded);
+  push(stripExerciseSuffixes(withoutAdded));
+  // Trailing numeric token (timestamps / dedupe counters).
+  const withoutTrailingNum = withoutAdded.replace(/-\d{6,}$/, "");
+  push(withoutTrailingNum);
+  push(stripExerciseSuffixes(withoutTrailingNum));
+
+  for (const c of candidates) {
+    if (m[c]) return m[c];
+  }
   if (looksLikeExerciseName(storedName)) return storedName!.trim();
-  return base || exerciseId;
+  return prettifyId(candidates[candidates.length - 1] || exerciseId);
 }
+
+/** Last-resort readable label so raw slugs never surface verbatim. */
+function prettifyId(id: string): string {
+  return id
+    .replace(/^(lib-db-|lib-|acc-|sub-|hx-)/i, "")
+    .replace(/[-_]+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (ch) => ch.toUpperCase());
+}
+
