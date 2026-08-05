@@ -802,7 +802,7 @@ export default function WorkoutSession() {
     setAddedAccessories(prev => [...prev, accId]);
     const newLogs: Record<string, SetLog[]> = {};
     routine.exercises.forEach(ex => {
-      const lastData = getLastDataForExercise(ex.id);
+      const lastData = getLastDataForExercise(ex.id) ?? [];
       const m = ex.reps.match(/(\d+)/);
       const parsedTargetReps = m ? parseInt(m[1], 10) : undefined;
       newLogs[ex.id] = Array.from({ length: ex.sets }, (_, si) => ({
