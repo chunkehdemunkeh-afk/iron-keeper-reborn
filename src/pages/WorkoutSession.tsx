@@ -1701,14 +1701,15 @@ export default function WorkoutSession() {
                      );
                    })()}
                 </div>
-                {!isHyroxSession && (
+                {!isHyroxSession && hasVerifiedDemo(getEffectiveExId(ex.id)) && (
                   <button
-                    onClick={() => setVideoExercise({ name: ex.name, id: ex.id })}
+                    onClick={() => setVideoExercise({ name: exerciseOverrides[ex.id]?.name || ex.name, id: getEffectiveExId(ex.id) })}
                     className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                   >
                     <Play className="h-3 w-3" />
                   </button>
                 )}
+
                 <span className="text-[10px] text-muted-foreground rounded-md bg-muted/50 px-2 py-0.5">
                   {ex.targetMuscle}
                 </span>
