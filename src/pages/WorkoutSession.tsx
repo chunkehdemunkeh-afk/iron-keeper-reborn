@@ -1867,7 +1867,7 @@ export default function WorkoutSession() {
                 targetRir={ex.targetRir ?? workout?.targetRir ?? targetRirForReps(ex.reps, sessionTargetRir)}
                 supersetGroup={ex.supersetGroup}
                 onToggleExpand={() => setExpandedExercise(isExpanded ? null : ex.id)}
-                onPlayVideo={isHyroxSession ? undefined : () => setVideoExercise({ name: displayName, id: ex.id })}
+                onPlayVideo={isHyroxSession || !hasVerifiedDemo(getEffectiveExId(ex.id)) ? undefined : () => setVideoExercise({ name: displayName, id: getEffectiveExId(ex.id) })}
                 onSwap={() => setSwapExerciseId(ex.id)}
                 hasSubs={hasSubs}
                 lastSub={!override ? lastSubstitutions[ex.id] : undefined}
