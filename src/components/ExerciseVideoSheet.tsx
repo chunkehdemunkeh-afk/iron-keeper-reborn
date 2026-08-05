@@ -44,7 +44,7 @@ function ImageFrame({ src, label }: { src: string; label: string }) {
 
 export default function ExerciseVideoSheet({ open, onOpenChange, exerciseName, exerciseId }: Props) {
   const images = getExerciseImages(exerciseId || "");
-  const videoUrl = images ? null : getExerciseVideoUrl(exerciseId || "", exerciseName);
+  const videoUrl = images ? null : getExerciseVideoUrl(exerciseId || "");
 
   const isShort = videoUrl?.includes("/shorts/");
   const shortId = isShort ? videoUrl!.split("/shorts/")[1]?.split("?")[0] : null;
