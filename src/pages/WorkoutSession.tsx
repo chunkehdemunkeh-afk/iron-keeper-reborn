@@ -43,6 +43,7 @@ import { useProgressions, progressionMap } from "@/hooks/queries/useProgressions
 import { useActiveDeload } from "@/hooks/queries/useDeload";
 import ProgressionSuggestionBanner from "@/components/workout/ProgressionSuggestionBanner";
 import { isSingleArmEligible, DEFAULT_SINGLE_ARM_IDS } from "@/lib/single-arm-variants";
+import { resolveExerciseName } from "@/lib/exercise-names";
 import { HYROX_WORKOUT_IDS } from "@/lib/hyrox-workouts";
 import DurationInput from "@/components/workout/DurationInput";
 import { formatSplit } from "@/lib/run-splits";
@@ -1002,7 +1003,7 @@ export default function WorkoutSession() {
       const exercise = allExercises.find(e => e.id === exerciseId);
       const override = exerciseOverrides[exerciseId];
       const effectiveId = getEffectiveExId(exerciseId);
-      const displayName = override?.name || exercise?.name || exerciseId;
+      const displayName = override?.name || exercise?.name || resolveExerciseName(exerciseId);
       const isTimeBased = (override?.repLabel || exercise?.repLabel) === "Sec";
       const tracksWeight = (override?.trackWeight ?? exercise?.trackWeight) !== false;
 
@@ -1071,7 +1072,7 @@ export default function WorkoutSession() {
 
         // Suggest weight increase if reps hit the top of the range
         if (newSets[setIdx].reps >= upThreshold) {
-          const exName = exercise?.name || exerciseId;
+          const exName = exercise?.name || resolveExerciseName(exerciseId);
           toast.info(`💪 ${exName} — Set ${setIdx + 1} hit ${newSets[setIdx].reps} reps! Consider adding weight next session.`);
           setWeightUpSuggestions(prev => {
             const existing = prev[exerciseId] || [];
@@ -1082,7 +1083,7 @@ export default function WorkoutSession() {
 
         // Suggest weight decrease if reps fell below the bottom of the range
         if (newSets[setIdx].reps > 0 && newSets[setIdx].reps < downThreshold) {
-          const exName = exercise?.name || exerciseId;
+          const exName = exercise?.name || resolveExerciseName(exerciseId);
           toast.warning(`⚠️ ${exName} — Set ${setIdx + 1} only ${newSets[setIdx].reps} reps. Consider lowering weight next session.`);
           setWeightDownSuggestions(prev => {
             const existing = prev[exerciseId] || [];
@@ -1639,7 +1640,7 @@ export default function WorkoutSession() {
                 <span>Weight increase suggested</span>
               </div>
               {Object.entries(weightUpSuggestions).map(([exId, setIdxs]) => {
-                const exName = workout.exercises.find(e => e.id === exId)?.name || exId;
+                const exName = workout.exercises.find(e => e.id === exId)?.name || resolveExerciseName(exId);
                 return (
                   <p key={exId} className="text-[11px] text-muted-foreground">
                     <span className="font-medium text-foreground">{exName}</span> — Set{setIdxs.length > 1 ? "s" : ""} {setIdxs.map(s => s + 1).join(", ")} hit 12+ reps last time
@@ -1657,7 +1658,7 @@ export default function WorkoutSession() {
                 <span>Weight decrease suggested</span>
               </div>
               {Object.entries(weightDownSuggestions).map(([exId, setIdxs]) => {
-                const exName = workout.exercises.find(e => e.id === exId)?.name || exId;
+                const exName = workout.exercises.find(e => e.id === exId)?.name || resolveExerciseName(exId);
                 return (
                   <p key={exId} className="text-[11px] text-muted-foreground">
                     <span className="font-medium text-foreground">{exName}</span> — Set{setIdxs.length > 1 ? "s" : ""} {setIdxs.map(s => s + 1).join(", ")} under 8 reps last time

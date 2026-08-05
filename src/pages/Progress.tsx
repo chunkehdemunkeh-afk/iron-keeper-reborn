@@ -1,3 +1,4 @@
+import { resolveExerciseName } from "@/lib/exercise-names";
 import { useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchVolumeData, deletePersonalRecord, bestOneRmForLift } from "@/lib/cloud-data";
@@ -79,7 +80,7 @@ function PRSwipeRow({ exId, pr, onDelete }: { exId: string; pr: any; onDelete: (
       >
         <div>
           <p className="text-sm font-medium text-foreground">
-            {pr.name || exId}
+            {pr.name || resolveExerciseName(exId)}
           </p>
           <p className="text-[10px] text-muted-foreground">
             {new Date(pr.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
@@ -590,7 +591,7 @@ export default function Progress() {
                     <PRSwipeRow
                       key={exId}
                       exId={exId}
-                      pr={{ ...(pr as any), name: (pr as any).name || exerciseMap[exId] || exId }}
+                      pr={{ ...(pr as any), name: (pr as any).name || exerciseMap[exId] || resolveExerciseName(exId) }}
                       onDelete={() => handleDeletePR((pr as any).setId)}
                     />
                   ))}
