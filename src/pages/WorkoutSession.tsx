@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import RestTimer from "@/components/RestTimer";
 import ExerciseTimer from "@/components/ExerciseTimer";
 import ExerciseVideoSheet from "@/components/ExerciseVideoSheet";
+import { hasVerifiedDemo } from "@/lib/exercise-videos";
+
 import PRCelebration from "@/components/PRCelebration";
 import { hapticMedium, hapticSuccess } from "@/lib/haptics";
 import { EXERCISE_SUBSTITUTIONS } from "@/lib/exercise-substitutions";
