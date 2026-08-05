@@ -16,6 +16,7 @@ import ExerciseVideoSheet from "@/components/ExerciseVideoSheet";
 import PRCelebration from "@/components/PRCelebration";
 import { hapticMedium, hapticSuccess } from "@/lib/haptics";
 import { EXERCISE_SUBSTITUTIONS } from "@/lib/exercise-substitutions";
+import { buildSubstitutionOverride } from "@/lib/substitution-rep-lock";
 import { EXERCISE_LIBRARY } from "@/lib/exercise-library";
 import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "@/lib/accessory-routines";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -2051,7 +2052,7 @@ export default function WorkoutSession() {
                                           if (!sub) return;
                                           setExerciseOverrides(prev => ({
                                             ...prev,
-                                            [ex.id]: { name: sub.name, notes: sub.notes, targetMuscle: sub.targetMuscle, trackWeight: sub.trackWeight, repLabel: sub.repLabel, weightLabel: sub.weightLabel, substituteId: sub.id },
+                                            [ex.id]: buildSubstitutionOverride(ex, sub),
                                           }));
                                           let effId = sub.id;
                                           if (heavyStackExercises.has(ex.id)) effId += "-heavy";
@@ -2736,7 +2737,7 @@ export default function WorkoutSession() {
                           onClick={async () => {
                             setExerciseOverrides(prev => ({
                               ...prev,
-                              [swapExerciseId]: { name: sub.name, notes: sub.notes, targetMuscle: sub.targetMuscle, trackWeight: sub.trackWeight, repLabel: sub.repLabel, weightLabel: sub.weightLabel, substituteId: sub.id },
+                              [swapExerciseId]: buildSubstitutionOverride(allExercises.find(e => e.id === swapExerciseId), sub),
                             }));
                             // Compute the effective ID for the swapped-in exercise using the original slot's modifiers
                             let effId = sub.id;
@@ -2798,7 +2799,7 @@ export default function WorkoutSession() {
                               onClick={async () => {
                                 setExerciseOverrides(prev => ({
                                   ...prev,
-                                  [swapExerciseId]: { name: ex.name, targetMuscle: ex.muscleGroup, substituteId: ex.id },
+                                  [swapExerciseId]: buildSubstitutionOverride(allExercises.find(e => e.id === swapExerciseId), { id: ex.id, name: ex.name, targetMuscle: ex.muscleGroup }),
                                 }));
                                 let effId = ex.id;
                                 if (twoHandedExercises.has(swapExerciseId)) effId += "-2h";
