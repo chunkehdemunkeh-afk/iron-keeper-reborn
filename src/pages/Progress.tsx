@@ -455,6 +455,7 @@ export default function Progress() {
           options={[
             { value: "stats", label: "Stats" },
             { value: "volume", label: "Volume" },
+            { value: "recovery", label: "Recovery" },
             { value: "photos", label: "Photos" },
           ]}
           layoutId="progress-tab-pill"
@@ -471,6 +472,26 @@ export default function Progress() {
             <VolumeTab />
           </div>
         )}
+
+        {tab === "recovery" && (
+          <div className="mt-4 space-y-5">
+            <RecoveryPanel />
+            {getUserPreferences(user.id)?.splitId !== "none" && (
+              <RecoveryTips splitId={getUserPreferences(user.id)?.splitId} />
+            )}
+            <button
+              onClick={() => navigate("/check-ins")}
+              className="w-full glass-card rounded-2xl p-3.5 flex items-center justify-between text-left transition-transform active:scale-[0.99]"
+            >
+              <div>
+                <p className="font-display text-sm font-bold">Check-in history</p>
+                <p className="text-xs text-muted-foreground">Past readiness and biometric check-ins</p>
+              </div>
+              <Moon className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </div>
+        )}
+
 
         {tab === "stats" && (
           <div className="space-y-5 mt-4">
