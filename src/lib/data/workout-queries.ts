@@ -538,33 +538,33 @@ export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerc
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [{ data: exactRows }, { data: likeRows }] = await Promise.all([
-    supabase
+  const pickLatest = async (ids: string[]) => {
+    const or = ids
+      .flatMap(id => [`exercise_id.eq.${id}`, `exercise_id.like.${id}-%`])
+      .join(",");
+    const { data } = await supabase
       .from("workout_sets")
       .select("workout_history_id, exercise_id, created_at")
       .eq("user_id", user.id)
-      .eq("exercise_id", baseId)
+      .or(or)
       .neq("set_type", "warmup")
       .order("created_at", { ascending: false })
-      .limit(1),
-    supabase
-      .from("workout_sets")
-      .select("workout_history_id, exercise_id, created_at")
-      .eq("user_id", user.id)
-      .like("exercise_id", `${baseId}-%`)
-      .neq("set_type", "warmup")
-      .order("created_at", { ascending: false })
-      .limit(1),
-  ]);
+      .limit(1);
+    return data?.[0] ?? null;
+  };
 
-  const candidates = [...(exactRows ?? []), ...(likeRows ?? [])];
-  if (candidates.length === 0) return null;
-  candidates.sort((a, b) =>
-    new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime()
-  );
-  const latestSet = candidates[0];
+  // 1. Exact ID (plus its variant suffixes).
+  let latestSet = await pickLatest([baseId]);
+
+  // 2. Fallback: equivalent exercises (substitution slots, renames, remapped
+  //    library IDs) so history logged under an old/alternate ID still shows.
+  if (!latestSet) {
+    const aliases = equivalentExerciseIds(baseId).filter(id => id !== baseId);
+    if (aliases.length) latestSet = await pickLatest(aliases);
+  }
 
   if (!latestSet) return null;
+
 
   const { data: sets } = await supabase
     .from("workout_sets")
