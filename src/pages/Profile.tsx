@@ -40,7 +40,9 @@ const SPLIT_META: Record<string, { intensity: string; intensityColor: string; fo
 import { changelog } from "@/lib/changelog";
 import { useUserRole } from "@/hooks/useUserRole";
 import { becomeCoach, joinCoachByCode, fetchMyCoach } from "@/lib/data/coach-queries";
-import { Users2 } from "lucide-react";
+import { Users2, ListChecks, Swords, ShoppingBag } from "lucide-react";
+import { SectionHeader, NavTile } from "@/components/ui/section";
+
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { getXpToastMode, setXpToastMode, type XpToastMode } from "@/lib/gamification/preferences";
@@ -396,6 +398,50 @@ export default function Profile() {
         <div className="glass-card rounded-xl p-4">
           <BadgeShelf variant="compact" />
         </div>
+
+        {/* Compete — every gamification surface in one place */}
+        <div>
+          <SectionHeader title="Compete" />
+          <div className="space-y-2">
+            <NavTile
+              index={0}
+              accent
+              icon={Trophy}
+              label="Leaderboards"
+              description="Ranks, 1RM and volume boards"
+              onClick={() => navigate("/leaderboard")}
+            />
+            <NavTile
+              index={1}
+              icon={ListChecks}
+              label="Quests"
+              description="Daily and weekly challenges"
+              onClick={() => navigate("/quests")}
+            />
+            <NavTile
+              index={2}
+              icon={Swords}
+              label="Duels"
+              description="Head-to-head challenges"
+              onClick={() => navigate("/duels")}
+            />
+            <NavTile
+              index={3}
+              icon={ShoppingBag}
+              label="Shop"
+              description="Spend coins on cosmetics"
+              onClick={() => navigate("/shop")}
+            />
+            <NavTile
+              index={4}
+              icon={Users2}
+              label="Community & clans"
+              description="Server goals and your clan"
+              onClick={() => navigate("/community")}
+            />
+          </div>
+        </div>
+
 
         {/* Quick links */}
         <div className="grid grid-cols-2 gap-2">
