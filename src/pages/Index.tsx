@@ -18,7 +18,7 @@ import HalfMarathonProgramCard from "@/components/HalfMarathonProgramCard";
 import HomeSessionCard from "@/components/home/HomeSessionCard";
 import PostOnboardingTip from "@/components/PostOnboardingTip";
 import { format, subDays, addDays, isToday } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,8 @@ import DeloadRecommendationBanner from "@/components/home/DeloadRecommendationBa
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
+import { SectionHeader } from "@/components/ui/section";
+import { hapticLight } from "@/lib/haptics";
 
 const Index = () => {
   const { profile, user } = useAuth();
@@ -41,6 +43,7 @@ const Index = () => {
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [slideDir, setSlideDir] = useState(0); // -1 left, 1 right
+  const [showMore, setShowMore] = useState(false);
 
   const queryClient = useQueryClient();
   const ptr = usePullToRefresh({
@@ -93,7 +96,6 @@ const Index = () => {
     weekday: "long",
     day: "numeric",
     month: "long",
-    year: "numeric",
   });
 
   const shortDateLabel = isCurrentDay
@@ -103,7 +105,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background safe-bottom">
       <PullToRefreshIndicator {...ptr} />
-      <div className="mx-auto max-w-lg md:max-w-2xl px-4 pt-6 pb-24 space-y-5">
+      <div className="mx-auto max-w-lg md:max-w-2xl px-4 pt-6 pb-24 space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -119,42 +121,25 @@ const Index = () => {
           <HelpButton />
         </motion.div>
 
-        {/* XP / Level / Streak */}
+        {/* Level / streak — single compact strip */}
         <XpBar />
 
-        {/* Stats */}
-        <StatsBar />
-
-        {/* Smart deload recommendation (data-driven, not time-based) */}
+        {/* Contextual prompts — each only renders when it actually applies */}
         {isCurrentDay && <DeloadRecommendationBanner />}
-
-        {/* Monday catch-up banner — only Mon/Tue if last week unreviewed */}
         {isCurrentDay && <MondayBanner />}
-
-        {/* Sunday/Monday volume summary banner */}
         {isCurrentDay && <VolumeSummaryBanner />}
 
-        {/* Half marathon plan card — runs layer on top of any lifting split */}
-        {isCurrentDay && <HalfMarathonProgramCard />}
-
-        {/* Week strip */}
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-            This Week
-          </p>
-          <WeekStrip />
-        </div>
-
-        {/* Next session — only show on today and when user has a workout plan */}
-        {isCurrentDay && !noWorkoutMode && <NextSessionCard />}
-
-        {/* Hyrox program card — visible for hyrox-split users */}
-        {isCurrentDay && hyroxMode && <HyroxProgramCard />}
-
-
-
-        {/* Home session launcher — always available on today */}
-        {isCurrentDay && <HomeSessionCard />}
+        {/* Today's training */}
+        {isCurrentDay && (
+          <div>
+            <SectionHeader title="Today's training" />
+            <div className="space-y-3">
+              {!noWorkoutMode && <NextSessionCard />}
+              {hyroxMode && <HyroxProgramCard />}
+              <HalfMarathonProgramCard />
+            </div>
+          </div>
+        )}
 
         {/* Date navigation pill */}
         <div className="flex items-center justify-center">
@@ -200,22 +185,60 @@ const Index = () => {
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className="space-y-5"
           >
-            {/* Combined recovery card: biometric scores + muscle diagram */}
+            {/* Readiness: biometric scores + muscle diagram */}
             {isCurrentDay && <HomeCombinedRecoveryCard date={dateStr} />}
 
             {/* Daily nutrition & water summary */}
             <HomeDailySummary date={dateStr} />
-
-            {/* Body weight tracker */}
-            <HomeWeightTracker date={dateStr} />
 
             {/* Complete Day */}
             <HomeCompleteDay date={dateStr} />
           </motion.div>
         </AnimatePresence>
 
-        {/* Pre-workout stretches — only show on today and when user has a workout plan */}
-        {isCurrentDay && !noWorkoutMode && <DailyStretchCard />}
+        {/* Everything else for today — collapsed by default so the screen stays calm */}
+        <div>
+          <button
+            onClick={() => {
+              hapticLight();
+              setShowMore((v) => !v);
+            }}
+            aria-expanded={showMore}
+            className="w-full flex items-center justify-between rounded-2xl glass-card px-4 py-3 transition-transform active:scale-[0.99]"
+          >
+            <span className="font-display text-sm font-bold">More for today</span>
+            <ChevronDown
+              className={`h-4 w-4 text-muted-foreground transition-transform ${showMore ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          <AnimatePresence initial={false}>
+            {showMore && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.22, ease: "easeInOut" }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-5 pt-4">
+                  <div>
+                    <SectionHeader title="This week" />
+                    <WeekStrip />
+                  </div>
+
+                  <StatsBar />
+
+                  {isCurrentDay && <HomeSessionCard />}
+
+                  <HomeWeightTracker date={dateStr} />
+
+                  {isCurrentDay && !noWorkoutMode && <DailyStretchCard />}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* One-time post-onboarding tip drawer */}
