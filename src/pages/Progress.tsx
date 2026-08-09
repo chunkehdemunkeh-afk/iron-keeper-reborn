@@ -366,7 +366,8 @@ export default function Progress() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const tab = (tabParam === "photos" || tabParam === "volume") ? tabParam : "stats";
+  const tab = (tabParam === "photos" || tabParam === "volume" || tabParam === "recovery") ? tabParam : "stats";
+
 
   const { data: history = [], isLoading: historyLoading } = useWorkoutHistory();
 
