@@ -8,7 +8,10 @@ import { BarChart3, Trophy, Calendar, TrendingUp, Dumbbell, Clock, Trash2, Activ
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import type { PanInfo } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import RecoveryPanel from "@/components/recovery/RecoveryPanel";
+import RecoveryTips from "@/components/RecoveryTips";
+
 import { useWorkoutHistory } from "@/hooks/queries/useWorkoutHistory";
 import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
 import { useRecentSets } from "@/hooks/queries/useRecentSets";
