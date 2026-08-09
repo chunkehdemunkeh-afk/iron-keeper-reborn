@@ -5,6 +5,8 @@ import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "../accessory-routin
 import { EXERCISE_LIBRARY } from "../exercise-library";
 import { stripExerciseSuffixes } from "../muscle-mapping";
 import { looksLikeExerciseName, resolveExerciseName } from "../exercise-names";
+import { equivalentExerciseIds } from "../exercise-equivalents";
+
 import { estimateStrengthBurn } from "../calorie-burn";
 import { lookupUserBodyweight } from "./nutrition-queries";
 import { isReverseLoadExercise } from "../reverse-load-exercises";
