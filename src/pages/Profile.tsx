@@ -40,7 +40,9 @@ const SPLIT_META: Record<string, { intensity: string; intensityColor: string; fo
 import { changelog } from "@/lib/changelog";
 import { useUserRole } from "@/hooks/useUserRole";
 import { becomeCoach, joinCoachByCode, fetchMyCoach } from "@/lib/data/coach-queries";
-import { Users2 } from "lucide-react";
+import { Users2, ListChecks, Swords, ShoppingBag } from "lucide-react";
+import { SectionHeader, NavTile } from "@/components/ui/section";
+
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { getXpToastMode, setXpToastMode, type XpToastMode } from "@/lib/gamification/preferences";
