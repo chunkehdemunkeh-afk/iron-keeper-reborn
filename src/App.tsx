@@ -109,7 +109,9 @@ const AnimatedRoutes = () => {
         <Route path="/coach/athlete/:userId" element={<PageWrapper><ProtectedRoute><CoachAthleteDetail /></ProtectedRoute></PageWrapper>} />
         <Route path="/inbox" element={<PageWrapper><ProtectedRoute><Inbox /></ProtectedRoute></PageWrapper>} />
         <Route path="/inbox/:partnerId" element={<PageWrapper><ProtectedRoute><Conversation /></ProtectedRoute></PageWrapper>} />
+        <Route path="/train" element={<PageWrapper><ProtectedRoute><Train /></ProtectedRoute></PageWrapper>} />
         <Route path="/sessions" element={<PageWrapper><ProtectedRoute><Sessions /></ProtectedRoute></PageWrapper>} />
+
         <Route path="/workout/:id" element={<PageWrapper><ProtectedRoute><WorkoutSession /></ProtectedRoute></PageWrapper>} />
         <Route path="/builder" element={<PageWrapper><ProtectedRoute><WorkoutBuilder /></ProtectedRoute></PageWrapper>} />
         <Route path="/programme/edit" element={<PageWrapper><ProtectedRoute><ProgrammeEditor /></ProtectedRoute></PageWrapper>} />
