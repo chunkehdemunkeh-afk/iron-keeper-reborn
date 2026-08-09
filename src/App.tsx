@@ -15,6 +15,8 @@ import DemoBanner from "@/components/demo/DemoBanner";
 import { getLatestChangelog, hasSeenVersion, markVersionSeen } from "@/lib/changelog";
 import Index from "./pages/Index";
 import Sessions from "./pages/Sessions";
+import Train from "./pages/Train";
+
 import WorkoutSession from "./pages/WorkoutSession";
 import WorkoutBuilder from "./pages/WorkoutBuilder";
 import ProgrammeEditor from "./pages/ProgrammeEditor";
