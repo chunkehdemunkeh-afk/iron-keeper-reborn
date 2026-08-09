@@ -367,6 +367,8 @@ function RecoveryTabContent() {
 export default function Progress() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const tab = (tabParam === "photos" || tabParam === "volume" || tabParam === "recovery") ? tabParam : "stats";
