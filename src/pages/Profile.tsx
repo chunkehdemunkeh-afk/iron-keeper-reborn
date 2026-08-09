@@ -397,6 +397,50 @@ export default function Profile() {
           <BadgeShelf variant="compact" />
         </div>
 
+        {/* Compete — every gamification surface in one place */}
+        <div>
+          <SectionHeader title="Compete" />
+          <div className="space-y-2">
+            <NavTile
+              index={0}
+              accent
+              icon={Trophy}
+              label="Leaderboards"
+              description="Ranks, 1RM and volume boards"
+              onClick={() => navigate("/leaderboard")}
+            />
+            <NavTile
+              index={1}
+              icon={ListChecks}
+              label="Quests"
+              description="Daily and weekly challenges"
+              onClick={() => navigate("/quests")}
+            />
+            <NavTile
+              index={2}
+              icon={Swords}
+              label="Duels"
+              description="Head-to-head challenges"
+              onClick={() => navigate("/duels")}
+            />
+            <NavTile
+              index={3}
+              icon={ShoppingBag}
+              label="Shop"
+              description="Spend coins on cosmetics"
+              onClick={() => navigate("/shop")}
+            />
+            <NavTile
+              index={4}
+              icon={Users2}
+              label="Community & clans"
+              description="Server goals and your clan"
+              onClick={() => navigate("/community")}
+            />
+          </div>
+        </div>
+
+
         {/* Quick links */}
         <div className="grid grid-cols-2 gap-2">
           <motion.button
