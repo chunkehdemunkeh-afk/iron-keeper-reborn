@@ -5,6 +5,8 @@ import { ACCESSORY_ROUTINES, ACCESSORY_SUBSTITUTIONS } from "../accessory-routin
 import { EXERCISE_LIBRARY } from "../exercise-library";
 import { stripExerciseSuffixes } from "../muscle-mapping";
 import { looksLikeExerciseName, resolveExerciseName } from "../exercise-names";
+import { equivalentExerciseIds } from "../exercise-equivalents";
+
 import { estimateStrengthBurn } from "../calorie-burn";
 import { lookupUserBodyweight } from "./nutrition-queries";
 import { isReverseLoadExercise } from "../reverse-load-exercises";
@@ -501,15 +503,29 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data: latestSet } = await supabase
-    .from("workout_sets")
-    .select("workout_history_id")
-    .eq("user_id", user.id)
-    .eq("exercise_id", exerciseId)
-    .neq("set_type", "warmup")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const pickLatest = async (id: string) => {
+    const { data } = await supabase
+      .from("workout_sets")
+      .select("workout_history_id, exercise_id")
+      .eq("user_id", user.id)
+      .eq("exercise_id", id)
+      .neq("set_type", "warmup")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    return data?.[0] ?? null;
+  };
+
+  let latestSet = await pickLatest(exerciseId);
+
+  // Fallback: same movement logged under an equivalent ID (substitution,
+  // rename, or remapped library ID) so we never show zeroes when history exists.
+  if (!latestSet) {
+    for (const alias of equivalentExerciseIds(exerciseId)) {
+      if (alias === exerciseId) continue;
+      latestSet = await pickLatest(alias);
+      if (latestSet) break;
+    }
+  }
 
   if (!latestSet) return [];
 
@@ -517,11 +533,12 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
     .from("workout_sets")
     .select("reps, weight, rir, set_type, set_index, created_at, id")
     .eq("workout_history_id", latestSet.workout_history_id)
-    .eq("exercise_id", exerciseId)
+    .eq("exercise_id", latestSet.exercise_id)
     .neq("set_type", "warmup")
     .order("set_index", { ascending: true, nullsFirst: true })
     .order("created_at", { ascending: true })
     .order("id", { ascending: true });
+
 
   return (sets || []).map(s => {
     const rirVal = (s as { rir?: number | null }).rir;
@@ -538,33 +555,33 @@ export async function fetchExerciseLastDataLike(baseId: string): Promise<{ exerc
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [{ data: exactRows }, { data: likeRows }] = await Promise.all([
-    supabase
+  const pickLatest = async (ids: string[]) => {
+    const or = ids
+      .flatMap(id => [`exercise_id.eq.${id}`, `exercise_id.like.${id}-%`])
+      .join(",");
+    const { data } = await supabase
       .from("workout_sets")
       .select("workout_history_id, exercise_id, created_at")
       .eq("user_id", user.id)
-      .eq("exercise_id", baseId)
+      .or(or)
       .neq("set_type", "warmup")
       .order("created_at", { ascending: false })
-      .limit(1),
-    supabase
-      .from("workout_sets")
-      .select("workout_history_id, exercise_id, created_at")
-      .eq("user_id", user.id)
-      .like("exercise_id", `${baseId}-%`)
-      .neq("set_type", "warmup")
-      .order("created_at", { ascending: false })
-      .limit(1),
-  ]);
+      .limit(1);
+    return data?.[0] ?? null;
+  };
 
-  const candidates = [...(exactRows ?? []), ...(likeRows ?? [])];
-  if (candidates.length === 0) return null;
-  candidates.sort((a, b) =>
-    new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime()
-  );
-  const latestSet = candidates[0];
+  // 1. Exact ID (plus its variant suffixes).
+  let latestSet = await pickLatest([baseId]);
+
+  // 2. Fallback: equivalent exercises (substitution slots, renames, remapped
+  //    library IDs) so history logged under an old/alternate ID still shows.
+  if (!latestSet) {
+    const aliases = equivalentExerciseIds(baseId).filter(id => id !== baseId);
+    if (aliases.length) latestSet = await pickLatest(aliases);
+  }
 
   if (!latestSet) return null;
+
 
   const { data: sets } = await supabase
     .from("workout_sets")
