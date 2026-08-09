@@ -503,15 +503,29 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data: latestSet } = await supabase
-    .from("workout_sets")
-    .select("workout_history_id")
-    .eq("user_id", user.id)
-    .eq("exercise_id", exerciseId)
-    .neq("set_type", "warmup")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const pickLatest = async (id: string) => {
+    const { data } = await supabase
+      .from("workout_sets")
+      .select("workout_history_id, exercise_id")
+      .eq("user_id", user.id)
+      .eq("exercise_id", id)
+      .neq("set_type", "warmup")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    return data?.[0] ?? null;
+  };
+
+  let latestSet = await pickLatest(exerciseId);
+
+  // Fallback: same movement logged under an equivalent ID (substitution,
+  // rename, or remapped library ID) so we never show zeroes when history exists.
+  if (!latestSet) {
+    for (const alias of equivalentExerciseIds(exerciseId)) {
+      if (alias === exerciseId) continue;
+      latestSet = await pickLatest(alias);
+      if (latestSet) break;
+    }
+  }
 
   if (!latestSet) return [];
 
@@ -519,11 +533,12 @@ export async function fetchExerciseLastData(exerciseId: string): Promise<{ reps:
     .from("workout_sets")
     .select("reps, weight, rir, set_type, set_index, created_at, id")
     .eq("workout_history_id", latestSet.workout_history_id)
-    .eq("exercise_id", exerciseId)
+    .eq("exercise_id", latestSet.exercise_id)
     .neq("set_type", "warmup")
     .order("set_index", { ascending: true, nullsFirst: true })
     .order("created_at", { ascending: true })
     .order("id", { ascending: true });
+
 
   return (sets || []).map(s => {
     const rirVal = (s as { rir?: number | null }).rir;
