@@ -119,7 +119,9 @@ export function equivalentExerciseIds(exerciseId: string, limit = 24): string[] 
   push(base);
   push(exerciseId);
 
-  groups().get(base)?.forEach(push);
+  // Only aliases sharing the same equipment class count as the same movement.
+  groups().get(base)?.forEach((id) => { if (classesCompatible(base, id)) push(id); });
+
 
   // Also match anything sharing the resolved display name but missing from the
   // static maps' grouping (defensive: resolveExerciseName has extra fallbacks).
