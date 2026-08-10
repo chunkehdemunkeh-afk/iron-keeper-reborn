@@ -17,6 +17,34 @@ import { exerciseNameMap, resolveExerciseName } from "./exercise-names";
 
 const normName = (n: string) => n.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
+/**
+ * Equipment class of a movement. Two exercises with *different* known classes
+ * are never treated as equivalent — an incline barbell bench and an incline
+ * dumbbell bench are distinct movements with their own history and PRs, even
+ * though each is offered as a substitute for the other.
+ */
+function equipmentClass(id: string): string | null {
+  const n = normName(resolveExerciseName(id));
+  if (!n) return null;
+  if (/\bsmith\b/.test(n)) return "smith";
+  if (/\bdumbbell|\bdb\b/.test(n)) return "dumbbell";
+  if (/\bbarbell|\bbb\b/.test(n)) return "barbell";
+  if (/\bcable\b/.test(n)) return "cable";
+  if (/\bmachine\b|\blever\b/.test(n)) return "machine";
+  if (/\bkettlebell\b/.test(n)) return "kettlebell";
+  if (/\bband\b/.test(n)) return "band";
+  return null;
+}
+
+/** Compatible when at least one side has no recognisable equipment marker. */
+function classesCompatible(a: string, b: string): boolean {
+  const ca = equipmentClass(a);
+  const cb = equipmentClass(b);
+  if (!ca || !cb) return true;
+  return ca === cb;
+}
+
+
 let _groups: Map<string, Set<string>> | null = null;
 
 /** id → set of equivalent ids (including itself). */
@@ -91,7 +119,9 @@ export function equivalentExerciseIds(exerciseId: string, limit = 24): string[] 
   push(base);
   push(exerciseId);
 
-  groups().get(base)?.forEach(push);
+  // Only aliases sharing the same equipment class count as the same movement.
+  groups().get(base)?.forEach((id) => { if (classesCompatible(base, id)) push(id); });
+
 
   // Also match anything sharing the resolved display name but missing from the
   // static maps' grouping (defensive: resolveExerciseName has extra fallbacks).
