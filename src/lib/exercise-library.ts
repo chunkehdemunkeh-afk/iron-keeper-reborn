@@ -105,6 +105,7 @@ export const EXERCISE_LIBRARY: LibraryExercise[] = [
   { id: "lib-64", name: "Mag Grip Seated Cable Row", muscleGroup: "Back", equipment: "Cable", description: "Seated cable row with mag (neutral) grip. Pull to lower chest, drive elbows back, squeeze shoulder blades, full stretch at extension." },
   { id: "lib-68", name: "Plate Loaded Chest Press", muscleGroup: "Chest", equipment: "Machine", description: "Plate-loaded seated chest press. Handles at mid-chest, drive forward and slightly in, full stretch on the eccentric, no lockout rest." },
   { id: "lib-69", name: "Assisted Pull-Up", muscleGroup: "Back", equipment: "Machine", description: "Assisted pull-up machine. The logged weight is the ASSISTANCE used — lower is better. Full dead hang at the bottom, chin over bar, drive elbows down." },
+  { id: "lib-70", name: "Chest Supported Incline Lateral Raise", muscleGroup: "Shoulders", equipment: "Dumbbell", description: "Lie chest-down on an incline bench with dumbbells hanging below. Raise out to the sides to shoulder height with a soft elbow, lower fully for the stretch. Chest support removes all momentum." },
 
 
   // Agility
