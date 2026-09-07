@@ -1979,9 +1979,6 @@ export default function WorkoutSession() {
                                         </button>
                                       </div>
                                     )}
-
-                                      </div>
-                                    )}
                                     {/* Light/Heavy toggle — standalone cable exercises only (no benches, lat pulldowns, seated rows, machines) */}
                                     {(() => {
                                       const dn = displayName.toLowerCase();
