@@ -150,7 +150,7 @@ export const WORKOUTS: WorkoutDay[] = [
     focus: "Back · Biceps · Rear Delts",
     color: "from-blue-500/20 to-indigo-500/10",
     exercises: [
-      { id: "pl1", name: "Seated Row Machine", sets: 3, reps: "8-10", targetMuscle: "Mid Back", notes: "Pull to lower chest, squeeze shoulder blades" },
+      { id: "pl1", name: "Plate Loaded Row Machine", sets: 3, reps: "8-10", targetMuscle: "Mid Back", notes: "Pull to lower chest, squeeze shoulder blades" },
       { id: "pl2", name: "T-Bar Row", sets: 3, reps: "8-10", targetMuscle: "Back Thickness", notes: "Keep chest on pad, drive elbows back" },
       { id: "pl3", name: "Lat Pull Down - Pronated Grip", sets: 3, reps: "8-10", targetMuscle: "Lats", notes: "Wide grip, pull to upper chest, control the negative" },
       { id: "lib-13", name: "Face Pulls", sets: 3, reps: "8-10", targetMuscle: "Rear Delts", notes: "High pull, external rotate at top, squeeze shoulder blades" },
@@ -445,7 +445,7 @@ export const WORKOUTS: WorkoutDay[] = [
     targetRir: "1-2",
     exercises: [
       { id: "pu3",       name: "15° Incline Dumbbell Bench Press", sets: 2, reps: "5-10", targetMuscle: "Upper Chest",       targetRir: "0-1", notes: "A shallow incline keeps more load on the mid-chest. Lower slowly to a deep stretch, then press and squeeze the chest at the top." },
-      { id: "pl1",       name: "Seated Row Machine",               sets: 2, reps: "5-10", targetMuscle: "Mid Back",          targetRir: "0-1", notes: "Neutral grip, chest tall against the pad. Pull to the lower chest, hold the squeeze, and let the shoulder blades travel forward on the return." },
+      { id: "pl1",       name: "Plate Loaded Row Machine",               sets: 2, reps: "5-10", targetMuscle: "Mid Back",          targetRir: "0-1", notes: "Neutral grip, chest tall against the pad. Pull to the lower chest, hold the squeeze, and let the shoulder blades travel forward on the return." },
       { id: "up4",       name: "Cable Flies To Thighs",            sets: 2, reps: "5-10", targetMuscle: "Lower Chest",       targetRir: "0-1", notes: "Set the pulleys high and sweep down toward the thighs in an arc. Slight elbow bend held constant, squeeze for a beat at the bottom." },
       { id: "lib-18",    name: "Incline Dumbbell Curl",            sets: 2, reps: "5-10", targetMuscle: "Biceps",            targetRir: "0-1", notes: "Bench at about 45° so the arms hang behind the torso for a long-head stretch. Keep the elbows still and only log clean, uncheated reps." },
       { id: "lib-64",    name: "Single-Arm Cable Reverse Fly",     sets: 2, reps: "5-10", targetMuscle: "Rear Delts",        targetRir: "0-1", notes: "Chest-height pulley, handle in the far hand across the body. Sweep out and back in an arc with a soft elbow and squeeze the rear delt. Both sides." },
