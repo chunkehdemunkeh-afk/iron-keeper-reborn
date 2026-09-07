@@ -1958,7 +1958,7 @@ export default function WorkoutSession() {
                                         2 Handed
                                       </button>
                                     )}
-                                    {/* Machine Row variant pill — "Machine Row" (standard) vs "Low Row", tracked separately */}
+                                    {/* Plate Loaded Row Machine variant pill — "High" (base id) vs "Low" (`-heavy`), tracked separately */}
                                     {ex.id === "pl1" && !exerciseOverrides[ex.id] && (
                                       <div className="flex items-center rounded-full bg-muted/50 p-0.5 select-none">
                                         <button
@@ -1967,7 +1967,7 @@ export default function WorkoutSession() {
                                           })}
                                           className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${!heavyStackExercises.has(ex.id) ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
                                         >
-                                          Machine Row
+                                          High
                                         </button>
                                         <button
                                           onClick={() => !heavyStackExercises.has(ex.id) && setHeavyStackExercises(prev => {
@@ -1975,8 +1975,11 @@ export default function WorkoutSession() {
                                           })}
                                           className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${heavyStackExercises.has(ex.id) ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
                                         >
-                                          Low Row
+                                          Low
                                         </button>
+                                      </div>
+                                    )}
+
                                       </div>
                                     )}
                                     {/* Light/Heavy toggle — standalone cable exercises only (no benches, lat pulldowns, seated rows, machines) */}
