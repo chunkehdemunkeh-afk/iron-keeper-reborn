@@ -79,6 +79,7 @@ function getAllSwapExercises(): SwapExercise[] {
   if (_swapExercises) return _swapExercises;
   const seen = new Set<string>();
   const seenIds = new Set<string>();
+  const out: SwapExercise[] = [];
   const pushEntry = (entry: SwapExercise) => {
     const key = entry.name.toLowerCase();
     if (seen.has(key) || seenIds.has(entry.id)) return;
