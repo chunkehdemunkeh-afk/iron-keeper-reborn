@@ -78,22 +78,27 @@ let _swapExercises: SwapExercise[] | null = null;
 function getAllSwapExercises(): SwapExercise[] {
   if (_swapExercises) return _swapExercises;
   const seen = new Set<string>();
+  const seenIds = new Set<string>();
   const out: SwapExercise[] = [];
+  const pushEntry = (entry: SwapExercise) => {
+    const key = entry.name.toLowerCase();
+    if (seen.has(key) || seenIds.has(entry.id)) return;
+    seen.add(key);
+    seenIds.add(entry.id);
+    out.push(entry);
+  };
   for (const w of WORKOUTS) {
     for (const ex of w.exercises) {
-      const key = ex.name.toLowerCase();
-      if (!seen.has(key)) { seen.add(key); out.push({ id: ex.id, name: ex.name, muscleGroup: ex.targetMuscle, equipment: "", description: ex.notes || "" }); }
+      pushEntry({ id: ex.id, name: ex.name, muscleGroup: ex.targetMuscle, equipment: "", description: ex.notes || "" });
     }
   }
   for (const r of ACCESSORY_ROUTINES) {
     for (const ex of r.exercises) {
-      const key = ex.name.toLowerCase();
-      if (!seen.has(key)) { seen.add(key); out.push({ id: ex.id, name: ex.name, muscleGroup: ex.targetMuscle, equipment: "", description: ex.notes || "" }); }
+      pushEntry({ id: ex.id, name: ex.name, muscleGroup: ex.targetMuscle, equipment: "", description: ex.notes || "" });
     }
   }
   for (const ex of EXERCISE_LIBRARY) {
-    const key = ex.name.toLowerCase();
-    if (!seen.has(key)) { seen.add(key); out.push({ id: ex.id, name: ex.name, muscleGroup: ex.muscleGroup, equipment: ex.equipment, description: ex.description || "" }); }
+    pushEntry({ id: ex.id, name: ex.name, muscleGroup: ex.muscleGroup, equipment: ex.equipment, description: ex.description || "" });
   }
   return (_swapExercises = out);
 }

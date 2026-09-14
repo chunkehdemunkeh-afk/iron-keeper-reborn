@@ -520,7 +520,7 @@ export const EXERCISE_SUBSTITUTIONS: Record<string, SubstituteExercise[]> = {
   ],
 
   // ── Upper/Lower A/B additions ────────────────────────────────────────────
-  "lib-64": [ // Mag Grip Seated Cable Row
+  "lib-71": [ // Mag Grip Seated Cable Row
     { id: "sub-pl64a", name: "Chest-Supported Machine Row", targetMuscle: "Mid Back", notes: "Chest pad supported — isolates back, removes lower-back fatigue", description: "Chest-supported machine row" },
     { id: "sub-pl64b", name: "Barbell Bent-Over Row", targetMuscle: "Back Thickness", notes: "Overhand grip, hinge 45°, row to lower chest — heavier loading", description: "Classic barbell bent-over row" },
   ],

@@ -479,7 +479,7 @@ const EXERCISE_DB_FOLDERS: Record<string, string> = {
   "lib-19": "Triceps_Pushdown_-_Rope_Attachment",      // Upper B: Tricep Pushdown
   "lib-54": "Lateral_Box_Jump",                        // Lower B: Lateral Bound
   "lib-62": "Dip_Machine",                             // Upper A: Plate Loaded Dip Machine
-  "lib-64": "Seated_Cable_Rows",                       // Upper A: Mag Grip Seated Cable Row (closest match)
+  "lib-71": "Seated_Cable_Rows",                       // Upper A: Mag Grip Seated Cable Row (closest match)
   "lib-66": "Box_Jump_Multiple_Response",              // Lower A: Box Jumps with Drop Jump
 
   // Power day
