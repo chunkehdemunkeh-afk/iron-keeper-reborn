@@ -39,4 +39,19 @@ describe("Upper B exercise replacements", () => {
     expect(ids).toContain("pu5");
     expect(ids).not.toContain("lib-19");
   });
+  it("follows the chest-back-chest-back-shoulder-bicep-tricep-shoulder-rear-delt-wrist order", () => {
+    expect(ids).toEqual([
+      "pu3",
+      "lib-8",
+      "lib-60",
+      "pl2",
+      "sub-up5a",
+      "lib-61",
+      "pu5",
+      "lib-db-One-Arm_Incline_Lateral_Raise",
+      "lib-db-Reverse_Machine_Flyes",
+      "acc-wrist1",
+      "acc-wrist2",
+    ]);
+  });
 });
