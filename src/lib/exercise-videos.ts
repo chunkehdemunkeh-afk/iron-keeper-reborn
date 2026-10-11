@@ -623,7 +623,10 @@ const EXERCISE_DB_FOLDERS: Record<string, string> = {
   am4: "Standing_Dumbbell_Triceps_Extension",
   am5: "Preacher_Hammer_Dumbbell_Curl",
   am6: "Triceps_Pushdown_-_Rope_Attachment",
+
+  "lib-73": "Bent_Over_Low-Pulley_Side_Lateral", // Cable cuff lateral raise — single-arm side raise from a low pulley
 };
+
 
 // Strips runtime suffixes (variant/attachment/added markers) so demos resolve to the base movement
 export function demoBaseId(exerciseId: string): string {

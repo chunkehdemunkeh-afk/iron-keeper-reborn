@@ -92,6 +92,8 @@ const ID_OVERRIDES: Record<string, MuscleHits> = {
   "lib-13": { primary: ["rear_delts"], secondary: ["traps"] },
   "lib-14": { primary: ["front_delts", "side_delts"], secondary: ["triceps"] },
   "lib-15": { primary: ["rear_delts"], secondary: ["traps"] },
+  "lib-73": { primary: ["side_delts"], secondary: ["front_delts", "traps"] }, // Cable cuff lateral raise
+
   // Biceps / Triceps
   "lib-16": { primary: ["biceps"], secondary: ["forearms"] },
   "lib-17": { primary: ["biceps", "forearms"], secondary: [] },
