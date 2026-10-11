@@ -502,7 +502,12 @@ export const EXERCISE_SUBSTITUTIONS: Record<string, SubstituteExercise[]> = {
     { id: "sub-am2a", name: "Overhead Dumbbell Tricep Extension", targetMuscle: "Triceps", notes: "Single or double arm overhead — great long head stretch", description: "Overhead dumbbell tricep extension" },
     { id: "sub-am2b", name: "Close-Grip Bench Press", targetMuscle: "Triceps", notes: "Compound pressing — allows heavier tricep loading", description: "Close-grip bench press" },
   ],
+  "lib-17": [ // Hammer Curl
+    { id: "sub-lib17a", name: "Cross-Body Hammer Curl", targetMuscle: "Biceps/Brachialis", notes: "Curl dumbbell across body to opposite shoulder — neutral grip", description: "Cross-body dumbbell hammer curl" },
+    { id: "sub-lib17b", name: "Cable Hammer Curl", targetMuscle: "Biceps/Brachialis", notes: "Rope attachment on low cable, neutral grip — constant tension", description: "Cable rope hammer curl" },
+  ],
   "lib-18": [ // Incline Dumbbell Curl
+
     { id: "sub-am3a", name: "Spider Curl", targetMuscle: "Biceps", notes: "Lie chest-down on incline bench, curl from fully stretched — hits long head hard", description: "Incline bench spider curl" },
     { id: "sub-am3b", name: "Cable Curl", targetMuscle: "Biceps", notes: "Low cable, constant tension — great for the stretched position", description: "Cable bicep curl" },
   ],

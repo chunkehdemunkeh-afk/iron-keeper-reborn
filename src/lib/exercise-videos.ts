@@ -475,6 +475,8 @@ const EXERCISE_DB_FOLDERS: Record<string, string> = {
   // ── Programme lib-* exercises — verified folder names from existing mappings ──
   "lib-1":  "Barbell_Bench_Press_-_Medium_Grip",       // Upper A: Barbell Bench Press
   "lib-13": "Face_Pull",                               // Upper B: Face Pulls
+  "lib-17": "Hammer_Curls",                            // Upper A: Hammer Curl
+
   "lib-18": "Incline_Dumbbell_Curl",                   // Upper B: Incline Dumbbell Curl
   "lib-19": "Triceps_Pushdown_-_Rope_Attachment",      // Upper B: Tricep Pushdown
   "lib-54": "Lateral_Box_Jump",                        // Lower B: Lateral Bound
