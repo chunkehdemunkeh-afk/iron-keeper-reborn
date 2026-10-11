@@ -476,6 +476,7 @@ const EXERCISE_DB_FOLDERS: Record<string, string> = {
   "lib-1":  "Barbell_Bench_Press_-_Medium_Grip",       // Upper A: Barbell Bench Press
   "lib-13": "Face_Pull",                               // Upper B: Face Pulls
   "lib-17": "Hammer_Curls",                            // Upper A: Hammer Curl
+  "lib-15": "Reverse_Flyes",                           // Upper A: Dumbbell Rear Delt Fly
 
   "lib-18": "Incline_Dumbbell_Curl",                   // Upper B: Incline Dumbbell Curl
   "lib-19": "Triceps_Pushdown_-_Rope_Attachment",      // Upper B: Tricep Pushdown

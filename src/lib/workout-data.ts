@@ -408,6 +408,7 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "up8",       name: "Tricep Pushdown",                              sets: 2, reps: "5-10",  targetMuscle: "Triceps",        targetRir: "0-1", notes: "Rope on a high pulley, elbows pinned to your sides throughout. Push down to full lockout and split the rope at the bottom, then let it rise slowly to a right-angle bend." },
       { id: "lib-17",    name: "Hammer Curl",                                  sets: 2, reps: "5-10",  targetMuscle: "Biceps/Brachialis", targetRir: "0-1", notes: "Neutral grip, elbows pinned to the sides. Curl through a full range without swinging — the brachialis and forearms do most of the work here." },
       { id: "lib-72",    name: "Machine Lateral Raise",                        sets: 2, reps: "5-10",  targetMuscle: "Side Delts",     targetRir: "0-1", notes: "Sit with the pads against your forearms, elbows just below shoulder height. Raise out to the sides to shoulder height, pause briefly, then lower slowly to a full stretch — the fixed path keeps all tension on the side delts." },
+      { id: "lib-15",    name: "Dumbbell Rear Delt Fly",                       sets: 2, reps: "5-10",  targetMuscle: "Rear Delts",     targetRir: "0-1", notes: "Hinge forward until your torso is near parallel, soft elbow bend throughout. Sweep the dumbbells out and back until your arms reach shoulder height, squeeze, then lower slowly — don't shrug or swing." },
     ],
   },
   {
