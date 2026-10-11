@@ -18,4 +18,8 @@ describe("Upper A exercise replacements", () => {
       expect(exercise.reps).toBe("5-10");
     }
   });
+  it("adds a dumbbell rear delt fly at the session's set and rep scheme", () => {
+    expect(ids).toContain("lib-15");
+    expect(exercises.find((exercise) => exercise.id === "lib-15")).toMatchObject({ sets: 2, reps: "5-10" });
+  });
 });

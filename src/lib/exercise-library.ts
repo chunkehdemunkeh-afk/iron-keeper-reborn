@@ -34,7 +34,7 @@ export const EXERCISE_LIBRARY: LibraryExercise[] = [
   { id: "lib-12", name: "Lateral Raise", muscleGroup: "Shoulders", equipment: "Dumbbells", description: "Raise dumbbells to sides until parallel to floor." },
   { id: "lib-13", name: "Face Pulls", muscleGroup: "Shoulders", equipment: "Cable", description: "Pull rope to face, external rotate at top." },
   { id: "lib-14", name: "Arnold Press", muscleGroup: "Shoulders", equipment: "Dumbbells", description: "Rotating dumbbell press — palms in to palms out." },
-  { id: "lib-15", name: "Rear Delt Fly", muscleGroup: "Shoulders", equipment: "Dumbbells", description: "Bent over, raise dumbbells to sides." },
+  { id: "lib-15", name: "Dumbbell Rear Delt Fly", muscleGroup: "Shoulders", equipment: "Dumbbells", description: "Bent over, raise dumbbells to sides." },
 
   // Biceps
   { id: "lib-16", name: "Barbell Curl", muscleGroup: "Biceps", equipment: "Barbell", description: "Curl bar with strict form, no swinging." },
