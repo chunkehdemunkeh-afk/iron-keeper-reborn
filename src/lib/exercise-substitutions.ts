@@ -507,7 +507,12 @@ export const EXERCISE_SUBSTITUTIONS: Record<string, SubstituteExercise[]> = {
     { id: "sub-lib15b", name: "Cable Rear Delt Fly", targetMuscle: "Rear Delts", notes: "Crossed cables at shoulder height — constant tension through the whole sweep", description: "Cable rear delt fly" },
     { id: "sub-lib15c", name: "Rear Pec Deck Fly", targetMuscle: "Rear Delts", notes: "Machine with a fixed path — good when the dumbbell version drifts into a shrug", description: "Rear pec deck fly" },
   ],
+  "lib-73": [ // Cable Cuff Lateral Raise
+    { id: "sub-lib73a", name: "Cable Seated Lateral Raise", targetMuscle: "Side Delts", notes: "Seated between two low pulleys — removes leg drive completely", description: "Seated cable lateral raise" },
+    { id: "sub-lib73b", name: "One-Arm Incline Lateral Raise", targetMuscle: "Side Delts", notes: "Dumbbell lying sideways on an incline bench — different resistance curve, no cable needed", description: "One-arm incline dumbbell lateral raise" },
+  ],
   "lib-17": [ // Hammer Curl
+
     { id: "sub-lib17a", name: "Cross-Body Hammer Curl", targetMuscle: "Biceps/Brachialis", notes: "Curl dumbbell across body to opposite shoulder — neutral grip", description: "Cross-body dumbbell hammer curl" },
     { id: "sub-lib17b", name: "Cable Hammer Curl", targetMuscle: "Biceps/Brachialis", notes: "Rope attachment on low cable, neutral grip — constant tension", description: "Cable rope hammer curl" },
   ],
