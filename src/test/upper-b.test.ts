@@ -35,8 +35,13 @@ describe("Upper B exercise replacements", () => {
     expect(ids).toContain("lib-db-Reverse_Machine_Flyes");
     expect(ids).not.toContain("lib-64");
   });
+  it("replaces the one-arm incline lateral raise with a cable cuff lateral raise", () => {
+    expect(ids).toContain("lib-73");
+    expect(ids).not.toContain("lib-db-One-Arm_Incline_Lateral_Raise");
+  });
   it("replaces tricep pushdowns with tricep X-overs", () => {
     expect(ids).toContain("pu5");
+
     expect(ids).not.toContain("lib-19");
   });
   it("follows the chest-back-chest-back-shoulder-bicep-tricep-shoulder-rear-delt-wrist order", () => {
@@ -48,7 +53,7 @@ describe("Upper B exercise replacements", () => {
       "sub-up5a",
       "lib-61",
       "pu5",
-      "lib-db-One-Arm_Incline_Lateral_Raise",
+      "lib-73",
       "lib-db-Reverse_Machine_Flyes",
       "acc-wrist1",
       "acc-wrist2",
