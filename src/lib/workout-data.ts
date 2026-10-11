@@ -407,7 +407,7 @@ export const WORKOUTS: WorkoutDay[] = [
       { id: "lib-db-Machine_Preacher_Curls", name: "Machine Preacher Curl", sets: 2, reps: "5-10", targetMuscle: "Biceps", targetRir: "0-1", notes: "Chest against the pad, upper arms flat throughout. Control out of the bottom — don't bounce — and squeeze hard at the top." },
       { id: "bn5",       name: "Skull Crushers",                               sets: 2, reps: "5-10",  targetMuscle: "Triceps",        targetRir: "0-1", notes: "Keep the elbows pointed at the ceiling and fixed. Lower to the forehead or just behind it, then extend slowly to lockout." },
       { id: "lib-61",    name: "Bayesian Curl",                                sets: 2, reps: "5-10",  targetMuscle: "Biceps",         targetRir: "0-1", notes: "Stand a step in front of a low cable so the arm hangs behind the torso. That stretched start hits the long head — slow eccentric each rep." },
-      { id: "lib-70",    name: "Chest Supported Incline Lateral Raise",        sets: 2, reps: "5-10",  targetMuscle: "Side Delts",     targetRir: "0-1", notes: "Lie chest-down on an incline bench with dumbbells hanging below. Raise out to the sides to shoulder height with a soft elbow, lower fully for the stretch. The chest support removes all momentum." },
+      { id: "lib-72",    name: "Machine Lateral Raise",                        sets: 2, reps: "5-10",  targetMuscle: "Side Delts",     targetRir: "0-1", notes: "Sit with the pads against your forearms, elbows just below shoulder height. Raise out to the sides to shoulder height, pause briefly, then lower slowly to a full stretch — the fixed path keeps all tension on the side delts." },
     ],
   },
   {
