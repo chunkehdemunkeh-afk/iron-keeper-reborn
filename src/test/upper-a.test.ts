@@ -22,4 +22,18 @@ describe("Upper A exercise replacements", () => {
     expect(ids).toContain("lib-15");
     expect(exercises.find((exercise) => exercise.id === "lib-15")).toMatchObject({ sets: 2, reps: "5-10" });
   });
+  it("orders the session chest, back, chest, back, shoulder, bicep, tricep, shoulder, then grip", () => {
+    expect(ids).toEqual([
+      "lib-db-Smith_Machine_Incline_Bench_Press",
+      "lib-69",
+      "lib-68",
+      "pl1",
+      "lib-db-Smith_Machine_Overhead_Shoulder_Press",
+      "lib-db-Machine_Preacher_Curls",
+      "up8",
+      "lib-72",
+      "lib-15",
+      "lib-17",
+    ]);
+  });
 });
