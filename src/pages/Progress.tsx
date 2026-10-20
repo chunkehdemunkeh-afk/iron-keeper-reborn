@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { fetchVolumeData, deletePersonalRecord } from "@/lib/cloud-data";
 import { queryKeys } from "@/lib/query-keys";
 import { WORKOUTS } from "@/lib/workout-data";
-import { BarChart3, Trophy, Calendar, TrendingUp, Dumbbell, Clock, Trash2, Moon } from "lucide-react";
+import { BarChart3, Trophy, Calendar, TrendingUp, Dumbbell, Clock, Trash2 } from "lucide-react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import type { PanInfo } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
