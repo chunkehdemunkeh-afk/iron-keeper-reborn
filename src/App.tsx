@@ -11,7 +11,6 @@ import BottomNav from "@/components/BottomNav";
 import SplashScreen from "@/components/SplashScreen";
 import UpdateBanner from "@/components/UpdateBanner";
 import DemoBanner from "@/components/demo/DemoBanner";
-import { getLatestChangelog, hasSeenVersion, markVersionSeen } from "@/lib/changelog";
 import Index from "./pages/Index";
 import Sessions from "./pages/Sessions";
 import Train from "./pages/Train";
@@ -124,7 +123,7 @@ const AnimatedRoutes = () => {
 };
 
 function RoleBasedHome() {
-  const { isCoach, roleLoading } = useUserRole();
+  const { roleLoading } = useUserRole();
   const { user } = useAuth();
   if (roleLoading) {
     return (
@@ -178,7 +177,6 @@ const AppRoutes = () => {
 const App = () => {
   const [splashDone, setSplashDone] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const [showWhatsNew, setShowWhatsNew] = useState(false);
 
   const handleSplashComplete = useCallback(() => setSplashDone(true), []);
 
@@ -189,27 +187,7 @@ const App = () => {
     return () => window.removeEventListener("ik-updating", handler);
   }, []);
 
-  // Show "What's New" only when the latest changelog entry is genuinely unseen.
-  // Previously, any update reload (ik-just-updated flag) would force the sheet
-  // open even if the latest version had already been shown — causing the popup
-  // to repeatedly display old changes after every background update poll.
-  useEffect(() => {
-    if (!splashDone) return;
-    // Always clear the flag so it can't accumulate across reloads
-    localStorage.removeItem(STORAGE_KEYS.justUpdated);
-    const latest = getLatestChangelog();
-    if (!latest) return;
-    if (hasSeenVersion(latest.version)) return;
-    const timer = setTimeout(() => setShowWhatsNew(true), 800);
-    return () => clearTimeout(timer);
-  }, [splashDone]);
-
-  const latestEntry = getLatestChangelog();
-
-  const handleCloseWhatsNew = () => {
-    setShowWhatsNew(false);
-    if (latestEntry) markVersionSeen(latestEntry.version);
-  };
+  useEffect(() => { localStorage.removeItem(STORAGE_KEYS.justUpdated); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -222,13 +200,6 @@ const App = () => {
             <AppRoutes />
           </AuthProvider>
         </BrowserRouter>
-        {latestEntry && (
-          <WhatsNewSheet
-            open={showWhatsNew}
-            onClose={handleCloseWhatsNew}
-            entry={latestEntry}
-          />
-        )}
       </TooltipProvider>
     </QueryClientProvider>
   );
