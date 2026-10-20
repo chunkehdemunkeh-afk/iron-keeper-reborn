@@ -59,6 +59,8 @@ function makeBuilder(table: string) {
   let orderAsc = true;
   let limitN: number | null = null;
   let returnSelected = false;
+  let rangeFrom: number | null = null;
+  let rangeTo: number | null = null;
 
   const exec = async () => {
     const tableRows: any[] = store[table] || [];
