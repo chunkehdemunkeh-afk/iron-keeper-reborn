@@ -107,59 +107,6 @@ export default function RecoveryPanel() {
 
       <HRVTrendCard />
 
-      <div className="flex items-center justify-between">
-        <p className="text-[11px] text-muted-foreground">
-          Model: <span className="text-foreground font-medium capitalize">{settings.model}</span>
-          {" · "}Sleep ×{settings.sleepWeight.toFixed(2)}
-        </p>
-        <RecoverySettings />
-      </div>
-
-      <motion.div
-        ref={diagramRef}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card rounded-xl p-4"
-      >
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Activity className="h-4 w-4 text-primary" />
-            Muscle Recovery
-          </h3>
-          <div className="flex bg-muted rounded-lg p-0.5">
-            <button
-              onClick={() => setView("front")}
-              className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-colors ${
-                view === "front" ? "bg-card text-foreground" : "text-muted-foreground"
-              }`}
-            >
-              Front
-            </button>
-            <button
-              onClick={() => setView("back")}
-              className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-colors ${
-                view === "back" ? "bg-card text-foreground" : "text-muted-foreground"
-              }`}
-            >
-              Back
-            </button>
-          </div>
-        </div>
-        <BodyDiagram states={states} view={view} interactive size="lg" highlighted={highlighted} />
-        <p className="text-[10px] text-muted-foreground text-center mt-2">
-          {highlighted ? `Highlighting ${MUSCLE_LABELS[highlighted]} — tap again to clear` : "Tap a muscle for details"}
-        </p>
-
-        <div className="flex items-center justify-center gap-3 mt-3 pt-3 border-t border-border/30">
-          {(["fatigued", "workable", "recovered"] as const).map((s) => (
-            <div key={s} className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full" style={{ background: statusColor(s) }} />
-              <span className="text-[10px] text-muted-foreground">{statusLabel(s)}</span>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
