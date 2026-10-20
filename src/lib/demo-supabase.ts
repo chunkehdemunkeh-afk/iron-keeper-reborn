@@ -120,6 +120,16 @@ function makeBuilder(table: string) {
     gte(col: string, val: any) { filters.push({ type: "gte", col, val }); return builder; },
     lte(col: string, val: any) { filters.push({ type: "lte", col, val }); return builder; },
     not(col: string, op: string, val: any) { filters.push({ type: "not", col, val, op }); return builder; },
+    gt(col: string, val: any) { filters.push({ type: "gt", col, val }); return builder; },
+    lt(col: string, val: any) { filters.push({ type: "lt", col, val }); return builder; },
+    range(from: number, to: number) {
+      // PostgREST range is inclusive; emulate with offset/limit applied after
+      // order/limit in exec(). Store on the builder via closure vars.
+      rangeFrom = Math.max(0, from);
+      rangeTo = to;
+      return builder;
+    },
+    contains(col: string, val: any) { filters.push({ type: "contains", col, val }); return builder; },
     order(col: string, opts?: { ascending?: boolean }) {
       orderCol = col;
       orderAsc = opts?.ascending !== false;
