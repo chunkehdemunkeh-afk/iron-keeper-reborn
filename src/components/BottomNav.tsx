@@ -28,7 +28,7 @@ const NAV_ITEMS = [
     icon: User,
     label: "You",
     path: "/profile",
-    match: ["/profile", "/inbox", "/leaderboard", "/quests", "/duels", "/shop", "/community", "/coach"],
+    match: ["/profile"],
   },
 ];
 
