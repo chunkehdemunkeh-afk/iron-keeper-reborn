@@ -181,15 +181,6 @@ export async function saveWorkoutToCloud(workout: CompletedWorkout): Promise<voi
     }
   }
 
-  // Refresh today's strain score so the home/recovery cards reflect this workout.
-  if (String(workout.date).slice(0, 10) === new Date().toISOString().split("T")[0]) {
-    try {
-      const { recomputeTodayStrain } = await import("./biometric-queries");
-      await recomputeTodayStrain();
-    } catch (e) {
-      console.error("Strain recompute failed:", e);
-    }
-  }
 
   // Evaluate auto-progression suggestions (double-progression model).
   try {

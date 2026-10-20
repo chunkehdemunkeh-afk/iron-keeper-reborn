@@ -70,10 +70,9 @@ export default function WeekStrip() {
   const [refreshKey, setRefreshKey] = useState(0);
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const invalidateRecoveryAndStrain = useCallback(() => {
+  const invalidateLogs = useCallback(() => {
     if (!user) return;
     queryClient.invalidateQueries({ queryKey: queryKeys.activityLogs(user.id) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dailyScores(user.id) });
     queryClient.invalidateQueries({ queryKey: queryKeys.recentSets(user.id) });
     queryClient.invalidateQueries({ queryKey: queryKeys.workoutHistory(user.id) });
   }, [queryClient, user]);
@@ -178,7 +177,7 @@ export default function WeekStrip() {
       setPendingType(null);
       setShowOtherInput(false);
       setRefreshKey((k) => k + 1);
-      invalidateRecoveryAndStrain();
+      invalidateLogs();
     } else {
       toast.error("Failed to log activity");
     }
@@ -189,7 +188,7 @@ export default function WeekStrip() {
     if (success) {
       toast.success("Activity removed");
       setRefreshKey((k) => k + 1);
-      invalidateRecoveryAndStrain();
+      invalidateLogs();
     }
   };
 
@@ -199,7 +198,7 @@ export default function WeekStrip() {
       toast.success("Workout removed");
       setRefreshKey((k) => k + 1);
       setSelectedDay(null);
-      invalidateRecoveryAndStrain();
+      invalidateLogs();
     }
   };
 

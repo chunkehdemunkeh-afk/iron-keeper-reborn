@@ -6,8 +6,6 @@ export * from "./nutrition-queries";
 export * from "./photo-queries";
 export * from "./review-queries";
 export * from "./leaderboard-queries";
-export * from "./sleep-queries";
-export * from "./biometric-queries";
 export * from "./progression-queries";
 export * from "./volume-queries";
 export * from "./custom-workout-queries";

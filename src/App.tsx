@@ -29,8 +29,6 @@ import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
 import NutritionOnboarding from "./pages/NutritionOnboarding";
 import ResetPassword from "./pages/ResetPassword";
-import Recovery from "./pages/Recovery";
-import CheckInHistory from "./pages/CheckInHistory";
 import HyroxBenchmarks from "./pages/HyroxBenchmarks";
 import HalfMarathonProgram from "./pages/HalfMarathonProgram";
 import RunBenchmarks from "./pages/RunBenchmarks";
@@ -102,8 +100,6 @@ const AnimatedRoutes = () => {
         <Route path="/profile" element={<PageWrapper><ProtectedRoute><Profile /></ProtectedRoute></PageWrapper>} />
         <Route path="/exercises" element={<PageWrapper><ProtectedRoute><ExerciseLibrary /></ProtectedRoute></PageWrapper>} />
         <Route path="/body" element={<PageWrapper><ProtectedRoute><BodyMeasurements /></ProtectedRoute></PageWrapper>} />
-        <Route path="/recovery" element={<PageWrapper><ProtectedRoute><Recovery /></ProtectedRoute></PageWrapper>} />
-        <Route path="/check-ins" element={<PageWrapper><ProtectedRoute><CheckInHistory /></ProtectedRoute></PageWrapper>} />
         <Route path="/hyrox" element={<PageWrapper><ProtectedRoute><HyroxBenchmarks /></ProtectedRoute></PageWrapper>} />
         <Route path="/half-marathon" element={<PageWrapper><ProtectedRoute><HalfMarathonProgram /></ProtectedRoute></PageWrapper>} />
         <Route path="/run" element={<PageWrapper><ProtectedRoute><RunBenchmarks /></ProtectedRoute></PageWrapper>} />
