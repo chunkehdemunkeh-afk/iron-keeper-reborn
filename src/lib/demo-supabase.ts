@@ -10,7 +10,7 @@ import { supabase as realClient } from "@/integrations/supabase/client";
 import { isDemoMode } from "@/lib/demo-mode";
 import { getDemoStore, demoInsert, demoUpdate, demoDelete } from "@/lib/demo-data";
 
-type Filter = { type: "eq" | "in" | "gte" | "lte" | "not"; col: string; val: any; op?: string };
+type Filter = { type: "eq" | "in" | "gte" | "lte" | "gt" | "lt" | "not" | "contains"; col: string; val: any; op?: string };
 
 function applyFilters(rows: any[], filters: Filter[]): any[] {
   return rows.filter((row) => {
@@ -25,6 +25,15 @@ function applyFilters(rows: any[], filters: Filter[]): any[] {
           break;
         case "gte":
           if (!(v >= f.val)) return false;
+          break;
+        case "gt":
+          if (!(v > f.val)) return false;
+          break;
+        case "lt":
+          if (!(v < f.val)) return false;
+          break;
+        case "contains":
+          if (!Array.isArray(v) || !Array.isArray(f.val) || !f.val.every((x: any) => v.includes(x))) return false;
           break;
         case "lte":
           if (!(v <= f.val)) return false;
