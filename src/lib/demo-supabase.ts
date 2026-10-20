@@ -77,6 +77,7 @@ function makeBuilder(table: string) {
           });
         }
         if (limitN !== null) rows = rows.slice(0, limitN);
+        if (rangeFrom !== null && rangeTo !== null) rows = rows.slice(rangeFrom, rangeTo + 1);
         return { data: rows, error: null };
       }
 
