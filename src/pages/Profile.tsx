@@ -337,9 +337,6 @@ export default function Profile() {
                 <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
               </button>
             )}
-            {equippedTitle && (
-              <p className="text-xs font-semibold text-primary mt-0.5">{equippedTitle}</p>
-            )}
             <p className="text-xs text-muted-foreground">
               {user?.email}
             </p>
