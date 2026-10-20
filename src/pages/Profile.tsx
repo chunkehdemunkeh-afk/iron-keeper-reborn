@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchWorkoutHistory, fetchActivityLogs, fetchWeeklyBurn, mondayOfWeek, fetchLeaderboardVisibility, updateLeaderboardVisibility } from "@/lib/cloud-data";
-import { backfillStrainScores } from "@/lib/data/biometric-queries";
 import { queryKeys } from "@/lib/query-keys";
 import { useUnreadMessages } from "@/hooks/queries/useInbox";
-import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy, RefreshCw, Dumbbell, Bell, Wand2, MessageSquare } from "lucide-react";
+import { Flame, Target, LogOut, Scale, BookOpen, User, Settings2, ChevronRight, Pencil, Check, X, Camera, Loader2, Heart, Apple, Star, Activity, Trophy, Dumbbell, Bell, Wand2, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import RecoveryTips from "@/components/RecoveryTips";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getUserPreferences, computeWeeklyStreak } from "@/lib/user-preferences";
 import { WORKOUTS } from "@/lib/workout-data";
@@ -69,7 +67,6 @@ export default function Profile() {
   const [removingAvatar, setRemovingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-  const [backfilling, setBackfilling] = useState(false);
   const [xpToastMode, setXpToastModeState] = useState<XpToastMode>("toast");
 
   useEffect(() => {
