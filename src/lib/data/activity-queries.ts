@@ -60,7 +60,6 @@ export async function saveActivityLog(data: {
       calories_burned: caloriesBurned,
     });
 
-  if (!error && data.date === new Date().toISOString().split("T")[0]) {
   return !error;
 }
 
