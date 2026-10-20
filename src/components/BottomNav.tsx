@@ -2,7 +2,6 @@ import { Home, Dumbbell, UtensilsCrossed, BarChart3, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { hapticLight } from "@/lib/haptics";
-import { useUnreadMessages } from "@/hooks/queries/useInbox";
 
 /**
  * Five-tab primary navigation.
@@ -28,14 +27,13 @@ const NAV_ITEMS = [
     icon: User,
     label: "You",
     path: "/profile",
-    match: ["/profile", "/inbox", "/leaderboard", "/quests", "/duels", "/shop", "/community", "/coach"],
+    match: ["/profile"],
   },
 ];
 
 export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { data: unread } = useUnreadMessages();
 
   // Hide nav during active workout or on login
   if (location.pathname.startsWith("/workout/") || location.pathname === "/login") return null;
@@ -83,11 +81,6 @@ export default function BottomNav() {
                     isActive ? "text-primary" : "text-muted-foreground"
                   }`}
                 />
-                {itemPath === "/profile" && (unread ?? 0) > 0 && (
-                  <span className="absolute -top-0.5 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
-                    {unread}
-                  </span>
-                )}
               </div>
               <span
                 className={`text-[10px] font-semibold tracking-wide transition-colors leading-none ${

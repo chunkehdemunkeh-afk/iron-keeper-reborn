@@ -10,9 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import BottomNav from "@/components/BottomNav";
 import SplashScreen from "@/components/SplashScreen";
 import UpdateBanner from "@/components/UpdateBanner";
-import WhatsNewSheet from "@/components/WhatsNewSheet";
 import DemoBanner from "@/components/demo/DemoBanner";
-import { getLatestChangelog, hasSeenVersion, markVersionSeen } from "@/lib/changelog";
 import Index from "./pages/Index";
 import Sessions from "./pages/Sessions";
 import Train from "./pages/Train";
@@ -24,31 +22,18 @@ import History from "./pages/History";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
-import JoinCoach from "./pages/JoinCoach";
 import ExerciseLibrary from "./pages/ExerciseLibrary";
 import BodyMeasurements from "./pages/BodyMeasurements";
-import CoachDashboard from "./pages/CoachDashboard";
-import CoachAthleteDetail from "./pages/CoachAthleteDetail";
 import FoodTracker from "./pages/FoodTracker";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
 import NutritionOnboarding from "./pages/NutritionOnboarding";
 import ResetPassword from "./pages/ResetPassword";
-import Leaderboard from "./pages/Leaderboard";
 import Recovery from "./pages/Recovery";
 import CheckInHistory from "./pages/CheckInHistory";
-import Quests from "./pages/Quests";
-import Duels from "./pages/Duels";
-import Shop from "./pages/Shop";
-import Community from "./pages/Community";
 import HyroxBenchmarks from "./pages/HyroxBenchmarks";
 import HalfMarathonProgram from "./pages/HalfMarathonProgram";
 import RunBenchmarks from "./pages/RunBenchmarks";
-import Inbox from "./pages/Inbox";
-import Conversation from "./pages/Conversation";
-import LevelUpSheet from "@/components/gamification/LevelUpSheet";
-import BadgeUnlockSheet from "@/components/gamification/BadgeUnlockSheet";
-import SeasonFinaleSheet from "@/components/gamification/SeasonFinaleSheet";
 import { isOnboardingComplete } from "@/lib/user-preferences";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -105,10 +90,6 @@ const AnimatedRoutes = () => {
         <Route path="/onboarding" element={<PageWrapper><ProtectedRoute><Onboarding /></ProtectedRoute></PageWrapper>} />
         <Route path="/onboarding/nutrition" element={<PageWrapper><ProtectedRoute><NutritionOnboarding /></ProtectedRoute></PageWrapper>} />
         <Route path="/" element={<PageWrapper><ProtectedRoute><RoleBasedHome /></ProtectedRoute></PageWrapper>} />
-        <Route path="/coach" element={<PageWrapper><ProtectedRoute><CoachDashboard /></ProtectedRoute></PageWrapper>} />
-        <Route path="/coach/athlete/:userId" element={<PageWrapper><ProtectedRoute><CoachAthleteDetail /></ProtectedRoute></PageWrapper>} />
-        <Route path="/inbox" element={<PageWrapper><ProtectedRoute><Inbox /></ProtectedRoute></PageWrapper>} />
-        <Route path="/inbox/:partnerId" element={<PageWrapper><ProtectedRoute><Conversation /></ProtectedRoute></PageWrapper>} />
         <Route path="/train" element={<PageWrapper><ProtectedRoute><Train /></ProtectedRoute></PageWrapper>} />
         <Route path="/sessions" element={<PageWrapper><ProtectedRoute><Sessions /></ProtectedRoute></PageWrapper>} />
 
@@ -121,17 +102,19 @@ const AnimatedRoutes = () => {
         <Route path="/profile" element={<PageWrapper><ProtectedRoute><Profile /></ProtectedRoute></PageWrapper>} />
         <Route path="/exercises" element={<PageWrapper><ProtectedRoute><ExerciseLibrary /></ProtectedRoute></PageWrapper>} />
         <Route path="/body" element={<PageWrapper><ProtectedRoute><BodyMeasurements /></ProtectedRoute></PageWrapper>} />
-        <Route path="/leaderboard" element={<PageWrapper><ProtectedRoute><Leaderboard /></ProtectedRoute></PageWrapper>} />
         <Route path="/recovery" element={<PageWrapper><ProtectedRoute><Recovery /></ProtectedRoute></PageWrapper>} />
         <Route path="/check-ins" element={<PageWrapper><ProtectedRoute><CheckInHistory /></ProtectedRoute></PageWrapper>} />
-        <Route path="/quests" element={<PageWrapper><ProtectedRoute><Quests /></ProtectedRoute></PageWrapper>} />
-        <Route path="/duels" element={<PageWrapper><ProtectedRoute><Duels /></ProtectedRoute></PageWrapper>} />
-        <Route path="/shop" element={<PageWrapper><ProtectedRoute><Shop /></ProtectedRoute></PageWrapper>} />
-        <Route path="/community" element={<PageWrapper><ProtectedRoute><Community /></ProtectedRoute></PageWrapper>} />
         <Route path="/hyrox" element={<PageWrapper><ProtectedRoute><HyroxBenchmarks /></ProtectedRoute></PageWrapper>} />
         <Route path="/half-marathon" element={<PageWrapper><ProtectedRoute><HalfMarathonProgram /></ProtectedRoute></PageWrapper>} />
         <Route path="/run" element={<PageWrapper><ProtectedRoute><RunBenchmarks /></ProtectedRoute></PageWrapper>} />
-        <Route path="/join/:code" element={<PageWrapper><JoinCoach /></PageWrapper>} />
+        <Route path="/coach/*" element={<Navigate to="/" replace />} />
+        <Route path="/inbox/*" element={<Navigate to="/" replace />} />
+        <Route path="/leaderboard" element={<Navigate to="/" replace />} />
+        <Route path="/quests" element={<Navigate to="/" replace />} />
+        <Route path="/duels" element={<Navigate to="/" replace />} />
+        <Route path="/shop" element={<Navigate to="/" replace />} />
+        <Route path="/community" element={<Navigate to="/" replace />} />
+        <Route path="/join/:code" element={<Navigate to="/" replace />} />
         <Route path="/reset-password" element={<PageWrapper><ResetPassword /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>
@@ -140,7 +123,7 @@ const AnimatedRoutes = () => {
 };
 
 function RoleBasedHome() {
-  const { isCoach, roleLoading } = useUserRole();
+  const { roleLoading } = useUserRole();
   const { user } = useAuth();
   if (roleLoading) {
     return (
@@ -149,7 +132,6 @@ function RoleBasedHome() {
       </div>
     );
   }
-  if (isCoach) return <Navigate to="/coach" replace />;
   if (user && !isOnboardingComplete(user.id)) return <Navigate to="/onboarding" replace />;
   return <Index />;
 }
@@ -188,9 +170,6 @@ const AppRoutes = () => {
         <AnimatedRoutes />
       </ErrorBoundary>
       {user && <BottomNav />}
-      {user && <LevelUpSheet />}
-      {user && <BadgeUnlockSheet />}
-      {user && <SeasonFinaleSheet />}
     </>
   );
 };
@@ -198,7 +177,6 @@ const AppRoutes = () => {
 const App = () => {
   const [splashDone, setSplashDone] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const [showWhatsNew, setShowWhatsNew] = useState(false);
 
   const handleSplashComplete = useCallback(() => setSplashDone(true), []);
 
@@ -209,27 +187,7 @@ const App = () => {
     return () => window.removeEventListener("ik-updating", handler);
   }, []);
 
-  // Show "What's New" only when the latest changelog entry is genuinely unseen.
-  // Previously, any update reload (ik-just-updated flag) would force the sheet
-  // open even if the latest version had already been shown — causing the popup
-  // to repeatedly display old changes after every background update poll.
-  useEffect(() => {
-    if (!splashDone) return;
-    // Always clear the flag so it can't accumulate across reloads
-    localStorage.removeItem(STORAGE_KEYS.justUpdated);
-    const latest = getLatestChangelog();
-    if (!latest) return;
-    if (hasSeenVersion(latest.version)) return;
-    const timer = setTimeout(() => setShowWhatsNew(true), 800);
-    return () => clearTimeout(timer);
-  }, [splashDone]);
-
-  const latestEntry = getLatestChangelog();
-
-  const handleCloseWhatsNew = () => {
-    setShowWhatsNew(false);
-    if (latestEntry) markVersionSeen(latestEntry.version);
-  };
+  useEffect(() => { localStorage.removeItem(STORAGE_KEYS.justUpdated); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -242,13 +200,6 @@ const App = () => {
             <AppRoutes />
           </AuthProvider>
         </BrowserRouter>
-        {latestEntry && (
-          <WhatsNewSheet
-            open={showWhatsNew}
-            onClose={handleCloseWhatsNew}
-            entry={latestEntry}
-          />
-        )}
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -25,7 +25,6 @@ import { useDailyBiometrics } from "@/hooks/queries/useDailyBiometrics";
 import { useRecentSets } from "@/hooks/queries/useRecentSets";
 import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
 import { useWorkoutHistory } from "@/hooks/queries/useWorkoutHistory";
-import BodyDiagram from "@/components/recovery/BodyDiagram";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import BiometricCheckIn from "@/components/biometrics/BiometricCheckIn";
 import RecoveryDetailSheet from "@/components/biometrics/RecoveryDetailSheet";
@@ -548,56 +547,11 @@ export default function HomeCombinedRecoveryCard({ date }: Props) {
           )}
         </AnimatePresence>
 
-        {/* Muscle recovery — always shown */}
-        <button
-          type="button"
-          onClick={() => navigate("/recovery")}
-          className="w-full text-left active:scale-[0.99] transition-transform"
-        >
-          <div className="flex items-center gap-4">
-            <div className="flex-shrink-0">
-              <BodyDiagram states={states} view="front" interactive={false} size="sm" />
-            </div>
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="flex items-center gap-2 text-xs">
-                <span className="inline-block h-2 w-2 rounded-full" style={{ background: statusColor("recovered") }} />
-                <AnimatedNumber value={counts.recovered} className="text-foreground font-semibold tabular-nums" />
-                <span className="text-muted-foreground">recovered</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="inline-block h-2 w-2 rounded-full" style={{ background: statusColor("workable") }} />
-                <AnimatedNumber value={counts.workable} className="text-foreground font-semibold tabular-nums" />
-                <span className="text-muted-foreground">workable</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="inline-block h-2 w-2 rounded-full" style={{ background: statusColor("fatigued") }} />
-                <AnimatedNumber value={counts.fatigued} className="text-foreground font-semibold tabular-nums" />
-                <span className="text-muted-foreground">fatigued</span>
-              </div>
-
-              <AnimatePresence mode="wait">
-                {topFatigued.length > 0 && (
-                  <motion.p
-                    key={topFatigued.map((s) => s.region).join(",")}
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.25 }}
-                    className="text-[10px] text-muted-foreground pt-1 border-t border-border/30 mt-2"
-                  >
-                    Resting: {topFatigued.map((s) => MUSCLE_LABELS[s.region]).join(", ")}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {!hasData && (
-            <p className="text-xs text-primary mt-3 font-medium">
-              Log Samsung Health metrics for your recovery score →
-            </p>
-          )}
-        </button>
+        {!hasData && (
+          <p className="text-xs text-primary font-medium">
+            Log Samsung Health metrics for your recovery score →
+          </p>
+        )}
 
         {/* Open Recovery deep-link */}
         <button

@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import { hapticSuccess } from "@/lib/haptics";
 import HelpButton from "@/components/demo/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
-import BadgeShelf from "@/components/gamification/BadgeShelf";
 import { TierBadge } from "@/components/gamification/TierBadge";
 import { useUserProgress } from "@/hooks/queries/useUserProgress";
 import { useCurrentSeason, daysRemaining } from "@/hooks/queries/useCurrentSeason";
@@ -337,9 +336,6 @@ export default function Profile() {
                 <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
               </button>
             )}
-            {equippedTitle && (
-              <p className="text-xs font-semibold text-primary mt-0.5">{equippedTitle}</p>
-            )}
             <p className="text-xs text-muted-foreground">
               {user?.email}
             </p>
@@ -391,77 +387,8 @@ export default function Profile() {
           </div>
         </motion.div>
 
-        {/* Level + Tier hero */}
-        <ProfileLevelTier />
-
-        {/* Badge shelf */}
-        <div className="glass-card rounded-xl p-4">
-          <BadgeShelf variant="compact" />
-        </div>
-
-        {/* Compete — every gamification surface in one place */}
-        <div>
-          <SectionHeader title="Compete" />
-          <div className="space-y-2">
-            <NavTile
-              index={0}
-              accent
-              icon={Trophy}
-              label="Leaderboards"
-              description="Ranks, 1RM and volume boards"
-              onClick={() => navigate("/leaderboard")}
-            />
-            <NavTile
-              index={1}
-              icon={ListChecks}
-              label="Quests"
-              description="Daily and weekly challenges"
-              onClick={() => navigate("/quests")}
-            />
-            <NavTile
-              index={2}
-              icon={Swords}
-              label="Duels"
-              description="Head-to-head challenges"
-              onClick={() => navigate("/duels")}
-            />
-            <NavTile
-              index={3}
-              icon={ShoppingBag}
-              label="Shop"
-              description="Spend coins on cosmetics"
-              onClick={() => navigate("/shop")}
-            />
-            <NavTile
-              index={4}
-              icon={Users2}
-              label="Community & clans"
-              description="Server goals and your clan"
-              onClick={() => navigate("/community")}
-            />
-          </div>
-        </div>
-
-
         {/* Quick links */}
         <div className="grid grid-cols-2 gap-2">
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate("/inbox")}
-            className="glass-card rounded-xl p-4 flex items-center gap-3 text-left hover:ring-1 hover:ring-primary/30 transition-all col-span-2"
-          >
-            <MessageSquare className="h-5 w-5 text-primary" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground">Inbox</p>
-              <p className="text-[10px] text-muted-foreground">Message your coach or athletes</p>
-            </div>
-            {(unreadMessages ?? 0) > 0 && (
-              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
-                {unreadMessages}
-              </span>
-            )}
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </motion.button>
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => navigate("/sessions")}
@@ -655,55 +582,6 @@ export default function Profile() {
           <ChevronRight className="h-4 w-4 text-primary flex-shrink-0" />
         </button>
 
-        {/* Coaching */}
-        <CoachLinkCard />
-
-        {/* Leaderboard privacy */}
-        <div className="glass-card rounded-xl p-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 flex-shrink-0">
-              <Trophy className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">Show me on leaderboards</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Others can see your rank and stats</p>
-            </div>
-          </div>
-          <button
-            onClick={() => handleLeaderboardToggle(!leaderboardVisible)}
-            className={`relative h-6 w-11 rounded-full transition-colors flex-shrink-0 ${
-              leaderboardVisible ? "bg-primary" : "bg-muted"
-            }`}
-            aria-checked={leaderboardVisible}
-            role="switch"
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                leaderboardVisible ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </button>
-        </div>
-
-        {/* XP toast mode */}
-        <div className="glass-card rounded-xl p-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 flex-shrink-0">
-              <Bell className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">XP toasts</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Show a summary toast when you earn XP and coins</p>
-            </div>
-          </div>
-          <Switch
-            id="xp-toasts"
-            checked={xpToastMode === "toast"}
-            onCheckedChange={handleXpToastToggle}
-            aria-label="Toggle XP toasts"
-          />
-        </div>
-
         {/* Sign out */}
         <motion.button
           whileTap={{ scale: 0.97 }}
@@ -723,177 +601,3 @@ export default function Profile() {
   );
 }
 
-function CoachLinkCard() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { isCoach, roleLoading } = useUserRole();
-  const [becoming, setBecoming] = useState(false);
-  const [codeInput, setCodeInput] = useState("");
-  const [joining, setJoining] = useState(false);
-  const [myCoach, setMyCoach] = useState<{ coachUserId: string; displayName: string | null } | null>(null);
-
-  useEffect(() => {
-    if (!isCoach && !roleLoading) {
-      fetchMyCoach().then(setMyCoach).catch(() => {});
-    }
-  }, [isCoach, roleLoading]);
-
-  const handleBecomeCoach = async () => {
-    setBecoming(true);
-    const { error } = await becomeCoach();
-    setBecoming(false);
-    if (error) {
-      toast.error(error);
-      return;
-    }
-    hapticSuccess();
-    toast.success("You're now a coach");
-    navigate("/coach");
-  };
-
-  const handleJoinCoach = async () => {
-    if (!codeInput.trim()) return;
-    setJoining(true);
-    const { coachName, error } = await joinCoachByCode(codeInput.trim());
-    setJoining(false);
-    if (error) {
-      toast.error(error === "Invalid invite code" ? "That code doesn't match a coach" : error);
-      return;
-    }
-    hapticSuccess();
-    toast.success(`Joined ${coachName}'s roster`);
-    setCodeInput("");
-    fetchMyCoach().then(setMyCoach).catch(() => {});
-  };
-
-  if (roleLoading) return null;
-
-  return (
-    <div className="glass-card rounded-xl p-4 space-y-3">
-      <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 flex-shrink-0">
-          <Users2 className="h-4 w-4 text-primary" />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-foreground">Coaching</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            {isCoach ? "Manage your athlete roster" : "Join a coach or become one yourself"}
-          </p>
-        </div>
-      </div>
-
-      {isCoach ? (
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={() => navigate("/coach")}
-          className="w-full flex items-center justify-between rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 text-left hover:bg-primary/15 transition-colors"
-        >
-          <p className="text-sm font-semibold text-foreground">Open Coach Dashboard</p>
-          <ChevronRight className="h-4 w-4 text-primary flex-shrink-0" />
-        </motion.button>
-      ) : myCoach ? (
-        <div className="space-y-2">
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate(`/inbox/${myCoach.coachUserId}`)}
-            className="w-full flex items-center justify-between rounded-xl bg-primary/10 border border-primary/20 px-4 py-3 text-left hover:bg-primary/15 transition-colors"
-          >
-            <p className="text-sm font-semibold text-foreground">Message {myCoach.displayName || "your coach"}</p>
-            <ChevronRight className="h-4 w-4 text-primary flex-shrink-0" />
-          </motion.button>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <div className="flex gap-2">
-            <input
-              value={codeInput}
-              onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
-              placeholder="Enter coach's invite code"
-              maxLength={6}
-              className="flex-1 min-w-0 rounded-lg bg-muted/40 border border-border/40 px-3 py-2 text-sm uppercase tracking-widest"
-            />
-            <button
-              onClick={handleJoinCoach}
-              disabled={joining || !codeInput.trim()}
-              className="shrink-0 rounded-lg bg-primary text-primary-foreground px-3 py-2 text-xs font-semibold disabled:opacity-50"
-            >
-              Join
-            </button>
-          </div>
-          <button
-            onClick={handleBecomeCoach}
-            disabled={becoming}
-            className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors py-1 disabled:opacity-50"
-          >
-            {becoming ? "Setting up…" : "I'm a coach — set up my own roster"}
-          </button>
-        </div>
-      )}
-
-    </div>
-  );
-}
-
-function ProfileLevelTier() {
-  const { data: progress } = useUserProgress();
-  const { data: season } = useCurrentSeason();
-  if (!progress) return null;
-  const rp = progress.seasonRp;
-  const tier = tierFromRp(rp);
-  const next = nextTier(rp);
-  const pct = tierProgress(rp) * 100;
-  const days = daysRemaining(season);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`rounded-2xl bg-gradient-to-br ${tier.gradient} ring-1 ring-border/40 p-4 space-y-4`}
-    >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-[10px] uppercase tracking-widest text-primary font-semibold">Level</p>
-          <p className="font-display text-4xl font-bold leading-none mt-1">{progress.level}</p>
-        </div>
-        <TierBadge rp={rp} />
-      </div>
-
-      <div>
-        <div className="flex justify-between text-[11px] text-muted-foreground tabular-nums mb-1.5">
-          <span>{progress.levelProgress.current.toLocaleString()} / {progress.levelProgress.needed.toLocaleString()} XP</span>
-          <span>L{progress.level + 1}</span>
-        </div>
-        <div className="h-2 bg-secondary rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${progress.levelProgress.pct}%` }}
-            transition={{ duration: 0.6 }}
-            className="h-full bg-gradient-to-r from-primary to-primary/70"
-          />
-        </div>
-      </div>
-
-      <div className="pt-3 border-t border-border/40">
-        <div className="flex items-baseline justify-between mb-1.5">
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-            Season {season?.number ?? 1} · {rp.toLocaleString()} RP
-          </p>
-          <p className="text-[10px] text-muted-foreground">{days}d left</p>
-        </div>
-        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
-            transition={{ duration: 0.6 }}
-            className="h-full bg-gradient-to-r from-primary/70 to-primary/40"
-          />
-        </div>
-        {next && (
-          <p className="text-[10px] text-muted-foreground mt-1.5">
-            {(next.minRp - rp).toLocaleString()} RP to {next.label}
-          </p>
-        )}
-      </div>
-    </motion.div>
-  );
-}

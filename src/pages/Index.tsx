@@ -4,11 +4,9 @@ import { useAuth } from "@/hooks/useAuth";
 import WeekStrip from "@/components/WeekStrip";
 import NextSessionCard from "@/components/NextSessionCard";
 import StatsBar from "@/components/StatsBar";
-import DailyStretchCard from "@/components/DailyStretchCard";
 import HomeDailySummary from "@/components/HomeDailySummary";
 import HomeWeightTracker from "@/components/HomeWeightTracker";
 import HomeCompleteDay from "@/components/HomeCompleteDay";
-import XpBar from "@/components/gamification/XpBar";
 
 import HomeCombinedRecoveryCard from "@/components/HomeCombinedRecoveryCard";
 import MorningCheckInPrompt from "@/components/biometrics/MorningCheckInPrompt";
@@ -24,10 +22,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import HelpButton from "@/components/demo/HelpButton";
-import WeeklyReviewPrompt from "@/components/weekly/WeeklyReviewPrompt";
-import MondayBanner from "@/components/weekly/MondayBanner";
-import VolumeSummaryBanner from "@/components/weekly/VolumeSummaryBanner";
-import DeloadRecommendationBanner from "@/components/home/DeloadRecommendationBanner";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
@@ -120,14 +114,6 @@ const Index = () => {
           </div>
           <HelpButton />
         </motion.div>
-
-        {/* Level / streak — single compact strip */}
-        <XpBar />
-
-        {/* Contextual prompts — each only renders when it actually applies */}
-        {isCurrentDay && <DeloadRecommendationBanner />}
-        {isCurrentDay && <MondayBanner />}
-        {isCurrentDay && <VolumeSummaryBanner />}
 
         {/* Today's training */}
         {isCurrentDay && (
@@ -232,8 +218,6 @@ const Index = () => {
                   {isCurrentDay && <HomeSessionCard />}
 
                   <HomeWeightTracker date={dateStr} />
-
-                  {isCurrentDay && !noWorkoutMode && <DailyStretchCard />}
                 </div>
               </motion.div>
             )}
@@ -243,9 +227,6 @@ const Index = () => {
 
       {/* One-time post-onboarding tip drawer */}
       <PostOnboardingTip />
-
-      {/* Sunday weekly review prompt */}
-      <WeeklyReviewPrompt />
 
       {/* Morning biometric check-in prompt */}
       <MorningCheckInPrompt />

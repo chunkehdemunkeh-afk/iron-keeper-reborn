@@ -109,35 +109,8 @@ function queueToast(userId: string, source: string, xp: number, coins: number) {
  * Award XP and show user feedback.
  * Failures are swallowed — gamification must never block a successful log.
  */
-export async function awardXpAndNotify(input: AwardXpInput): Promise<AwardXpResult | null> {
-  try {
-    const result = await awardXp(input);
-    if (result.skipped) return result;
-
-    // Invalidate progress queries so the XP bar updates
-    queryClient.invalidateQueries({ queryKey: ["user-progress"] });
-    queryClient.invalidateQueries({ queryKey: ["user-badges"] });
-    queryClient.invalidateQueries({ queryKey: ["xp-events"] });
-
-    // Queue routine XP/coins toast for batching; avoid duplicating badge/level sheets.
-    if (result.xp > 0 || result.coins > 0) {
-      queueToast(result.userId, input.source, result.xp, result.coins);
-      batchHaptic = true;
-    }
-
-    // Level up sheet (milestone — keep as a sheet, not a toast)
-    if (result.leveledUp) {
-      pendingLevelUp?.(result);
-    }
-
-    // Badge unlock sheet (milestone — keep as a sheet; skip per-badge toasts)
-    if (result.unlockedBadges.length > 0) {
-      pendingBadgeUnlock?.(result);
-    }
-
-    return result;
-  } catch (e) {
-    console.error("awardXpAndNotify failed:", e);
-    return null;
-  }
+// XP, levels and reward pop-ups were intentionally removed from the app.
+// Kept as a no-op so existing call sites stay harmless.
+export async function awardXpAndNotify(_input: AwardXpInput): Promise<AwardXpResult | null> {
+  return null;
 }
