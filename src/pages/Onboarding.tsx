@@ -45,7 +45,7 @@ export default function Onboarding() {
 
   const pendingCoachCode = useState(() => readPendingCoachCode() ?? "")[0];
   // Coach linking happens before the programme wizard (new signups only).
-  const [coachStepDone, setCoachStepDone] = useState(fromProfile);
+  const [coachStepDone, setCoachStepDone] = useState(true);
 
   const [step, setStep] = useState(0); // 0=days, 1=split, 2=custom, 3=summary
   const [days, setDays] = useState<number | null>(null);

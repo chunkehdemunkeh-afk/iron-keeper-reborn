@@ -6,14 +6,13 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import EmailAuthForm from "@/components/auth/EmailAuthForm";
 import { useAuth } from "@/hooks/useAuth";
-import AccountTypeSelector from "@/components/auth/AccountTypeSelector";
 import { useState } from "react";
 import { setSignupIntent, type AccountType } from "@/lib/signup-intent";
 
 export default function Login() {
   const navigate = useNavigate();
   const { enterDemoSession } = useAuth();
-  const [accountType, setAccountType] = useState<AccountType>("athlete");
+  const [accountType] = useState<AccountType>("athlete");
 
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     // Applied after the redirect only when the account is brand new.
@@ -94,16 +93,6 @@ export default function Login() {
 
         {/* CTA */}
         <div className="w-full space-y-4 pt-2">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.65, duration: 0.4 }}
-          >
-            <AccountTypeSelector value={accountType} onChange={setAccountType} />
-            <p className="text-[10px] text-muted-foreground mt-2 text-left">
-              Only applies to new accounts — existing accounts keep their current role.
-            </p>
-          </motion.div>
 
           <motion.button
             initial={{ opacity: 0, y: 10 }}
