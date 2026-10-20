@@ -81,20 +81,6 @@ export default function Profile() {
     if (user?.id) setXpToastMode(user.id, mode);
   };
 
-  const handleBackfill = async () => {
-    setBackfilling(true);
-    try {
-      const days = await backfillStrainScores(30);
-      queryClient.invalidateQueries({ queryKey: queryKeys.dailyScores(user!.id) });
-      hapticSuccess();
-      toast.success(`Recomputed strain for ${days} day${days === 1 ? "" : "s"}`);
-    } catch (e) {
-      console.error(e);
-      toast.error("Backfill failed");
-    } finally {
-      setBackfilling(false);
-    }
-  };
 
   const startEditName = () => {
     setNameInput(profile?.display_name || "");
