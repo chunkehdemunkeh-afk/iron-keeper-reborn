@@ -10,7 +10,7 @@ import { supabase as realClient } from "@/integrations/supabase/client";
 import { isDemoMode } from "@/lib/demo-mode";
 import { getDemoStore, demoInsert, demoUpdate, demoDelete } from "@/lib/demo-data";
 
-type Filter = { type: "eq" | "in" | "gte" | "lte" | "not"; col: string; val: any; op?: string };
+type Filter = { type: "eq" | "in" | "gte" | "lte" | "gt" | "lt" | "not" | "contains"; col: string; val: any; op?: string };
 
 function applyFilters(rows: any[], filters: Filter[]): any[] {
   return rows.filter((row) => {
@@ -25,6 +25,15 @@ function applyFilters(rows: any[], filters: Filter[]): any[] {
           break;
         case "gte":
           if (!(v >= f.val)) return false;
+          break;
+        case "gt":
+          if (!(v > f.val)) return false;
+          break;
+        case "lt":
+          if (!(v < f.val)) return false;
+          break;
+        case "contains":
+          if (!Array.isArray(v) || !Array.isArray(f.val) || !f.val.every((x: any) => v.includes(x))) return false;
           break;
         case "lte":
           if (!(v <= f.val)) return false;
@@ -50,6 +59,8 @@ function makeBuilder(table: string) {
   let orderAsc = true;
   let limitN: number | null = null;
   let returnSelected = false;
+  let rangeFrom: number | null = null;
+  let rangeTo: number | null = null;
 
   const exec = async () => {
     const tableRows: any[] = store[table] || [];
@@ -66,6 +77,7 @@ function makeBuilder(table: string) {
           });
         }
         if (limitN !== null) rows = rows.slice(0, limitN);
+        if (rangeFrom !== null && rangeTo !== null) rows = rows.slice(rangeFrom, rangeTo + 1);
         return { data: rows, error: null };
       }
 
@@ -120,6 +132,16 @@ function makeBuilder(table: string) {
     gte(col: string, val: any) { filters.push({ type: "gte", col, val }); return builder; },
     lte(col: string, val: any) { filters.push({ type: "lte", col, val }); return builder; },
     not(col: string, op: string, val: any) { filters.push({ type: "not", col, val, op }); return builder; },
+    gt(col: string, val: any) { filters.push({ type: "gt", col, val }); return builder; },
+    lt(col: string, val: any) { filters.push({ type: "lt", col, val }); return builder; },
+    range(from: number, to: number) {
+      // PostgREST range is inclusive; emulate with offset/limit applied after
+      // order/limit in exec(). Store on the builder via closure vars.
+      rangeFrom = Math.max(0, from);
+      rangeTo = to;
+      return builder;
+    },
+    contains(col: string, val: any) { filters.push({ type: "contains", col, val }); return builder; },
     order(col: string, opts?: { ascending?: boolean }) {
       orderCol = col;
       orderAsc = opts?.ascending !== false;
