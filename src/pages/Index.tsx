@@ -8,8 +8,6 @@ import HomeDailySummary from "@/components/HomeDailySummary";
 import HomeWeightTracker from "@/components/HomeWeightTracker";
 import HomeCompleteDay from "@/components/HomeCompleteDay";
 
-import HomeCombinedRecoveryCard from "@/components/HomeCombinedRecoveryCard";
-import MorningCheckInPrompt from "@/components/biometrics/MorningCheckInPrompt";
 import { isGKSplit, isNoWorkoutMode, getUserPreferences } from "@/lib/user-preferences";
 import HyroxProgramCard from "@/components/HyroxProgramCard";
 import HalfMarathonProgramCard from "@/components/HalfMarathonProgramCard";
@@ -171,8 +169,6 @@ const Index = () => {
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className="space-y-5"
           >
-            {/* Readiness: biometric scores + muscle diagram */}
-            {isCurrentDay && <HomeCombinedRecoveryCard date={dateStr} />}
 
             {/* Daily nutrition & water summary */}
             <HomeDailySummary date={dateStr} />
@@ -228,8 +224,6 @@ const Index = () => {
       {/* One-time post-onboarding tip drawer */}
       <PostOnboardingTip />
 
-      {/* Morning biometric check-in prompt */}
-      <MorningCheckInPrompt />
     </div>
   );
 };

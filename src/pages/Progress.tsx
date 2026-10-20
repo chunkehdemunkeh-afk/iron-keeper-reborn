@@ -7,9 +7,7 @@ import { BarChart3, Trophy, Calendar, TrendingUp, Dumbbell, Clock, Trash2, Moon 
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import type { PanInfo } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import RecoveryPanel from "@/components/recovery/RecoveryPanel";
-import RecoveryTips from "@/components/RecoveryTips";
+import { useSearchParams } from "react-router-dom";
 
 import { useWorkoutHistory } from "@/hooks/queries/useWorkoutHistory";
 import { usePersonalRecords } from "@/hooks/queries/usePersonalRecords";
@@ -21,7 +19,6 @@ import {
   BarChart, Bar, CartesianGrid,
 } from "recharts";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
-import { getUserPreferences } from "@/lib/user-preferences";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import PhotosTab from "@/components/progress/PhotosTab";
@@ -78,11 +75,10 @@ function PRSwipeRow({ exId, pr, onDelete }: { exId: string; pr: any; onDelete: (
 export default function Progress() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const tab = (tabParam === "photos" || tabParam === "recovery") ? tabParam : "stats";
+  const tab = tabParam === "photos" ? "photos" : "stats";
 
 
   const { data: history = [], isLoading: historyLoading } = useWorkoutHistory();
@@ -170,7 +166,6 @@ export default function Progress() {
           }}
           options={[
             { value: "stats", label: "Stats" },
-            { value: "recovery", label: "Recovery" },
             { value: "photos", label: "Photos" },
           ]}
           layoutId="progress-tab-pill"
@@ -181,26 +176,6 @@ export default function Progress() {
             <PhotosTab />
           </div>
         )}
-
-        {tab === "recovery" && (
-          <div className="mt-4 space-y-5">
-            <RecoveryPanel />
-            {getUserPreferences(user.id)?.splitId !== "none" && (
-              <RecoveryTips splitId={getUserPreferences(user.id)?.splitId} />
-            )}
-            <button
-              onClick={() => navigate("/check-ins")}
-              className="w-full glass-card rounded-2xl p-3.5 flex items-center justify-between text-left transition-transform active:scale-[0.99]"
-            >
-              <div>
-                <p className="font-display text-sm font-bold">Check-in history</p>
-                <p className="text-xs text-muted-foreground">Past readiness and biometric check-ins</p>
-              </div>
-              <Moon className="h-4 w-4 text-muted-foreground" />
-            </button>
-          </div>
-        )}
-
 
         {tab === "stats" && (
           <div className="space-y-5 mt-4">

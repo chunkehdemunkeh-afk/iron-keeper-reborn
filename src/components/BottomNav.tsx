@@ -21,7 +21,7 @@ const NAV_ITEMS = [
     icon: BarChart3,
     label: "Progress",
     path: "/progress",
-    match: ["/progress", "/recovery", "/check-ins", "/history"],
+    match: ["/progress", "/history"],
   },
   {
     icon: User,

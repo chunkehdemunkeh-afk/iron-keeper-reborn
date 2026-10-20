@@ -61,14 +61,6 @@ export async function saveActivityLog(data: {
     });
 
   if (!error && data.date === new Date().toISOString().split("T")[0]) {
-    try {
-      const { recomputeTodayStrain } = await import("./biometric-queries");
-      await recomputeTodayStrain();
-    } catch (e) {
-      console.error("Strain recompute failed:", e);
-    }
-  }
-
   return !error;
 }
 
