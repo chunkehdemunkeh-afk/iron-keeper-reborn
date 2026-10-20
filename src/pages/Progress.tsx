@@ -203,7 +203,6 @@ export default function Progress() {
             {/* Weekly Energy (kcal burned) */}
             <WeeklyEnergyCard />
 
-            {/* Biometric trends moved to /recovery */}
 
             {/* Volume over time chart */}
             {volumeData.length > 0 && (

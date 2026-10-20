@@ -31,7 +31,7 @@ export default function Login() {
 
   const features = [
     { icon: Dumbbell, title: "Smart Programming", desc: "PPL, Upper/Lower, 5/3/1 and more" },
-    { icon: Activity, title: "Recovery Intelligence", desc: "Strain, sleep & readiness scoring" },
+    { icon: Activity, title: "Race Programmes", desc: "Half marathon & Hyrox training built in" },
     { icon: TrendingUp, title: "Track Every Lift", desc: "PRs, volume & strength standards" },
   ];
 
