@@ -1,10 +1,9 @@
 import { resolveExerciseName } from "@/lib/exercise-names";
-import { useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchVolumeData, deletePersonalRecord, bestOneRmForLift } from "@/lib/cloud-data";
+import { fetchVolumeData, deletePersonalRecord } from "@/lib/cloud-data";
 import { queryKeys } from "@/lib/query-keys";
 import { WORKOUTS } from "@/lib/workout-data";
-import { BarChart3, Trophy, Calendar, TrendingUp, Dumbbell, Clock, Trash2, Activity, Moon } from "lucide-react";
+import { BarChart3, Trophy, Calendar, TrendingUp, Dumbbell, Clock, Trash2, Moon } from "lucide-react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import type { PanInfo } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,10 +12,7 @@ import RecoveryPanel from "@/components/recovery/RecoveryPanel";
 import RecoveryTips from "@/components/RecoveryTips";
 
 import { useWorkoutHistory } from "@/hooks/queries/useWorkoutHistory";
-import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
-import { useRecentSets } from "@/hooks/queries/useRecentSets";
 import { usePersonalRecords } from "@/hooks/queries/usePersonalRecords";
-import { useStrengthProfile } from "@/hooks/queries/useStrengthProfile";
 import DailyReviewChart from "@/components/DailyReviewChart";
 import PRTrendChart from "@/components/PRTrendChart";
 import HelpButton from "@/components/demo/HelpButton";
@@ -25,31 +21,12 @@ import {
   BarChart, Bar, CartesianGrid,
 } from "recharts";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
-import BodyDiagram, { viewForMuscle } from "@/components/recovery/BodyDiagram";
-import RecoverySettings from "@/components/recovery/RecoverySettings";
-import { computeMuscleRecovery, statusColor, statusLabel } from "@/lib/recovery";
-import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
 import { getUserPreferences } from "@/lib/user-preferences";
-import { useRecoverySettings } from "@/hooks/useRecoverySettings";
-import AnimatedNumber from "@/components/AnimatedNumber";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useState } from "react";
 import PhotosTab from "@/components/progress/PhotosTab";
 import StrengthLevelCard from "@/components/progress/StrengthLevelCard";
 import WeeklyEnergyCard from "@/components/WeeklyEnergyCard";
-import HRVTrendCard from "@/components/biometrics/HRVTrendCard";
-import RecoveryDashboard from "@/components/biometrics/RecoveryDashboard";
-import {
-  RATED_LIFTS,
-  TIER_COLORS,
-  TIER_SHORT_LABELS,
-  epley1RM,
-  getStrengthRating,
-  inferLiftId,
-  isBilateralDumbbell,
-  type StrengthRating,
-} from "@/lib/strength-standards";
 
 function PRSwipeRow({ exId, pr, onDelete }: { exId: string; pr: any; onDelete: () => void }) {
   const x = useMotionValue(0);
