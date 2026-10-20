@@ -391,77 +391,8 @@ export default function Profile() {
           </div>
         </motion.div>
 
-        {/* Level + Tier hero */}
-        <ProfileLevelTier />
-
-        {/* Badge shelf */}
-        <div className="glass-card rounded-xl p-4">
-          <BadgeShelf variant="compact" />
-        </div>
-
-        {/* Compete — every gamification surface in one place */}
-        <div>
-          <SectionHeader title="Compete" />
-          <div className="space-y-2">
-            <NavTile
-              index={0}
-              accent
-              icon={Trophy}
-              label="Leaderboards"
-              description="Ranks, 1RM and volume boards"
-              onClick={() => navigate("/leaderboard")}
-            />
-            <NavTile
-              index={1}
-              icon={ListChecks}
-              label="Quests"
-              description="Daily and weekly challenges"
-              onClick={() => navigate("/quests")}
-            />
-            <NavTile
-              index={2}
-              icon={Swords}
-              label="Duels"
-              description="Head-to-head challenges"
-              onClick={() => navigate("/duels")}
-            />
-            <NavTile
-              index={3}
-              icon={ShoppingBag}
-              label="Shop"
-              description="Spend coins on cosmetics"
-              onClick={() => navigate("/shop")}
-            />
-            <NavTile
-              index={4}
-              icon={Users2}
-              label="Community & clans"
-              description="Server goals and your clan"
-              onClick={() => navigate("/community")}
-            />
-          </div>
-        </div>
-
-
         {/* Quick links */}
         <div className="grid grid-cols-2 gap-2">
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate("/inbox")}
-            className="glass-card rounded-xl p-4 flex items-center gap-3 text-left hover:ring-1 hover:ring-primary/30 transition-all col-span-2"
-          >
-            <MessageSquare className="h-5 w-5 text-primary" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground">Inbox</p>
-              <p className="text-[10px] text-muted-foreground">Message your coach or athletes</p>
-            </div>
-            {(unreadMessages ?? 0) > 0 && (
-              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
-                {unreadMessages}
-              </span>
-            )}
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </motion.button>
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => navigate("/sessions")}
@@ -654,55 +585,6 @@ export default function Profile() {
           </div>
           <ChevronRight className="h-4 w-4 text-primary flex-shrink-0" />
         </button>
-
-        {/* Coaching */}
-        <CoachLinkCard />
-
-        {/* Leaderboard privacy */}
-        <div className="glass-card rounded-xl p-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 flex-shrink-0">
-              <Trophy className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">Show me on leaderboards</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Others can see your rank and stats</p>
-            </div>
-          </div>
-          <button
-            onClick={() => handleLeaderboardToggle(!leaderboardVisible)}
-            className={`relative h-6 w-11 rounded-full transition-colors flex-shrink-0 ${
-              leaderboardVisible ? "bg-primary" : "bg-muted"
-            }`}
-            aria-checked={leaderboardVisible}
-            role="switch"
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                leaderboardVisible ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </button>
-        </div>
-
-        {/* XP toast mode */}
-        <div className="glass-card rounded-xl p-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 flex-shrink-0">
-              <Bell className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">XP toasts</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Show a summary toast when you earn XP and coins</p>
-            </div>
-          </div>
-          <Switch
-            id="xp-toasts"
-            checked={xpToastMode === "toast"}
-            onCheckedChange={handleXpToastToggle}
-            aria-label="Toggle XP toasts"
-          />
-        </div>
 
         {/* Sign out */}
         <motion.button
