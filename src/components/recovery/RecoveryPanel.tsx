@@ -1,80 +1,14 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Activity, Moon } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useRecentSets } from "@/hooks/queries/useRecentSets";
+import { Moon } from "lucide-react";
 import { useSleepLogs } from "@/hooks/queries/useSleepLogs";
-import { usePersonalRecords } from "@/hooks/queries/usePersonalRecords";
-import { useStrengthProfile } from "@/hooks/queries/useStrengthProfile";
-import { bestOneRmForLift } from "@/lib/cloud-data";
-import BodyDiagram, { viewForMuscle } from "@/components/recovery/BodyDiagram";
-import RecoverySettings from "@/components/recovery/RecoverySettings";
-import { computeMuscleRecovery, statusColor, statusLabel } from "@/lib/recovery";
-import { MUSCLE_REGIONS, MUSCLE_LABELS } from "@/lib/muscle-mapping";
-import { getUserPreferences } from "@/lib/user-preferences";
-import { useRecoverySettings } from "@/hooks/useRecoverySettings";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import RecoveryHero from "@/components/recovery/RecoveryHero";
 import HRVTrendCard from "@/components/biometrics/HRVTrendCard";
-import {
-  RATED_LIFTS,
-  TIER_COLORS,
-  TIER_SHORT_LABELS,
-  epley1RM,
-  getStrengthRating,
-  inferLiftId,
-  isBilateralDumbbell,
-  type StrengthRating,
-} from "@/lib/strength-standards";
 
 export default function RecoveryPanel() {
-  const { user } = useAuth();
   const today = new Date().toISOString().split("T")[0];
-  const [view, setView] = useState<"front" | "back">("front");
-  const [highlighted, setHighlighted] = useState<typeof MUSCLE_REGIONS[number] | null>(null);
-  const diagramRef = useRef<HTMLDivElement>(null);
-
-  const { data: sets = [] } = useRecentSets();
   const { data: sleepLogs = [] } = useSleepLogs();
-  const { data: prs = {} } = usePersonalRecords();
-  const { data: profile } = useStrengthProfile();
-
-  const splitId = user ? getUserPreferences(user.id)?.splitId : null;
-  const settings = useRecoverySettings(user?.id);
-
-  const states = useMemo(
-    () => computeMuscleRecovery(sets, sleepLogs, splitId, new Date(), settings),
-    [sets, sleepLogs, splitId, settings],
-  );
-
-  const muscleToRating: Partial<Record<typeof MUSCLE_REGIONS[number], StrengthRating>> = useMemo(() => {
-    if (!profile?.bodyweight || !profile?.sex) return {};
-    const out: Partial<Record<typeof MUSCLE_REGIONS[number], StrengthRating>> = {};
-    RATED_LIFTS.forEach((def) => {
-      const oneRm = bestOneRmForLift(
-        prs,
-        (exId, name) => inferLiftId(exId, name) === def.id,
-        epley1RM,
-        (exId, name) => isBilateralDumbbell(exId, name) ? 2 : 1,
-      );
-      if (!oneRm || oneRm <= 0) return;
-      const rating = getStrengthRating(def.id, oneRm, {
-        bodyweight: profile.bodyweight!,
-        sex: profile.sex!,
-        age: profile.age,
-      });
-      if (!rating) return;
-      const region = def.primaryMuscle as typeof MUSCLE_REGIONS[number];
-      const existing = out[region];
-      if (!existing || rating.tierIndex > existing.tierIndex) out[region] = rating;
-    });
-    return out;
-  }, [prs, profile]);
-
-  const sortedRegions = useMemo(
-    () => [...MUSCLE_REGIONS].sort((a, b) => states[a].score - states[b].score),
-    [states],
-  );
 
   const last7Sleep = useMemo(() => {
     const now = new Date();
